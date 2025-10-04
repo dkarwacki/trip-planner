@@ -1,0 +1,21 @@
+---
+import Layout from "../layouts/Layout.astro";
+import TripPlanner from "../components/TripPlanner";
+
+export const prerender = false;
+
+// Get API key for map display
+// Use GOOGLE_MAPS_API_KEY_PUBLIC if available (domain-restricted),
+// otherwise fall back to GOOGLE_MAPS_API_KEY
+const apiKey = import.meta.env.GOOGLE_MAPS_API_KEY_PUBLIC || import.meta.env.GOOGLE_MAPS_API_KEY;
+
+if (!apiKey) {
+  throw new Error(
+    "Google Maps API key is not configured. Please set GOOGLE_MAPS_API_KEY or GOOGLE_MAPS_API_KEY_PUBLIC in your .env file."
+  );
+}
+---
+
+<Layout title="Trip Planner">
+  <TripPlanner client:load apiKey={apiKey} />
+</Layout>

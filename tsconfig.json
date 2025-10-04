@@ -8,6 +8,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "downlevelIteration": true,
+    "module": "ESNext",
+    "target": "ESNext"
   }
 }

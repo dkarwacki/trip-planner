@@ -46,6 +46,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Coding Practices
 
 ### Error Handling
+
 - Handle errors and edge cases at the beginning of functions
 - Use early returns for error conditions
 - Place happy path last in functions
@@ -53,6 +54,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Implement proper error logging and user-friendly messages
 
 ### Astro Guidelines
+
 - Use `export const prerender = false` for API routes
 - Use POST, GET (uppercase) for endpoint handlers
 - Use Zod for input validation in API routes
@@ -62,6 +64,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Leverage View Transitions API for smooth page transitions
 
 ### React Guidelines
+
 - Use functional components with hooks (never class components)
 - **Never use "use client"** or other Next.js directives
 - Extract custom hooks into `src/components/hooks`
@@ -72,10 +75,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Use useId() for generating unique IDs for accessibility
 
 ### Component Strategy
+
 - Use Astro components (.astro) for static content and layouts
 - Use React components (.tsx) only when interactivity is needed
 
 ### Tailwind CSS
+
 - Use responsive variants (sm:, md:, lg:)
 - Use state variants (hover:, focus-visible:, active:)
 - Implement dark mode with the `dark:` variant
@@ -83,6 +88,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Use the @layer directive for organizing styles
 
 ### Accessibility
+
 - Use ARIA landmarks for page regions
 - Apply aria-expanded and aria-controls for expandable content
 - Use aria-live regions for dynamic updates
@@ -90,12 +96,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Avoid redundant ARIA that duplicates semantic HTML
 
 ### Backend (Supabase)
+
 - Use supabase from `context.locals` in Astro routes (not direct imports)
 - Use SupabaseClient type from `src/db/supabase.client.ts`
 - Use Zod schemas to validate data exchanged with backend
 - Follow Supabase guidelines for security and performance
 
 ### Effect Guidelines
+
 - **Use Effect for business logic and data operations** - Leverage type-safe error handling and composability
 - **Always use `Effect.gen`** (generator-style) for effect composition instead of pipe
 - **Use tagged errors** (objects with `_tag` field) for better error discrimination
