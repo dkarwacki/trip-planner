@@ -1,0 +1,182 @@
+# Effect TypeScript Best Practices
+
+## Core Principles
+
+**Type-Safe Error Handling**: Use `Effect<A, E, R>` to track success (A), errors (E), and requirements (R) in the type system.
+
+```typescript
+// ✅ Explicit error handling with tagged errors
+type DivisionError = { _tag: "DivisionByZero" }
+
+function divide(a: number, b: number): Effect.Effect<number, DivisionError> {
+  if (b === 0) return Effect.fail({ _tag: "DivisionByZero" })
+  return Effect.succeed(a / b)
+}
+```
+
+## Code Style
+
+**ALWAYS use `Effect.gen`** (generator-style) for composition - NOT pipe:
+
+```typescript
+// ✅ Preferred: Generator style
+const program = Effect.gen(function* () {
+  const user = yield* getUser()
+  const data = yield* fetchData(user.id)
+  yield* Effect.log("Processing complete")
+  return data
+})
+
+// ❌ Avoid: Pipe chains (use only for single transformations)
+const program = getUser().pipe(
+  Effect.flatMap((user) => fetchData(user.id)),
+  Effect.tap(() => Effect.log("Processing complete"))
+)
+```
+
+**Use pipe ONLY for**: single transformations, providing layers, adding annotations.
+
+**Avoid**: tacit/point-free style, `flow` from effect/Function.
+
+## Creating Effects
+
+```typescript
+// Synchronous effects
+Effect.sync(() => console.log("Hello"))
+Effect.try(() => JSON.parse(input)) // may throw
+
+// Async effects
+Effect.promise(() => delay(100)) // won't reject
+Effect.tryPromise(() => fetch(url)) // may reject
+
+// Custom error mapping
+Effect.tryPromise({
+  try: () => fetch(url),
+  catch: (error) => ({ _tag: "FetchError" as const, error })
+})
+
+// Lazy evaluation (for recursion, side effects)
+Effect.suspend(() => Effect.succeed(i++))
+```
+
+## Working with Multiple Effects
+
+```typescript
+// Sequential
+const program = Effect.gen(function* () {
+  const a = yield* task1
+  const b = yield* task2
+  return { a, b }
+})
+
+// Parallel
+const program = Effect.gen(function* () {
+  const [a, b, c] = yield* Effect.all([task1, task2, task3], { concurrency: 3 })
+  return { a, b, c }
+})
+
+// Conditional logic
+const program = Effect.gen(function* () {
+  const user = yield* getUser()
+  if (user.role === "admin") {
+    return yield* adminTask()
+  }
+  return yield* regularTask()
+})
+```
+
+## Error Handling
+
+```typescript
+// Tagged errors for pattern matching
+type ApiError =
+  | { _tag: "NotFound"; url: string }
+  | { _tag: "Unauthorized"; user: string }
+
+const program = Effect.gen(function* () {
+  const data = yield* fetchApi().pipe(
+    Effect.catchTag("NotFound", (e) => Effect.succeed(defaultData)),
+    Effect.catchTag("Unauthorized", (e) => Effect.fail({ _tag: "AccessDenied" as const }))
+  )
+  return data
+})
+
+// Catch all errors
+const safe = program.pipe(
+  Effect.catchAll((error) => Effect.succeed(fallbackValue))
+)
+
+// Handle defects (unexpected errors)
+const withDefectHandling = program.pipe(
+  Effect.catchAllDefect((defect) => {
+    console.error("Defect:", defect)
+    return Effect.succeed(fallbackValue)
+  })
+)
+```
+
+## Schema Validation
+
+```typescript
+import { Schema } from "effect"
+
+// Define schema
+const User = Schema.Struct({
+  id: Schema.Number,
+  email: Schema.String.pipe(Schema.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/))
+})
+
+// Validate
+const decode = Schema.decodeUnknown(User)
+const result = yield* decode(unknownData)
+
+// Tagged unions
+const Shape = Schema.Union(
+  Schema.Struct({ kind: Schema.Literal("circle"), radius: Schema.Number }),
+  Schema.Struct({ kind: Schema.Literal("square"), size: Schema.Number })
+)
+```
+
+## Resource Management
+
+```typescript
+// acquireRelease pattern
+const program = Effect.gen(function* () {
+  const file = yield* Effect.acquireRelease(
+    Effect.sync(() => openFile()),
+    (file) => Effect.sync(() => closeFile(file))
+  )
+  return yield* processFile(file)
+})
+
+// Scoped resources
+const program = Effect.scoped(
+  Effect.gen(function* () {
+    const resource = yield* Effect.acquireRelease(acquire, release)
+    return yield* useResource(resource)
+  })
+)
+```
+
+## Running Effects
+
+```typescript
+// Entry point
+import { NodeRuntime } from "@effect/platform-node"
+NodeRuntime.runMain(program)
+
+// Manual execution
+Effect.runPromise(program) // returns Promise
+Effect.runFork(program) // returns Fiber
+Effect.runSync(program) // ⚠️ only for synchronous effects
+```
+
+## Best Practices Summary
+
+1. **Always use `Effect.gen`** for composition (not pipe)
+2. **Never throw errors** - use `Effect.fail` with tagged errors
+3. **Track errors in types** - `Effect<A, E, R>` makes errors explicit
+4. **Use Effect Schema** for data validation at boundaries
+5. **Use `Effect.tryPromise`** for async operations that may fail
+6. **Use `Effect.all`** for parallel execution when needed
+7. **Handle both errors and defects** appropriately
