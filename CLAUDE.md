@@ -101,6 +101,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Use tagged errors** (objects with `_tag` field) for better error discrimination
 - **Never throw exceptions** - use `Effect.fail` for expected errors and track them in the type system
 - **Use `Effect.tryPromise`** when wrapping async operations that might fail
-- **Use `Effect.all`** for parallel execution when needed
-- **Use Effect Schema** for data validation at API boundaries
-- **See detailed best practices** in `.cursor/rules/effect.md`
+- **Use Effect Streams** for reactive data processing
+- **Use branded types** for domain primitives (IDs, emails, etc.)
+- **See detailed best practices** in `.cursor/rules/effect.mdc`

@@ -55,4 +55,6 @@ When modifying the directory structure, always update this section.
 - **Always use `Effect.gen`** for effect composition - it's more readable and easier to debug than pipe
 - **Use tagged errors** (objects with `_tag` field) for better error discrimination and pattern matching
 - **Avoid throwing exceptions** - use `Effect.fail` for expected errors and track them in the type system
+- **Use Effect Streams** for reactive data processing
+- **Use branded types** for domain primitives (IDs, emails, etc.)
 - **See `.cursor/rules/effect.md`** for comprehensive Effect best practices and patterns

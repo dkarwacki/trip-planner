@@ -1,11 +1,14 @@
-# Effect TypeScript Best Practices
+---
+alwaysApply: false
+---
+# Guidelines for Effect
 
 ## Core Principles
 
 **Type-Safe Error Handling**: Use `Effect<A, E, R>` to track success (A), errors (E), and requirements (R) in the type system.
 
 ```typescript
-// ✅ Explicit error handling with tagged errors
+// Explicit error handling with tagged errors
 type DivisionError = { _tag: "DivisionByZero" }
 
 function divide(a: number, b: number): Effect.Effect<number, DivisionError> {
@@ -19,7 +22,7 @@ function divide(a: number, b: number): Effect.Effect<number, DivisionError> {
 **ALWAYS use `Effect.gen`** (generator-style) for composition - NOT pipe:
 
 ```typescript
-// ✅ Preferred: Generator style
+// Preferred: Generator style
 const program = Effect.gen(function* () {
   const user = yield* getUser()
   const data = yield* fetchData(user.id)
@@ -27,7 +30,7 @@ const program = Effect.gen(function* () {
   return data
 })
 
-// ❌ Avoid: Pipe chains (use only for single transformations)
+// Avoid: Pipe chains (use only for single transformations)
 const program = getUser().pipe(
   Effect.flatMap((user) => fetchData(user.id)),
   Effect.tap(() => Effect.log("Processing complete"))
@@ -171,6 +174,53 @@ Effect.runFork(program) // returns Fiber
 Effect.runSync(program) // ⚠️ only for synchronous effects
 ```
 
+## Streams
+
+```typescript
+import { Stream, Effect, Option } from "effect"
+
+// Create streams
+const stream = Stream.make(1, 2, 3)
+const fromIterable = Stream.fromIterable([1, 2, 3])
+const fromEffect = Stream.fromEffect(fetchData())
+const fromPaginatedApi = Stream.paginate(0, (pageNumber) =>
+  Effect.gen(function* () {
+    const page = yield* fetchPage(pageNumber)
+    return [
+      page.results,
+      page.isLast ? Option.none() : Option.some(pageNumber + 1)
+    ]
+  })
+)
+
+// Transform streams
+const program = Effect.gen(function* () {
+  yield* Stream.make(1, 2, 3).pipe(
+    Stream.map(n => n * 2),
+    Stream.filter(n => n > 2),
+    Stream.runCollect
+  )
+})
+```
+
+## Branded Types
+
+```typescript
+import { Brand } from "effect"
+
+// Nominal branding (no validation)
+type UserId = number & Brand.Brand<"UserId">
+const UserId = Brand.nominal<UserId>()
+const id = UserId(123)
+
+// Refined branding (with validation)
+type Email = string & Brand.Brand<"Email">
+const Email = Brand.refined<Email>(
+  (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s),
+  (s) => Brand.error(`Invalid email: ${s}`)
+)
+```
+
 ## Best Practices Summary
 
 1. **Always use `Effect.gen`** for composition (not pipe)
@@ -180,3 +230,5 @@ Effect.runSync(program) // ⚠️ only for synchronous effects
 5. **Use `Effect.tryPromise`** for async operations that may fail
 6. **Use `Effect.all`** for parallel execution when needed
 7. **Handle both errors and defects** appropriately
+8. **Use branded types** for domain primitives (IDs, emails, etc.)
+9. **Use Effect Streams** for reactive data processing
