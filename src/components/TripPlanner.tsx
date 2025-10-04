@@ -180,7 +180,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
             ) : (
               <ScrollArea className="h-full px-6 pb-6">
                 <div className="space-y-2">
-                  {places.map((place) => (
+                  {places.map((place, index) => (
                     <div
                       key={place.placeId}
                       onClick={() => handlePanToPlace(place)}
@@ -197,11 +197,16 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
                       }}
                     >
                       <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium truncate">{place.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {place.lat.toFixed(4)}, {place.lng.toFixed(4)}
-                          </p>
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium truncate">{place.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {place.lat.toFixed(4)}, {place.lng.toFixed(4)}
+                            </p>
+                          </div>
                         </div>
                         <button
                           onClick={(e) => {
