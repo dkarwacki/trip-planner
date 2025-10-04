@@ -6,8 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { searchPlace } from "@/lib/services/places.client";
-import type { Place } from "@/types";
+import { getTopAttractions, getTopRestaurants } from "@/lib/services/attractions.client";
+import type { Place, AttractionScore } from "@/types";
 import { X } from "lucide-react";
+import AttractionsPanel from "@/components/AttractionsPanel";
+
+type CategoryTab = "attractions" | "restaurants";
 
 interface TripPlannerProps {
   apiKey: string;
@@ -16,7 +20,6 @@ interface TripPlannerProps {
 
 const MapContent = ({ mapId }: { mapId?: string }) => {
   const map = useMap();
-  const mapsLibrary = useMapsLibrary("maps");
   const markerLibrary = useMapsLibrary("marker");
 
   const [places, setPlaces] = useState<Place[]>([]);
@@ -24,6 +27,20 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+
+  // Attractions state
+  const [attractions, setAttractions] = useState<AttractionScore[]>([]);
+  const [isLoadingAttractions, setIsLoadingAttractions] = useState(false);
+  const [attractionsError, setAttractionsError] = useState<string | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+
+  // Restaurants state
+  const [restaurants, setRestaurants] = useState<AttractionScore[]>([]);
+  const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(false);
+  const [restaurantsError, setRestaurantsError] = useState<string | null>(null);
+
+  // Track which tabs have been loaded
+  const [loadedTabs, setLoadedTabs] = useState<Set<CategoryTab>>(new Set(["attractions"]));
 
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
 
@@ -78,20 +95,118 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   );
 
   // Handle removing a place
-  const handleRemovePlace = useCallback((placeId: string) => {
-    setPlaces((prev) => prev.filter((p) => p.placeId !== placeId));
-    if (selectedPlaceId === placeId) {
-      setSelectedPlaceId(null);
-    }
-  }, [selectedPlaceId]);
+  const handleRemovePlace = useCallback(
+    (placeId: string) => {
+      setPlaces((prev) => prev.filter((p) => p.placeId !== placeId));
+      if (selectedPlaceId === placeId) {
+        setSelectedPlaceId(null);
+        setSelectedPlace(null);
+        setAttractions([]);
+        setAttractionsError(null);
+        setRestaurants([]);
+        setRestaurantsError(null);
+        setLoadedTabs(new Set(["attractions"]));
+      }
+    },
+    [selectedPlaceId]
+  );
 
   // Handle panning to a place
-  const handlePanToPlace = useCallback((place: Place) => {
-    if (!map) return;
-    setSelectedPlaceId(place.placeId);
-    map.panTo({ lat: place.lat, lng: place.lng });
-    map.setZoom(14);
-  }, [map]);
+  const handlePanToPlace = useCallback(
+    async (place: Place) => {
+      if (!map) return;
+      setSelectedPlaceId(place.placeId);
+      setSelectedPlace(place);
+      map.panTo({ lat: place.lat, lng: place.lng });
+      map.setZoom(14);
+
+      // Reset state
+      setAttractions([]);
+      setAttractionsError(null);
+      setRestaurants([]);
+      setRestaurantsError(null);
+      setLoadedTabs(new Set(["attractions"]));
+
+      // Fetch attractions for this place (default tab)
+      setIsLoadingAttractions(true);
+
+      try {
+        const attractionsResult = await Effect.runPromise(
+          getTopAttractions(place.lat, place.lng, 10).pipe(
+            Effect.catchAll((error) => {
+              if (error._tag === "NoAttractionsFoundError") {
+                return Effect.fail("No attractions found in this area");
+              }
+              if (error._tag === "AttractionsAPIError") {
+                return Effect.fail(error.message);
+              }
+              return Effect.fail("An unexpected error occurred");
+            })
+          )
+        );
+
+        setAttractions(attractionsResult);
+      } catch (err) {
+        setAttractionsError(typeof err === "string" ? err : "Failed to load attractions");
+      } finally {
+        setIsLoadingAttractions(false);
+      }
+    },
+    [map]
+  );
+
+  // Handle closing attractions panel
+  const handleCloseAttractions = useCallback(() => {
+    setSelectedPlace(null);
+    setSelectedPlaceId(null);
+    setAttractions([]);
+    setAttractionsError(null);
+    setRestaurants([]);
+    setRestaurantsError(null);
+    setLoadedTabs(new Set(["attractions"]));
+  }, []);
+
+  // Handle tab change with lazy loading
+  const handleTabChange = useCallback(
+    async (tab: CategoryTab) => {
+      if (!selectedPlace) return;
+
+      // Skip if already loaded
+      if (loadedTabs.has(tab)) return;
+
+      // Mark as loaded
+      setLoadedTabs((prev) => new Set([...prev, tab]));
+
+      // Fetch restaurants if restaurants tab is opened
+      if (tab === "restaurants") {
+        setIsLoadingRestaurants(true);
+        setRestaurantsError(null);
+
+        try {
+          const restaurantsResult = await Effect.runPromise(
+            getTopRestaurants(selectedPlace.lat, selectedPlace.lng, 10).pipe(
+              Effect.catchAll((error) => {
+                if (error._tag === "NoAttractionsFoundError") {
+                  return Effect.fail("No restaurants found in this area");
+                }
+                if (error._tag === "AttractionsAPIError") {
+                  return Effect.fail(error.message);
+                }
+                return Effect.fail("An unexpected error occurred");
+              })
+            )
+          );
+
+          setRestaurants(restaurantsResult);
+        } catch (err) {
+          setRestaurantsError(typeof err === "string" ? err : "Failed to load restaurants");
+        } finally {
+          setIsLoadingRestaurants(false);
+        }
+      }
+    },
+    [selectedPlace, loadedTabs]
+  );
 
   // Manage markers lifecycle
   useEffect(() => {
@@ -104,7 +219,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
     // Map ID is required for AdvancedMarkerElement
     if (!mapId) {
-      console.error("Map ID is required for AdvancedMarkerElement. Please set GOOGLE_MAPS_MAP_ID in your .env file.");
       return;
     }
 
@@ -229,7 +343,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       </div>
 
       {/* Right Side - Map */}
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <Map
           defaultCenter={{ lat: 0, lng: 0 }}
           defaultZoom={2}
@@ -237,6 +351,21 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           disableDefaultUI={false}
           mapId={mapId}
         />
+
+        {/* Attractions Panel Overlay */}
+        {selectedPlace && (
+          <AttractionsPanel
+            attractions={attractions}
+            isLoadingAttractions={isLoadingAttractions}
+            attractionsError={attractionsError}
+            restaurants={restaurants}
+            isLoadingRestaurants={isLoadingRestaurants}
+            restaurantsError={restaurantsError}
+            placeName={selectedPlace.name}
+            onClose={handleCloseAttractions}
+            onTabChange={handleTabChange}
+          />
+        )}
       </div>
     </div>
   );

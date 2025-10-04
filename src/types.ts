@@ -5,3 +5,24 @@ export interface Place {
   lng: number;
   placeId: string;
 }
+
+export interface Attraction {
+  placeId: string;
+  name: string;
+  rating: number;
+  userRatingsTotal: number;
+  types: string[];
+  vicinity: string;
+  priceLevel?: number;
+  openNow?: boolean;
+}
+
+export interface AttractionScore {
+  attraction: Attraction;
+  score: number;
+  breakdown: {
+    qualityScore: number;
+    diversityScore: number;
+    localityScore: number;
+  };
+}
