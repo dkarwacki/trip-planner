@@ -14,8 +14,11 @@ if (!apiKey) {
     "Google Maps API key is not configured. Please set GOOGLE_MAPS_API_KEY or GOOGLE_MAPS_API_KEY_PUBLIC in your .env file."
   );
 }
+
+// Optional: Get Map ID for AdvancedMarkerElement support
+const mapId = import.meta.env.GOOGLE_MAPS_MAP_ID;
 ---
 
 <Layout title="Trip Planner">
-  <TripPlanner client:load apiKey={apiKey} />
+  <TripPlanner client:load apiKey={apiKey} mapId={mapId} />
 </Layout>
