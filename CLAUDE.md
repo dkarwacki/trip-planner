@@ -31,7 +31,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `./src/types.ts` - Shared types for backend and frontend (Entities, DTOs)
 - `./src/components` - Components (Astro for static, React for interactive)
 - `./src/components/ui` - Shadcn/ui components
-- `./src/lib` - Services and helpers
+- `./src/lib` - Services and helpers organized by domain
+  - `./src/lib/services/{domain}/index.ts` - Server-side service (main entry point)
+  - `./src/lib/services/{domain}/client.ts` - Client-side service (browser-only)
+  - `./src/lib/services/{domain}/*` - Additional domain-specific modules
 - `./src/assets` - Static internal assets
 - `./public` - Public assets
 
@@ -57,7 +60,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Use `export const prerender = false` for API routes
 - Use POST, GET (uppercase) for endpoint handlers
-- Use Zod for input validation in API routes
+- Use Zod for validation and DTOs: define schemas, use `z.infer<>` for types, wrap in Effect with tagged errors
 - Extract logic into services in `src/lib/services`
 - Use `Astro.cookies` for server-side cookie management
 - Use `import.meta.env` for environment variables

@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { searchPlace } from "@/lib/services/places.client";
-import { getTopAttractions, getTopRestaurants } from "@/lib/services/attractions.client";
+import { searchPlace } from "@/lib/services/places/client";
+import { getTopAttractions, getTopRestaurants } from "@/lib/services/attractions/client";
 import type { Place, AttractionScore } from "@/types";
 import { X } from "lucide-react";
 import AttractionsPanel from "@/components/AttractionsPanel";
@@ -132,7 +132,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
       try {
         const attractionsResult = await Effect.runPromise(
-          getTopAttractions(place.lat, place.lng, 10).pipe(
+          getTopAttractions(place.lat, place.lng).pipe(
             Effect.catchAll((error) => {
               if (error._tag === "NoAttractionsFoundError") {
                 return Effect.fail("No attractions found in this area");
@@ -184,7 +184,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
         try {
           const restaurantsResult = await Effect.runPromise(
-            getTopRestaurants(selectedPlace.lat, selectedPlace.lng, 10).pipe(
+            getTopRestaurants(selectedPlace.lat, selectedPlace.lng).pipe(
               Effect.catchAll((error) => {
                 if (error._tag === "NoAttractionsFoundError") {
                   return Effect.fail("No restaurants found in this area");

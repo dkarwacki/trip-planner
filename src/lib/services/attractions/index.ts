@@ -1,6 +1,6 @@
 import { Effect, Cache, Duration } from "effect";
 import type { Attraction, AttractionScore } from "@/types";
-import { scoreAttractions } from "./attractions.scoring";
+import { scoreAttractions } from "./scoring";
 
 // Tagged errors for better error handling
 export class NoAttractionsFoundError {
@@ -308,7 +308,7 @@ const fetchNearbyRestaurantsUncached = (
 /**
  * Fetch nearby attractions with caching (5-minute TTL)
  */
-export const fetchNearbyAttractions = (
+const fetchNearbyAttractions = (
   lat: number,
   lng: number,
   radius: number,
@@ -322,7 +322,7 @@ export const fetchNearbyAttractions = (
 /**
  * Fetch nearby restaurants with caching (5-minute TTL)
  */
-export const fetchNearbyRestaurants = (
+const fetchNearbyRestaurants = (
   lat: number,
   lng: number,
   radius: number,

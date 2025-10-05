@@ -1,151 +1,143 @@
 import type { APIRoute } from "astro";
 import { Effect } from "effect";
-import { getTopAttractions } from "@/lib/services/attractions.service";
+import { z } from "zod";
+import { getTopAttractions, NoAttractionsFoundError, AttractionsAPIError } from "@/lib/services/attractions";
+import type { AttractionScore } from "@/types";
+import { getGoogleMapsApiKey, MissingGoogleMapsAPIKeyError } from "@/lib/utils";
 
 export const prerender = false;
 
+const RequestBodySchema = z.object({
+  lat: z.number({ required_error: "lat is required" }),
+  lng: z.number({ required_error: "lng is required" }),
+  radius: z.number().min(100).max(50000).default(1500),
+});
+
+type RequestBody = z.infer<typeof RequestBodySchema>;
+
+class ValidationError {
+  readonly _tag = "ValidationError";
+  constructor(readonly errors: z.ZodError) {}
+}
+
+const validateRequest = (body: unknown): Effect.Effect<RequestBody, ValidationError> =>
+  Effect.gen(function* () {
+    const result = RequestBodySchema.safeParse(body);
+
+    if (!result.success) {
+      return yield* Effect.fail(new ValidationError(result.error));
+    }
+
+    return result.data;
+  });
+
+const fetchAttractionsProgram = (
+  body: unknown
+): Effect.Effect<
+  AttractionScore[],
+  ValidationError | MissingGoogleMapsAPIKeyError | NoAttractionsFoundError | AttractionsAPIError
+> =>
+  Effect.gen(function* () {
+    const { lat, lng } = yield* validateRequest(body);
+    const apiKey = yield* getGoogleMapsApiKey();
+    const attractions = yield* getTopAttractions(lat, lng, apiKey, 10);
+    return attractions;
+  });
+
 export const POST: APIRoute = async ({ request }) => {
   try {
-    // Parse request body
     const body = await request.json();
-    const { lat, lng, radius = 1500 } = body;
 
-    // Validate parameters
-    if (typeof lat !== "number" || typeof lng !== "number") {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "lat and lng parameters are required and must be numbers",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
+    const response = await Effect.runPromise(
+      fetchAttractionsProgram(body).pipe(
+        Effect.match({
+          onFailure: (error) => {
+            if (error._tag === "ValidationError") {
+              const formattedErrors = error.errors.errors.map((err) => ({
+                path: err.path.join("."),
+                message: err.message,
+              }));
 
-    if (typeof radius !== "number" || radius < 100 || radius > 50000) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "radius must be a number between 100 and 50000",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
+              return new Response(
+                JSON.stringify({
+                  success: false,
+                  error: "Validation failed",
+                  details: formattedErrors,
+                }),
+                {
+                  status: 400,
+                  headers: { "Content-Type": "application/json" },
+                }
+              );
+            }
 
-    // Get API key from environment
-    const apiKey = import.meta.env.GOOGLE_MAPS_API_KEY as string | undefined;
+            if (error._tag === "MissingGoogleMapsAPIKeyError") {
+              return new Response(
+                JSON.stringify({
+                  success: false,
+                  error: "Server configuration error",
+                }),
+                {
+                  status: 500,
+                  headers: { "Content-Type": "application/json" },
+                }
+              );
+            }
 
-    if (!apiKey) {
-      // eslint-disable-next-line no-console
-      console.error("GOOGLE_MAPS_API_KEY is not configured");
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Server configuration error",
-        }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
+            if (error._tag === "NoAttractionsFoundError") {
+              return new Response(
+                JSON.stringify({
+                  success: false,
+                  error: `No attractions found near (${error.location.lat}, ${error.location.lng})`,
+                }),
+                {
+                  status: 404,
+                  headers: { "Content-Type": "application/json" },
+                }
+              );
+            }
 
-    // Define error response type
-    type ErrorResult =
-      | {
-          type: "not_found";
-          message: string;
-        }
-      | {
-          type: "api_error";
-          message: string;
-        }
-      | {
-          type: "unknown";
-          message: string;
-        };
+            if (error._tag === "AttractionsAPIError") {
+              return new Response(
+                JSON.stringify({
+                  success: false,
+                  error: error.message,
+                }),
+                {
+                  status: 502,
+                  headers: { "Content-Type": "application/json" },
+                }
+              );
+            }
 
-    // Execute Effect - get top 10 scored attractions
-    const result = await Effect.runPromise(
-      getTopAttractions(lat, lng, apiKey, 10).pipe(
-        Effect.catchAll((error) => {
-          // Map tagged errors to Effects that we can handle
-          if (error._tag === "NoAttractionsFoundError") {
-            return Effect.fail<ErrorResult>({
-              type: "not_found" as const,
-              message: `No attractions found near (${error.location.lat}, ${error.location.lng})`,
-            });
-          }
-          if (error._tag === "AttractionsAPIError") {
-            return Effect.fail<ErrorResult>({
-              type: "api_error" as const,
-              message: error.message,
-            });
-          }
-          return Effect.fail<ErrorResult>({
-            type: "unknown" as const,
-            message: "An unexpected error occurred",
-          });
+            return new Response(
+              JSON.stringify({
+                success: false,
+                error: "An unexpected error occurred",
+              }),
+              {
+                status: 500,
+                headers: { "Content-Type": "application/json" },
+              }
+            );
+          },
+          onSuccess: (attractions) => {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                attractions: attractions,
+              }),
+              {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              }
+            );
+          },
         })
       )
-    ).catch((error: ErrorResult) => {
-      // Handle failed Effects
-      if (error.type === "not_found") {
-        return {
-          success: false as const,
-          error: error.message,
-          status: 404,
-        };
-      }
-      if (error.type === "api_error") {
-        return {
-          success: false as const,
-          error: error.message,
-          status: 502,
-        };
-      }
-      return {
-        success: false as const,
-        error: "An unexpected error occurred",
-        status: 500,
-      };
-    });
-
-    // Check if result is an error response
-    if (typeof result === "object" && result !== null && "success" in result && !result.success) {
-      const errorResult = result as {
-        success: false;
-        error: string;
-        status: number;
-      };
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: errorResult.error,
-        }),
-        {
-          status: errorResult.status,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Success response
-    return new Response(
-      JSON.stringify({
-        success: true,
-        attractions: result,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
     );
+
+    return response;
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("Unexpected error in /api/attractions:", error);

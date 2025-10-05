@@ -29,7 +29,10 @@ When introducing changes to the project, always follow the directory structure b
 - `./src/types.ts` - Shared types for backend and frontend (Entities, DTOs)
 - `./src/components` - Client-side components written in Astro (static) and React (dynamic)
 - `./src/components/ui` - Client-side components from Shadcn/ui
-- `./src/lib` - Services and helpers 
+- `./src/lib` - Services and helpers organized by domain
+  - `./src/lib/services/{domain}/index.ts` - Server-side service (main entry point)
+  - `./src/lib/services/{domain}/client.ts` - Client-side service (browser-only)
+  - `./src/lib/services/{domain}/*` - Additional domain-specific modules
 - `./src/assets` - static internal assets
 - `./public` - public assets
 
@@ -49,12 +52,18 @@ When modifying the directory structure, always update this section.
 - Implement proper error logging and user-friendly error messages.
 - Consider using custom error types or error factories for consistent error handling.
 
+### Validation and Data Transfer Objects (DTOs)
+
+- Use Zod for validation and DTOs: define schemas, use `z.infer<>` for types, `safeParse()` for validation
+- Wrap Zod validation in Effect with tagged errors (e.g., `ValidationError`)
+
 ### Effect Guidelines
 
-- **Use Effect for business logic and data operations** - Leverage Effect's type-safe error handling and composability
-- **Always use `Effect.gen`** for effect composition - it's more readable and easier to debug than pipe
-- **Use tagged errors** (objects with `_tag` field) for better error discrimination and pattern matching
-- **Avoid throwing exceptions** - use `Effect.fail` for expected errors and track them in the type system
+- **Use Effect for business logic and data operations** - Leverage type-safe error handling and composability
+- **Always use `Effect.gen`** (generator-style) for effect composition instead of pipe
+- **Use tagged errors** (objects with `_tag` field) for better error discrimination
+- **Never throw exceptions** - use `Effect.fail` for expected errors and track them in the type system
+- **Use `Effect.tryPromise`** when wrapping async operations that might fail
 - **Use Effect Streams** for reactive data processing
 - **Use branded types** for domain primitives (IDs, emails, etc.)
-- **See `.cursor/rules/effect.md`** for comprehensive Effect best practices and patterns
+- **See detailed best practices** in `.cursor/rules/effect.mdc`
