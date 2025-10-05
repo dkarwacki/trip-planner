@@ -1,6 +1,46 @@
 import type { Attraction, AttractionScore } from "@/types";
 
 /**
+ * Scoring weights and explanations
+ */
+export const SCORING_CONFIG = {
+  weights: {
+    quality: 0.4,
+    diversity: 0.3,
+    locality: 0.3,
+  },
+  explanations: {
+    quality: {
+      title: "Quality Score",
+      weight: "40% weight",
+      description: [
+        "Based on rating and review count",
+        "Higher ratings with more reviews score better",
+        "Formula: rating × log₁₀(reviews + 1)",
+      ],
+    },
+    diversity: {
+      title: "Diversity Score",
+      weight: "30% weight",
+      description: [
+        "Rewards unique place types",
+        "Penalizes over-represented categories",
+        "Boosts for art galleries, museums, parks, cafes",
+      ],
+    },
+    locality: {
+      title: "Locality Score",
+      weight: "30% weight",
+      description: [
+        "Favors local gems over tourist traps",
+        "Sweet spot: 500-5000 reviews",
+        "Prefers moderate pricing ($ or $$)",
+      ],
+    },
+  },
+} as const;
+
+/**
  * Calculate quality score (40% weight)
  * Rewards high ratings with substantial reviews
  */
@@ -94,7 +134,10 @@ export const scoreAttractions = (attractions: Attraction[]): AttractionScore[] =
     const localityScore = calculateLocalityScore(attraction);
 
     // Weighted sum: 40% quality, 30% diversity, 30% locality
-    const score = qualityScore * 0.4 + diversityScore * 0.3 + localityScore * 0.3;
+    const score =
+      qualityScore * SCORING_CONFIG.weights.quality +
+      diversityScore * SCORING_CONFIG.weights.diversity +
+      localityScore * SCORING_CONFIG.weights.locality;
 
     return {
       attraction,

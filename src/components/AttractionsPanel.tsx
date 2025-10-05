@@ -1,11 +1,11 @@
-import { X, Star, MapPin, DollarSign, Info } from "lucide-react";
+import { X, Star, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScoreBadge } from "@/components/ScoreBadge";
 import type { AttractionScore } from "@/types";
 
 type CategoryTab = "attractions" | "restaurants";
@@ -104,33 +104,7 @@ const renderContent = (data: AttractionScore[], isLoading: boolean, error: strin
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-semibold text-base leading-tight flex-1">{attraction.name}</h3>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-md cursor-help flex-shrink-0">
-                          <Info className="h-3 w-3 text-primary" />
-                          <span className="text-sm font-semibold text-primary">{score}</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="left" className="w-64">
-                        <div className="space-y-1.5">
-                          <p className="font-semibold text-sm mb-2">Score Breakdown</p>
-                          <div className="flex justify-between text-xs">
-                            <span>Quality Score:</span>
-                            <span className="font-medium">{breakdown.qualityScore}</span>
-                          </div>
-                          <div className="flex justify-between text-xs">
-                            <span>Diversity Score:</span>
-                            <span className="font-medium">{breakdown.diversityScore}</span>
-                          </div>
-                          <div className="flex justify-between text-xs">
-                            <span>Locality Score:</span>
-                            <span className="font-medium">{breakdown.localityScore}</span>
-                          </div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <ScoreBadge score={score} breakdown={breakdown} />
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
@@ -141,7 +115,6 @@ const renderContent = (data: AttractionScore[], isLoading: boolean, error: strin
                   </div>
                   {attraction.priceLevel && (
                     <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4" />
                       <span>{getPriceLevelSymbol(attraction.priceLevel)}</span>
                     </div>
                   )}
