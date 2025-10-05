@@ -53,7 +53,13 @@ const formatTypeName = (type: string): string => {
     .join(" ");
 };
 
-const renderContent = (data: AttractionScore[], isLoading: boolean, error: string | null, emptyMessage: string) => {
+const renderContent = (
+  data: AttractionScore[],
+  isLoading: boolean,
+  error: string | null,
+  emptyMessage: string,
+  type: "attractions" | "restaurants"
+) => {
   // Loading State
   if (isLoading) {
     return (
@@ -104,7 +110,7 @@ const renderContent = (data: AttractionScore[], isLoading: boolean, error: strin
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-semibold text-base leading-tight flex-1">{attraction.name}</h3>
-                  <ScoreBadge score={score} breakdown={breakdown} />
+                  <ScoreBadge score={score} breakdown={breakdown} type={type} />
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
@@ -202,7 +208,8 @@ export default function AttractionsPanel({
                 attractions,
                 isLoadingAttractions,
                 attractionsError,
-                "No attractions found for this location."
+                "No attractions found for this location.",
+                "attractions"
               )}
             </TabsContent>
 
@@ -211,7 +218,8 @@ export default function AttractionsPanel({
                 restaurants,
                 isLoadingRestaurants,
                 restaurantsError,
-                "No restaurants found for this location."
+                "No restaurants found for this location.",
+                "restaurants"
               )}
             </TabsContent>
           </Tabs>

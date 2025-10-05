@@ -3,6 +3,8 @@ import { Info, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScoreExplanation } from "@/components/ScoreExplanation";
 
+export type ScoreType = "attractions" | "restaurants";
+
 interface ScoreBadgeProps {
   score: number;
   breakdown: {
@@ -10,9 +12,10 @@ interface ScoreBadgeProps {
     diversityScore: number;
     localityScore: number;
   };
+  type: ScoreType;
 }
 
-export function ScoreBadge({ score, breakdown }: ScoreBadgeProps) {
+export function ScoreBadge({ score, breakdown, type }: ScoreBadgeProps) {
   const [showExplanation, setShowExplanation] = useState(false);
 
   return (
@@ -33,7 +36,7 @@ export function ScoreBadge({ score, breakdown }: ScoreBadgeProps) {
         </TooltipTrigger>
         <TooltipContent side="left" className="w-64">
           {showExplanation ? (
-            <ScoreExplanation />
+            <ScoreExplanation type={type} />
           ) : (
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 mb-2">
@@ -52,10 +55,12 @@ export function ScoreBadge({ score, breakdown }: ScoreBadgeProps) {
                 <span>Quality Score:</span>
                 <span className="font-medium">{breakdown.qualityScore}</span>
               </div>
-              <div className="flex justify-between text-xs">
-                <span>Diversity Score:</span>
-                <span className="font-medium">{breakdown.diversityScore}</span>
-              </div>
+              {type === "attractions" && (
+                <div className="flex justify-between text-xs">
+                  <span>Diversity Score:</span>
+                  <span className="font-medium">{breakdown.diversityScore}</span>
+                </div>
+              )}
               <div className="flex justify-between text-xs">
                 <span>Locality Score:</span>
                 <span className="font-medium">{breakdown.localityScore}</span>

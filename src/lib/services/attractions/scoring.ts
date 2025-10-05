@@ -1,9 +1,9 @@
 import type { Attraction, AttractionScore } from "@/types";
 
 /**
- * Scoring weights and explanations
+ * Scoring weights and explanations for attractions
  */
-export const SCORING_CONFIG = {
+export const ATTRACTIONS_SCORING_CONFIG = {
   weights: {
     quality: 0.4,
     diversity: 0.3,
@@ -31,6 +31,36 @@ export const SCORING_CONFIG = {
     locality: {
       title: "Locality Score",
       weight: "30% weight",
+      description: [
+        "Favors local gems over tourist traps",
+        "Sweet spot: 500-5000 reviews",
+        "Prefers moderate pricing ($ or $$)",
+      ],
+    },
+  },
+} as const;
+
+/**
+ * Scoring weights and explanations for restaurants
+ */
+export const RESTAURANTS_SCORING_CONFIG = {
+  weights: {
+    quality: 0.6,
+    locality: 0.4,
+  },
+  explanations: {
+    quality: {
+      title: "Quality Score",
+      weight: "60% weight",
+      description: [
+        "Based on rating and review count",
+        "Higher ratings with more reviews score better",
+        "Formula: rating × log₁₀(reviews + 1)",
+      ],
+    },
+    locality: {
+      title: "Locality Score",
+      weight: "40% weight",
       description: [
         "Favors local gems over tourist traps",
         "Sweet spot: 500-5000 reviews",
@@ -135,9 +165,9 @@ export const scoreAttractions = (attractions: Attraction[]): AttractionScore[] =
 
     // Weighted sum: 40% quality, 30% diversity, 30% locality
     const score =
-      qualityScore * SCORING_CONFIG.weights.quality +
-      diversityScore * SCORING_CONFIG.weights.diversity +
-      localityScore * SCORING_CONFIG.weights.locality;
+      qualityScore * ATTRACTIONS_SCORING_CONFIG.weights.quality +
+      diversityScore * ATTRACTIONS_SCORING_CONFIG.weights.diversity +
+      localityScore * ATTRACTIONS_SCORING_CONFIG.weights.locality;
 
     return {
       attraction,
@@ -145,6 +175,39 @@ export const scoreAttractions = (attractions: Attraction[]): AttractionScore[] =
       breakdown: {
         qualityScore: Math.round(qualityScore * 10) / 10,
         diversityScore: Math.round(diversityScore * 10) / 10,
+        localityScore: Math.round(localityScore * 10) / 10,
+      },
+    };
+  });
+
+  // Sort by score descending
+  return scored.sort((a, b) => b.score - a.score);
+};
+
+/**
+ * Score restaurants using simplified algorithm
+ * Quality (60%) + Locality (40%)
+ * No diversity scoring as it doesn't make sense for restaurants
+ *
+ * This is a pure function with no side effects, making it easy to test and reuse
+ */
+export const scoreRestaurants = (restaurants: Attraction[]): AttractionScore[] => {
+  // Score each restaurant
+  const scored = restaurants.map((restaurant) => {
+    const qualityScore = calculateQualityScore(restaurant);
+    const localityScore = calculateLocalityScore(restaurant);
+
+    // Weighted sum: 60% quality, 40% locality (no diversity)
+    const score =
+      qualityScore * RESTAURANTS_SCORING_CONFIG.weights.quality +
+      localityScore * RESTAURANTS_SCORING_CONFIG.weights.locality;
+
+    return {
+      attraction: restaurant,
+      score: Math.round(score * 10) / 10, // Round to 1 decimal
+      breakdown: {
+        qualityScore: Math.round(qualityScore * 10) / 10,
+        diversityScore: 0, // Not applicable for restaurants
         localityScore: Math.round(localityScore * 10) / 10,
       },
     };

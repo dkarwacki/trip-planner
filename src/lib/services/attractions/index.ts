@@ -1,6 +1,6 @@
 import { Effect, Cache, Duration } from "effect";
 import type { Attraction, AttractionScore } from "@/types";
-import { scoreAttractions } from "./scoring";
+import { scoreAttractions, scoreRestaurants } from "./scoring";
 
 // Tagged errors for better error handling
 export class NoAttractionsFoundError {
@@ -344,10 +344,8 @@ export const getTopAttractions = (
   limit = 10
 ): Effect.Effect<AttractionScore[], NoAttractionsFoundError | AttractionsAPIError> =>
   Effect.gen(function* () {
-    // Fetch attractions (cached)
     const attractions = yield* fetchNearbyAttractions(lat, lng, 1500, apiKey);
 
-    // Score and limit
     const scored = scoreAttractions(attractions);
     return scored.slice(0, limit);
   });
@@ -363,10 +361,8 @@ export const getTopRestaurants = (
   limit = 10
 ): Effect.Effect<AttractionScore[], NoAttractionsFoundError | AttractionsAPIError> =>
   Effect.gen(function* () {
-    // Fetch restaurants (cached)
     const restaurants = yield* fetchNearbyRestaurants(lat, lng, 1500, apiKey);
 
-    // Score and limit
-    const scored = scoreAttractions(restaurants);
+    const scored = scoreRestaurants(restaurants);
     return scored.slice(0, limit);
   });

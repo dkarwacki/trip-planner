@@ -1,9 +1,13 @@
 import * as React from "react";
-import { SCORING_CONFIG } from "@/lib/services/attractions/scoring";
+import { ATTRACTIONS_SCORING_CONFIG, RESTAURANTS_SCORING_CONFIG } from "@/lib/services/attractions/scoring";
 
-export function ScoreExplanation() {
-  const { quality, diversity, locality } = SCORING_CONFIG.explanations;
-  const { weights } = SCORING_CONFIG;
+interface ScoreExplanationProps {
+  type: "attractions" | "restaurants";
+}
+
+export function ScoreExplanation({ type }: ScoreExplanationProps) {
+  const config = type === "attractions" ? ATTRACTIONS_SCORING_CONFIG : RESTAURANTS_SCORING_CONFIG;
+  const { explanations, weights } = config;
 
   return (
     <div className="space-y-3 text-xs">
@@ -14,32 +18,34 @@ export function ScoreExplanation() {
       <div className="space-y-2">
         <div>
           <p className="font-semibold mb-1">
-            {quality.title} ({quality.weight})
+            {explanations.quality.title} ({explanations.quality.weight})
           </p>
           <ul className="space-y-0.5 text-muted-foreground">
-            {quality.description.map((item, idx) => (
+            {explanations.quality.description.map((item, idx) => (
               <li key={idx}>• {item}</li>
             ))}
           </ul>
         </div>
 
-        <div>
-          <p className="font-semibold mb-1">
-            {diversity.title} ({diversity.weight})
-          </p>
-          <ul className="space-y-0.5 text-muted-foreground">
-            {diversity.description.map((item, idx) => (
-              <li key={idx}>• {item}</li>
-            ))}
-          </ul>
-        </div>
+        {"diversity" in explanations && (
+          <div>
+            <p className="font-semibold mb-1">
+              {explanations.diversity.title} ({explanations.diversity.weight})
+            </p>
+            <ul className="space-y-0.5 text-muted-foreground">
+              {explanations.diversity.description.map((item, idx) => (
+                <li key={idx}>• {item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div>
           <p className="font-semibold mb-1">
-            {locality.title} ({locality.weight})
+            {explanations.locality.title} ({explanations.locality.weight})
           </p>
           <ul className="space-y-0.5 text-muted-foreground">
-            {locality.description.map((item, idx) => (
+            {explanations.locality.description.map((item, idx) => (
               <li key={idx}>• {item}</li>
             ))}
           </ul>
@@ -47,8 +53,9 @@ export function ScoreExplanation() {
 
         <div className="pt-1 border-t border-border">
           <p className="text-muted-foreground italic">
-            Overall Score = {Math.round(weights.quality * 100)}% Quality + {Math.round(weights.diversity * 100)}%
-            Diversity + {Math.round(weights.locality * 100)}% Locality
+            Overall Score = {Math.round(weights.quality * 100)}% Quality +{" "}
+            {"diversity" in weights && `${Math.round(weights.diversity * 100)}% Diversity + `}
+            {Math.round(weights.locality * 100)}% Locality
           </p>
         </div>
       </div>
