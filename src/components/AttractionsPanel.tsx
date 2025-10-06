@@ -1,4 +1,4 @@
-import { X, Star, MapPin } from "lucide-react";
+import { X, Star, MapPin, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -117,7 +117,20 @@ const renderContent = (
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-semibold text-base leading-tight flex-1">{attraction.name}</h3>
-                  <ScoreBadge score={score} breakdown={breakdown} type={type} />
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`https://www.google.com/maps/place/?q=place_id:${attraction.placeId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-primary transition-colors"
+                      aria-label={`View ${attraction.name} in Google Maps`}
+                      title="View in Google Maps"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                    <ScoreBadge score={score} breakdown={breakdown} type={type} />
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
