@@ -1,4 +1,4 @@
-import { Effect, Cache, Duration } from "effect";
+import { Effect, Cache, Duration, Data } from "effect";
 import type { Attraction, AttractionScore } from "@/types";
 import { scoreAttractions, scoreRestaurants } from "./scoring";
 
@@ -13,21 +13,30 @@ export class AttractionsAPIError {
   constructor(readonly message: string) {}
 }
 
-// Cache for attractions (5 minutes TTL)
-const attractionsCache = Cache.make({
-  capacity: 100,
-  timeToLive: Duration.minutes(5),
-  lookup: (key: { lat: number; lng: number; radius: number; apiKey: string }) =>
-    fetchNearbyAttractionsUncached(key.lat, key.lng, key.radius, key.apiKey),
-});
+// Cache key type using Data.struct for value-based equality
+interface ServerCacheKey {
+  lat: number;
+  lng: number;
+  radius: number;
+  apiKey: string;
+}
 
-// Cache for restaurants (5 minutes TTL)
-const restaurantsCache = Cache.make({
-  capacity: 100,
-  timeToLive: Duration.minutes(5),
-  lookup: (key: { lat: number; lng: number; radius: number; apiKey: string }) =>
-    fetchNearbyRestaurantsUncached(key.lat, key.lng, key.radius, key.apiKey),
-});
+// Create singleton caches for server-side (stored at module scope, not globalThis since server is persistent)
+const attractionsCacheSingleton = Effect.runSync(
+  Cache.make({
+    capacity: 100,
+    timeToLive: Duration.minutes(5),
+    lookup: (key: ServerCacheKey) => fetchNearbyAttractionsUncached(key.lat, key.lng, key.radius, key.apiKey),
+  })
+);
+
+const restaurantsCacheSingleton = Effect.runSync(
+  Cache.make({
+    capacity: 100,
+    timeToLive: Duration.minutes(5),
+    lookup: (key: ServerCacheKey) => fetchNearbyRestaurantsUncached(key.lat, key.lng, key.radius, key.apiKey),
+  })
+);
 
 // Google Places Nearby Search API response types
 interface PlaceResult {
@@ -306,36 +315,8 @@ const fetchNearbyRestaurantsUncached = (
   });
 
 /**
- * Fetch nearby attractions with caching (5-minute TTL)
- */
-const fetchNearbyAttractions = (
-  lat: number,
-  lng: number,
-  radius: number,
-  apiKey: string
-): Effect.Effect<Attraction[], NoAttractionsFoundError | AttractionsAPIError> =>
-  Effect.gen(function* () {
-    const cache = yield* attractionsCache;
-    return yield* cache.get({ lat, lng, radius, apiKey });
-  });
-
-/**
- * Fetch nearby restaurants with caching (5-minute TTL)
- */
-const fetchNearbyRestaurants = (
-  lat: number,
-  lng: number,
-  radius: number,
-  apiKey: string
-): Effect.Effect<Attraction[], NoAttractionsFoundError | AttractionsAPIError> =>
-  Effect.gen(function* () {
-    const cache = yield* restaurantsCache;
-    return yield* cache.get({ lat, lng, radius, apiKey });
-  });
-
-/**
  * Get top N scored attractions for a location
- * Server-side method that fetches, scores, and limits results
+ * Server-side method that fetches, scores, and limits results with caching
  */
 export const getTopAttractions = (
   lat: number,
@@ -344,7 +325,8 @@ export const getTopAttractions = (
   limit = 10
 ): Effect.Effect<AttractionScore[], NoAttractionsFoundError | AttractionsAPIError> =>
   Effect.gen(function* () {
-    const attractions = yield* fetchNearbyAttractions(lat, lng, 1500, apiKey);
+    const cacheKey = Data.struct({ lat, lng, radius: 1500, apiKey });
+    const attractions = yield* attractionsCacheSingleton.get(cacheKey);
 
     const scored = scoreAttractions(attractions);
     return scored.slice(0, limit);
@@ -352,7 +334,7 @@ export const getTopAttractions = (
 
 /**
  * Get top N scored restaurants for a location
- * Server-side method that fetches, scores, and limits results
+ * Server-side method that fetches, scores, and limits results with caching
  */
 export const getTopRestaurants = (
   lat: number,
@@ -361,7 +343,8 @@ export const getTopRestaurants = (
   limit = 10
 ): Effect.Effect<AttractionScore[], NoAttractionsFoundError | AttractionsAPIError> =>
   Effect.gen(function* () {
-    const restaurants = yield* fetchNearbyRestaurants(lat, lng, 1500, apiKey);
+    const cacheKey = Data.struct({ lat, lng, radius: 1500, apiKey });
+    const restaurants = yield* restaurantsCacheSingleton.get(cacheKey);
 
     const scored = scoreRestaurants(restaurants);
     return scored.slice(0, limit);

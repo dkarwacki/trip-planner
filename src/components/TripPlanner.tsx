@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { searchPlace } from "@/lib/services/places/client";
-import { getTopAttractions, getTopRestaurants } from "@/lib/services/attractions/client";
+import { fetchTopAttractions, fetchTopRestaurants } from "@/lib/services/attractions/client";
 import type { Place, AttractionScore } from "@/types";
 import { X } from "lucide-react";
 import AttractionsPanel from "@/components/AttractionsPanel";
@@ -131,23 +131,11 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       setIsLoadingAttractions(true);
 
       try {
-        const attractionsResult = await Effect.runPromise(
-          getTopAttractions(place.lat, place.lng).pipe(
-            Effect.catchAll((error) => {
-              if (error._tag === "NoAttractionsFoundError") {
-                return Effect.fail("No attractions found in this area");
-              }
-              if (error._tag === "AttractionsAPIError") {
-                return Effect.fail(error.message);
-              }
-              return Effect.fail("An unexpected error occurred");
-            })
-          )
-        );
+        const attractionsResult = await fetchTopAttractions(place.lat, place.lng);
 
         setAttractions(attractionsResult);
       } catch (err) {
-        setAttractionsError(typeof err === "string" ? err : "Failed to load attractions");
+        setAttractionsError(err instanceof Error ? err.message : "Failed to load attractions");
       } finally {
         setIsLoadingAttractions(false);
       }
@@ -183,23 +171,11 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         setRestaurantsError(null);
 
         try {
-          const restaurantsResult = await Effect.runPromise(
-            getTopRestaurants(selectedPlace.lat, selectedPlace.lng).pipe(
-              Effect.catchAll((error) => {
-                if (error._tag === "NoAttractionsFoundError") {
-                  return Effect.fail("No restaurants found in this area");
-                }
-                if (error._tag === "AttractionsAPIError") {
-                  return Effect.fail(error.message);
-                }
-                return Effect.fail("An unexpected error occurred");
-              })
-            )
-          );
+          const restaurantsResult = await fetchTopRestaurants(selectedPlace.lat, selectedPlace.lng);
 
           setRestaurants(restaurantsResult);
         } catch (err) {
-          setRestaurantsError(typeof err === "string" ? err : "Failed to load restaurants");
+          setRestaurantsError(err instanceof Error ? err.message : "Failed to load restaurants");
         } finally {
           setIsLoadingRestaurants(false);
         }
