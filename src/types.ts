@@ -15,6 +15,7 @@ export interface Attraction {
   vicinity: string;
   priceLevel?: number;
   openNow?: boolean;
+  location: { lat: number; lng: number };
 }
 
 export interface AttractionScore {

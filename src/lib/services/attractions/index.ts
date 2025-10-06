@@ -50,6 +50,12 @@ interface PlaceResult {
   opening_hours?: {
     open_now?: boolean;
   };
+  geometry?: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
 }
 
 interface NearbySearchResponse {
@@ -204,6 +210,11 @@ const fetchNearbyAttractionsUncached = (
             continue;
           }
 
+          // Skip if no location data
+          if (!result.geometry?.location) {
+            continue;
+          }
+
           seenPlaceIds.add(result.place_id);
 
           const attraction: Attraction = {
@@ -215,6 +226,10 @@ const fetchNearbyAttractionsUncached = (
             vicinity: result.vicinity || "",
             priceLevel: result.price_level,
             openNow: result.opening_hours?.open_now,
+            location: {
+              lat: result.geometry.location.lat,
+              lng: result.geometry.location.lng,
+            },
           };
 
           allAttractions.push(attraction);
@@ -288,6 +303,11 @@ const fetchNearbyRestaurantsUncached = (
             continue;
           }
 
+          // Skip if no location data
+          if (!result.geometry?.location) {
+            continue;
+          }
+
           seenPlaceIds.add(result.place_id);
 
           const restaurant: Attraction = {
@@ -299,6 +319,10 @@ const fetchNearbyRestaurantsUncached = (
             vicinity: result.vicinity || "",
             priceLevel: result.price_level,
             openNow: result.opening_hours?.open_now,
+            location: {
+              lat: result.geometry.location.lat,
+              lng: result.geometry.location.lng,
+            },
           };
 
           allRestaurants.push(restaurant);

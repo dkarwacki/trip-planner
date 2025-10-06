@@ -20,6 +20,7 @@ interface AttractionsPanelProps {
   placeName: string;
   onClose: () => void;
   onTabChange: (tab: CategoryTab) => void;
+  onAttractionHover?: (placeId: string | null) => void;
 }
 
 const getPriceLevelSymbol = (priceLevel?: number): string => {
@@ -58,7 +59,8 @@ const renderContent = (
   isLoading: boolean,
   error: string | null,
   emptyMessage: string,
-  type: "attractions" | "restaurants"
+  type: "attractions" | "restaurants",
+  onAttractionHover?: (placeId: string | null) => void
 ) => {
   // Loading State
   if (isLoading) {
@@ -106,7 +108,12 @@ const renderContent = (
           const topTypes = attraction.types.slice(0, 3);
 
           return (
-            <div key={attraction.placeId} className="space-y-3">
+            <div
+              key={attraction.placeId}
+              className="space-y-3 cursor-pointer rounded-lg p-2 -mx-2 transition-colors hover:bg-accent"
+              onMouseEnter={() => onAttractionHover?.(attraction.placeId)}
+              onMouseLeave={() => onAttractionHover?.(null)}
+            >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-semibold text-base leading-tight flex-1">{attraction.name}</h3>
@@ -168,6 +175,7 @@ export default function AttractionsPanel({
   placeName,
   onClose,
   onTabChange,
+  onAttractionHover,
 }: AttractionsPanelProps) {
   return (
     <div className="absolute right-4 top-4 bottom-4 w-96 z-10 pointer-events-auto">
@@ -209,7 +217,8 @@ export default function AttractionsPanel({
                 isLoadingAttractions,
                 attractionsError,
                 "No attractions found for this location.",
-                "attractions"
+                "attractions",
+                onAttractionHover
               )}
             </TabsContent>
 
@@ -219,7 +228,8 @@ export default function AttractionsPanel({
                 isLoadingRestaurants,
                 restaurantsError,
                 "No restaurants found for this location.",
-                "restaurants"
+                "restaurants",
+                onAttractionHover
               )}
             </TabsContent>
           </Tabs>

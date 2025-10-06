@@ -42,7 +42,19 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   // Track which tabs have been loaded
   const [loadedTabs, setLoadedTabs] = useState<Set<CategoryTab>>(new Set(["attractions"]));
 
+  // Track active tab
+  const [activeTab, setActiveTab] = useState<CategoryTab>("attractions");
+
+  // Track hovered attraction/restaurant
+  const [hoveredAttractionId, setHoveredAttractionId] = useState<string | null>(null);
+
+  interface MarkerData {
+    marker: google.maps.marker.AdvancedMarkerElement;
+    element: HTMLDivElement;
+  }
+
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const attractionMarkersRef = useRef<Map<string, MarkerData> | null>(null);
 
   // Handle place search
   const handleSearch = useCallback(async () => {
@@ -106,6 +118,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         setRestaurants([]);
         setRestaurantsError(null);
         setLoadedTabs(new Set(["attractions"]));
+        setActiveTab("attractions");
       }
     },
     [selectedPlaceId]
@@ -126,6 +139,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       setRestaurants([]);
       setRestaurantsError(null);
       setLoadedTabs(new Set(["attractions"]));
+      setActiveTab("attractions");
 
       // Fetch attractions for this place (default tab)
       setIsLoadingAttractions(true);
@@ -152,12 +166,16 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     setRestaurants([]);
     setRestaurantsError(null);
     setLoadedTabs(new Set(["attractions"]));
+    setActiveTab("attractions");
   }, []);
 
   // Handle tab change with lazy loading
   const handleTabChange = useCallback(
     async (tab: CategoryTab) => {
       if (!selectedPlace) return;
+
+      // Update active tab
+      setActiveTab(tab);
 
       // Skip if already loaded
       if (loadedTabs.has(tab)) return;
@@ -233,6 +251,81 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       markersRef.current = [];
     };
   }, [map, markerLibrary, places, mapId]);
+
+  // Manage attraction/restaurant markers lifecycle based on active tab and data
+  useEffect(() => {
+    // Lazy initialize the Map
+    if (!attractionMarkersRef.current) {
+      attractionMarkersRef.current = new globalThis.Map();
+    }
+    const markersMap = attractionMarkersRef.current;
+
+    // Clear existing markers
+    markersMap.forEach(({ marker }) => (marker.map = null));
+    markersMap.clear();
+
+    if (!map || !markerLibrary || !selectedPlace || !mapId) return;
+
+    // Determine which data to show based on active tab
+    const data = activeTab === "attractions" ? attractions : restaurants;
+    if (data.length === 0) return;
+
+    // Icon styling based on tab
+    const iconColor = activeTab === "attractions" ? "#3B82F6" : "#EF4444";
+
+    // Create markers for each attraction/restaurant
+    data.forEach((scored) => {
+      const { attraction } = scored;
+
+      // Create a small colored pin icon
+      const pinElement = document.createElement("div");
+      pinElement.style.width = "12px";
+      pinElement.style.height = "12px";
+      pinElement.style.borderRadius = "50%";
+      pinElement.style.backgroundColor = iconColor;
+      pinElement.style.border = `2px solid white`;
+      pinElement.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+      pinElement.style.transition = "all 0.2s ease-in-out";
+
+      const marker = new markerLibrary.AdvancedMarkerElement({
+        map,
+        position: { lat: attraction.location.lat, lng: attraction.location.lng },
+        content: pinElement,
+        title: attraction.name,
+      });
+
+      markersMap.set(attraction.placeId, { marker, element: pinElement });
+    });
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      markersMap.forEach(({ marker }) => (marker.map = null));
+      markersMap.clear();
+    };
+  }, [map, markerLibrary, selectedPlace, attractions, restaurants, activeTab, mapId]);
+
+  // Handle marker appearance on hover
+  useEffect(() => {
+    if (!attractionMarkersRef.current) return;
+
+    attractionMarkersRef.current.forEach(({ element }, placeId) => {
+      if (placeId === hoveredAttractionId) {
+        // Highlighted state
+        element.style.width = "20px";
+        element.style.height = "20px";
+        element.style.borderWidth = "3px";
+        element.style.transform = "scale(1.2)";
+        element.style.zIndex = "1000";
+      } else {
+        // Normal state
+        element.style.width = "12px";
+        element.style.height = "12px";
+        element.style.borderWidth = "2px";
+        element.style.transform = "scale(1)";
+        element.style.zIndex = "auto";
+      }
+    });
+  }, [hoveredAttractionId]);
 
   return (
     <div className="flex h-screen">
@@ -340,6 +433,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
             placeName={selectedPlace.name}
             onClose={handleCloseAttractions}
             onTabChange={handleTabChange}
+            onAttractionHover={setHoveredAttractionId}
           />
         )}
       </div>
