@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { APIProvider, Map, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { Effect } from "effect";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { searchPlace } from "@/lib/services/places/client";
+import { getPlaceDetails } from "@/lib/services/places/client";
 import { fetchTopAttractions, fetchTopRestaurants } from "@/lib/services/attractions/client";
 import type { Place, AttractionScore } from "@/types";
 import { X } from "lucide-react";
 import AttractionsPanel from "@/components/AttractionsPanel";
+import PlaceAutocomplete from "@/components/PlaceAutocomplete";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -23,7 +23,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const markerLibrary = useMapsLibrary("marker");
 
   const [places, setPlaces] = useState<Place[]>([]);
-  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
@@ -56,54 +55,46 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const attractionMarkersRef = useRef<Map<string, MarkerData> | null>(null);
 
-  // Handle place search
-  const handleSearch = useCallback(async () => {
-    if (!inputValue.trim()) return;
+  // Handle place selection from autocomplete
+  const handlePlaceSelect = useCallback(
+    async (place: google.maps.places.PlaceResult) => {
+      if (!place.place_id) return;
 
-    setIsLoading(true);
-    setError(null);
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const place = await Effect.runPromise(
-        searchPlace(inputValue).pipe(
-          Effect.catchAll((error) => {
-            if (error._tag === "PlaceNotFoundError") {
-              return Effect.fail(`No results found for "${error.query}"`);
-            }
-            if (error._tag === "PlacesAPIError") {
-              return Effect.fail(error.message);
-            }
-            return Effect.fail("An unexpected error occurred");
-          })
-        )
-      );
+      try {
+        const placeDetails = await Effect.runPromise(
+          getPlaceDetails(place.place_id).pipe(
+            Effect.catchAll((error) => {
+              if (error._tag === "PlaceNotFoundError") {
+                return Effect.fail(`No details found for this place`);
+              }
+              if (error._tag === "PlacesAPIError") {
+                return Effect.fail(error.message);
+              }
+              return Effect.fail("An unexpected error occurred");
+            })
+          )
+        );
 
-      // Check for duplicates by placeId
-      const isDuplicate = places.some((p) => p.placeId === place.placeId);
-      if (isDuplicate) {
-        setError("This place has already been added");
+        // Check for duplicates by placeId
+        const isDuplicate = places.some((p) => p.placeId === placeDetails.placeId);
+        if (isDuplicate) {
+          setError("This place has already been added");
+          setIsLoading(false);
+          return;
+        }
+
+        // Add place to array
+        setPlaces((prev) => [...prev, placeDetails]);
+      } catch (err) {
+        setError(typeof err === "string" ? err : "An error occurred");
+      } finally {
         setIsLoading(false);
-        return;
-      }
-
-      // Add place to array
-      setPlaces((prev) => [...prev, place]);
-      setInputValue("");
-    } catch (err) {
-      setError(typeof err === "string" ? err : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [inputValue, places]);
-
-  // Handle Enter key press
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter" && !isLoading) {
-        handleSearch();
       }
     },
-    [handleSearch, isLoading]
+    [places]
   );
 
   // Handle removing a place
@@ -333,18 +324,9 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       <div className="w-96 flex flex-col bg-white border-r shadow-sm">
         {/* Search Input */}
         <div className="p-4 border-b">
-          <Input
-            type="text"
-            placeholder="Enter place name..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isLoading}
-            aria-label="Search for a place"
-            aria-invalid={!!error}
-          />
+          <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} />
           {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
-          {isLoading && <p className="text-sm text-muted-foreground mt-1">Searching...</p>}
+          {isLoading && <p className="text-sm text-muted-foreground mt-1">Loading place details...</p>}
         </div>
 
         {/* Places List */}
