@@ -29,27 +29,19 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
-  // Attractions state
   const [attractions, setAttractions] = useState<AttractionScore[]>([]);
   const [isLoadingAttractions, setIsLoadingAttractions] = useState(false);
   const [attractionsError, setAttractionsError] = useState<string | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
 
-  // Restaurants state
   const [restaurants, setRestaurants] = useState<AttractionScore[]>([]);
   const [isLoadingRestaurants, setIsLoadingRestaurants] = useState(false);
   const [restaurantsError, setRestaurantsError] = useState<string | null>(null);
 
-  // Track which tabs have been loaded
   const [loadedTabs, setLoadedTabs] = useState<Set<CategoryTab>>(new Set(["attractions"]));
-
-  // Track active tab
   const [activeTab, setActiveTab] = useState<CategoryTab>("attractions");
-
-  // Track hovered attraction/restaurant
   const [hoveredAttractionId, setHoveredAttractionId] = useState<string | null>(null);
 
-  // Map click state
   const [clickedLocation, setClickedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showAddPlacePopover, setShowAddPlacePopover] = useState(false);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
@@ -64,7 +56,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const attractionMarkersRef = useRef<Map<string, MarkerData> | null>(null);
   const tempMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
 
-  // Handle place selection from autocomplete
   const handlePlaceSelect = useCallback(
     async (place: google.maps.places.PlaceResult) => {
       if (!place.place_id) return;
@@ -87,7 +78,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           )
         );
 
-        // Check for duplicates by placeId
         const isDuplicate = places.some((p) => p.placeId === placeDetails.placeId);
         if (isDuplicate) {
           setError("This place has already been added");
@@ -95,7 +85,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           return;
         }
 
-        // Add place to array
         setPlaces((prev) => [...prev, placeDetails]);
       } catch (err) {
         setError(typeof err === "string" ? err : "An error occurred");
@@ -106,7 +95,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     [places]
   );
 
-  // Handle removing a place
   const handleRemovePlace = useCallback(
     (placeId: string) => {
       setPlaces((prev) => prev.filter((p) => p.placeId !== placeId));
@@ -124,7 +112,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     [selectedPlaceId]
   );
 
-  // Handle panning to a place
   const handlePanToPlace = useCallback(
     async (place: Place) => {
       if (!map) return;
@@ -133,7 +120,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       map.panTo({ lat: place.lat, lng: place.lng });
       map.setZoom(14);
 
-      // Reset state
       setAttractions([]);
       setAttractionsError(null);
       setRestaurants([]);
@@ -141,7 +127,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       setLoadedTabs(new Set(["attractions"]));
       setActiveTab("attractions");
 
-      // Fetch attractions for this place (default tab)
       setIsLoadingAttractions(true);
 
       try {
@@ -157,7 +142,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     [map]
   );
 
-  // Handle closing attractions panel
   const handleCloseAttractions = useCallback(() => {
     setSelectedPlace(null);
     setSelectedPlaceId(null);
@@ -169,21 +153,16 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     setActiveTab("attractions");
   }, []);
 
-  // Handle tab change with lazy loading
   const handleTabChange = useCallback(
     async (tab: CategoryTab) => {
       if (!selectedPlace) return;
 
-      // Update active tab
       setActiveTab(tab);
 
-      // Skip if already loaded
       if (loadedTabs.has(tab)) return;
 
-      // Mark as loaded
       setLoadedTabs((prev) => new Set([...prev, tab]));
 
-      // Fetch restaurants if restaurants tab is opened
       if (tab === "restaurants") {
         setIsLoadingRestaurants(true);
         setRestaurantsError(null);
@@ -202,21 +181,18 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     [selectedPlace, loadedTabs]
   );
 
-  // Handle closing the add place popover
   const handleClosePopover = useCallback(() => {
     setClickedLocation(null);
     setShowAddPlacePopover(false);
     setGeocodingError(null);
     setIsReverseGeocoding(false);
 
-    // Remove temporary marker
     if (tempMarkerRef.current) {
       tempMarkerRef.current.map = null;
       tempMarkerRef.current = null;
     }
   }, []);
 
-  // Handle adding a place from map click
   const handleAddPlace = useCallback(async () => {
     if (!clickedLocation) return;
 
@@ -238,7 +214,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         )
       );
 
-      // Check for duplicates by placeId
       const isDuplicate = places.some((p) => p.placeId === place.placeId);
       if (isDuplicate) {
         setGeocodingError("This place has already been added");
@@ -246,10 +221,8 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         return;
       }
 
-      // Add place to array
       setPlaces((prev) => [...prev, place]);
 
-      // Close popover and cleanup
       handleClosePopover();
     } catch (err) {
       setGeocodingError(typeof err === "string" ? err : "An error occurred");
@@ -257,25 +230,20 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     }
   }, [clickedLocation, places, handleClosePopover]);
 
-  // Manage markers lifecycle
   useEffect(() => {
     if (!map || !markerLibrary || places.length === 0) {
-      // Clear existing markers if places are empty
       markersRef.current.forEach((marker) => (marker.map = null));
       markersRef.current = [];
       return;
     }
 
-    // Map ID is required for AdvancedMarkerElement
     if (!mapId) {
       return;
     }
 
-    // Clear existing markers
     markersRef.current.forEach((marker) => (marker.map = null));
     markersRef.current = [];
 
-    // Create new markers for each place
     const newMarkers = places.map((place) => {
       const marker = new markerLibrary.AdvancedMarkerElement({
         map,
@@ -283,7 +251,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         title: place.name,
       });
 
-      // Add click listener to highlight the place
       marker.addListener("click", () => {
         setSelectedPlaceId(place.placeId);
       });
@@ -293,46 +260,37 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
     markersRef.current = newMarkers;
 
-    // Fit map bounds to show all markers
     const bounds = new google.maps.LatLngBounds();
     places.forEach((place) => {
       bounds.extend({ lat: place.lat, lng: place.lng });
     });
     map.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 400 });
 
-    // Cleanup on unmount
     return () => {
       markersRef.current.forEach((marker) => (marker.map = null));
       markersRef.current = [];
     };
   }, [map, markerLibrary, places, mapId]);
 
-  // Manage attraction/restaurant markers lifecycle based on active tab and data
   useEffect(() => {
-    // Lazy initialize the Map
     if (!attractionMarkersRef.current) {
       attractionMarkersRef.current = new globalThis.Map();
     }
     const markersMap = attractionMarkersRef.current;
 
-    // Clear existing markers
     markersMap.forEach(({ marker }) => (marker.map = null));
     markersMap.clear();
 
     if (!map || !markerLibrary || !selectedPlace || !mapId) return;
 
-    // Determine which data to show based on active tab
     const data = activeTab === "attractions" ? attractions : restaurants;
     if (data.length === 0) return;
 
-    // Icon styling based on tab
     const iconColor = activeTab === "attractions" ? "#3B82F6" : "#EF4444";
 
-    // Create markers for each attraction/restaurant
     data.forEach((scored) => {
-      const { attraction } = scored;
+        const { attraction } = scored;
 
-      // Create a small colored pin icon
       const pinElement = document.createElement("div");
       pinElement.style.width = "12px";
       pinElement.style.height = "12px";
@@ -352,27 +310,23 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       markersMap.set(attraction.placeId, { marker, element: pinElement });
     });
 
-    // Cleanup on unmount or when dependencies change
     return () => {
       markersMap.forEach(({ marker }) => (marker.map = null));
       markersMap.clear();
     };
   }, [map, markerLibrary, selectedPlace, attractions, restaurants, activeTab, mapId]);
 
-  // Handle marker appearance on hover
   useEffect(() => {
     if (!attractionMarkersRef.current) return;
 
     attractionMarkersRef.current.forEach(({ element }, placeId) => {
       if (placeId === hoveredAttractionId) {
-        // Highlighted state
         element.style.width = "20px";
         element.style.height = "20px";
         element.style.borderWidth = "3px";
         element.style.transform = "scale(1.2)";
         element.style.zIndex = "1000";
       } else {
-        // Normal state
         element.style.width = "12px";
         element.style.height = "12px";
         element.style.borderWidth = "2px";
@@ -382,7 +336,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     });
   }, [hoveredAttractionId]);
 
-  // Handle map clicks for adding places
   useEffect(() => {
     if (!map || !markerLibrary || !mapId) return;
 
@@ -392,14 +345,11 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
       if (lat === undefined || lng === undefined) return;
 
-      // Close any existing popover first
       handleClosePopover();
 
-      // Set clicked location
       setClickedLocation({ lat, lng });
       setShowAddPlacePopover(true);
 
-      // Create temporary marker
       const tempElement = document.createElement("div");
       tempElement.style.width = "16px";
       tempElement.style.height = "16px";
@@ -426,16 +376,13 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
   return (
     <div className="flex h-screen">
-      {/* Left Sidebar - Places List */}
       <div className="w-96 flex flex-col bg-white border-r shadow-sm">
-        {/* Search Input */}
         <div className="p-4 border-b">
-          <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} />
+          <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} map={map} />
           {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
           {isLoading && <p className="text-sm text-muted-foreground mt-1">Loading place details...</p>}
         </div>
 
-        {/* Places List */}
         <Card className="flex-1 m-4 flex flex-col rounded-lg">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between">
@@ -499,7 +446,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         </Card>
       </div>
 
-      {/* Right Side - Map */}
       <div className="flex-1 relative">
         <Map
           defaultCenter={{ lat: 0, lng: 0 }}
@@ -509,7 +455,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           mapId={mapId}
         />
 
-        {/* Attractions Panel Overlay */}
         {selectedPlace && (
           <AttractionsPanel
             attractions={attractions}
@@ -525,7 +470,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           />
         )}
 
-        {/* Add Place Popover */}
         {showAddPlacePopover && clickedLocation && (
           <div className="absolute top-4 left-4 z-50">
             <div className="bg-white rounded-lg shadow-lg border p-4 w-80">

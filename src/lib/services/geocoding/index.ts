@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 import type { Place } from "@/types";
 
-// Tagged errors for better error handling
 export class NoResultsError {
   readonly _tag = "NoResultsError";
   constructor(
@@ -15,7 +14,6 @@ export class GeocodingError {
   constructor(readonly message: string) {}
 }
 
-// Google Geocoding API response types
 interface GeocodeResult {
   formatted_address: string;
   place_id: string;

@@ -2,7 +2,6 @@ import { Effect, Cache, Duration, Data } from "effect";
 import type { Attraction, AttractionScore } from "@/types";
 import { scoreAttractions, scoreRestaurants } from "./scoring";
 
-// Tagged errors for better error handling
 export class NoAttractionsFoundError {
   readonly _tag = "NoAttractionsFoundError";
   constructor(readonly location: { lat: number; lng: number }) {}
@@ -13,7 +12,6 @@ export class AttractionsAPIError {
   constructor(readonly message: string) {}
 }
 
-// Cache key type using Data.struct for value-based equality
 interface ServerCacheKey {
   lat: number;
   lng: number;
@@ -21,7 +19,6 @@ interface ServerCacheKey {
   apiKey: string;
 }
 
-// Create singleton caches for server-side (stored at module scope, not globalThis since server is persistent)
 const attractionsCacheSingleton = Effect.runSync(
   Cache.make({
     capacity: 100,
@@ -38,7 +35,6 @@ const restaurantsCacheSingleton = Effect.runSync(
   })
 );
 
-// Google Places Nearby Search API response types
 interface PlaceResult {
   place_id: string;
   name: string;
@@ -64,10 +60,6 @@ interface NearbySearchResponse {
   error_message?: string;
 }
 
-/**
- * Fetch nearby attractions using Google Places Nearby Search API (uncached)
- * Queries multiple types for better diversity
- */
 const fetchNearbyAttractionsUncached = (
   lat: number,
   lng: number,
@@ -75,7 +67,6 @@ const fetchNearbyAttractionsUncached = (
   apiKey: string
 ): Effect.Effect<Attraction[], NoAttractionsFoundError | AttractionsAPIError> =>
   Effect.gen(function* () {
-    // Validate inputs
     if (!apiKey) {
       return yield* Effect.fail(new AttractionsAPIError("API key is required"));
     }
@@ -84,7 +75,6 @@ const fetchNearbyAttractionsUncached = (
       return yield* Effect.fail(new AttractionsAPIError("Radius must be between 100 and 50000 meters"));
     }
 
-    // Query specific sightseeing types (excluding broad point_of_interest to avoid shops/mechanics)
     const types = [
       "tourist_attraction",
       "museum",
@@ -99,15 +89,12 @@ const fetchNearbyAttractionsUncached = (
       "performing_arts_theater",
     ];
 
-    // Blocklist of commercial/service types to exclude from attractions
     const blockedTypes = new Set([
-      // Automotive
       "car_repair",
       "car_dealer",
       "car_wash",
       "car_rental",
       "gas_station",
-      // Shopping
       "store",
       "shopping_mall",
       "convenience_store",
@@ -121,7 +108,6 @@ const fetchNearbyAttractionsUncached = (
       "home_goods_store",
       "jewelry_store",
       "pet_store",
-      // Services
       "electrician",
       "plumber",
       "locksmith",
@@ -131,25 +117,20 @@ const fetchNearbyAttractionsUncached = (
       "real_estate_agency",
       "insurance_agency",
       "accounting",
-      // Financial
       "atm",
       "bank",
-      // Healthcare
       "dentist",
       "doctor",
       "hospital",
       "pharmacy",
       "veterinary_care",
-      // Personal Care
       "hair_care",
       "beauty_salon",
       "spa",
       "gym",
-      // Other Services
       "laundry",
       "post_office",
       "storage",
-      // Lodging/Hotels
       "lodging",
       "hotel",
       "motel",
@@ -159,7 +140,6 @@ const fetchNearbyAttractionsUncached = (
       "guest_house",
       "campground",
       "rv_park",
-      // Food & Dining
       "restaurant",
       "cafe",
       "bar",
@@ -170,7 +150,6 @@ const fetchNearbyAttractionsUncached = (
       "night_club",
     ]);
 
-    // Fetch results for each type
     const allAttractions: Attraction[] = [];
     const seenPlaceIds = new Set<string>();
 
@@ -188,29 +167,23 @@ const fetchNearbyAttractionsUncached = (
         catch: () => new AttractionsAPIError("Failed to parse API response"),
       });
 
-      // Handle API status codes
       if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
         const errorMessage = data.error_message || `Places API error: ${data.status}`;
         return yield* Effect.fail(new AttractionsAPIError(errorMessage));
       }
 
-      // Process results
       if (data.results && data.results.length > 0) {
         for (const result of data.results) {
-          // Skip if we've already seen this place
           if (seenPlaceIds.has(result.place_id)) continue;
 
-          // Skip places with commercial/service types
           if (result.types && result.types.some((type) => blockedTypes.has(type))) {
             continue;
           }
 
-          // Only include places with rating and reviews
           if (!result.rating || !result.user_ratings_total || result.user_ratings_total < 10) {
             continue;
           }
 
-          // Skip if no location data
           if (!result.geometry?.location) {
             continue;
           }
@@ -237,7 +210,6 @@ const fetchNearbyAttractionsUncached = (
       }
     }
 
-    // Check if we found any attractions
     if (allAttractions.length === 0) {
       return yield* Effect.fail(new NoAttractionsFoundError({ lat, lng }));
     }
@@ -245,10 +217,6 @@ const fetchNearbyAttractionsUncached = (
     return allAttractions;
   });
 
-/**
- * Fetch nearby restaurants using Google Places Nearby Search API (uncached)
- * Queries restaurant and cafe types
- */
 const fetchNearbyRestaurantsUncached = (
   lat: number,
   lng: number,
@@ -256,7 +224,6 @@ const fetchNearbyRestaurantsUncached = (
   apiKey: string
 ): Effect.Effect<Attraction[], NoAttractionsFoundError | AttractionsAPIError> =>
   Effect.gen(function* () {
-    // Validate inputs
     if (!apiKey) {
       return yield* Effect.fail(new AttractionsAPIError("API key is required"));
     }
@@ -265,10 +232,8 @@ const fetchNearbyRestaurantsUncached = (
       return yield* Effect.fail(new AttractionsAPIError("Radius must be between 100 and 50000 meters"));
     }
 
-    // Query restaurant types
     const types = ["restaurant", "cafe", "bar", "bakery", "meal_takeaway"];
 
-    // Fetch results for each type
     const allRestaurants: Attraction[] = [];
     const seenPlaceIds = new Set<string>();
 
@@ -286,24 +251,19 @@ const fetchNearbyRestaurantsUncached = (
         catch: () => new AttractionsAPIError("Failed to parse API response"),
       });
 
-      // Handle API status codes
       if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
         const errorMessage = data.error_message || `Places API error: ${data.status}`;
         return yield* Effect.fail(new AttractionsAPIError(errorMessage));
       }
 
-      // Process results
       if (data.results && data.results.length > 0) {
         for (const result of data.results) {
-          // Skip if we've already seen this place
           if (seenPlaceIds.has(result.place_id)) continue;
 
-          // Only include places with rating and reviews
           if (!result.rating || !result.user_ratings_total || result.user_ratings_total < 10) {
             continue;
           }
 
-          // Skip if no location data
           if (!result.geometry?.location) {
             continue;
           }
@@ -330,7 +290,6 @@ const fetchNearbyRestaurantsUncached = (
       }
     }
 
-    // Check if we found any restaurants
     if (allRestaurants.length === 0) {
       return yield* Effect.fail(new NoAttractionsFoundError({ lat, lng }));
     }
@@ -338,10 +297,6 @@ const fetchNearbyRestaurantsUncached = (
     return allRestaurants;
   });
 
-/**
- * Get top N scored attractions for a location
- * Server-side method that fetches, scores, and limits results with caching
- */
 export const getTopAttractions = (
   lat: number,
   lng: number,
@@ -356,10 +311,6 @@ export const getTopAttractions = (
     return scored.slice(0, limit);
   });
 
-/**
- * Get top N scored restaurants for a location
- * Server-side method that fetches, scores, and limits results with caching
- */
 export const getTopRestaurants = (
   lat: number,
   lng: number,
