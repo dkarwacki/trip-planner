@@ -260,11 +260,16 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
     markersRef.current = newMarkers;
 
-    const bounds = new google.maps.LatLngBounds();
-    places.forEach((place) => {
-      bounds.extend({ lat: place.lat, lng: place.lng });
-    });
-    map.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 400 });
+    if (places.length === 1) {
+      map.panTo({ lat: places[0].lat, lng: places[0].lng });
+      map.setZoom(14);
+    } else {
+      const bounds = new google.maps.LatLngBounds();
+      places.forEach((place) => {
+        bounds.extend({ lat: place.lat, lng: place.lng });
+      });
+      map.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 400 });
+    }
 
     return () => {
       markersRef.current.forEach((marker) => (marker.map = null));
@@ -289,7 +294,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     const iconColor = activeTab === "attractions" ? "#3B82F6" : "#EF4444";
 
     data.forEach((scored) => {
-        const { attraction } = scored;
+      const { attraction } = scored;
 
       const pinElement = document.createElement("div");
       pinElement.style.width = "12px";
