@@ -6,10 +6,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { getPlaceDetails } from "@/lib/services/places/client";
 import { fetchTopAttractions, fetchTopRestaurants } from "@/lib/services/attractions/client";
+import { reverseGeocode } from "@/lib/services/geocoding/client";
 import type { Place, AttractionScore } from "@/types";
 import { X } from "lucide-react";
 import AttractionsPanel from "@/components/AttractionsPanel";
 import PlaceAutocomplete from "@/components/PlaceAutocomplete";
+import { Button } from "@/components/ui/button";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -47,6 +49,12 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   // Track hovered attraction/restaurant
   const [hoveredAttractionId, setHoveredAttractionId] = useState<string | null>(null);
 
+  // Map click state
+  const [clickedLocation, setClickedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [showAddPlacePopover, setShowAddPlacePopover] = useState(false);
+  const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+  const [geocodingError, setGeocodingError] = useState<string | null>(null);
+
   interface MarkerData {
     marker: google.maps.marker.AdvancedMarkerElement;
     element: HTMLDivElement;
@@ -54,6 +62,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const attractionMarkersRef = useRef<Map<string, MarkerData> | null>(null);
+  const tempMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
 
   // Handle place selection from autocomplete
   const handlePlaceSelect = useCallback(
@@ -193,6 +202,61 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     [selectedPlace, loadedTabs]
   );
 
+  // Handle closing the add place popover
+  const handleClosePopover = useCallback(() => {
+    setClickedLocation(null);
+    setShowAddPlacePopover(false);
+    setGeocodingError(null);
+    setIsReverseGeocoding(false);
+
+    // Remove temporary marker
+    if (tempMarkerRef.current) {
+      tempMarkerRef.current.map = null;
+      tempMarkerRef.current = null;
+    }
+  }, []);
+
+  // Handle adding a place from map click
+  const handleAddPlace = useCallback(async () => {
+    if (!clickedLocation) return;
+
+    setIsReverseGeocoding(true);
+    setGeocodingError(null);
+
+    try {
+      const place = await Effect.runPromise(
+        reverseGeocode(clickedLocation.lat, clickedLocation.lng).pipe(
+          Effect.catchAll((error) => {
+            if (error._tag === "NoResultsError") {
+              return Effect.fail("No address found for this location");
+            }
+            if (error._tag === "GeocodingError") {
+              return Effect.fail(error.message);
+            }
+            return Effect.fail("An unexpected error occurred");
+          })
+        )
+      );
+
+      // Check for duplicates by placeId
+      const isDuplicate = places.some((p) => p.placeId === place.placeId);
+      if (isDuplicate) {
+        setGeocodingError("This place has already been added");
+        setIsReverseGeocoding(false);
+        return;
+      }
+
+      // Add place to array
+      setPlaces((prev) => [...prev, place]);
+
+      // Close popover and cleanup
+      handleClosePopover();
+    } catch (err) {
+      setGeocodingError(typeof err === "string" ? err : "An error occurred");
+      setIsReverseGeocoding(false);
+    }
+  }, [clickedLocation, places, handleClosePopover]);
+
   // Manage markers lifecycle
   useEffect(() => {
     if (!map || !markerLibrary || places.length === 0) {
@@ -318,6 +382,48 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     });
   }, [hoveredAttractionId]);
 
+  // Handle map clicks for adding places
+  useEffect(() => {
+    if (!map || !markerLibrary || !mapId) return;
+
+    const clickListener = map.addListener("click", (e: google.maps.MapMouseEvent) => {
+      const lat = e.latLng?.lat();
+      const lng = e.latLng?.lng();
+
+      if (lat === undefined || lng === undefined) return;
+
+      // Close any existing popover first
+      handleClosePopover();
+
+      // Set clicked location
+      setClickedLocation({ lat, lng });
+      setShowAddPlacePopover(true);
+
+      // Create temporary marker
+      const tempElement = document.createElement("div");
+      tempElement.style.width = "16px";
+      tempElement.style.height = "16px";
+      tempElement.style.borderRadius = "50%";
+      tempElement.style.backgroundColor = "#10B981";
+      tempElement.style.border = "3px solid white";
+      tempElement.style.boxShadow = "0 2px 6px rgba(0,0,0,0.4)";
+
+      const tempMarker = new markerLibrary.AdvancedMarkerElement({
+        map,
+        position: { lat, lng },
+        content: tempElement,
+      });
+
+      tempMarkerRef.current = tempMarker;
+    });
+
+    return () => {
+      if (clickListener) {
+        google.maps.event.removeListener(clickListener);
+      }
+    };
+  }, [map, markerLibrary, mapId, handleClosePopover]);
+
   return (
     <div className="flex h-screen">
       {/* Left Sidebar - Places List */}
@@ -361,7 +467,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
                         }
                       }}
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
                           <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
                             {index + 1}
@@ -378,7 +484,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
                             e.stopPropagation();
                             handleRemovePlace(place.placeId);
                           }}
-                          className="ml-2 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                          className="flex-shrink-0 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                           aria-label={`Remove ${place.name}`}
                         >
                           <X className="h-4 w-4" />
@@ -417,6 +523,40 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
             onTabChange={handleTabChange}
             onAttractionHover={setHoveredAttractionId}
           />
+        )}
+
+        {/* Add Place Popover */}
+        {showAddPlacePopover && clickedLocation && (
+          <div className="absolute top-4 left-4 z-50">
+            <div className="bg-white rounded-lg shadow-lg border p-4 w-80">
+              <div className="space-y-3">
+                <div>
+                  <h3 className="font-semibold text-sm mb-1">Add Location to Places</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {clickedLocation.lat.toFixed(6)}, {clickedLocation.lng.toFixed(6)}
+                  </p>
+                </div>
+
+                {geocodingError && <p className="text-sm text-red-500">{geocodingError}</p>}
+
+                {isReverseGeocoding ? (
+                  <div className="flex items-center justify-center py-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                    <span className="ml-2 text-sm text-muted-foreground">Finding address...</span>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button onClick={handleAddPlace} className="flex-1" size="sm">
+                      Add to Places
+                    </Button>
+                    <Button onClick={handleClosePopover} variant="outline" className="flex-1" size="sm">
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

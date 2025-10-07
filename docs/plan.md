@@ -1,58 +1,127 @@
-# Plan: Add Colored Circles for Attractions and Restaurants on Map
+# Plan: Add Place via Map Click
 
 ## Overview
 
-When a place card is shown in the AttractionsPanel, display semi-transparent circles on the map for each attraction/restaurant based on their geographic location.
+Add functionality to click anywhere on the map to show a context menu/popover with an option to add that location to the places list.
 
 ## Implementation Steps
 
-### 1. **Add `location` field to `Attraction` type** (`src/types.ts`)
+### 1. Add Shadcn UI Components
 
-- Add `location: { lat: number; lng: number }` to the `Attraction` interface
-- This will store coordinates for each attraction/restaurant returned from the API
+- Install `popover` component from shadcn/ui for the context menu
+- Install `dialog` component (if needed for confirmation)
 
-### 2. **Update API endpoints to include location data**
+### 2. Create Reverse Geocoding Service
 
-- Modify `src/pages/api/attractions.ts` to include `geometry.location` from Google Places API
-- Modify `src/pages/api/restaurants.ts` to include `geometry.location` from Google Places API
+#### Server-side (`src/lib/services/geocoding/index.ts`)
+- Add Effect-based function to convert coordinates to place details
+- Use Google Maps Geocoding API
+- Define tagged errors: `GeocodingError`, `NoResultsError`
+- Return Place object with formatted address and coordinates
 
-### 3. **Create circle markers in TripPlanner component** (`src/components/TripPlanner.tsx`)
+#### Client-side (`src/lib/services/geocoding/client.ts`)
+- Wrapper to call backend API endpoint
+- Return Place object with coordinates and address
+- Follow existing error handling patterns
 
-- Add a new ref to track circle overlays: `circlesRef`
-- Create new `useEffect` hook that triggers when:
-  - Attractions/restaurants data changes
-  - Active tab changes
-- Use `google.maps.Circle` to render circles:
-  - **Blue circles** for attractions (when attractions tab is active)
-  - **Red circles** for restaurants (when restaurants tab is active)
-- Circle styling:
-  - `fillColor`: `#3B82F6` (blue) for attractions, `#EF4444` (red) for restaurants
-  - `fillOpacity`: `0.2` (semi-transparent)
-  - `strokeColor`: same as fillColor
-  - `strokeOpacity`: `0.5`
-  - `strokeWeight`: `1`
-  - `radius`: ~100 meters (adjustable)
-- Clear circles when:
-  - Panel is closed
-  - Place is changed
-  - Tab switches
+#### API Route (`src/pages/api/geocoding/reverse.ts`)
+- Accept lat/lng coordinates via POST
+- Call server-side geocoding service
+- Return place information
+- Follow existing patterns from places API (validation with Zod)
 
-### 4. **Track active tab state**
+### 3. Update TripPlanner Component
 
-- Add `activeTab` state to track which tab is currently visible
-- Pass `activeTab` to `AttractionsPanel` via props
-- Update circles based on active tab
+#### Add State Management
+- `clickedLocation: { lat: number; lng: number } | null` - Store clicked coordinates
+- `showAddPlacePopover: boolean` - Control popover visibility
+- `isReverseGeocoding: boolean` - Loading state for geocoding
 
-## Files to Modify
+#### Add Map Click Handler
+- Add `onClick` prop to `<Map>` component
+- Extract lat/lng from `google.maps.MapMouseEvent`
+- Set clicked location state
+- Show popover at click position
 
-- `src/types.ts` - Add location field to Attraction interface
-- `src/pages/api/attractions.ts` - Include location in API response
-- `src/pages/api/restaurants.ts` - Include location in API response
-- `src/components/TripPlanner.tsx` - Add circle rendering logic
-- `src/components/AttractionsPanel.tsx` - Report active tab changes
+#### Add Temporary Marker
+- Create temporary marker ref for clicked location
+- Show marker when location is clicked
+- Clear marker when popover is closed or place is added
+
+#### Add Popover UI
+- Position popover absolutely over the map at click coordinates
+- Display:
+  - Coordinates (formatted)
+  - "Add to Places" button
+  - "Cancel" button
+  - Loading spinner during reverse geocoding
+  - Error message if geocoding fails
+
+#### Handle "Add to Places" Flow
+1. Call reverse geocoding service to get place details
+2. Validate result (ensure placeId exists)
+3. Check for duplicates (reuse existing logic)
+4. Add place to places array using existing `setPlaces`
+5. Clear temporary marker and popover
+6. Show success/error feedback
+
+#### Edge Cases
+- Handle empty geocoding results
+- Handle API errors gracefully
+- Prevent duplicate additions
+- Close popover when clicking elsewhere on map
+
+### 4. Update Types (if needed)
+
+- Ensure `Place` interface supports geocoded places
+- Verify all required fields (id, name, lat, lng, placeId) are provided by geocoding service
 
 ## Technical Details
 
-- Use standard `google.maps.Circle` (not AdvancedMarkerElement) since we need overlay shapes
-- Circles don't require map ID configuration
-- Clean up circles properly to avoid memory leaks
+### Map Click Event
+```tsx
+<Map
+  onClick={(e: google.maps.MapMouseEvent) => {
+    const lat = e.detail.latLng?.lat;
+    const lng = e.detail.latLng?.lng;
+    if (lat && lng) {
+      handleMapClick({ lat, lng });
+    }
+  }}
+/>
+```
+
+### Geocoding API
+- Use `google.maps.Geocoder` via geocoding library
+- Call `geocode({ location: { lat, lng } })`
+- Extract place_id, formatted_address, and coordinates from results
+- Generate unique ID for the place
+
+### UI Components
+- Use shadcn Popover component
+- Position with absolute coordinates
+- Show loading state with Skeleton or Spinner
+- Maintain consistent styling with existing UI
+
+### Error Handling
+- Use Effect pattern with tagged errors
+- Display user-friendly error messages
+- Fallback to coordinates if no address found
+- Log errors for debugging
+
+## Files to Create/Modify
+
+### Create
+- `src/lib/services/geocoding/index.ts`
+- `src/lib/services/geocoding/client.ts`
+- `src/pages/api/geocoding/reverse.ts`
+
+### Modify
+- `src/components/TripPlanner.tsx` - Add click handler, popover UI, state management
+- `src/types.ts` - Verify Place interface (may not need changes)
+
+## Dependencies
+
+- Shadcn UI components: `popover` (possibly `dialog`)
+- Google Maps Geocoding API (already available via Places API)
+- Existing Effect patterns and error handling
