@@ -116,8 +116,8 @@ const renderContent = (
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-semibold text-base leading-tight flex-1">{attraction.name}</h3>
-                  <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-base leading-tight flex-1 line-clamp-2 min-w-0">{attraction.name}</h3>
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <a
                       href={`https://www.google.com/maps/place/?q=place_id:${attraction.placeId}`}
                       target="_blank"
@@ -195,9 +195,9 @@ export default function AttractionsPanel({
       <Card className="h-full flex flex-col shadow-xl">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
-            <div>
+            <div className="flex-1 min-w-0 mr-2">
               <h2 className="text-lg">Nearby Places</h2>
-              <p className="text-sm font-normal text-muted-foreground mt-1">{placeName}</p>
+              <p className="text-sm font-normal text-muted-foreground mt-1 line-clamp-2">{placeName}</p>
             </div>
             <button
               onClick={onClose}

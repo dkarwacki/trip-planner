@@ -35,7 +35,7 @@ export default function PlaceAutocomplete({
 
     const updateZoomState = () => {
       const zoom = map.getZoom();
-      setIsZoomedIn(zoom !== undefined && zoom > 5);
+      setIsZoomedIn(zoom !== undefined && zoom > 14);
     };
 
     updateZoomState();

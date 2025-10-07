@@ -420,7 +420,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
                             {index + 1}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium truncate">{place.name}</h3>
+                            <h3 className="font-medium line-clamp-2">{place.name}</h3>
                             <p className="text-sm text-muted-foreground">
                               {place.lat.toFixed(4)}, {place.lng.toFixed(4)}
                             </p>
