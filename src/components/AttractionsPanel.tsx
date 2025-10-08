@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoreBadge } from "@/components/ScoreBadge";
-import type { AttractionScore, Attraction } from "@/types";
+import type { AttractionScore, Attraction } from "@/domain/models";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -151,31 +151,31 @@ const ContentList = ({
         {data.map((scored) => {
           const { attraction, score, breakdown } = scored;
           const topTypes = attraction.types.slice(0, 3);
-          const isPlanned = plannedIds.has(attraction.placeId);
+          const isPlanned = plannedIds.has(attraction.id);
 
           return (
             <div
-              key={attraction.placeId}
+              key={attraction.id}
               ref={(el) => {
                 if (el) {
-                  itemRefs.current.set(attraction.placeId, el);
+                  itemRefs.current.set(attraction.id, el);
                 } else {
-                  itemRefs.current.delete(attraction.placeId);
+                  itemRefs.current.delete(attraction.id);
                 }
               }}
               className={`space-y-3 cursor-pointer rounded-lg p-3 -mx-3 transition-colors hover:bg-accent ${
-                highlightedAttractionId === attraction.placeId ? "bg-accent ring-2 ring-primary" : ""
+                highlightedAttractionId === attraction.id ? "bg-accent ring-2 ring-primary" : ""
               } ${isPlanned ? "bg-muted/50" : ""}`}
               role="button"
               tabIndex={0}
-              onClick={() => onAttractionClick?.(attraction.placeId)}
+              onClick={() => onAttractionClick?.(attraction.id)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  onAttractionClick?.(attraction.placeId);
+                  onAttractionClick?.(attraction.id);
                 }
               }}
-              onMouseEnter={() => onAttractionHover?.(attraction.placeId)}
+              onMouseEnter={() => onAttractionHover?.(attraction.id)}
               onMouseLeave={() => onAttractionHover?.(null)}
             >
               <div>
@@ -206,7 +206,7 @@ const ContentList = ({
                       </button>
                     )}
                     <a
-                      href={`https://www.google.com/maps/place/?q=place_id:${attraction.placeId}`}
+                      href={`https://www.google.com/maps/place/?q=place_id:${attraction.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}

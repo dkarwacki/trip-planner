@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import PlannedItemsList from "@/components/PlannedItemsList";
-import type { Place, Attraction } from "@/types";
+import type { Place, Attraction } from "@/domain/models";
 
 interface PlaceListItemProps {
   place: Place;
@@ -37,8 +37,9 @@ export default function PlaceListItem({
 }: PlaceListItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: place.placeId,
+    id: place.id,
   });
+  const prevItemsCountRef = useRef(0);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -48,20 +49,22 @@ export default function PlaceListItem({
   };
 
   const hasPlannedItems = plannedAttractions.length > 0 || plannedRestaurants.length > 0;
+  const itemsCount = plannedAttractions.length + plannedRestaurants.length;
 
-  // Auto-expand when items are added
+  // Auto-expand only when items are first added (count increases from 0)
   useEffect(() => {
-    if (hasPlannedItems && !isOpen) {
+    if (itemsCount > 0 && prevItemsCountRef.current === 0) {
       setIsOpen(true);
     }
-  }, [plannedAttractions.length, plannedRestaurants.length]);
+    prevItemsCountRef.current = itemsCount;
+  }, [itemsCount]);
 
   // Collapse when this place is not selected
   useEffect(() => {
     if (!isSelected && isOpen) {
       setIsOpen(false);
     }
-  }, [isSelected]);
+  }, [isSelected, isOpen]);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -111,10 +114,7 @@ export default function PlaceListItem({
             {hasPlannedItems && (
               <CollapsibleTrigger asChild>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsOpen(!isOpen);
-                  }}
+                  onClick={(e) => e.stopPropagation()}
                   className="flex-shrink-0 p-1 rounded-md hover:bg-accent text-muted-foreground transition-colors cursor-pointer"
                   aria-label={isOpen ? "Collapse planned items" : "Expand planned items"}
                   style={{ cursor: "pointer" }}
@@ -126,7 +126,7 @@ export default function PlaceListItem({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onRemove(place.placeId);
+                onRemove(place.id);
               }}
               className="flex-shrink-0 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
               aria-label={`Remove ${place.name}`}

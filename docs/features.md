@@ -57,8 +57,47 @@ The Trip Planner provides an interactive map-based interface for discovering and
   - Click place � Pan to location and zoom to level 14
   - Click place � Load attractions/restaurants automatically
   - Click remove � Delete place from list and clear related data
+  - Double-click place � Expand planned items (if any exist)
+- **Collapsible planned items:**
+  - Chevron toggle button to expand/collapse planned attractions and restaurants
+  - Auto-expands when items are added to the plan
+  - Auto-collapses when place is deselected
+  - Separate sections for "Planned Attractions" (blue) and "Planned Restaurants" (red)
 
-### 5. Attractions & Restaurants Discovery
+### 5. Trip Planning & Itinerary
+
+**Add attractions/restaurants to your place-specific plan:**
+
+**Add to Plan Dialog:**
+- Triggered by clicking the "+" button on any attraction/restaurant card
+- Displays confirmation dialog with:
+  - Attraction/restaurant name and details
+  - Rating, review count, price level
+  - Open/closed status badge
+  - Full address
+  - Confirm/Cancel buttons
+
+**Planned Items Management:**
+- **Drag-and-drop reordering** - Reorder attractions and restaurants within each place
+- **Numbered badges** - Visual sequence indicators (blue for attractions, red for restaurants)
+- **Quick access** - Click planned item to:
+  - Switch to parent place
+  - Switch to appropriate tab (attractions/restaurants)
+  - Highlight the item on the map
+  - Pan to item location
+- **Remove items** - Hover to reveal X button for removal
+- **Status indicators:**
+  - "+" button for unplanned items
+  - Check mark (✓) for already-planned items
+  - Prevents duplicate additions
+
+**Collapsible Place Cards:**
+- Expand/collapse toggle (chevron icon) appears when planned items exist
+- Shows inline planned items grouped by type
+- Compact display with ratings and key info
+- Color-coded backgrounds (blue for attractions, red for restaurants)
+
+### 6. Attractions & Restaurants Discovery
 
 **Right-side panel** (384px width) appears when a place is selected:
 
@@ -83,7 +122,7 @@ The Trip Planner provides an interactive map-based interface for discovering and
 - Help icon (?) to explain calculation methodology
 - Type-specific explanations for attractions vs. restaurants
 
-### 6. Map Markers & Interactions
+### 7. Map Markers & Interactions
 
 **Place Markers:**
 - Default Google Maps markers
@@ -109,7 +148,7 @@ The Trip Planner provides an interactive map-based interface for discovering and
 - Smooth transitions (0.2s ease-in-out)
 - Z-index elevation on hover
 
-### 7. Rich Attraction Details
+### 8. Rich Attraction Details
 
 Each attraction/restaurant card displays:
 
@@ -145,7 +184,7 @@ Each attraction/restaurant card displays:
 - Clickable � Cursor pointer
 - Keyboard accessible (Enter/Space)
 
-### 8. Error Handling & Loading States
+### 9. Error Handling & Loading States
 
 **Loading States:**
 - Skeleton loaders for attractions/restaurants
@@ -219,6 +258,8 @@ Each attraction/restaurant card displays:
   - Separator
   - Tabs, TabsList, TabsTrigger, TabsContent
   - Tooltip, TooltipProvider, TooltipTrigger, TooltipContent
+  - Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
+  - Collapsible, CollapsibleContent, CollapsibleTrigger
 
 - **Lucide icons:**
   - X (close)
@@ -227,3 +268,11 @@ Each attraction/restaurant card displays:
   - ExternalLink (Google Maps)
   - Info (score)
   - HelpCircle (help)
+  - Plus (add to plan)
+  - Check (planned status)
+  - ChevronDown, ChevronUp (collapse/expand)
+
+- **DnD Kit:**
+  - @dnd-kit/core - Core drag and drop functionality
+  - @dnd-kit/sortable - Sortable list utilities
+  - @dnd-kit/utilities - CSS transform utilities

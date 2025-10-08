@@ -1,4 +1,5 @@
 import { Brand } from "effect";
+import type { Attraction } from "./Attraction";
 
 // Branded types for type safety
 export type PlaceId = string & Brand.Brand<"PlaceId">;
@@ -11,33 +12,10 @@ export const Latitude = Brand.nominal<Latitude>();
 export const Longitude = Brand.nominal<Longitude>();
 
 export interface Place {
-  id: string;
+  id: PlaceId;
   name: string;
   lat: Latitude;
   lng: Longitude;
-  placeId: PlaceId;
   plannedAttractions: Attraction[];
   plannedRestaurants: Attraction[];
-}
-
-export interface Attraction {
-  placeId: PlaceId;
-  name: string;
-  rating: number;
-  userRatingsTotal: number;
-  types: string[];
-  vicinity: string;
-  priceLevel?: number;
-  openNow?: boolean;
-  location: { lat: Latitude; lng: Longitude };
-}
-
-export interface AttractionScore {
-  attraction: Attraction;
-  score: number;
-  breakdown: {
-    qualityScore: number;
-    diversityScore: number;
-    localityScore: number;
-  };
 }

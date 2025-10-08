@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { Attraction } from "@/types";
+import type { Attraction } from "@/domain/models";
 
 interface AddToPlanDialogProps {
   attraction: Attraction | null;

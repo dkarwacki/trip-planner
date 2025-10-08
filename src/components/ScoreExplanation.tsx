@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ATTRACTIONS_SCORING_CONFIG, RESTAURANTS_SCORING_CONFIG } from "@/lib/services/attractions/scoring";
+import { ATTRACTIONS_SCORING_CONFIG, RESTAURANTS_SCORING_CONFIG } from "@/domain/scoring";
 
 interface ScoreExplanationProps {
   type: "attractions" | "restaurants";

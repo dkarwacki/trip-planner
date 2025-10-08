@@ -8,7 +8,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { X, Star } from "lucide-react";
-import type { Attraction } from "@/types";
+import type { Attraction } from "@/domain/models";
 
 interface PlannedItemsListProps {
   items: Attraction[];
@@ -35,7 +35,7 @@ const formatReviewCount = (count: number): string => {
 
 function PlannedItem({ attraction, index, type, onRemove, onItemClick }: PlannedItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: attraction.placeId,
+    id: attraction.id,
   });
 
   const style = {
@@ -79,7 +79,7 @@ function PlannedItem({ attraction, index, type, onRemove, onItemClick }: Planned
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onRemove(attraction.placeId);
+          onRemove(attraction.id);
         }}
         className="flex-shrink-0 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
         aria-label={`Remove ${attraction.name}`}
@@ -105,8 +105,8 @@ export default function PlannedItemsList({ items, type, onReorder, onRemove, onI
       return;
     }
 
-    const oldIndex = items.findIndex((item) => item.placeId === active.id);
-    const newIndex = items.findIndex((item) => item.placeId === over.id);
+    const oldIndex = items.findIndex((item) => item.id === active.id);
+    const newIndex = items.findIndex((item) => item.id === over.id);
 
     onReorder(oldIndex, newIndex);
   };
@@ -121,11 +121,11 @@ export default function PlannedItemsList({ items, type, onReorder, onRemove, onI
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={items.map((item) => item.placeId)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-1.5">
           {items.map((item, index) => (
             <PlannedItem
-              key={item.placeId}
+              key={item.id}
               attraction={item}
               index={index}
               type={type}

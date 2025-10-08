@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { Place } from "@/types";
+import type { Place } from "@/domain/models";
 
 export class NoResultsError {
   readonly _tag = "NoResultsError";

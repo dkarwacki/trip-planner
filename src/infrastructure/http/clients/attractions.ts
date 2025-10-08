@@ -1,4 +1,4 @@
-import type { AttractionScore } from "@/types";
+import type { AttractionScore } from "@/domain/models";
 
 // API response types
 interface SuccessResponse {

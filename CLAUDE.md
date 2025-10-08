@@ -34,19 +34,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Structure
 
+The project follows **Clean Architecture** principles with clear separation of concerns:
+
 - `./src` - Source code
 - `./src/layouts` - Astro layouts
 - `./src/pages` - Astro pages (file-based routing)
-- `./src/pages/api` - API endpoints
+- `./src/pages/api` - API endpoints (call application use cases)
 - `./src/middleware/index.ts` - Astro middleware
 - `./src/db` - Supabase clients and types
-- `./src/types.ts` - Shared types for backend and frontend (Entities, DTOs)
 - `./src/components` - Components (Astro for static, React for interactive)
 - `./src/components/ui` - Shadcn/ui components
-- `./src/lib` - Services and helpers organized by domain
-  - `./src/lib/services/{domain}/index.ts` - Server-side service (main entry point)
-  - `./src/lib/services/{domain}/client.ts` - Client-side service (browser-only)
-  - `./src/lib/services/{domain}/*` - Additional domain-specific modules
+
+### Clean Architecture Layers
+
+- `./src/domain` - **Domain layer** (pure business logic, no external dependencies)
+  - `./src/domain/models` - Domain entities and branded types (Place, Attraction, etc.)
+  - `./src/domain/scoring` - Business rules and scoring algorithms
+  - `./src/domain/errors` - Tagged errors for type-safe error handling
+
+- `./src/application` - **Application layer** (use cases, orchestration)
+  - `./src/application/{domain}` - Use cases per domain (attractions, places, geocoding)
+  - `./src/application/{domain}/index.ts` - Public API exports
+  - `./src/application/{domain}/inputs.ts` - Zod schemas for input validation
+
+- `./src/infrastructure` - **Infrastructure layer** (external services, I/O)
+  - `./src/infrastructure/google-maps` - Google Maps API client implementation
+  - `./src/infrastructure/cache` - Caching services (Effect Cache)
+  - `./src/infrastructure/config` - Configuration management
+  - `./src/infrastructure/http` - HTTP utilities (validation, response mappers, browser clients)
+  - `./src/infrastructure/runtime.ts` - Effect runtime configuration with all dependencies
+
+- `./src/lib` - Shared utilities (utils.ts)
 - `./src/assets` - Static internal assets
 - `./public` - Public assets
 

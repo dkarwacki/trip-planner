@@ -1,0 +1,1 @@
+Create a detailed action plan that includes requirements analysis, architecture design, edge case handling, error handling, tests, decisions to be made, potential rabbit holes, and a task list for implementation.

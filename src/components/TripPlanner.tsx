@@ -12,10 +12,10 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { getPlaceDetails } from "@/lib/services/places/client";
-import { fetchTopAttractions, fetchTopRestaurants } from "@/lib/services/attractions/client";
-import { reverseGeocode } from "@/lib/services/geocoding/client";
-import type { Place, AttractionScore, Attraction } from "@/types";
+import { getPlaceDetails } from "@/infrastructure/http/clients";
+import { fetchTopAttractions, fetchTopRestaurants } from "@/infrastructure/http/clients";
+import { reverseGeocode } from "@/infrastructure/http/clients";
+import type { Place, AttractionScore, Attraction } from "@/domain/models";
 import AttractionsPanel from "@/components/AttractionsPanel";
 import PlaceAutocomplete from "@/components/PlaceAutocomplete";
 import PlaceListItem from "@/components/PlaceListItem";
@@ -110,7 +110,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           )
         );
 
-        const isDuplicate = places.some((p) => p.placeId === placeDetails.placeId);
+        const isDuplicate = places.some((p) => p.id === placeDetails.id);
         if (isDuplicate) {
           setError("This place has already been added");
           setIsLoading(false);
@@ -129,7 +129,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
   const handleRemovePlace = useCallback(
     (placeId: string) => {
-      setPlaces((prev) => prev.filter((p) => p.placeId !== placeId));
+      setPlaces((prev) => prev.filter((p) => p.id !== placeId));
       if (selectedPlaceId === placeId) {
         setSelectedPlaceId(null);
         setSelectedPlace(null);
@@ -147,7 +147,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const handlePanToPlace = useCallback(
     async (place: Place) => {
       if (!map) return;
-      setSelectedPlaceId(place.placeId);
+      setSelectedPlaceId(place.id);
       setSelectedPlace(place);
       map.panTo({ lat: place.lat, lng: place.lng });
       map.setZoom(14);
@@ -220,19 +220,19 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       // Find which place this attraction belongs to
       const parentPlace = places.find(
         (p) =>
-          p.plannedAttractions.some((a) => a.placeId === attraction.placeId) ||
-          p.plannedRestaurants.some((r) => r.placeId === attraction.placeId)
+          p.plannedAttractions.some((a) => a.id === attraction.id) ||
+          p.plannedRestaurants.some((r) => r.id === attraction.id)
       );
 
       if (!parentPlace) return;
 
       // Check if this is a restaurant or attraction
-      const isRestaurant = parentPlace.plannedRestaurants.some((r) => r.placeId === attraction.placeId);
+      const isRestaurant = parentPlace.plannedRestaurants.some((r) => r.id === attraction.id);
       const targetTab: CategoryTab = isRestaurant ? "restaurants" : "attractions";
 
       // If the parent place is not currently selected, select it first
-      if (parentPlace.placeId !== selectedPlaceId) {
-        setSelectedPlaceId(parentPlace.placeId);
+      if (parentPlace.id !== selectedPlaceId) {
+        setSelectedPlaceId(parentPlace.id);
         setSelectedPlace(parentPlace);
         map.panTo({ lat: attraction.location.lat, lng: attraction.location.lng });
         map.setZoom(15);
@@ -279,8 +279,8 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       // Pan to the attraction's location and highlight it
       map.panTo({ lat: attraction.location.lat, lng: attraction.location.lng });
       map.setZoom(15);
-      setHighlightedAttractionId(attraction.placeId);
-      setScrollToAttractionId(attraction.placeId);
+      setHighlightedAttractionId(attraction.id);
+      setScrollToAttractionId(attraction.id);
     },
     [places, selectedPlaceId, map, handleTabChange]
   );
@@ -322,7 +322,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         )
       );
 
-      const isDuplicate = places.some((p) => p.placeId === place.placeId);
+      const isDuplicate = places.some((p) => p.id === place.id);
       if (isDuplicate) {
         setGeocodingError("This place has already been added");
         setIsReverseGeocoding(false);
@@ -346,8 +346,8 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     }
 
     setPlaces((items) => {
-      const oldIndex = items.findIndex((item) => item.placeId === active.id);
-      const newIndex = items.findIndex((item) => item.placeId === over.id);
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
 
       return arrayMove(items, oldIndex, newIndex);
     });
@@ -366,14 +366,14 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
     setPlaces((prev) =>
       prev.map((place) => {
-        if (place.placeId !== selectedPlaceId) {
+        if (place.id !== selectedPlaceId) {
           return place;
         }
 
         const isDuplicate =
           pendingType === "attraction"
-            ? place.plannedAttractions.some((a) => a.placeId === pendingAttraction.placeId)
-            : place.plannedRestaurants.some((r) => r.placeId === pendingAttraction.placeId);
+            ? place.plannedAttractions.some((a) => a.id === pendingAttraction.id)
+            : place.plannedRestaurants.some((r) => r.id === pendingAttraction.id);
 
         if (isDuplicate) {
           return place;
@@ -403,15 +403,15 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     (placeId: string, attractionId: string, type: "attraction" | "restaurant") => {
       setPlaces((prev) =>
         prev.map((place) => {
-          if (place.placeId !== placeId) {
+          if (place.id !== placeId) {
             return place;
           }
 
           return {
             ...place,
             ...(type === "attraction"
-              ? { plannedAttractions: place.plannedAttractions.filter((a) => a.placeId !== attractionId) }
-              : { plannedRestaurants: place.plannedRestaurants.filter((r) => r.placeId !== attractionId) }),
+              ? { plannedAttractions: place.plannedAttractions.filter((a) => a.id !== attractionId) }
+              : { plannedRestaurants: place.plannedRestaurants.filter((r) => r.id !== attractionId) }),
           };
         })
       );
@@ -423,7 +423,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     (placeId: string, type: "attraction" | "restaurant", oldIndex: number, newIndex: number) => {
       setPlaces((prev) =>
         prev.map((place) => {
-          if (place.placeId !== placeId) {
+          if (place.id !== placeId) {
             return place;
           }
 
@@ -461,7 +461,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       });
 
       marker.addListener("click", () => {
-        setSelectedPlaceId(place.placeId);
+        setSelectedPlaceId(place.id);
       });
 
       return marker;
@@ -535,19 +535,19 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       });
 
       marker.addListener("click", () => {
-        setScrollToAttractionId(attraction.placeId);
-        setHighlightedAttractionId(attraction.placeId);
+        setScrollToAttractionId(attraction.id);
+        setHighlightedAttractionId(attraction.id);
       });
 
       pinElement.addEventListener("mouseenter", () => {
-        setHoveredAttractionId(attraction.placeId);
+        setHoveredAttractionId(attraction.id);
       });
 
       pinElement.addEventListener("mouseleave", () => {
         setHoveredAttractionId(null);
       });
 
-      markersMap.set(attraction.placeId, { marker, element: pinElement });
+      markersMap.set(attraction.id, { marker, element: pinElement });
     });
 
     return () => {
@@ -638,29 +638,29 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
             ) : (
               <ScrollArea className="h-full px-6 pb-6">
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={places.map((p) => p.placeId)} strategy={verticalListSortingStrategy}>
+                  <SortableContext items={places.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-2">
                       {places.map((place, index) => (
                         <PlaceListItem
-                          key={place.placeId}
+                          key={place.id}
                           place={place}
                           index={index}
-                          isSelected={selectedPlaceId === place.placeId}
+                          isSelected={selectedPlaceId === place.id}
                           onSelect={handlePanToPlace}
                           onRemove={handleRemovePlace}
                           plannedAttractions={place.plannedAttractions}
                           plannedRestaurants={place.plannedRestaurants}
                           onReorderAttractions={(oldIndex: number, newIndex: number) =>
-                            handleReorderPlannedItems(place.placeId, "attraction", oldIndex, newIndex)
+                            handleReorderPlannedItems(place.id, "attraction", oldIndex, newIndex)
                           }
                           onReorderRestaurants={(oldIndex: number, newIndex: number) =>
-                            handleReorderPlannedItems(place.placeId, "restaurant", oldIndex, newIndex)
+                            handleReorderPlannedItems(place.id, "restaurant", oldIndex, newIndex)
                           }
                           onRemoveAttraction={(attractionId: string) =>
-                            handleRemoveFromPlan(place.placeId, attractionId, "attraction")
+                            handleRemoveFromPlan(place.id, attractionId, "attraction")
                           }
                           onRemoveRestaurant={(restaurantId: string) =>
-                            handleRemoveFromPlan(place.placeId, restaurantId, "restaurant")
+                            handleRemoveFromPlan(place.id, restaurantId, "restaurant")
                           }
                           onPlannedItemClick={handlePlannedItemClick}
                         />
@@ -701,10 +701,10 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
             highlightedAttractionId={highlightedAttractionId}
             onAttractionClick={setHighlightedAttractionId}
             plannedAttractionIds={
-              new Set(places.find((p) => p.placeId === selectedPlaceId)?.plannedAttractions.map((a) => a.placeId) || [])
+              new Set(places.find((p) => p.id === selectedPlaceId)?.plannedAttractions.map((a) => a.id) || [])
             }
             plannedRestaurantIds={
-              new Set(places.find((p) => p.placeId === selectedPlaceId)?.plannedRestaurants.map((r) => r.placeId) || [])
+              new Set(places.find((p) => p.id === selectedPlaceId)?.plannedRestaurants.map((r) => r.id) || [])
             }
             onAddToPlan={handleOpenAddDialog}
           />
