@@ -20,6 +20,16 @@ interface TripPlannerProps {
   mapId?: string;
 }
 
+// Marker size constants
+const MARKER_SIZE = {
+  DEFAULT: 16,
+  HOVERED: 24,
+  BORDER: {
+    DEFAULT: 2,
+    HOVERED: 3,
+  },
+} as const;
+
 const MapContent = ({ mapId }: { mapId?: string }) => {
   const map = useMap();
   const markerLibrary = useMapsLibrary("marker");
@@ -41,6 +51,8 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const [loadedTabs, setLoadedTabs] = useState<Set<CategoryTab>>(new Set(["attractions"]));
   const [activeTab, setActiveTab] = useState<CategoryTab>("attractions");
   const [hoveredAttractionId, setHoveredAttractionId] = useState<string | null>(null);
+  const [scrollToAttractionId, setScrollToAttractionId] = useState<string | null>(null);
+  const [highlightedAttractionId, setHighlightedAttractionId] = useState<string | null>(null);
 
   const [clickedLocation, setClickedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showAddPlacePopover, setShowAddPlacePopover] = useState(false);
@@ -181,6 +193,10 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     [selectedPlace, loadedTabs]
   );
 
+  const handleScrollComplete = useCallback(() => {
+    setScrollToAttractionId(null);
+  }, []);
+
   const handleClosePopover = useCallback(() => {
     setClickedLocation(null);
     setShowAddPlacePopover(false);
@@ -297,19 +313,33 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       const { attraction } = scored;
 
       const pinElement = document.createElement("div");
-      pinElement.style.width = "12px";
-      pinElement.style.height = "12px";
+      pinElement.style.width = `${MARKER_SIZE.DEFAULT}px`;
+      pinElement.style.height = `${MARKER_SIZE.DEFAULT}px`;
       pinElement.style.borderRadius = "50%";
       pinElement.style.backgroundColor = iconColor;
-      pinElement.style.border = `2px solid white`;
+      pinElement.style.border = `${MARKER_SIZE.BORDER.DEFAULT}px solid white`;
       pinElement.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
       pinElement.style.transition = "all 0.2s ease-in-out";
+      pinElement.style.cursor = "pointer";
 
       const marker = new markerLibrary.AdvancedMarkerElement({
         map,
         position: { lat: attraction.location.lat, lng: attraction.location.lng },
         content: pinElement,
         title: attraction.name,
+      });
+
+      marker.addListener("click", () => {
+        setScrollToAttractionId(attraction.placeId);
+        setHighlightedAttractionId(attraction.placeId);
+      });
+
+      pinElement.addEventListener("mouseenter", () => {
+        setHoveredAttractionId(attraction.placeId);
+      });
+
+      pinElement.addEventListener("mouseleave", () => {
+        setHoveredAttractionId(null);
       });
 
       markersMap.set(attraction.placeId, { marker, element: pinElement });
@@ -325,21 +355,21 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     if (!attractionMarkersRef.current) return;
 
     attractionMarkersRef.current.forEach(({ element }, placeId) => {
-      if (placeId === hoveredAttractionId) {
-        element.style.width = "20px";
-        element.style.height = "20px";
-        element.style.borderWidth = "3px";
+      if (placeId === hoveredAttractionId || placeId === highlightedAttractionId) {
+        element.style.width = `${MARKER_SIZE.HOVERED}px`;
+        element.style.height = `${MARKER_SIZE.HOVERED}px`;
+        element.style.borderWidth = `${MARKER_SIZE.BORDER.HOVERED}px`;
         element.style.transform = "scale(1.2)";
         element.style.zIndex = "1000";
       } else {
-        element.style.width = "12px";
-        element.style.height = "12px";
-        element.style.borderWidth = "2px";
+        element.style.width = `${MARKER_SIZE.DEFAULT}px`;
+        element.style.height = `${MARKER_SIZE.DEFAULT}px`;
+        element.style.borderWidth = `${MARKER_SIZE.BORDER.DEFAULT}px`;
         element.style.transform = "scale(1)";
         element.style.zIndex = "auto";
       }
     });
-  }, [hoveredAttractionId]);
+  }, [hoveredAttractionId, highlightedAttractionId]);
 
   useEffect(() => {
     if (!map || !markerLibrary || !mapId) return;
@@ -470,8 +500,13 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
             restaurantsError={restaurantsError}
             placeName={selectedPlace.name}
             onClose={handleCloseAttractions}
+            activeTab={activeTab}
             onTabChange={handleTabChange}
             onAttractionHover={setHoveredAttractionId}
+            scrollToAttractionId={scrollToAttractionId}
+            onScrollComplete={handleScrollComplete}
+            highlightedAttractionId={highlightedAttractionId}
+            onAttractionClick={setHighlightedAttractionId}
           />
         )}
 

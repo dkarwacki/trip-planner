@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { X, Star, MapPin, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,8 +20,13 @@ interface AttractionsPanelProps {
   restaurantsError: string | null;
   placeName: string;
   onClose: () => void;
+  activeTab: CategoryTab;
   onTabChange: (tab: CategoryTab) => void;
   onAttractionHover?: (placeId: string | null) => void;
+  scrollToAttractionId?: string | null;
+  onScrollComplete?: () => void;
+  highlightedAttractionId?: string | null;
+  onAttractionClick?: (placeId: string) => void;
 }
 
 const getPriceLevelSymbol = (priceLevel?: number): string => {
@@ -54,14 +60,46 @@ const formatTypeName = (type: string): string => {
     .join(" ");
 };
 
-const renderContent = (
-  data: AttractionScore[],
-  isLoading: boolean,
-  error: string | null,
-  emptyMessage: string,
-  type: "attractions" | "restaurants",
-  onAttractionHover?: (placeId: string | null) => void
-) => {
+interface ContentListProps {
+  data: AttractionScore[];
+  isLoading: boolean;
+  error: string | null;
+  emptyMessage: string;
+  type: "attractions" | "restaurants";
+  onAttractionHover?: (placeId: string | null) => void;
+  scrollToAttractionId?: string | null;
+  onScrollComplete?: () => void;
+  highlightedAttractionId?: string | null;
+  onAttractionClick?: (placeId: string) => void;
+}
+
+const ContentList = ({
+  data,
+  isLoading,
+  error,
+  emptyMessage,
+  type,
+  onAttractionHover,
+  scrollToAttractionId,
+  onScrollComplete,
+  highlightedAttractionId,
+  onAttractionClick,
+}: ContentListProps) => {
+  const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  useEffect(() => {
+    if (scrollToAttractionId) {
+      const element = itemRefs.current.get(scrollToAttractionId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Wait for smooth scroll to complete before clearing state
+        const timeoutId = setTimeout(() => {
+          onScrollComplete?.();
+        }, 500);
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, [scrollToAttractionId, onScrollComplete]);
   // Loading State
   if (isLoading) {
     return (
@@ -110,13 +148,33 @@ const renderContent = (
           return (
             <div
               key={attraction.placeId}
-              className="space-y-3 cursor-pointer rounded-lg p-2 -mx-2 transition-colors hover:bg-accent"
+              ref={(el) => {
+                if (el) {
+                  itemRefs.current.set(attraction.placeId, el);
+                } else {
+                  itemRefs.current.delete(attraction.placeId);
+                }
+              }}
+              className={`space-y-3 cursor-pointer rounded-lg p-3 -mx-3 transition-colors hover:bg-accent ${
+                highlightedAttractionId === attraction.placeId ? "bg-accent ring-2 ring-primary" : ""
+              }`}
+              role="button"
+              tabIndex={0}
+              onClick={() => onAttractionClick?.(attraction.placeId)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onAttractionClick?.(attraction.placeId);
+                }
+              }}
               onMouseEnter={() => onAttractionHover?.(attraction.placeId)}
               onMouseLeave={() => onAttractionHover?.(null)}
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-semibold text-base leading-tight flex-1 line-clamp-2 min-w-0">{attraction.name}</h3>
+                  <h3 className="font-semibold text-base leading-tight flex-1 line-clamp-2 min-w-0">
+                    {attraction.name}
+                  </h3>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <a
                       href={`https://www.google.com/maps/place/?q=place_id:${attraction.placeId}`}
@@ -187,16 +245,23 @@ export default function AttractionsPanel({
   restaurantsError,
   placeName,
   onClose,
+  activeTab,
   onTabChange,
   onAttractionHover,
+  scrollToAttractionId,
+  onScrollComplete,
+  highlightedAttractionId,
+  onAttractionClick,
 }: AttractionsPanelProps) {
+  const headingText = activeTab === "attractions" ? "Nearby Attractions" : "Nearby Restaurants";
+
   return (
     <div className="absolute right-4 top-4 bottom-4 w-96 z-10 pointer-events-auto">
       <Card className="h-full flex flex-col shadow-xl">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <div className="flex-1 min-w-0 mr-2">
-              <h2 className="text-lg">Nearby Places</h2>
+              <h2 className="text-lg">{headingText}</h2>
               <p className="text-sm font-normal text-muted-foreground mt-1 line-clamp-2">{placeName}</p>
             </div>
             <button
@@ -225,25 +290,33 @@ export default function AttractionsPanel({
             </TabsList>
 
             <TabsContent value="attractions" className="flex-1 overflow-hidden mt-0">
-              {renderContent(
-                attractions,
-                isLoadingAttractions,
-                attractionsError,
-                "No attractions found for this location.",
-                "attractions",
-                onAttractionHover
-              )}
+              <ContentList
+                data={attractions}
+                isLoading={isLoadingAttractions}
+                error={attractionsError}
+                emptyMessage="No attractions found for this location."
+                type="attractions"
+                onAttractionHover={onAttractionHover}
+                scrollToAttractionId={scrollToAttractionId}
+                onScrollComplete={onScrollComplete}
+                highlightedAttractionId={highlightedAttractionId}
+                onAttractionClick={onAttractionClick}
+              />
             </TabsContent>
 
             <TabsContent value="restaurants" className="flex-1 overflow-hidden mt-0">
-              {renderContent(
-                restaurants,
-                isLoadingRestaurants,
-                restaurantsError,
-                "No restaurants found for this location.",
-                "restaurants",
-                onAttractionHover
-              )}
+              <ContentList
+                data={restaurants}
+                isLoading={isLoadingRestaurants}
+                error={restaurantsError}
+                emptyMessage="No restaurants found for this location."
+                type="restaurants"
+                onAttractionHover={onAttractionHover}
+                scrollToAttractionId={scrollToAttractionId}
+                onScrollComplete={onScrollComplete}
+                highlightedAttractionId={highlightedAttractionId}
+                onAttractionClick={onAttractionClick}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

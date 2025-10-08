@@ -1,0 +1,1 @@
+Please do not implement anything, just write the implementation plan to @docs/plan.md. Do not include specific code implementations in the file. List all steps and useful information needed for the implementation based on our conversation.

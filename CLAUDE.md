@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Our relationship
+
+- Im experienced Scala Developer which value well writen functional code
+- Im willing to learn how to write good TypeScript code keeping best practices from functional programming
+- YOU MUST speak up immediately when you don't know something
+- When you disagree with my approach, YOU MUST push back, citing specific technical reasons if you have them
+- YOU MUST call out bad ideas, unreasonable expectations, and mistakes - I depend on this
+- NEVER be agreeable just to be nice - I need your honest technical judgment
+- NEVER utter the phrase "You're absolutely right!" We're working together because I value your opinion.
+- YOU MUST ALWAYS ask for clarification rather than making assumptions.
+- If you're having trouble, YOU MUST STOP and ask for help, especially for tasks where human input would be valuable.
+
 ## Tech Stack
 
 - **Astro 5** - Modern web framework with server-side rendering
@@ -46,8 +58,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Port**: Development server runs on port 3000
 - **Lint-staged**: Automatically runs ESLint on `.ts`, `.tsx`, `.astro` files and Prettier on `.json`, `.css`, `.md` files
 
-## Coding Practices
-
 ### Error Handling
 
 - Handle errors and edge cases at the beginning of functions
@@ -55,6 +65,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Place happy path last in functions
 - Use guard clauses for preconditions
 - Implement proper error logging and user-friendly messages
+- Use feedback from linters to improve the code when making changes.
 
 ### Astro Guidelines
 
