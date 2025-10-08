@@ -33,26 +33,25 @@ When introducing changes to the project, always follow the directory structure b
 - `./src` - source code
 - `./src/layouts` - Astro layouts
 - `./src/pages` - Astro pages
-- `./src/pages/api` - API endpoints (call application use cases)
+- `./src/pages/api` - API endpoints (thin adapters calling application use cases)
 - `./src/middleware/index.ts` - Astro middleware
 - `./src/db` - Supabase clients and types
 - `./src/components` - Client-side components written in Astro (static) and React (dynamic)
 - `./src/components/ui` - Client-side components from Shadcn/ui
-- `./src/domain` - Domain layer (pure business logic, no external dependencies)
-  - `./src/domain/models` - Domain entities and branded types (Place, Attraction, etc.)
-  - `./src/domain/scoring` - Business rules and scoring algorithms
-  - `./src/domain/errors` - Tagged errors for type-safe error handling
-- `./src/application` - Application layer (use cases, orchestration)
-  - `./src/application/{domain}` - Use cases per domain (attractions, places, geocoding)
-  - `./src/application/{domain}/index.ts` - Public API exports
-  - `./src/application/{domain}/inputs.ts` - Zod schemas for input validation
+- `./src/domain` - Domain layer (pure business logic, no dependencies)
+  - `./src/domain/models` - Entities and branded types
+  - `./src/domain/scoring` - Business rules and algorithms
+  - `./src/domain/errors` - Tagged errors
+- `./src/application` - Application layer (use cases with Effect)
+  - `./src/application/{domain}` - Use cases per domain
+  - `./src/application/{domain}/inputs.ts` - Zod input schemas
 - `./src/infrastructure` - Infrastructure layer (external services, I/O)
-  - `./src/infrastructure/google-maps` - Google Maps API client implementation
-  - `./src/infrastructure/cache` - Caching services
-  - `./src/infrastructure/config` - Configuration management
-  - `./src/infrastructure/http` - HTTP utilities (validation, response mappers, browser clients)
-  - `./src/infrastructure/runtime.ts` - Effect runtime configuration with all dependencies
-- `./src/lib` - Shared utilities (utils.ts)
+  - `./src/infrastructure/google-maps` - Google Maps API client
+  - `./src/infrastructure/cache` - Effect cache services
+  - `./src/infrastructure/config` - Configuration service
+  - `./src/infrastructure/http` - Validation, response mappers, browser API clients
+  - `./src/infrastructure/runtime.ts` - Effect runtime with all dependencies
+- `./src/lib` - Shared utilities (utils.ts only)
 - `./src/assets` - static internal assets
 - `./public` - public assets
 
@@ -80,11 +79,11 @@ When modifying the directory structure, always update this section.
 
 ### Effect Guidelines
 
-- **Use Effect for business logic and data operations** - Leverage type-safe error handling and composability
+- **Use Effect for server-side logic** (API routes, use cases, infrastructure services)
+- **Use plain async/await in browser components** (React hooks, event handlers)
 - **Always use `Effect.gen`** (generator-style) for effect composition instead of pipe
 - **Use tagged errors** (objects with `_tag` field) for better error discrimination
 - **Never throw exceptions** - use `Effect.fail` for expected errors and track them in the type system
-- **Use `Effect.tryPromise`** when wrapping async operations that might fail
-- **Use Effect Streams** for reactive data processing
+- **Use Context.Tag + Layer** for dependency injection (see `infrastructure/runtime.ts`)
 - **Use branded types** for domain primitives (IDs, emails, etc.)
 - **See detailed best practices** in `.cursor/rules/effect.mdc`

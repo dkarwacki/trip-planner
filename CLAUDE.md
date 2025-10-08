@@ -89,8 +89,8 @@ The project follows **Clean Architecture** principles with clear separation of c
 
 - Use `export const prerender = false` for API routes
 - Use POST, GET (uppercase) for endpoint handlers
-- Use Zod for validation and DTOs: define schemas, use `z.infer<>` for types, wrap in Effect with tagged errors
-- Extract logic into services in `src/lib/services`
+- API routes are **thin adapters**: validate input → call application use case → map response
+- Use Zod for validation (in `application/*/inputs.ts`), wrap in Effect with tagged errors
 - Use `Astro.cookies` for server-side cookie management
 - Use `import.meta.env` for environment variables
 - Leverage View Transitions API for smooth page transitions
@@ -136,11 +136,11 @@ The project follows **Clean Architecture** principles with clear separation of c
 
 ### Effect Guidelines
 
-- **Use Effect for business logic and data operations** - Leverage type-safe error handling and composability
+- **Use Effect for server-side logic only** (API routes, use cases, infrastructure services)
+- **Use plain async/await in browser components** (React hooks, event handlers call browser API clients from `infrastructure/http/clients`)
 - **Always use `Effect.gen`** (generator-style) for effect composition instead of pipe
 - **Use tagged errors** (objects with `_tag` field) for better error discrimination
 - **Never throw exceptions** - use `Effect.fail` for expected errors and track them in the type system
-- **Use `Effect.tryPromise`** when wrapping async operations that might fail
-- **Use Effect Streams** for reactive data processing
+- **Use Context.Tag + Layer** for dependency injection (see `infrastructure/runtime.ts`)
 - **Use branded types** for domain primitives (IDs, emails, etc.)
 - **See detailed best practices** in `.cursor/rules/effect.mdc`
