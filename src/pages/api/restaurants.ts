@@ -1,9 +1,10 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
-import { GetTopRestaurants, GetTopRestaurantsInputSchema } from "@/application/attractions";
+import { getTopRestaurants, GetTopRestaurantsInputSchema } from "@/application/attractions";
 import { ValidationError } from "@/infrastructure/http/validation";
 import { toHttpResponse } from "@/infrastructure/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/runtime";
+import { UnexpectedError } from "@/domain/errors";
 
 export const prerender = false;
 
@@ -23,7 +24,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const program = Effect.gen(function* () {
     const input = yield* validateRequest(body);
-    const restaurants = yield* GetTopRestaurants(input);
+    const restaurants = yield* getTopRestaurants(input);
     return { attractions: restaurants }; // Keep "attractions" key for backwards compat
   });
 
@@ -32,7 +33,7 @@ export const POST: APIRoute = async ({ request }) => {
       Effect.catchAllDefect((defect) =>
         Effect.gen(function* () {
           yield* Effect.logError("Unexpected error in /api/restaurants", { defect });
-          return toHttpResponse({ success: false, error: "Internal server error" });
+          return yield* Effect.fail(new UnexpectedError("Internal server error", defect));
         })
       ),
       Effect.match({

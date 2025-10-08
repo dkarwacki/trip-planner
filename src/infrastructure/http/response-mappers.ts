@@ -7,6 +7,7 @@ import type {
   NoResultsError,
   GeocodingError,
   MissingGoogleMapsAPIKeyError,
+  UnexpectedError,
 } from "@/domain/errors";
 
 type AppError =
@@ -17,9 +18,10 @@ type AppError =
   | PlaceNotFoundError
   | PlacesAPIError
   | NoResultsError
-  | GeocodingError;
+  | GeocodingError
+  | UnexpectedError;
 
-export const toHttpResponse = (error: AppError, successData?: unknown): Response => {
+export const toHttpResponse = (error: AppError, successData?: Record<string, unknown>): Response => {
   if ("_tag" in error) {
     switch (error._tag) {
       case "ValidationError": {
@@ -122,6 +124,18 @@ export const toHttpResponse = (error: AppError, successData?: unknown): Response
           }),
           {
             status: 502,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+      case "UnexpectedError":
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: error.message,
+          }),
+          {
+            status: 500,
             headers: { "Content-Type": "application/json" },
           }
         );
