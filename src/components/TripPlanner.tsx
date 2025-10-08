@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { APIProvider, Map, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { Effect } from "effect";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import type { DragEndEvent } from "@dnd-kit/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -8,9 +16,9 @@ import { getPlaceDetails } from "@/lib/services/places/client";
 import { fetchTopAttractions, fetchTopRestaurants } from "@/lib/services/attractions/client";
 import { reverseGeocode } from "@/lib/services/geocoding/client";
 import type { Place, AttractionScore } from "@/types";
-import { X } from "lucide-react";
 import AttractionsPanel from "@/components/AttractionsPanel";
 import PlaceAutocomplete from "@/components/PlaceAutocomplete";
+import PlaceListItem from "@/components/PlaceListItem";
 import { Button } from "@/components/ui/button";
 
 type CategoryTab = "attractions" | "restaurants";
@@ -33,6 +41,13 @@ const MARKER_SIZE = {
 const MapContent = ({ mapId }: { mapId?: string }) => {
   const map = useMap();
   const markerLibrary = useMapsLibrary("marker");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const [places, setPlaces] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -246,6 +261,21 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     }
   }, [clickedLocation, places, handleClosePopover]);
 
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setPlaces((items) => {
+      const oldIndex = items.findIndex((item) => item.placeId === active.id);
+      const newIndex = items.findIndex((item) => item.placeId === over.id);
+
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  }, []);
+
   useEffect(() => {
     if (!map || !markerLibrary || places.length === 0) {
       markersRef.current.forEach((marker) => (marker.map = null));
@@ -432,49 +462,22 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
               </div>
             ) : (
               <ScrollArea className="h-full px-6 pb-6">
-                <div className="space-y-2">
-                  {places.map((place, index) => (
-                    <div
-                      key={place.placeId}
-                      onClick={() => handlePanToPlace(place)}
-                      className={`p-3 rounded-lg border cursor-pointer transition-colors hover:bg-accent ${
-                        selectedPlaceId === place.placeId ? "bg-accent border-primary" : ""
-                      }`}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`View ${place.name} on map`}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          handlePanToPlace(place);
-                        }
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
-                            {index + 1}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium line-clamp-2">{place.name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {place.lat.toFixed(4)}, {place.lng.toFixed(4)}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemovePlace(place.placeId);
-                          }}
-                          className="flex-shrink-0 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                          aria-label={`Remove ${place.name}`}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={places.map((p) => p.placeId)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-2">
+                      {places.map((place, index) => (
+                        <PlaceListItem
+                          key={place.placeId}
+                          place={place}
+                          index={index}
+                          isSelected={selectedPlaceId === place.placeId}
+                          onSelect={handlePanToPlace}
+                          onRemove={handleRemovePlace}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               </ScrollArea>
             )}
           </CardContent>

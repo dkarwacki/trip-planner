@@ -13,6 +13,9 @@ export default defineConfig({
   server: { port: 3000 },
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
+    },
   },
   adapter: node({
     mode: "standalone",
