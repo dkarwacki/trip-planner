@@ -1,4 +1,5 @@
 import { Effect, Context, Layer } from "effect";
+import { ZodError } from "zod";
 import type { Attraction, Place } from "@/domain/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/models";
 import {
@@ -11,7 +12,21 @@ import {
   MissingGoogleMapsAPIKeyError,
 } from "@/domain/errors";
 import { ConfigService } from "@/infrastructure/config";
-import type { NearbySearchResponse, GeocodeResponse, PlaceDetailsResponse } from "./types";
+import {
+  NearbySearchResponseSchema,
+  GeocodeResponseSchema,
+  PlaceDetailsResponseSchema,
+  validateSearchRadius,
+  validateNonEmptyString,
+  validateCoordinates,
+} from "./validation";
+import {
+  calculateDistance,
+  isRestaurantSearch,
+  calculatePlaceScore,
+  NEARBY_PLACE_SEARCH_RADIUS,
+  MIN_RATING_COUNT,
+} from "./helpers";
 import { BLOCKED_PLACE_TYPES } from "./constants";
 
 export interface IGoogleMapsClient {
@@ -52,20 +67,24 @@ export const GoogleMapsClientLive = Layer.effect(
       Effect.gen(function* () {
         const apiKey = yield* config.getGoogleMapsApiKey();
 
-        if (radius < 100 || radius > 50000) {
-          return yield* Effect.fail(new AttractionsAPIError("Radius must be between 100 and 50000 meters"));
-        }
+        const validatedRadius = yield* Effect.try({
+          try: () => validateSearchRadius(radius),
+          catch: (error) =>
+            new AttractionsAPIError(error instanceof ZodError ? error.errors[0].message : "Invalid radius"),
+        });
+
+        yield* Effect.try({
+          try: () => validateCoordinates(lat, lng),
+          catch: (error) =>
+            new AttractionsAPIError(error instanceof ZodError ? error.errors[0].message : "Invalid coordinates"),
+        });
 
         const allResults: Attraction[] = [];
         const seenPlaceIds = new Set<string>();
-
-        // Determine if we're searching for restaurants (don't apply blocking in that case)
-        const isRestaurantSearch = types.some((t) =>
-          ["restaurant", "cafe", "bar", "bakery", "meal_takeaway"].includes(t)
-        );
+        const isRestaurants = isRestaurantSearch(types);
 
         for (const type of types) {
-          const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${apiKey}`;
+          const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${validatedRadius}&type=${type}&key=${apiKey}`;
 
           const response = yield* Effect.tryPromise({
             try: () => fetch(url),
@@ -73,9 +92,17 @@ export const GoogleMapsClientLive = Layer.effect(
               new AttractionsAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
           });
 
-          const data: NearbySearchResponse = yield* Effect.tryPromise({
+          const json = yield* Effect.tryPromise({
             try: () => response.json(),
             catch: () => new AttractionsAPIError("Failed to parse API response"),
+          });
+
+          const data = yield* Effect.try({
+            try: () => NearbySearchResponseSchema.parse(json),
+            catch: (error) =>
+              new AttractionsAPIError(
+                error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
+              ),
           });
 
           if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
@@ -83,12 +110,12 @@ export const GoogleMapsClientLive = Layer.effect(
             return yield* Effect.fail(new AttractionsAPIError(errorMessage));
           }
 
-          if (data.results && data.results.length > 0) {
+          if (data.results.length > 0) {
             for (const result of data.results) {
               if (seenPlaceIds.has(result.place_id)) continue;
 
               // Only apply blocking for non-restaurant searches
-              if (!isRestaurantSearch && result.types && result.types.some((type) => BLOCKED_PLACE_TYPES.has(type))) {
+              if (!isRestaurants && result.types && result.types.some((type) => BLOCKED_PLACE_TYPES.has(type))) {
                 const blockedType = result.types.find((type) => BLOCKED_PLACE_TYPES.has(type));
                 yield* Effect.logDebug("Filtered out place due to blocked type", {
                   place: result.name,
@@ -97,7 +124,7 @@ export const GoogleMapsClientLive = Layer.effect(
                 continue;
               }
 
-              if (!result.rating || !result.user_ratings_total || result.user_ratings_total < 10) {
+              if (!result.rating || !result.user_ratings_total || result.user_ratings_total < MIN_RATING_COUNT) {
                 yield* Effect.logDebug("Filtered out place due to low ratings", {
                   place: result.name,
                   rating: result.rating,
@@ -136,7 +163,7 @@ export const GoogleMapsClientLive = Layer.effect(
         }
 
         if (allResults.length === 0) {
-          const searchType = isRestaurantSearch ? "restaurants" : "attractions";
+          const searchType = isRestaurants ? "restaurants" : "attractions";
           return yield* Effect.fail(new NoAttractionsFoundError({ lat, lng }, searchType));
         }
 
@@ -149,11 +176,12 @@ export const GoogleMapsClientLive = Layer.effect(
       Effect.gen(function* () {
         const apiKey = yield* config.getGoogleMapsApiKey();
 
-        if (!query.trim()) {
-          return yield* Effect.fail(new PlaceNotFoundError(query));
-        }
+        const validatedQuery = yield* Effect.try({
+          try: () => validateNonEmptyString(query),
+          catch: (error) => new PlaceNotFoundError(error instanceof ZodError ? error.errors[0].message : query),
+        });
 
-        const encodedQuery = encodeURIComponent(query.trim());
+        const encodedQuery = encodeURIComponent(validatedQuery);
         const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedQuery}&key=${apiKey}`;
 
         const response = yield* Effect.tryPromise({
@@ -162,9 +190,17 @@ export const GoogleMapsClientLive = Layer.effect(
             new PlacesAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
         });
 
-        const data: GeocodeResponse = yield* Effect.tryPromise({
+        const json = yield* Effect.tryPromise({
           try: () => response.json(),
           catch: () => new PlacesAPIError("Failed to parse API response"),
+        });
+
+        const data = yield* Effect.try({
+          try: () => GeocodeResponseSchema.parse(json),
+          catch: (error) =>
+            new PlacesAPIError(
+              error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
+            ),
         });
 
         if (data.status === "ZERO_RESULTS") {
@@ -176,7 +212,7 @@ export const GoogleMapsClientLive = Layer.effect(
           return yield* Effect.fail(new PlacesAPIError(errorMessage));
         }
 
-        if (!data.results || data.results.length === 0) {
+        if (data.results.length === 0) {
           return yield* Effect.fail(new PlaceNotFoundError(query));
         }
 
@@ -201,19 +237,13 @@ export const GoogleMapsClientLive = Layer.effect(
       Effect.gen(function* () {
         const apiKey = yield* config.getGoogleMapsApiKey();
 
-        if (typeof lat !== "number" || typeof lng !== "number" || isNaN(lat) || isNaN(lng)) {
-          return yield* Effect.fail(new GeocodingError("Invalid coordinates"));
-        }
+        yield* Effect.try({
+          try: () => validateCoordinates(lat, lng),
+          catch: (error) =>
+            new GeocodingError(error instanceof ZodError ? error.errors[0].message : "Invalid coordinates"),
+        });
 
-        if (lat < -90 || lat > 90) {
-          return yield* Effect.fail(new GeocodingError("Latitude must be between -90 and 90"));
-        }
-
-        if (lng < -180 || lng > 180) {
-          return yield* Effect.fail(new GeocodingError("Longitude must be between -180 and 180"));
-        }
-
-        // Try to find nearby significant place first (nearby search logic from geocoding/index.ts)
+        // Try to find nearby significant place first
         const nearbyPlace = yield* findNearbySignificantPlace(lat, lng, apiKey);
         if (nearbyPlace) {
           return nearbyPlace;
@@ -228,9 +258,17 @@ export const GoogleMapsClientLive = Layer.effect(
             new GeocodingError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
         });
 
-        const data: GeocodeResponse = yield* Effect.tryPromise({
+        const json = yield* Effect.tryPromise({
           try: () => response.json(),
           catch: () => new GeocodingError("Failed to parse API response"),
+        });
+
+        const data = yield* Effect.try({
+          try: () => GeocodeResponseSchema.parse(json),
+          catch: (error) =>
+            new GeocodingError(
+              error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
+            ),
         });
 
         if (data.status === "ZERO_RESULTS") {
@@ -242,7 +280,7 @@ export const GoogleMapsClientLive = Layer.effect(
           return yield* Effect.fail(new GeocodingError(errorMessage));
         }
 
-        if (!data.results || data.results.length === 0) {
+        if (data.results.length === 0) {
           return yield* Effect.fail(new NoResultsError(lat, lng));
         }
 
@@ -266,11 +304,12 @@ export const GoogleMapsClientLive = Layer.effect(
       Effect.gen(function* () {
         const apiKey = yield* config.getGoogleMapsApiKey();
 
-        if (!placeId.trim()) {
-          return yield* Effect.fail(new PlaceNotFoundError(placeId));
-        }
+        const validatedPlaceId = yield* Effect.try({
+          try: () => validateNonEmptyString(placeId),
+          catch: (error) => new PlaceNotFoundError(error instanceof ZodError ? error.errors[0].message : placeId),
+        });
 
-        const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=place_id,name,formatted_address,geometry&key=${apiKey}`;
+        const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(validatedPlaceId)}&fields=place_id,name,formatted_address,geometry&key=${apiKey}`;
 
         const response = yield* Effect.tryPromise({
           try: () => fetch(url),
@@ -278,9 +317,17 @@ export const GoogleMapsClientLive = Layer.effect(
             new PlacesAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
         });
 
-        const data: PlaceDetailsResponse = yield* Effect.tryPromise({
+        const json = yield* Effect.tryPromise({
           try: () => response.json(),
           catch: () => new PlacesAPIError("Failed to parse API response"),
+        });
+
+        const data = yield* Effect.try({
+          try: () => PlaceDetailsResponseSchema.parse(json),
+          catch: (error) =>
+            new PlacesAPIError(
+              error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
+            ),
         });
 
         if (data.status === "NOT_FOUND" || data.status === "ZERO_RESULTS") {
@@ -310,15 +357,13 @@ export const GoogleMapsClientLive = Layer.effect(
         return place;
       });
 
-    // Helper function from geocoding/index.ts
     const findNearbySignificantPlace = (
       lat: number,
       lng: number,
       apiKey: string
     ): Effect.Effect<Place | undefined, GeocodingError> =>
       Effect.gen(function* () {
-        const radius = 150;
-        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&rankby=prominence&key=${apiKey}`;
+        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${NEARBY_PLACE_SEARCH_RADIUS}&rankby=prominence&key=${apiKey}`;
 
         const response = yield* Effect.tryPromise({
           try: () => fetch(url),
@@ -326,20 +371,22 @@ export const GoogleMapsClientLive = Layer.effect(
             new GeocodingError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
         });
 
-        const data: NearbySearchResponse = yield* Effect.tryPromise({
+        const json = yield* Effect.tryPromise({
           try: () => response.json(),
           catch: () => new GeocodingError("Failed to parse API response"),
         });
 
-        if (data.status === "ZERO_RESULTS") {
+        const data = yield* Effect.try({
+          try: () => NearbySearchResponseSchema.parse(json),
+          catch: (error) =>
+            new GeocodingError(
+              error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
+            ),
+        });
+
+        if (data.status === "ZERO_RESULTS" || data.status !== "OK") {
           return undefined;
         }
-
-        if (data.status !== "OK") {
-          return undefined;
-        }
-
-        // Find best nearby place (scoring logic from geocoding/index.ts)
         interface BestPlaceResult {
           result: {
             geometry: { location: { lat: number; lng: number } };
@@ -354,19 +401,19 @@ export const GoogleMapsClientLive = Layer.effect(
         }
         let bestPlace: BestPlaceResult | null = null;
 
-        for (const result of data.results || []) {
+        for (const result of data.results) {
           if (!result.geometry?.location || !result.name || !result.place_id) continue;
 
           const distance = calculateDistance(lat, lng, result.geometry.location.lat, result.geometry.location.lng);
 
-          if (distance > radius) continue;
+          if (distance > NEARBY_PLACE_SEARCH_RADIUS) continue;
 
-          const typePriority = getTypePriority(result.types || []);
-          const ratingScore = (result.rating || 0) * 10;
-          const reviewScore = Math.min((result.user_ratings_total || 0) / 10, 50);
-          const distanceScore = Math.max(0, 100 - distance);
-
-          const totalScore = typePriority + ratingScore + reviewScore + distanceScore;
+          const totalScore = calculatePlaceScore(
+            distance,
+            result.types || [],
+            result.rating,
+            result.user_ratings_total
+          );
 
           if (!bestPlace || totalScore > bestPlace.score) {
             bestPlace = {
@@ -407,59 +454,3 @@ export const GoogleMapsClientLive = Layer.effect(
     };
   })
 );
-
-// Helper functions from geocoding/index.ts
-function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371e3; // Earth's radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
-
-  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c;
-}
-
-function getTypePriority(types: string[]): number {
-  const highestPriority = new Set([
-    "tourist_attraction",
-    "museum",
-    "art_gallery",
-    "monument",
-    "church",
-    "synagogue",
-    "mosque",
-    "temple",
-    "historical_landmark",
-    "cultural_center",
-    "performing_arts_theater",
-  ]);
-
-  const highPriority = new Set(["park", "national_park", "zoo", "aquarium", "amusement_park", "stadium", "casino"]);
-
-  const mediumPriority = new Set([
-    "shopping_mall",
-    "department_store",
-    "hotel",
-    "lodging",
-    "restaurant",
-    "cafe",
-    "bar",
-    "night_club",
-  ]);
-
-  for (const type of types) {
-    if (highestPriority.has(type)) return 100;
-  }
-  for (const type of types) {
-    if (highPriority.has(type)) return 75;
-  }
-  for (const type of types) {
-    if (mediumPriority.has(type)) return 50;
-  }
-
-  return 25;
-}
