@@ -16,6 +16,8 @@ export interface Place {
   lat: Latitude;
   lng: Longitude;
   placeId: PlaceId;
+  plannedAttractions: Attraction[];
+  plannedRestaurants: Attraction[];
 }
 
 export interface Attraction {

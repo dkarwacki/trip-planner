@@ -92,6 +92,8 @@ export const searchPlace = (query: string, apiKey: string): Effect.Effect<Place,
       lat: Latitude(result.geometry.location.lat),
       lng: Longitude(result.geometry.location.lng),
       placeId: PlaceId(result.place_id),
+      plannedAttractions: [],
+      plannedRestaurants: [],
     };
 
     return place;
@@ -144,6 +146,8 @@ export const getPlaceDetails = (
       lat: Latitude(result.geometry.location.lat),
       lng: Longitude(result.geometry.location.lng),
       placeId: PlaceId(result.place_id),
+      plannedAttractions: [],
+      plannedRestaurants: [],
     };
 
     return place;

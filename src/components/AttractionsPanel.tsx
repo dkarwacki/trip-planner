@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { X, Star, MapPin, ExternalLink } from "lucide-react";
+import { X, Star, MapPin, ExternalLink, Check, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoreBadge } from "@/components/ScoreBadge";
-import type { AttractionScore } from "@/types";
+import type { AttractionScore, Attraction } from "@/types";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -27,6 +27,9 @@ interface AttractionsPanelProps {
   onScrollComplete?: () => void;
   highlightedAttractionId?: string | null;
   onAttractionClick?: (placeId: string) => void;
+  plannedAttractionIds: Set<string>;
+  plannedRestaurantIds: Set<string>;
+  onAddToPlan: (attraction: Attraction, type: "attraction" | "restaurant") => void;
 }
 
 const getPriceLevelSymbol = (priceLevel?: number): string => {
@@ -71,6 +74,8 @@ interface ContentListProps {
   onScrollComplete?: () => void;
   highlightedAttractionId?: string | null;
   onAttractionClick?: (placeId: string) => void;
+  plannedIds: Set<string>;
+  onAddToPlan: (attraction: Attraction, type: "attraction" | "restaurant") => void;
 }
 
 const ContentList = ({
@@ -84,6 +89,8 @@ const ContentList = ({
   onScrollComplete,
   highlightedAttractionId,
   onAttractionClick,
+  plannedIds,
+  onAddToPlan,
 }: ContentListProps) => {
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -144,6 +151,7 @@ const ContentList = ({
         {data.map((scored) => {
           const { attraction, score, breakdown } = scored;
           const topTypes = attraction.types.slice(0, 3);
+          const isPlanned = plannedIds.has(attraction.placeId);
 
           return (
             <div
@@ -157,7 +165,7 @@ const ContentList = ({
               }}
               className={`space-y-3 cursor-pointer rounded-lg p-3 -mx-3 transition-colors hover:bg-accent ${
                 highlightedAttractionId === attraction.placeId ? "bg-accent ring-2 ring-primary" : ""
-              }`}
+              } ${isPlanned ? "bg-muted/50" : ""}`}
               role="button"
               tabIndex={0}
               onClick={() => onAttractionClick?.(attraction.placeId)}
@@ -176,6 +184,27 @@ const ContentList = ({
                     {attraction.name}
                   </h3>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {isPlanned ? (
+                      <div
+                        className="p-1 rounded-md bg-primary/10 text-primary"
+                        title="Added to plan"
+                        aria-label="Added to plan"
+                      >
+                        <Check className="h-4 w-4" />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToPlan(attraction, type === "attractions" ? "attraction" : "restaurant");
+                        }}
+                        className="p-1 rounded-md hover:bg-primary hover:text-primary-foreground text-muted-foreground transition-colors"
+                        aria-label={`Add ${attraction.name} to plan`}
+                        title="Add to plan"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    )}
                     <a
                       href={`https://www.google.com/maps/place/?q=place_id:${attraction.placeId}`}
                       target="_blank"
@@ -252,6 +281,9 @@ export default function AttractionsPanel({
   onScrollComplete,
   highlightedAttractionId,
   onAttractionClick,
+  plannedAttractionIds,
+  plannedRestaurantIds,
+  onAddToPlan,
 }: AttractionsPanelProps) {
   const headingText = activeTab === "attractions" ? "Nearby Attractions" : "Nearby Restaurants";
 
@@ -276,7 +308,7 @@ export default function AttractionsPanel({
         <Separator />
         <CardContent className="flex-1 overflow-hidden p-0">
           <Tabs
-            defaultValue="attractions"
+            value={activeTab}
             className="h-full flex flex-col"
             onValueChange={(value) => onTabChange(value as CategoryTab)}
           >
@@ -301,6 +333,8 @@ export default function AttractionsPanel({
                 onScrollComplete={onScrollComplete}
                 highlightedAttractionId={highlightedAttractionId}
                 onAttractionClick={onAttractionClick}
+                plannedIds={plannedAttractionIds}
+                onAddToPlan={onAddToPlan}
               />
             </TabsContent>
 
@@ -316,6 +350,8 @@ export default function AttractionsPanel({
                 onScrollComplete={onScrollComplete}
                 highlightedAttractionId={highlightedAttractionId}
                 onAttractionClick={onAttractionClick}
+                plannedIds={plannedRestaurantIds}
+                onAddToPlan={onAddToPlan}
               />
             </TabsContent>
           </Tabs>

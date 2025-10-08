@@ -202,6 +202,8 @@ const findNearbySignificantPlace = (
         lat: Latitude(bestPlace.result.geometry.location.lat),
         lng: Longitude(bestPlace.result.geometry.location.lng),
         placeId: PlaceId(bestPlace.result.place_id),
+        plannedAttractions: [],
+        plannedRestaurants: [],
       };
       return place;
     }
@@ -290,6 +292,8 @@ export const reverseGeocode = (
       lat: Latitude(lat),
       lng: Longitude(lng),
       placeId: PlaceId(result.place_id),
+      plannedAttractions: [],
+      plannedRestaurants: [],
     };
 
     return place;

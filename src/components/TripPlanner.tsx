@@ -15,10 +15,11 @@ import { Badge } from "@/components/ui/badge";
 import { getPlaceDetails } from "@/lib/services/places/client";
 import { fetchTopAttractions, fetchTopRestaurants } from "@/lib/services/attractions/client";
 import { reverseGeocode } from "@/lib/services/geocoding/client";
-import type { Place, AttractionScore } from "@/types";
+import type { Place, AttractionScore, Attraction } from "@/types";
 import AttractionsPanel from "@/components/AttractionsPanel";
 import PlaceAutocomplete from "@/components/PlaceAutocomplete";
 import PlaceListItem from "@/components/PlaceListItem";
+import AddToPlanDialog from "@/components/AddToPlanDialog";
 import { Button } from "@/components/ui/button";
 
 type CategoryTab = "attractions" | "restaurants";
@@ -73,6 +74,10 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const [showAddPlacePopover, setShowAddPlacePopover] = useState(false);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
   const [geocodingError, setGeocodingError] = useState<string | null>(null);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingAttraction, setPendingAttraction] = useState<Attraction | null>(null);
+  const [pendingType, setPendingType] = useState<"attraction" | "restaurant" | null>(null);
 
   interface MarkerData {
     marker: google.maps.marker.AdvancedMarkerElement;
@@ -208,6 +213,78 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     [selectedPlace, loadedTabs]
   );
 
+  const handlePlannedItemClick = useCallback(
+    async (attraction: Attraction) => {
+      if (!map) return;
+
+      // Find which place this attraction belongs to
+      const parentPlace = places.find(
+        (p) =>
+          p.plannedAttractions.some((a) => a.placeId === attraction.placeId) ||
+          p.plannedRestaurants.some((r) => r.placeId === attraction.placeId)
+      );
+
+      if (!parentPlace) return;
+
+      // Check if this is a restaurant or attraction
+      const isRestaurant = parentPlace.plannedRestaurants.some((r) => r.placeId === attraction.placeId);
+      const targetTab: CategoryTab = isRestaurant ? "restaurants" : "attractions";
+
+      // If the parent place is not currently selected, select it first
+      if (parentPlace.placeId !== selectedPlaceId) {
+        setSelectedPlaceId(parentPlace.placeId);
+        setSelectedPlace(parentPlace);
+        map.panTo({ lat: attraction.location.lat, lng: attraction.location.lng });
+        map.setZoom(15);
+
+        // Load attractions
+        setAttractions([]);
+        setAttractionsError(null);
+        setIsLoadingAttractions(true);
+        try {
+          const attractionsResult = await fetchTopAttractions(parentPlace.lat, parentPlace.lng);
+          setAttractions(attractionsResult);
+        } catch (err) {
+          setAttractionsError(err instanceof Error ? err.message : "Failed to load attractions");
+        } finally {
+          setIsLoadingAttractions(false);
+        }
+
+        // If we need restaurants, load them too
+        if (targetTab === "restaurants") {
+          setRestaurants([]);
+          setRestaurantsError(null);
+          setLoadedTabs(new Set(["attractions", "restaurants"]));
+          setIsLoadingRestaurants(true);
+          try {
+            const restaurantsResult = await fetchTopRestaurants(parentPlace.lat, parentPlace.lng);
+            setRestaurants(restaurantsResult);
+          } catch (err) {
+            setRestaurantsError(err instanceof Error ? err.message : "Failed to load restaurants");
+          } finally {
+            setIsLoadingRestaurants(false);
+          }
+        } else {
+          setRestaurants([]);
+          setRestaurantsError(null);
+          setLoadedTabs(new Set(["attractions"]));
+        }
+
+        setActiveTab(targetTab);
+      } else {
+        // Place is already selected, just switch tabs if needed
+        await handleTabChange(targetTab);
+      }
+
+      // Pan to the attraction's location and highlight it
+      map.panTo({ lat: attraction.location.lat, lng: attraction.location.lng });
+      map.setZoom(15);
+      setHighlightedAttractionId(attraction.placeId);
+      setScrollToAttractionId(attraction.placeId);
+    },
+    [places, selectedPlaceId, map, handleTabChange]
+  );
+
   const handleScrollComplete = useCallback(() => {
     setScrollToAttractionId(null);
   }, []);
@@ -276,6 +353,92 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     });
   }, []);
 
+  const handleOpenAddDialog = useCallback((attraction: Attraction, type: "attraction" | "restaurant") => {
+    setPendingAttraction(attraction);
+    setPendingType(type);
+    setDialogOpen(true);
+  }, []);
+
+  const handleConfirmAdd = useCallback(() => {
+    if (!pendingAttraction || !pendingType || !selectedPlaceId) {
+      return;
+    }
+
+    setPlaces((prev) =>
+      prev.map((place) => {
+        if (place.placeId !== selectedPlaceId) {
+          return place;
+        }
+
+        const isDuplicate =
+          pendingType === "attraction"
+            ? place.plannedAttractions.some((a) => a.placeId === pendingAttraction.placeId)
+            : place.plannedRestaurants.some((r) => r.placeId === pendingAttraction.placeId);
+
+        if (isDuplicate) {
+          return place;
+        }
+
+        return {
+          ...place,
+          ...(pendingType === "attraction"
+            ? { plannedAttractions: [...place.plannedAttractions, pendingAttraction] }
+            : { plannedRestaurants: [...place.plannedRestaurants, pendingAttraction] }),
+        };
+      })
+    );
+
+    setDialogOpen(false);
+    setPendingAttraction(null);
+    setPendingType(null);
+  }, [pendingAttraction, pendingType, selectedPlaceId]);
+
+  const handleCancelAdd = useCallback(() => {
+    setDialogOpen(false);
+    setPendingAttraction(null);
+    setPendingType(null);
+  }, []);
+
+  const handleRemoveFromPlan = useCallback(
+    (placeId: string, attractionId: string, type: "attraction" | "restaurant") => {
+      setPlaces((prev) =>
+        prev.map((place) => {
+          if (place.placeId !== placeId) {
+            return place;
+          }
+
+          return {
+            ...place,
+            ...(type === "attraction"
+              ? { plannedAttractions: place.plannedAttractions.filter((a) => a.placeId !== attractionId) }
+              : { plannedRestaurants: place.plannedRestaurants.filter((r) => r.placeId !== attractionId) }),
+          };
+        })
+      );
+    },
+    []
+  );
+
+  const handleReorderPlannedItems = useCallback(
+    (placeId: string, type: "attraction" | "restaurant", oldIndex: number, newIndex: number) => {
+      setPlaces((prev) =>
+        prev.map((place) => {
+          if (place.placeId !== placeId) {
+            return place;
+          }
+
+          return {
+            ...place,
+            ...(type === "attraction"
+              ? { plannedAttractions: arrayMove(place.plannedAttractions, oldIndex, newIndex) }
+              : { plannedRestaurants: arrayMove(place.plannedRestaurants, oldIndex, newIndex) }),
+          };
+        })
+      );
+    },
+    []
+  );
+
   useEffect(() => {
     if (!map || !markerLibrary || places.length === 0) {
       markersRef.current.forEach((marker) => (marker.map = null));
@@ -306,22 +469,34 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
     markersRef.current = newMarkers;
 
-    if (places.length === 1) {
-      map.panTo({ lat: places[0].lat, lng: places[0].lng });
-      map.setZoom(14);
-    } else {
-      const bounds = new google.maps.LatLngBounds();
-      places.forEach((place) => {
-        bounds.extend({ lat: place.lat, lng: place.lng });
-      });
-      map.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 400 });
-    }
-
     return () => {
       markersRef.current.forEach((marker) => (marker.map = null));
       markersRef.current = [];
     };
   }, [map, markerLibrary, places, mapId]);
+
+  // Separate effect to handle initial map positioning when places are added/removed
+  const placesCountRef = useRef(places.length);
+  useEffect(() => {
+    if (!map || places.length === 0) return;
+
+    // Only adjust map view if the number of places changed (added/removed)
+    // Not when places are updated (e.g., adding planned items)
+    if (placesCountRef.current !== places.length) {
+      placesCountRef.current = places.length;
+
+      if (places.length === 1) {
+        map.panTo({ lat: places[0].lat, lng: places[0].lng });
+        map.setZoom(14);
+      } else {
+        const bounds = new google.maps.LatLngBounds();
+        places.forEach((place) => {
+          bounds.extend({ lat: place.lat, lng: place.lng });
+        });
+        map.fitBounds(bounds, { top: 100, right: 100, bottom: 100, left: 400 });
+      }
+    }
+  }, [map, places]);
 
   useEffect(() => {
     if (!attractionMarkersRef.current) {
@@ -473,6 +648,21 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
                           isSelected={selectedPlaceId === place.placeId}
                           onSelect={handlePanToPlace}
                           onRemove={handleRemovePlace}
+                          plannedAttractions={place.plannedAttractions}
+                          plannedRestaurants={place.plannedRestaurants}
+                          onReorderAttractions={(oldIndex: number, newIndex: number) =>
+                            handleReorderPlannedItems(place.placeId, "attraction", oldIndex, newIndex)
+                          }
+                          onReorderRestaurants={(oldIndex: number, newIndex: number) =>
+                            handleReorderPlannedItems(place.placeId, "restaurant", oldIndex, newIndex)
+                          }
+                          onRemoveAttraction={(attractionId: string) =>
+                            handleRemoveFromPlan(place.placeId, attractionId, "attraction")
+                          }
+                          onRemoveRestaurant={(restaurantId: string) =>
+                            handleRemoveFromPlan(place.placeId, restaurantId, "restaurant")
+                          }
+                          onPlannedItemClick={handlePlannedItemClick}
                         />
                       ))}
                     </div>
@@ -510,8 +700,23 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
             onScrollComplete={handleScrollComplete}
             highlightedAttractionId={highlightedAttractionId}
             onAttractionClick={setHighlightedAttractionId}
+            plannedAttractionIds={
+              new Set(places.find((p) => p.placeId === selectedPlaceId)?.plannedAttractions.map((a) => a.placeId) || [])
+            }
+            plannedRestaurantIds={
+              new Set(places.find((p) => p.placeId === selectedPlaceId)?.plannedRestaurants.map((r) => r.placeId) || [])
+            }
+            onAddToPlan={handleOpenAddDialog}
           />
         )}
+
+        <AddToPlanDialog
+          attraction={pendingAttraction}
+          isOpen={dialogOpen}
+          onConfirm={handleConfirmAdd}
+          onCancel={handleCancelAdd}
+          type={pendingType || "attraction"}
+        />
 
         {showAddPlacePopover && clickedLocation && (
           <div className="absolute top-4 left-4 z-50">
