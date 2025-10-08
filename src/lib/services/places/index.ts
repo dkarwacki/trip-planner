@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import type { Place } from "@/types";
+import { PlaceId, Latitude, Longitude } from "@/types";
 
 export class PlaceNotFoundError {
   readonly _tag = "PlaceNotFoundError";
@@ -88,9 +89,9 @@ export const searchPlace = (query: string, apiKey: string): Effect.Effect<Place,
     const place: Place = {
       id: crypto.randomUUID(),
       name: result.formatted_address,
-      lat: result.geometry.location.lat,
-      lng: result.geometry.location.lng,
-      placeId: result.place_id,
+      lat: Latitude(result.geometry.location.lat),
+      lng: Longitude(result.geometry.location.lng),
+      placeId: PlaceId(result.place_id),
     };
 
     return place;
@@ -140,9 +141,9 @@ export const getPlaceDetails = (
     const place: Place = {
       id: crypto.randomUUID(),
       name: result.name || result.formatted_address,
-      lat: result.geometry.location.lat,
-      lng: result.geometry.location.lng,
-      placeId: result.place_id,
+      lat: Latitude(result.geometry.location.lat),
+      lng: Longitude(result.geometry.location.lng),
+      placeId: PlaceId(result.place_id),
     };
 
     return place;

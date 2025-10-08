@@ -1,6 +1,8 @@
-import { Effect, Cache, Duration, Data } from "effect";
+import { Effect, Cache, Duration, Data, Layer, Context } from "effect";
 import type { Attraction, AttractionScore } from "@/types";
+import { PlaceId, Latitude, Longitude } from "@/types";
 import { scoreAttractions, scoreRestaurants } from "./scoring";
+import { ATTRACTION_TYPES, RESTAURANT_TYPES, BLOCKED_PLACE_TYPES } from "./constants";
 
 export class NoAttractionsFoundError {
   readonly _tag = "NoAttractionsFoundError";
@@ -19,7 +21,20 @@ interface ServerCacheKey {
   apiKey: string;
 }
 
-const attractionsCacheSingleton = Effect.runSync(
+// Define cache service tags
+class AttractionsCache extends Context.Tag("AttractionsCache")<
+  AttractionsCache,
+  Cache.Cache<ServerCacheKey, Attraction[], NoAttractionsFoundError | AttractionsAPIError>
+>() {}
+
+class RestaurantsCache extends Context.Tag("RestaurantsCache")<
+  RestaurantsCache,
+  Cache.Cache<ServerCacheKey, Attraction[], NoAttractionsFoundError | AttractionsAPIError>
+>() {}
+
+// Create cache layers
+const AttractionsCacheLayer = Layer.effect(
+  AttractionsCache,
   Cache.make({
     capacity: 100,
     timeToLive: Duration.minutes(5),
@@ -27,13 +42,17 @@ const attractionsCacheSingleton = Effect.runSync(
   })
 );
 
-const restaurantsCacheSingleton = Effect.runSync(
+const RestaurantsCacheLayer = Layer.effect(
+  RestaurantsCache,
   Cache.make({
     capacity: 100,
     timeToLive: Duration.minutes(5),
     lookup: (key: ServerCacheKey) => fetchNearbyRestaurantsUncached(key.lat, key.lng, key.radius, key.apiKey),
   })
 );
+
+// Export layers for use in API endpoints
+export { AttractionsCacheLayer, RestaurantsCacheLayer, AttractionsCache, RestaurantsCache };
 
 interface PlaceResult {
   place_id: string;
@@ -75,85 +94,10 @@ const fetchNearbyAttractionsUncached = (
       return yield* Effect.fail(new AttractionsAPIError("Radius must be between 100 and 50000 meters"));
     }
 
-    const types = [
-      "tourist_attraction",
-      "museum",
-      "art_gallery",
-      "park",
-      "national_park",
-      "historical_landmark",
-      "zoo",
-      "aquarium",
-      "amusement_park",
-      "cultural_center",
-      "performing_arts_theater",
-    ];
-
-    const blockedTypes = new Set([
-      "car_repair",
-      "car_dealer",
-      "car_wash",
-      "car_rental",
-      "gas_station",
-      "store",
-      "shopping_mall",
-      "convenience_store",
-      "supermarket",
-      "department_store",
-      "clothing_store",
-      "shoe_store",
-      "electronics_store",
-      "furniture_store",
-      "hardware_store",
-      "home_goods_store",
-      "jewelry_store",
-      "pet_store",
-      "electrician",
-      "plumber",
-      "locksmith",
-      "painter",
-      "roofing_contractor",
-      "lawyer",
-      "real_estate_agency",
-      "insurance_agency",
-      "accounting",
-      "atm",
-      "bank",
-      "dentist",
-      "doctor",
-      "hospital",
-      "pharmacy",
-      "veterinary_care",
-      "hair_care",
-      "beauty_salon",
-      "spa",
-      "gym",
-      "laundry",
-      "post_office",
-      "storage",
-      "lodging",
-      "hotel",
-      "motel",
-      "hostel",
-      "resort_hotel",
-      "bed_and_breakfast",
-      "guest_house",
-      "campground",
-      "rv_park",
-      "restaurant",
-      "cafe",
-      "bar",
-      "bakery",
-      "meal_delivery",
-      "meal_takeaway",
-      "food",
-      "night_club",
-    ]);
-
     const allAttractions: Attraction[] = [];
     const seenPlaceIds = new Set<string>();
 
-    for (const type of types) {
+    for (const type of ATTRACTION_TYPES) {
       const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${apiKey}`;
 
       const response = yield* Effect.tryPromise({
@@ -176,22 +120,35 @@ const fetchNearbyAttractionsUncached = (
         for (const result of data.results) {
           if (seenPlaceIds.has(result.place_id)) continue;
 
-          if (result.types && result.types.some((type) => blockedTypes.has(type))) {
+          if (result.types && result.types.some((type) => BLOCKED_PLACE_TYPES.has(type))) {
+            const blockedType = result.types.find((type) => BLOCKED_PLACE_TYPES.has(type));
+            yield* Effect.logDebug("Filtered out place due to blocked type", {
+              place: result.name,
+              blockedType,
+            });
             continue;
           }
 
           if (!result.rating || !result.user_ratings_total || result.user_ratings_total < 10) {
+            yield* Effect.logDebug("Filtered out place due to low ratings", {
+              place: result.name,
+              rating: result.rating,
+              reviews: result.user_ratings_total,
+            });
             continue;
           }
 
           if (!result.geometry?.location) {
+            yield* Effect.logDebug("Filtered out place due to missing geometry", {
+              place: result.name,
+            });
             continue;
           }
 
           seenPlaceIds.add(result.place_id);
 
           const attraction: Attraction = {
-            placeId: result.place_id,
+            placeId: PlaceId(result.place_id),
             name: result.name,
             rating: result.rating,
             userRatingsTotal: result.user_ratings_total,
@@ -200,8 +157,8 @@ const fetchNearbyAttractionsUncached = (
             priceLevel: result.price_level,
             openNow: result.opening_hours?.open_now,
             location: {
-              lat: result.geometry.location.lat,
-              lng: result.geometry.location.lng,
+              lat: Latitude(result.geometry.location.lat),
+              lng: Longitude(result.geometry.location.lng),
             },
           };
 
@@ -232,12 +189,10 @@ const fetchNearbyRestaurantsUncached = (
       return yield* Effect.fail(new AttractionsAPIError("Radius must be between 100 and 50000 meters"));
     }
 
-    const types = ["restaurant", "cafe", "bar", "bakery", "meal_takeaway"];
-
     const allRestaurants: Attraction[] = [];
     const seenPlaceIds = new Set<string>();
 
-    for (const type of types) {
+    for (const type of RESTAURANT_TYPES) {
       const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=${type}&key=${apiKey}`;
 
       const response = yield* Effect.tryPromise({
@@ -261,17 +216,25 @@ const fetchNearbyRestaurantsUncached = (
           if (seenPlaceIds.has(result.place_id)) continue;
 
           if (!result.rating || !result.user_ratings_total || result.user_ratings_total < 10) {
+            yield* Effect.logDebug("Filtered out restaurant due to low ratings", {
+              place: result.name,
+              rating: result.rating,
+              reviews: result.user_ratings_total,
+            });
             continue;
           }
 
           if (!result.geometry?.location) {
+            yield* Effect.logDebug("Filtered out restaurant due to missing geometry", {
+              place: result.name,
+            });
             continue;
           }
 
           seenPlaceIds.add(result.place_id);
 
           const restaurant: Attraction = {
-            placeId: result.place_id,
+            placeId: PlaceId(result.place_id),
             name: result.name,
             rating: result.rating,
             userRatingsTotal: result.user_ratings_total,
@@ -280,8 +243,8 @@ const fetchNearbyRestaurantsUncached = (
             priceLevel: result.price_level,
             openNow: result.opening_hours?.open_now,
             location: {
-              lat: result.geometry.location.lat,
-              lng: result.geometry.location.lng,
+              lat: Latitude(result.geometry.location.lat),
+              lng: Longitude(result.geometry.location.lng),
             },
           };
 
@@ -302,10 +265,11 @@ export const getTopAttractions = (
   lng: number,
   apiKey: string,
   limit = 10
-): Effect.Effect<AttractionScore[], NoAttractionsFoundError | AttractionsAPIError> =>
+): Effect.Effect<AttractionScore[], NoAttractionsFoundError | AttractionsAPIError, AttractionsCache> =>
   Effect.gen(function* () {
+    const cache = yield* AttractionsCache;
     const cacheKey = Data.struct({ lat, lng, radius: 1500, apiKey });
-    const attractions = yield* attractionsCacheSingleton.get(cacheKey);
+    const attractions = yield* cache.get(cacheKey);
 
     const scored = scoreAttractions(attractions);
     return scored.slice(0, limit);
@@ -316,10 +280,11 @@ export const getTopRestaurants = (
   lng: number,
   apiKey: string,
   limit = 10
-): Effect.Effect<AttractionScore[], NoAttractionsFoundError | AttractionsAPIError> =>
+): Effect.Effect<AttractionScore[], NoAttractionsFoundError | AttractionsAPIError, RestaurantsCache> =>
   Effect.gen(function* () {
+    const cache = yield* RestaurantsCache;
     const cacheKey = Data.struct({ lat, lng, radius: 1500, apiKey });
-    const restaurants = yield* restaurantsCacheSingleton.get(cacheKey);
+    const restaurants = yield* cache.get(cacheKey);
 
     const scored = scoreRestaurants(restaurants);
     return scored.slice(0, limit);

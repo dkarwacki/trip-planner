@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import type { Place } from "@/types";
+import { PlaceId, Latitude, Longitude } from "@/types";
 
 export class NoResultsError {
   readonly _tag = "NoResultsError";
@@ -198,9 +199,9 @@ const findNearbySignificantPlace = (
       const place: Place = {
         id: crypto.randomUUID(),
         name: bestPlace.result.name,
-        lat: bestPlace.result.geometry.location.lat,
-        lng: bestPlace.result.geometry.location.lng,
-        placeId: bestPlace.result.place_id,
+        lat: Latitude(bestPlace.result.geometry.location.lat),
+        lng: Longitude(bestPlace.result.geometry.location.lng),
+        placeId: PlaceId(bestPlace.result.place_id),
       };
       return place;
     }
@@ -286,9 +287,9 @@ export const reverseGeocode = (
     const place: Place = {
       id: crypto.randomUUID(),
       name: result.formatted_address,
-      lat: lat,
-      lng: lng,
-      placeId: result.place_id,
+      lat: Latitude(lat),
+      lng: Longitude(lng),
+      placeId: PlaceId(result.place_id),
     };
 
     return place;

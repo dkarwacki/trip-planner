@@ -1,15 +1,27 @@
 import type { APIRoute } from "astro";
-import { Effect } from "effect";
+import { Effect, Layer, Runtime } from "effect";
 import { z } from "zod";
-import { getTopRestaurants, NoAttractionsFoundError, AttractionsAPIError } from "@/lib/services/attractions";
+import {
+  getTopRestaurants,
+  NoAttractionsFoundError,
+  AttractionsAPIError,
+  RestaurantsCacheLayer,
+} from "@/lib/services/attractions";
 import type { AttractionScore } from "@/types";
 import { getGoogleMapsApiKey, MissingGoogleMapsAPIKeyError } from "@/lib/utils";
 
 export const prerender = false;
 
+const runtimeEffect = Layer.toRuntime(RestaurantsCacheLayer);
+const runtime = await Effect.runPromise(Effect.scoped(runtimeEffect));
+
 const RequestBodySchema = z.object({
-  lat: z.number({ required_error: "lat is required" }),
-  lng: z.number({ required_error: "lng is required" }),
+  lat: z
+    .number({ required_error: "lat is required" })
+    .refine((val) => val >= -90 && val <= 90, { message: "Latitude must be between -90 and 90" }),
+  lng: z
+    .number({ required_error: "lng is required" })
+    .refine((val) => val >= -180 && val <= 180, { message: "Longitude must be between -180 and 180" }),
   radius: z.number().min(100).max(50000).default(1500),
 });
 
@@ -35,20 +47,21 @@ const fetchRestaurantsProgram = (
   body: unknown
 ): Effect.Effect<
   AttractionScore[],
-  ValidationError | MissingGoogleMapsAPIKeyError | NoAttractionsFoundError | AttractionsAPIError
+  ValidationError | MissingGoogleMapsAPIKeyError | NoAttractionsFoundError | AttractionsAPIError,
+  never
 > =>
   Effect.gen(function* () {
     const { lat, lng } = yield* validateRequest(body);
     const apiKey = yield* getGoogleMapsApiKey();
     const restaurants = yield* getTopRestaurants(lat, lng, apiKey, 10);
     return restaurants;
-  });
+  }).pipe(Effect.provide(RestaurantsCacheLayer));
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
 
-    const response = await Effect.runPromise(
+    const response = await Runtime.runPromise(runtime)(
       fetchRestaurantsProgram(body).pipe(
         Effect.match({
           onFailure: (error) => {
