@@ -10,7 +10,7 @@ export class ConfigService extends Context.Tag("ConfigService")<ConfigService, I
 export const ConfigServiceLive = Layer.succeed(ConfigService, {
   getGoogleMapsApiKey: () =>
     Effect.gen(function* () {
-      const apiKey = import.meta.env.GOOGLE_MAPS_API_KEY as string | undefined;
+      const apiKey = import.meta.env.GOOGLE_MAPS_API_KEY;
 
       if (!apiKey) {
         yield* Effect.logError("GOOGLE_MAPS_API_KEY is not configured");

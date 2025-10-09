@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
-import { GetPlaceDetails, GetPlaceDetailsInputSchema } from "@/application/places";
+import { getPlaceDetails, GetPlaceDetailsInputSchema } from "@/application/places";
 import { ValidationError } from "@/infrastructure/http/validation";
 import { toHttpResponse } from "@/infrastructure/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/runtime";
@@ -24,7 +24,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const program = Effect.gen(function* () {
     const input = yield* validateRequest(body);
-    const place = yield* GetPlaceDetails(input);
+    const place = yield* getPlaceDetails(input);
     return { place };
   });
 
