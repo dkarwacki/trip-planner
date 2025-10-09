@@ -16,6 +16,8 @@ import { getPlaceDetails } from "@/infrastructure/http/clients";
 import { fetchTopAttractions, fetchTopRestaurants } from "@/infrastructure/http/clients";
 import { reverseGeocode } from "@/infrastructure/http/clients";
 import type { Place, AttractionScore, Attraction } from "@/domain/models";
+import { scoreAttractions } from "@/domain/scoring/attractions";
+import { scoreRestaurants } from "@/domain/scoring/restaurants";
 import AttractionsPanel from "@/components/AttractionsPanel";
 import PlaceAutocomplete from "@/components/PlaceAutocomplete";
 import PlaceListItem from "@/components/PlaceListItem";
@@ -54,6 +56,26 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+
+  // Helper function to merge API results with planned items
+  const mergeWithPlannedItems = useCallback(
+    (
+      apiResults: AttractionScore[],
+      plannedItems: Attraction[],
+      scoringFn: (items: Attraction[]) => AttractionScore[]
+    ): AttractionScore[] => {
+      const apiIds = new Set(apiResults.map((r) => r.attraction.id));
+      const missingItems = plannedItems.filter((item) => !apiIds.has(item.id));
+
+      if (missingItems.length === 0) {
+        return apiResults;
+      }
+
+      const scoredMissing = scoringFn(missingItems);
+      return [...apiResults, ...scoredMissing];
+    },
+    []
+  );
 
   const [attractions, setAttractions] = useState<AttractionScore[]>([]);
   const [isLoadingAttractions, setIsLoadingAttractions] = useState(false);
@@ -156,22 +178,39 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       setAttractionsError(null);
       setRestaurants([]);
       setRestaurantsError(null);
-      setLoadedTabs(new Set(["attractions"]));
+      setLoadedTabs(new Set(["attractions", "restaurants"]));
       setActiveTab("attractions");
 
       setIsLoadingAttractions(true);
+      setIsLoadingRestaurants(true);
 
-      try {
-        const attractionsResult = await fetchTopAttractions(place.lat, place.lng);
+      const [attractionsResult, restaurantsResult] = await Promise.allSettled([
+        fetchTopAttractions(place.lat, place.lng),
+        fetchTopRestaurants(place.lat, place.lng),
+      ]);
 
-        setAttractions(attractionsResult);
-      } catch (err) {
-        setAttractionsError(err instanceof Error ? err.message : "Failed to load attractions");
-      } finally {
-        setIsLoadingAttractions(false);
+      if (attractionsResult.status === "fulfilled") {
+        const merged = mergeWithPlannedItems(attractionsResult.value, place.plannedAttractions, scoreAttractions);
+        setAttractions(merged);
+      } else {
+        setAttractionsError(
+          attractionsResult.reason instanceof Error ? attractionsResult.reason.message : "Failed to load attractions"
+        );
       }
+
+      if (restaurantsResult.status === "fulfilled") {
+        const merged = mergeWithPlannedItems(restaurantsResult.value, place.plannedRestaurants, scoreRestaurants);
+        setRestaurants(merged);
+      } else {
+        setRestaurantsError(
+          restaurantsResult.reason instanceof Error ? restaurantsResult.reason.message : "Failed to load restaurants"
+        );
+      }
+
+      setIsLoadingAttractions(false);
+      setIsLoadingRestaurants(false);
     },
-    [map]
+    [map, mergeWithPlannedItems]
   );
 
   const handleCloseAttractions = useCallback(() => {
@@ -201,8 +240,9 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
         try {
           const restaurantsResult = await fetchTopRestaurants(selectedPlace.lat, selectedPlace.lng);
+          const merged = mergeWithPlannedItems(restaurantsResult, selectedPlace.plannedRestaurants, scoreRestaurants);
 
-          setRestaurants(restaurantsResult);
+          setRestaurants(merged);
         } catch (err) {
           setRestaurantsError(err instanceof Error ? err.message : "Failed to load restaurants");
         } finally {
@@ -210,7 +250,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         }
       }
     },
-    [selectedPlace, loadedTabs]
+    [selectedPlace, loadedTabs, mergeWithPlannedItems]
   );
 
   const handlePlannedItemClick = useCallback(
@@ -237,38 +277,48 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         map.panTo({ lat: attraction.location.lat, lng: attraction.location.lng });
         map.setZoom(15);
 
-        // Load attractions
+        // Load both attractions and restaurants in parallel
         setAttractions([]);
         setAttractionsError(null);
+        setRestaurants([]);
+        setRestaurantsError(null);
+        setLoadedTabs(new Set(["attractions", "restaurants"]));
         setIsLoadingAttractions(true);
-        try {
-          const attractionsResult = await fetchTopAttractions(parentPlace.lat, parentPlace.lng);
-          setAttractions(attractionsResult);
-        } catch (err) {
-          setAttractionsError(err instanceof Error ? err.message : "Failed to load attractions");
-        } finally {
-          setIsLoadingAttractions(false);
+        setIsLoadingRestaurants(true);
+
+        const [attractionsResult, restaurantsResult] = await Promise.allSettled([
+          fetchTopAttractions(parentPlace.lat, parentPlace.lng),
+          fetchTopRestaurants(parentPlace.lat, parentPlace.lng),
+        ]);
+
+        if (attractionsResult.status === "fulfilled") {
+          const merged = mergeWithPlannedItems(
+            attractionsResult.value,
+            parentPlace.plannedAttractions,
+            scoreAttractions
+          );
+          setAttractions(merged);
+        } else {
+          setAttractionsError(
+            attractionsResult.reason instanceof Error ? attractionsResult.reason.message : "Failed to load attractions"
+          );
         }
 
-        // If we need restaurants, load them too
-        if (targetTab === "restaurants") {
-          setRestaurants([]);
-          setRestaurantsError(null);
-          setLoadedTabs(new Set(["attractions", "restaurants"]));
-          setIsLoadingRestaurants(true);
-          try {
-            const restaurantsResult = await fetchTopRestaurants(parentPlace.lat, parentPlace.lng);
-            setRestaurants(restaurantsResult);
-          } catch (err) {
-            setRestaurantsError(err instanceof Error ? err.message : "Failed to load restaurants");
-          } finally {
-            setIsLoadingRestaurants(false);
-          }
+        if (restaurantsResult.status === "fulfilled") {
+          const merged = mergeWithPlannedItems(
+            restaurantsResult.value,
+            parentPlace.plannedRestaurants,
+            scoreRestaurants
+          );
+          setRestaurants(merged);
         } else {
-          setRestaurants([]);
-          setRestaurantsError(null);
-          setLoadedTabs(new Set(["attractions"]));
+          setRestaurantsError(
+            restaurantsResult.reason instanceof Error ? restaurantsResult.reason.message : "Failed to load restaurants"
+          );
         }
+
+        setIsLoadingAttractions(false);
+        setIsLoadingRestaurants(false);
 
         setActiveTab(targetTab);
       } else {
@@ -282,7 +332,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       setHighlightedAttractionId(attraction.id);
       setScrollToAttractionId(attraction.id);
     },
-    [places, selectedPlaceId, map, handleTabChange]
+    [places, selectedPlaceId, map, handleTabChange, mergeWithPlannedItems]
   );
 
   const handleScrollComplete = useCallback(() => {
@@ -437,6 +487,38 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       );
     },
     []
+  );
+
+  const handlePlaceUpdate = useCallback((placeId: string, updatedPlace: Place) => {
+    setPlaces((prev) => prev.map((place) => (place.id === placeId ? updatedPlace : place)));
+  }, []);
+
+  const handleAttractionAccepted = useCallback(
+    (placeId: string, attraction: Attraction, type: "attraction" | "restaurant") => {
+      // Only add to nearby lists if this place is currently selected
+      if (placeId !== selectedPlaceId) {
+        return;
+      }
+
+      if (type === "attraction") {
+        // Check if already in the list
+        const exists = attractions.some((a) => a.attraction.id === attraction.id);
+        if (!exists) {
+          // Score the single attraction and add it to the list
+          const scored = scoreAttractions([attraction]);
+          setAttractions((prev) => [...prev, ...scored]);
+        }
+      } else {
+        // Check if already in the list
+        const exists = restaurants.some((r) => r.attraction.id === attraction.id);
+        if (!exists) {
+          // Score the single restaurant and add it to the list
+          const scored = scoreRestaurants([attraction]);
+          setRestaurants((prev) => [...prev, ...scored]);
+        }
+      }
+    },
+    [attractions, restaurants, selectedPlaceId]
   );
 
   useEffect(() => {
@@ -616,27 +698,27 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
   return (
     <div className="flex h-screen">
-      <div className="w-96 flex flex-col bg-white border-r shadow-sm">
-        <div className="p-4 border-b">
+      <div className="@container w-full sm:w-96 md:w-[28rem] lg:w-[32rem] xl:w-[36rem] flex-shrink-0 flex flex-col bg-white border-r shadow-sm">
+        <div className="p-4 border-b space-y-3">
           <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} map={map} />
           {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
           {isLoading && <p className="text-sm text-muted-foreground mt-1">Loading place details...</p>}
         </div>
 
-        <Card className="flex-1 m-4 flex flex-col rounded-lg">
-          <CardHeader className="pb-3">
+        <Card className="flex-1 m-4 flex flex-col rounded-lg min-h-0">
+          <CardHeader className="pb-3 flex-shrink-0">
             <CardTitle className="flex items-center justify-between">
               <span>Places</span>
               <Badge variant="secondary">{places.length}</Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden p-0">
+          <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
             {places.length === 0 ? (
               <div className="flex items-center justify-center h-full text-muted-foreground px-6 text-center">
                 <p>No places added yet. Search for a place to get started.</p>
               </div>
             ) : (
-              <ScrollArea className="h-full px-6 pb-6">
+              <ScrollArea className="h-full w-full px-4 sm:px-6 pb-6">
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={places.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-2">
@@ -663,6 +745,8 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
                             handleRemoveFromPlan(place.id, restaurantId, "restaurant")
                           }
                           onPlannedItemClick={handlePlannedItemClick}
+                          onPlaceUpdate={(updatedPlace: Place) => handlePlaceUpdate(place.id, updatedPlace)}
+                          onAttractionAccepted={handleAttractionAccepted}
                         />
                       ))}
                     </div>

@@ -4,6 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import PlannedItemsList from "@/components/PlannedItemsList";
+import PlaceSuggestionsButton from "@/components/PlaceSuggestionsButton";
 import type { Place, Attraction } from "@/domain/models";
 
 interface PlaceListItemProps {
@@ -19,6 +20,8 @@ interface PlaceListItemProps {
   onRemoveAttraction: (attractionId: string) => void;
   onRemoveRestaurant: (restaurantId: string) => void;
   onPlannedItemClick?: (attraction: Attraction) => void;
+  onPlaceUpdate: (updatedPlace: Place) => void;
+  onAttractionAccepted?: (placeId: string, attraction: Attraction, type: "attraction" | "restaurant") => void;
 }
 
 export default function PlaceListItem({
@@ -34,6 +37,8 @@ export default function PlaceListItem({
   onRemoveAttraction,
   onRemoveRestaurant,
   onPlannedItemClick,
+  onPlaceUpdate,
+  onAttractionAccepted,
 }: PlaceListItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -79,7 +84,7 @@ export default function PlaceListItem({
         tabIndex={0}
         aria-label={`${place.name} - Click to view on map, drag number to reorder`}
       >
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2 min-w-0">
           <button
             type="button"
             className="flex items-start gap-3 flex-1 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer"
@@ -104,13 +109,22 @@ export default function PlaceListItem({
               {index + 1}
             </div>
             <div className="flex-1 min-w-0 pointer-events-none">
-              <h3 className="font-medium line-clamp-2">{place.name}</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-medium break-words hyphens-auto" lang="el">
+                {place.name}
+              </h3>
+              <p className="text-sm text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
                 {place.lat.toFixed(4)}, {place.lng.toFixed(4)}
               </p>
             </div>
           </button>
-          <div className="flex items-center gap-1">
+          <div className="flex items-start gap-1 flex-shrink-0">
+            <PlaceSuggestionsButton
+              place={place}
+              onPlaceUpdate={onPlaceUpdate}
+              onExpandRequest={() => setIsOpen(true)}
+              onAttractionAccepted={onAttractionAccepted}
+              onHighlight={() => onSelect(place)}
+            />
             {hasPlannedItems && (
               <CollapsibleTrigger asChild>
                 <button

@@ -7,18 +7,28 @@ import type {
   NoResultsError,
   GeocodingError,
   MissingGoogleMapsAPIKeyError,
+  MissingOpenRouterAPIKeyError,
+  MissingOpenRouterModelError,
   UnexpectedError,
+  AgentError,
+  InvalidToolCallError,
+  ModelResponseError,
 } from "@/domain/errors";
 
 type AppError =
   | ValidationError
   | MissingGoogleMapsAPIKeyError
+  | MissingOpenRouterAPIKeyError
+  | MissingOpenRouterModelError
   | NoAttractionsFoundError
   | AttractionsAPIError
   | PlaceNotFoundError
   | PlacesAPIError
   | NoResultsError
   | GeocodingError
+  | AgentError
+  | InvalidToolCallError
+  | ModelResponseError
   | UnexpectedError;
 
 export const toHttpResponse = (error: AppError, successData?: Record<string, unknown>): Response => {
@@ -43,6 +53,8 @@ export const toHttpResponse = (error: AppError, successData?: Record<string, unk
       }
 
       case "MissingGoogleMapsAPIKeyError":
+      case "MissingOpenRouterAPIKeyError":
+      case "MissingOpenRouterModelError":
         return new Response(
           JSON.stringify({
             success: false,
@@ -117,6 +129,42 @@ export const toHttpResponse = (error: AppError, successData?: Record<string, unk
         );
 
       case "GeocodingError":
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: error.message,
+          }),
+          {
+            status: 502,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+      case "AgentError":
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: error.message,
+          }),
+          {
+            status: 502,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+      case "InvalidToolCallError":
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: error.message,
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+      case "ModelResponseError":
         return new Response(
           JSON.stringify({
             success: false,
