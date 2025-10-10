@@ -25,6 +25,7 @@ export interface ToolCall {
 }
 
 export interface ChatCompletionResponse {
+  usage: unknown;
   content: string | null;
   toolCalls?: ToolCall[];
   finishReason: string | null;
@@ -125,6 +126,7 @@ export const OpenAIClientLive = Layer.effect(
             content: message.content,
             toolCalls,
             finishReason: choice.finish_reason,
+            usage: completion.usage,
           };
         }),
     };

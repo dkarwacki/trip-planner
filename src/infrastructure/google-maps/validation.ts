@@ -88,10 +88,13 @@ export const PlaceDetailsResponseSchema = z.object({
   error_message: z.string().optional(),
 });
 
+export const TextSearchResponseSchema = NearbySearchResponseSchema;
+
 export type PlaceResult = z.infer<typeof PlaceResultSchema>;
 export type NearbySearchResponse = z.infer<typeof NearbySearchResponseSchema>;
 export type GeocodeResponse = z.infer<typeof GeocodeResponseSchema>;
 export type PlaceDetailsResponse = z.infer<typeof PlaceDetailsResponseSchema>;
+export type TextSearchResponse = z.infer<typeof TextSearchResponseSchema>;
 
 export const validateSearchRadius = (radius: number): SearchRadius => {
   const validated = SearchRadiusSchema.parse(radius);

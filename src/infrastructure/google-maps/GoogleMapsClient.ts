@@ -16,6 +16,7 @@ import {
   NearbySearchResponseSchema,
   GeocodeResponseSchema,
   PlaceDetailsResponseSchema,
+  TextSearchResponseSchema,
   validateSearchRadius,
   validateNonEmptyString,
   validateCoordinates,
@@ -49,6 +50,10 @@ export interface IGoogleMapsClient {
   readonly placeDetails: (
     placeId: string
   ) => Effect.Effect<Place, PlaceNotFoundError | PlacesAPIError | MissingGoogleMapsAPIKeyError>;
+
+  readonly textSearch: (
+    query: string
+  ) => Effect.Effect<Attraction | undefined, AttractionsAPIError | MissingGoogleMapsAPIKeyError>;
 }
 
 export class GoogleMapsClient extends Context.Tag("GoogleMapsClient")<GoogleMapsClient, IGoogleMapsClient>() {}
@@ -116,27 +121,14 @@ export const GoogleMapsClientLive = Layer.effect(
 
               // Only apply blocking for non-restaurant searches
               if (!isRestaurants && result.types && result.types.some((type) => BLOCKED_PLACE_TYPES.has(type))) {
-                const blockedType = result.types.find((type) => BLOCKED_PLACE_TYPES.has(type));
-                yield* Effect.logDebug("Filtered out place due to blocked type", {
-                  place: result.name,
-                  blockedType,
-                });
                 continue;
               }
 
               if (!result.rating || !result.user_ratings_total || result.user_ratings_total < MIN_RATING_COUNT) {
-                yield* Effect.logDebug("Filtered out place due to low ratings", {
-                  place: result.name,
-                  rating: result.rating,
-                  reviews: result.user_ratings_total,
-                });
                 continue;
               }
 
               if (!result.geometry?.location) {
-                yield* Effect.logDebug("Filtered out place due to missing geometry", {
-                  place: result.name,
-                });
                 continue;
               }
 
@@ -446,11 +438,79 @@ export const GoogleMapsClientLive = Layer.effect(
         return undefined;
       });
 
+    const textSearch = (
+      query: string
+    ): Effect.Effect<Attraction | undefined, AttractionsAPIError | MissingGoogleMapsAPIKeyError> =>
+      Effect.gen(function* () {
+        const apiKey = yield* config.getGoogleMapsApiKey();
+
+        const validatedQuery = yield* Effect.try({
+          try: () => validateNonEmptyString(query),
+          catch: (error) =>
+            new AttractionsAPIError(error instanceof ZodError ? error.errors[0].message : "Invalid query"),
+        });
+
+        const encodedQuery = encodeURIComponent(validatedQuery);
+        const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodedQuery}&key=${apiKey}`;
+
+        const response = yield* Effect.tryPromise({
+          try: () => fetch(url),
+          catch: (error) =>
+            new AttractionsAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
+        });
+
+        const json = yield* Effect.tryPromise({
+          try: () => response.json(),
+          catch: () => new AttractionsAPIError("Failed to parse API response"),
+        });
+
+        const data = yield* Effect.try({
+          try: () => TextSearchResponseSchema.parse(json),
+          catch: (error) =>
+            new AttractionsAPIError(
+              error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
+            ),
+        });
+
+        if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+          const errorMessage = data.error_message || `Text Search API error: ${data.status}`;
+          return yield* Effect.fail(new AttractionsAPIError(errorMessage));
+        }
+
+        if (data.results.length === 0) {
+          return undefined;
+        }
+
+        const result = data.results[0];
+
+        if (!result.geometry?.location || !result.rating || !result.user_ratings_total) {
+          return undefined;
+        }
+
+        const attraction: Attraction = {
+          id: PlaceId(result.place_id),
+          name: result.name,
+          rating: result.rating,
+          userRatingsTotal: result.user_ratings_total,
+          types: result.types || [],
+          vicinity: result.vicinity || "",
+          priceLevel: result.price_level,
+          openNow: result.opening_hours?.open_now,
+          location: {
+            lat: Latitude(result.geometry.location.lat),
+            lng: Longitude(result.geometry.location.lng),
+          },
+        };
+
+        return attraction;
+      });
+
     return {
       nearbySearch,
       geocode,
       reverseGeocode,
       placeDetails,
+      textSearch,
     };
   })
 );

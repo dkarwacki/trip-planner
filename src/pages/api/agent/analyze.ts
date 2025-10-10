@@ -37,12 +37,15 @@ export const POST: APIRoute = async ({ request }) => {
         })
       ),
       Effect.match({
-        onFailure: (error) => toHttpResponse(error),
-        onSuccess: (data) => toHttpResponse(data as unknown as Parameters<typeof toHttpResponse>[0], data),
+        onFailure: (error) => {
+          return toHttpResponse(error);
+        },
+        onSuccess: (data) => {
+          return toHttpResponse(data as unknown as Parameters<typeof toHttpResponse>[0], data);
+        },
       })
     )
   );
 
   return response;
 };
-

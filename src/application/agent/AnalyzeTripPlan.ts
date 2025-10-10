@@ -3,14 +3,15 @@ import { z } from "zod";
 import { OpenAIClient, type ToolCall } from "@/infrastructure/openai";
 import { getTopAttractions, getTopRestaurants } from "@/application/attractions";
 import { getPlaceDetails } from "@/application/places";
+import { GoogleMapsClient } from "@/infrastructure/google-maps";
 import type { AnalyzeTripPlanInput } from "./inputs";
 import { InvalidToolCallError, ModelResponseError } from "@/domain/errors";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
-// Response schema with chain-of-thought reasoning
 const SuggestionSchema = z.object({
   type: z.enum(["add_attraction", "add_restaurant", "general_tip"]),
   reasoning: z.string(),
+  attractionName: z.string().optional(),
   attractionData: z
     .object({
       id: z.string(),
@@ -26,7 +27,6 @@ const SuggestionSchema = z.object({
         lng: z.number(),
       }),
     })
-    .passthrough() // Allow extra fields that Claude might add
     .optional(),
 });
 
@@ -38,51 +38,63 @@ export const AgentResponseSchema = z.object({
 
 export type AgentResponse = z.infer<typeof AgentResponseSchema>;
 
-const SYSTEM_PROMPT = `You are an expert trip planning assistant. Your role is to analyze user's trip plans and suggest attractions and restaurants for specific places.
+const SYSTEM_PROMPT = `You are an expert trip planning assistant. Your role is to analyze locations and provide personalized attraction and restaurant recommendations by searching for real places and organizing them in a structured, helpful way.
 
-CRITICAL RULES:
-1. You MUST use the searchAttractions and searchRestaurants tools to find REAL places. NEVER make up fake place IDs or data.
-2. You MUST respond with ONLY valid JSON. Do not include any text before or after the JSON.
-3. When suggesting add_attraction or add_restaurant, you MUST include the attractionData field with complete data from tool responses.
-4. ONLY suggest attractions/restaurants that are returned by the tool calls.
-5. For general_tip suggestions (travel advice, timing tips, etc.), you don't need attractionData.
+## Your Task
 
-Response Format (YOU MUST FOLLOW THIS EXACTLY):
+You must use the searchAttractions and searchRestaurants tools to discover real places near the given location, then provide structured recommendations that help different types of travelers make informed decisions.
+
+## Instructions
+
+1. **Research Phase**: Use the searchAttractions and searchRestaurants tools to find real, highly-rated places near the location.
+
+2. **Analysis Phase**: Before providing recommendations, conduct your comprehensive planning inside "_thinking" array. In your planning, work through:
+   - **Tool Results Summary**: Document the key attractions and restaurants you found, noting names, ratings, and key features for each
+   - **Traveler Archetype Analysis**: Consider specific traveler types (history buffs, adventure seekers, nature lovers, first-time visitors) and what each group would most value from your findings
+   - **Tiered Recommendation Strategy**: Categorize options as must-sees, highly recommended if you have time, and hidden gems for longer stays
+   - **Selection Criteria**: Apply decision frameworks considering what to prioritize with limited time, practical tradeoffs (popular vs authentic, time investment vs payoff, cost considerations), and logistics (time needed, best times to visit, geographic connections, price ranges)
+   - **Final Selection Rationale**: Explain which 3-5 places you'll recommend and why they create a well-rounded set of options
+
+It's OK for this section to be quite long.
+
+3. **Recommendation Phase**: Select 3-5 of the best attractions or restaurants from your tool results that complement different traveler needs and preferences.
+
+## Critical Requirements
+
+- You MUST use the searchAttractions and searchRestaurants tools before making any suggestions
+- You MUST only suggest places that appear in your tool results
+- For attraction and restaurant suggestions, you MUST include the exact name from the tool results in the "attractionName" field
+- You MUST respond with ONLY valid JSON after your analysis - no additional text before or after
+- Consider variety, ratings, and proximity when selecting suggestions
+
+## Output Format
+
+After your analysis, provide your response as valid JSON in exactly this structure:
+
 {
-  "_thinking": ["step 1", "step 2", ...],
+  "_thinking": ["step 1 of your reasoning", "step 2 of your reasoning", "etc."],
   "suggestions": [
     {
       "type": "add_attraction",
-      "reasoning": "why this attraction is a good fit",
-      "attractionData": {
-        "id": "place_id_from_tool",
-        "name": "Place Name",
-        "rating": 4.5,
-        "userRatingsTotal": 1000,
-        "types": ["tourist_attraction"],
-        "vicinity": "address",
-        "priceLevel": 2,
-        "openNow": true,
-        "location": { "lat": 0.0, "lng": 0.0 }
-      }
+      "reasoning": "why this attraction fits specific traveler types and what makes it valuable",
+      "attractionName": "Exact Place Name from tool results"
+    },
+    {
+      "type": "add_restaurant", 
+      "reasoning": "why this restaurant is recommended and for which travelers",
+      "attractionName": "Exact Restaurant Name from tool results"
     },
     {
       "type": "general_tip",
-      "reasoning": "useful travel advice without specific place recommendation"
+      "reasoning": "practical travel advice, timing tips, or decision frameworks (no attractionName needed)"
     }
   ],
-  "summary": "brief summary"
+  "summary": "brief overview of recommendations and key insights"
 }
-
-Analysis Guidelines:
-1. In "_thinking": analyze the trip, identify what types of places would enhance the experience
-2. Call searchAttractions and searchRestaurants tools to find top-rated places near the location
-3. Select 3-5 best attractions or restaurants that complement what's already planned
-4. For each place suggestion, use type "add_attraction" for tourist attractions or "add_restaurant" for restaurants
-5. ALWAYS include the complete attractionData object from the tool response for add suggestions
-6. Use "general_tip" for travel advice, timing recommendations, or general tips (no attractionData needed)
-7. Provide clear reasoning for each suggestion
-8. Consider variety, ratings, and proximity when making suggestions`;
+**Suggestion Types:**
+- "add_attraction": For tourist attractions, landmarks, activities (requires exact attractionName from tools)
+- "add_restaurant": For restaurants, cafes, food venues (requires exact attractionName from tools) 
+- "general_tip": For travel advice, timing recommendations, logistical tips (no attractionName needed)`;
 
 /**
  * Main agent use case - analyzes trip plan and returns suggestions
@@ -130,72 +142,57 @@ export const analyzeTripPlan = (input: AnalyzeTripPlanInput) =>
       ),
       {
         role: "user",
-        content: `Here is my current trip plan:\n\n${tripContext}\n\n${userMessage}`,
+        content: `Here is my current trip plan:\n\n${tripContext}\n\n${userMessage}.`,
       },
     ];
 
-    yield* Effect.logInfo("Starting trip analysis", {
-      placesCount: input.places.length,
-      historyLength: input.conversationHistory.length,
-    });
-
-    // Initial AI call
     // Note: Don't use responseFormat for Claude models - they need explicit prompting instead
     let response = yield* openai.chatCompletion({
       messages,
       temperature: 0.7,
-      maxTokens: 3000,
+      maxTokens: 8192,
     });
 
-    // Handle tool calls in a loop
     const maxToolCallIterations = 5;
     let iterations = 0;
 
     while (response.toolCalls && response.toolCalls.length > 0 && iterations < maxToolCallIterations) {
       iterations++;
 
-      yield* Effect.logDebug("Processing tool calls", {
-        count: response.toolCalls.length,
-        iteration: iterations,
-      });
-
-      // Execute all tool calls
       const toolResults = yield* Effect.all(
         response.toolCalls.map((toolCall) => executeToolCall(toolCall)),
         { concurrency: 3 }
       );
 
-      // Add assistant message with tool calls
-      // Note: We need to extract the underlying string values from branded types for OpenAI API
+      // Extract branded type values for OpenAI API
       messages.push({
         role: "assistant",
         content: response.content,
         tool_calls: response.toolCalls.map((tc) => ({
-          id: tc.id as string, // Cast branded type to string for OpenAI API
+          id: tc.id,
           type: "function" as const,
           function: {
-            name: tc.name as string, // Cast branded type to string for OpenAI API
+            name: tc.name,
             arguments: tc.arguments,
           },
         })),
       });
 
-      // Add tool results as messages
       toolResults.forEach((result, index) => {
-        messages.push({
-          role: "tool",
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          tool_call_id: response.toolCalls![index].id as string, // Cast branded type to string for OpenAI API
-          content: result,
-        });
+        const toolCall = response.toolCalls?.[index];
+        if (toolCall) {
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: result,
+          });
+        }
       });
 
-      // Continue conversation with tool results
-      // Note: Don't use responseFormat for Claude models - they need explicit prompting instead
       response = yield* openai.chatCompletion({
         messages,
         temperature: 0.7,
-        maxTokens: 3000,
+        maxTokens: 8192,
       });
     }
 
@@ -204,31 +201,19 @@ export const analyzeTripPlan = (input: AnalyzeTripPlanInput) =>
       return yield* Effect.fail(new ModelResponseError("No content in final response"));
     }
 
-    yield* Effect.logDebug("Received response from AI", {
-      contentLength: response.content.length,
-      finishReason: response.finishReason,
-    });
-
     try {
-      // Try to extract JSON from response (Claude sometimes includes extra text)
+      // Claude sometimes includes extra text, extract JSON boundaries
       let jsonContent = response.content.trim();
 
-      // Try to find JSON object boundaries
       const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         jsonContent = jsonMatch[0];
       }
 
       const parsed = JSON.parse(jsonContent);
-
-      // Try validation with detailed error reporting
       const validationResult = AgentResponseSchema.safeParse(parsed);
 
       if (!validationResult.success) {
-        yield* Effect.logError("Schema validation failed", {
-          errors: validationResult.error.errors,
-          parsedData: JSON.stringify(parsed).substring(0, 1000),
-        });
         return yield* Effect.fail(
           new ModelResponseError(
             `Schema validation failed: ${validationResult.error.errors
@@ -241,18 +226,72 @@ export const analyzeTripPlan = (input: AnalyzeTripPlanInput) =>
 
       const validated = validationResult.data;
 
-      yield* Effect.logInfo("Trip analysis completed", {
-        suggestionsCount: validated.suggestions.length,
-        thinkingSteps: validated._thinking.length,
-      });
+      const googleMaps = yield* GoogleMapsClient;
 
-      return validated;
+      const lookupResults = yield* Effect.all(
+        validated.suggestions.map((suggestion) =>
+          Effect.gen(function* () {
+            if (
+              (suggestion.type === "add_attraction" || suggestion.type === "add_restaurant") &&
+              suggestion.attractionName
+            ) {
+              const attraction = yield* Effect.either(googleMaps.textSearch(suggestion.attractionName));
+
+              if (attraction._tag === "Right" && attraction.right !== undefined) {
+                return {
+                  suggestion,
+                  attraction: attraction.right,
+                  success: true as const,
+                };
+              }
+
+              return {
+                suggestion,
+                attraction: undefined,
+                success: false as const,
+              };
+            }
+
+            return {
+              suggestion,
+              attraction: undefined,
+              success: true as const,
+            };
+          })
+        ),
+        { concurrency: 3 }
+      );
+
+      const finalSuggestions = lookupResults
+        .filter((result) => result.success)
+        .map((result) => {
+          if (result.attraction) {
+            return {
+              ...result.suggestion,
+              attractionData: {
+                id: result.attraction.id,
+                name: result.attraction.name,
+                rating: result.attraction.rating,
+                userRatingsTotal: result.attraction.userRatingsTotal,
+                types: result.attraction.types,
+                vicinity: result.attraction.vicinity,
+                priceLevel: result.attraction.priceLevel,
+                openNow: result.attraction.openNow,
+                location: {
+                  lat: result.attraction.location.lat,
+                  lng: result.attraction.location.lng,
+                },
+              },
+            };
+          }
+          return result.suggestion;
+        });
+
+      return {
+        ...validated,
+        suggestions: finalSuggestions,
+      };
     } catch (error) {
-      yield* Effect.logError("Failed to parse agent response", {
-        error: error instanceof Error ? error.message : String(error),
-        responseContent: response.content.substring(0, 1000), // Log first 1000 chars
-        parseError: error,
-      });
       return yield* Effect.fail(new ModelResponseError("Invalid response format from AI", error));
     }
   });
@@ -264,15 +303,15 @@ const executeToolCall = (toolCall: ToolCall) =>
   Effect.gen(function* () {
     try {
       const args = JSON.parse(toolCall.arguments);
-      // Extract the underlying string from the branded type for switch statement
-      const toolName = toolCall.name as string;
+      // Branded types are compatible with their underlying types
+      const toolName = toolCall.name;
 
       switch (toolName) {
         case "searchAttractions": {
           const result = yield* getTopAttractions({
             lat: args.lat,
             lng: args.lng,
-            radius: args.radius ?? 1500,
+            radius: args.radius ?? 10000,
             limit: args.limit ?? 10,
           });
           return JSON.stringify({ attractions: result });
@@ -282,7 +321,7 @@ const executeToolCall = (toolCall: ToolCall) =>
           const result = yield* getTopRestaurants({
             lat: args.lat,
             lng: args.lng,
-            radius: args.radius ?? 1500,
+            radius: args.radius ?? 10000,
             limit: args.limit ?? 10,
           });
           return JSON.stringify({ restaurants: result });
@@ -297,10 +336,6 @@ const executeToolCall = (toolCall: ToolCall) =>
           return yield* Effect.fail(new InvalidToolCallError(`Unknown tool: ${toolName}`, toolCall.name));
       }
     } catch (error) {
-      yield* Effect.logError("Tool call execution failed", {
-        tool: toolCall.name,
-        error,
-      });
       return yield* Effect.fail(
         new InvalidToolCallError(`Failed to execute tool: ${toolCall.name}`, toolCall.name, error)
       );
