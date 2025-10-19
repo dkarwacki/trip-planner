@@ -55,7 +55,8 @@ The project follows **Clean Architecture** principles with clear separation of c
 - `./src/application` - **Application layer** (use cases, orchestration)
   - `./src/application/{domain}` - Use cases per domain (attractions, places, geocoding)
   - `./src/application/{domain}/index.ts` - Public API exports
-  - `./src/application/{domain}/inputs.ts` - Zod schemas for input validation
+  - `./src/application/{domain}/inputs.ts` - Zod schemas for input validation (validate incoming data)
+  - `./src/application/{domain}/outputs.ts` - Zod schemas for output validation with transforms (convert raw data to branded types)
 
 - `./src/infrastructure` - **Infrastructure layer** (external services, I/O)
   - `./src/infrastructure/google-maps` - Google Maps API client implementation
@@ -85,12 +86,17 @@ The project follows **Clean Architecture** principles with clear separation of c
 - Implement proper error logging and user-friendly messages
 - Use feedback from linters to improve the code when making changes.
 
+### Zod Validation & Schemas
+
+- **Input schemas** (`inputs.ts`): Validate incoming data without transforms
+- **Output schemas** (`outputs.ts`): Validate external data + use `.transform()` to convert to branded types
+
 ### Astro Guidelines
 
 - Use `export const prerender = false` for API routes
 - Use POST, GET (uppercase) for endpoint handlers
 - API routes are **thin adapters**: validate input → call application use case → map response
-- Use Zod for validation (in `application/*/inputs.ts`), wrap in Effect with tagged errors
+- Use Zod for validation (schemas in `application/*/inputs.ts` and `application/*/outputs.ts`), wrap in Effect with tagged errors
 - Use `Astro.cookies` for server-side cookie management
 - Use `import.meta.env` for environment variables
 - Leverage View Transitions API for smooth page transitions

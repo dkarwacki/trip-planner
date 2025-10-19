@@ -44,7 +44,8 @@ When introducing changes to the project, always follow the directory structure b
   - `./src/domain/errors` - Tagged errors
 - `./src/application` - Application layer (use cases with Effect)
   - `./src/application/{domain}` - Use cases per domain
-  - `./src/application/{domain}/inputs.ts` - Zod input schemas
+  - `./src/application/{domain}/inputs.ts` - Zod input schemas (validate incoming data)
+  - `./src/application/{domain}/outputs.ts` - Zod output schemas with transforms (convert raw data to branded types)
 - `./src/infrastructure` - Infrastructure layer (external services, I/O)
   - `./src/infrastructure/google-maps` - Google Maps API client
   - `./src/infrastructure/cache` - Effect cache services
@@ -74,8 +75,9 @@ When modifying the directory structure, always update this section.
 
 ### Validation and Data Transfer Objects (DTOs)
 
-- Use Zod for validation and DTOs: define schemas, use `z.infer<>` for types, `safeParse()` for validation
-- Wrap Zod validation in Effect with tagged errors (e.g., `ValidationError`)
+- Use Zod for validation: define schemas, use `z.infer<>`, `safeParse()`, wrap in Effect with tagged errors
+- **Input schemas** (`inputs.ts`): Validate incoming data without transforms
+- **Output schemas** (`outputs.ts`): Validate external data + use `.transform()` to convert to branded types
 
 ### Effect Guidelines
 
