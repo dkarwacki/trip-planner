@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Either, Option, Array } from "effect";
 import { OpenAIClient, type ToolCall, type ChatCompletionResponse, type IOpenAIClient } from "@/infrastructure/openai";
 import { getTopAttractions, getTopRestaurants } from "@/application/attractions";
 import { getPlaceDetails } from "@/application/places";
@@ -175,7 +175,6 @@ const handleToolCallIteration = (
       { concurrency: 3 }
     );
 
-    // Append assistant's response with tool calls to messages
     messages.push({
       role: "assistant",
       content: response.content,
@@ -189,7 +188,6 @@ const handleToolCallIteration = (
       })),
     });
 
-    // Append tool results to messages
     toolResults.forEach((result, index) => {
       const toolCall = response.toolCalls?.[index];
       if (toolCall) {
@@ -201,7 +199,6 @@ const handleToolCallIteration = (
       }
     });
 
-    // Get new response with tool results
     return yield* openai.chatCompletion({
       messages,
       temperature: 0.7,
@@ -218,57 +215,33 @@ const enrichSuggestionsWithAttractionData = (
   Effect.gen(function* () {
     const googleMaps = yield* GoogleMapsClient;
 
-    const lookupResults = yield* Effect.all(
+    const suggestionOptions = yield* Effect.all(
       validated.suggestions.map((suggestion) =>
         Effect.gen(function* () {
-          if (
-            (suggestion.type === "add_attraction" || suggestion.type === "add_restaurant") &&
-            suggestion.attractionName
-          ) {
-            const attraction = yield* Effect.either(googleMaps.textSearch(suggestion.attractionName));
-
-            if (attraction._tag === "Right") {
-              return {
-                suggestion,
-                attraction: attraction.right,
-                success: true as const,
-              };
-            }
-
-            return {
-              suggestion,
-              attraction: undefined,
-              success: false as const,
-            };
+          // General tips don't need attraction data
+          if (suggestion.type === "general_tip") {
+            return Option.some(suggestion);
           }
 
-          return {
-            suggestion,
-            attraction: undefined,
-            success: true as const,
-          };
+          if (suggestion.attractionName) {
+            const attraction = yield* Effect.either(googleMaps.textSearch(suggestion.attractionName));
+
+            return Either.match(attraction, {
+              onLeft: () => Option.none(), // Filter out failed lookups
+              onRight: (attractionData) => Option.some({ ...suggestion, attractionData }),
+            });
+          }
+
+          // Filter out attractions/restaurants without names
+          return Option.none();
         })
       ),
       { concurrency: 3 }
     );
 
-    return lookupResults
-      .filter((result) => result.success)
-      .map((result) => {
-        if (result.attraction) {
-          // Attraction already has branded types from GoogleMapsClient
-          return {
-            ...result.suggestion,
-            attractionData: result.attraction,
-          };
-        }
-        return result.suggestion;
-      });
+    return Array.getSomes(suggestionOptions);
   });
 
-/**
- * Execute a tool call by routing to the appropriate Effect service
- */
 const executeToolCall = (toolCall: ToolCall) =>
   Effect.gen(function* () {
     try {
