@@ -237,7 +237,7 @@ export const analyzeTripPlan = (input: AnalyzeTripPlanInput) =>
             ) {
               const attraction = yield* Effect.either(googleMaps.textSearch(suggestion.attractionName));
 
-              if (attraction._tag === "Right" && attraction.right !== undefined) {
+              if (attraction._tag === "Right") {
                 return {
                   suggestion,
                   attraction: attraction.right,

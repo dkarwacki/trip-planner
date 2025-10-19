@@ -5,6 +5,7 @@ import { PlaceId, Latitude, Longitude } from "@/domain/models";
 import {
   NoAttractionsFoundError,
   AttractionsAPIError,
+  AttractionNotFoundError,
   PlaceNotFoundError,
   PlacesAPIError,
   NoResultsError,
@@ -53,7 +54,7 @@ export interface IGoogleMapsClient {
 
   readonly textSearch: (
     query: string
-  ) => Effect.Effect<Attraction | undefined, AttractionsAPIError | MissingGoogleMapsAPIKeyError>;
+  ) => Effect.Effect<Attraction, AttractionNotFoundError | AttractionsAPIError | MissingGoogleMapsAPIKeyError>;
 }
 
 export class GoogleMapsClient extends Context.Tag("GoogleMapsClient")<GoogleMapsClient, IGoogleMapsClient>() {}
@@ -440,7 +441,7 @@ export const GoogleMapsClientLive = Layer.effect(
 
     const textSearch = (
       query: string
-    ): Effect.Effect<Attraction | undefined, AttractionsAPIError | MissingGoogleMapsAPIKeyError> =>
+    ): Effect.Effect<Attraction, AttractionNotFoundError | AttractionsAPIError | MissingGoogleMapsAPIKeyError> =>
       Effect.gen(function* () {
         const apiKey = yield* config.getGoogleMapsApiKey();
 
@@ -478,13 +479,13 @@ export const GoogleMapsClientLive = Layer.effect(
         }
 
         if (data.results.length === 0) {
-          return undefined;
+          return yield* Effect.fail(new AttractionNotFoundError(query));
         }
 
         const result = data.results[0];
 
         if (!result.geometry?.location || !result.rating || !result.user_ratings_total) {
-          return undefined;
+          return yield* Effect.fail(new AttractionNotFoundError(query));
         }
 
         const attraction: Attraction = {

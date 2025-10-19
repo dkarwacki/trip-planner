@@ -10,3 +10,8 @@ export class AttractionsAPIError {
   readonly _tag = "AttractionsAPIError";
   constructor(readonly message: string) {}
 }
+
+export class AttractionNotFoundError {
+  readonly _tag = "AttractionNotFoundError";
+  constructor(readonly query: string) {}
+}
