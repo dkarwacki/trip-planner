@@ -7,7 +7,7 @@ export const GetTopAttractionsInputSchema = z.object({
   lng: z
     .number({ required_error: "lng is required" })
     .refine((val) => val >= -180 && val <= 180, { message: "Longitude must be between -180 and 180" }),
-  radius: z.number().min(100).max(50000).default(1500),
+  radius: z.number().min(100).max(50000).default(5000),
   limit: z.number().min(1).max(50).default(10),
 });
 
@@ -20,7 +20,7 @@ export const GetTopRestaurantsInputSchema = z.object({
   lng: z
     .number({ required_error: "lng is required" })
     .refine((val) => val >= -180 && val <= 180, { message: "Longitude must be between -180 and 180" }),
-  radius: z.number().min(100).max(50000).default(1500),
+  radius: z.number().min(100).max(50000).default(5000),
   limit: z.number().min(1).max(50).default(10),
 });
 

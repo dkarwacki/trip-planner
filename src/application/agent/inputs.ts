@@ -53,4 +53,3 @@ export const AnalyzeTripPlanInputSchema = z.object({
 });
 
 export type AnalyzeTripPlanInput = z.infer<typeof AnalyzeTripPlanInputSchema>;
-

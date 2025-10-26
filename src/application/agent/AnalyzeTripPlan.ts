@@ -9,7 +9,7 @@ import { InvalidToolCallError, ModelResponseError } from "@/domain/errors";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { parseAndValidateJson } from "@/infrastructure/http/json-parsing";
 
-const SYSTEM_PROMPT = `You are an expert trip planning assistant. Your role is to analyze locations and provide personalized attraction and restaurant recommendations by searching for real places and organizing them in a structured, helpful way.
+const SYSTEM_PROMPT = `You are an expert trip planning assistant. Your role is to analyze user's trip plans and suggest attractions and restaurants for specific places.
 
 ## Your Task
 
@@ -21,14 +21,9 @@ You must use the searchAttractions and searchRestaurants tools to discover real 
 
 2. **Analysis Phase**: Before providing recommendations, conduct your comprehensive planning inside "_thinking" array. In your planning, work through:
    - **Tool Results Summary**: Document the key attractions and restaurants you found, noting names, ratings, and key features for each
-   - **Traveler Archetype Analysis**: Consider specific traveler types (history buffs, adventure seekers, nature lovers, first-time visitors) and what each group would most value from your findings
    - **Tiered Recommendation Strategy**: Categorize options as must-sees, highly recommended if you have time, and hidden gems for longer stays
-   - **Selection Criteria**: Apply decision frameworks considering what to prioritize with limited time, practical tradeoffs (popular vs authentic, time investment vs payoff, cost considerations), and logistics (time needed, best times to visit, geographic connections, price ranges)
-   - **Final Selection Rationale**: Explain which 3-5 places you'll recommend and why they create a well-rounded set of options
 
-It's OK for this section to be quite long.
-
-3. **Recommendation Phase**: Select 3-5 of the best attractions or restaurants from your tool results that complement different traveler needs and preferences.
+3. **Recommendation Phase**: Select 3-5 of the best attractions or restaurants from your tool results.
 
 ## Critical Requirements
 
@@ -36,7 +31,7 @@ It's OK for this section to be quite long.
 - You MUST only suggest places that appear in your tool results
 - For attraction and restaurant suggestions, you MUST include the exact name from the tool results in the "attractionName" field
 - You MUST respond with ONLY valid JSON after your analysis - no additional text before or after
-- Consider variety, ratings, and proximity when selecting suggestions
+- Consider variety and ratings when selecting suggestions
 
 ## Output Format
 
@@ -62,6 +57,7 @@ After your analysis, provide your response as valid JSON in exactly this structu
   ],
   "summary": "brief overview of recommendations and key insights"
 }
+
 **Suggestion Types:**
 - "add_attraction": For tourist attractions, landmarks, activities (requires exact attractionName from tools)
 - "add_restaurant": For restaurants, cafes, food venues (requires exact attractionName from tools) 
@@ -254,7 +250,7 @@ const executeToolCall = (toolCall: ToolCall) =>
           const result = yield* getTopAttractions({
             lat: args.lat,
             lng: args.lng,
-            radius: args.radius ?? 10000,
+            radius: args.radius ?? 5000,
             limit: args.limit ?? 10,
           });
           return JSON.stringify({ attractions: result });
@@ -264,7 +260,7 @@ const executeToolCall = (toolCall: ToolCall) =>
           const result = yield* getTopRestaurants({
             lat: args.lat,
             lng: args.lng,
-            radius: args.radius ?? 10000,
+            radius: args.radius ?? 5000,
             limit: args.limit ?? 10,
           });
           return JSON.stringify({ restaurants: result });
