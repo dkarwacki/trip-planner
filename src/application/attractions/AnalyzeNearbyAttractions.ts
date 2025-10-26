@@ -3,13 +3,13 @@ import { OpenAIClient, type ToolCall, type ChatCompletionResponse, type IOpenAIC
 import { getTopAttractions, getTopRestaurants } from "@/application/attractions";
 import { getPlaceDetails } from "@/application/places";
 import { GoogleMapsClient } from "@/infrastructure/google-maps";
-import type { AnalyzeTripPlanInput } from "./inputs";
-import { AgentResponseSchema, type AgentResponse, type Suggestion } from "./outputs";
+import type { AnalyzeNearbyAttractionsInput } from "./agent-inputs";
+import { AgentResponseSchema, type AgentResponse, type Suggestion } from "./agent-outputs";
 import { InvalidToolCallError, ModelResponseError } from "@/domain/errors";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { parseAndValidateJson } from "@/infrastructure/http/json-parsing";
 
-const SYSTEM_PROMPT = `You are an expert trip planning assistant. Your role is to analyze user's trip plans and suggest attractions and restaurants for specific places.
+const SYSTEM_PROMPT = `You are an expert local attractions assistant. Your role is to suggest attractions and restaurants near specific locations based on user preferences.
 
 ## Your Task
 
@@ -64,9 +64,9 @@ After your analysis, provide your response as valid JSON in exactly this structu
 - "general_tip": For travel advice, timing recommendations, logistical tips (no attractionName needed)`;
 
 /**
- * Main agent use case - analyzes trip plan and returns suggestions
+ * Main agent use case - analyzes nearby attractions and returns suggestions
  */
-export const analyzeTripPlan = (input: AnalyzeTripPlanInput) =>
+export const analyzeNearbyAttractions = (input: AnalyzeNearbyAttractionsInput) =>
   Effect.gen(function* () {
     const openai = yield* OpenAIClient;
 
@@ -104,7 +104,7 @@ export const analyzeTripPlan = (input: AnalyzeTripPlanInput) =>
 /**
  * Builds a JSON string representation of the trip context
  */
-const buildTripContext = (input: AnalyzeTripPlanInput): string => {
+const buildTripContext = (input: AnalyzeNearbyAttractionsInput): string => {
   return JSON.stringify(
     {
       places: input.places.map((p) => ({
@@ -134,7 +134,10 @@ const buildTripContext = (input: AnalyzeTripPlanInput): string => {
 /**
  * Constructs the initial messages array with system prompt, conversation history, and user request
  */
-const buildInitialMessages = (input: AnalyzeTripPlanInput, tripContext: string): ChatCompletionMessageParam[] => {
+const buildInitialMessages = (
+  input: AnalyzeNearbyAttractionsInput,
+  tripContext: string
+): ChatCompletionMessageParam[] => {
   const userMessage = input.userMessage || "Suggest new attractions and restaurants for this place.";
 
   return [

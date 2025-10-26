@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { Place, Attraction } from "@/domain/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/models";
-import type { AgentResponse } from "@/application/agent";
+import type { AgentResponse } from "@/application/attractions";
 
 interface ConversationMessage {
   role: "user" | "assistant" | "system";
@@ -90,7 +90,7 @@ export default function PlaceSuggestionsButton({
       }
 
       try {
-        const response = await fetch("/api/agent/analyze", {
+        const response = await fetch("/api/attractions/analyze", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

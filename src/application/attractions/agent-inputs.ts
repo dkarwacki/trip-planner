@@ -46,10 +46,10 @@ const MessageSchema = z.object({
   content: z.string(),
 });
 
-export const AnalyzeTripPlanInputSchema = z.object({
+export const AnalyzeNearbyAttractionsInputSchema = z.object({
   places: z.array(PlaceSchema).min(1, "At least one place is required"),
   conversationHistory: z.array(MessageSchema).default([]),
   userMessage: z.string().optional(),
 });
 
-export type AnalyzeTripPlanInput = z.infer<typeof AnalyzeTripPlanInputSchema>;
+export type AnalyzeNearbyAttractionsInput = z.infer<typeof AnalyzeNearbyAttractionsInputSchema>;

@@ -7,7 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoreBadge } from "@/components/ScoreBadge";
-import type { AttractionScore, Attraction } from "@/domain/models";
+import PlaceSuggestionsButton from "@/components/PlaceSuggestionsButton";
+import type { AttractionScore, Attraction, Place } from "@/domain/models";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -30,6 +31,9 @@ interface AttractionsPanelProps {
   plannedAttractionIds: Set<string>;
   plannedRestaurantIds: Set<string>;
   onAddToPlan: (attraction: Attraction, type: "attraction" | "restaurant") => void;
+  place: Place;
+  onPlaceUpdate: (updatedPlace: Place) => void;
+  onAttractionAccepted?: (placeId: string, attraction: Attraction, type: "attraction" | "restaurant") => void;
 }
 
 const getPriceLevelSymbol = (priceLevel?: number): string => {
@@ -284,6 +288,9 @@ export default function AttractionsPanel({
   plannedAttractionIds,
   plannedRestaurantIds,
   onAddToPlan,
+  place,
+  onPlaceUpdate,
+  onAttractionAccepted,
 }: AttractionsPanelProps) {
   const headingText = activeTab === "attractions" ? "Nearby Attractions" : "Nearby Restaurants";
 
@@ -304,6 +311,19 @@ export default function AttractionsPanel({
               <X className="h-5 w-5" />
             </button>
           </CardTitle>
+          <div className="mt-2">
+            <PlaceSuggestionsButton
+              place={place}
+              onPlaceUpdate={onPlaceUpdate}
+              onExpandRequest={() => {
+                /* No-op since we're already in the panel */
+              }}
+              onAttractionAccepted={onAttractionAccepted}
+              onHighlight={() => {
+                /* No-op since place is already selected */
+              }}
+            />
+          </div>
         </CardHeader>
         <Separator />
         <CardContent className="flex-1 overflow-hidden p-0">

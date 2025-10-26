@@ -839,8 +839,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
                             handleRemoveFromPlan(place.id, restaurantId, "restaurant")
                           }
                           onPlannedItemClick={handlePlannedItemClick}
-                          onPlaceUpdate={(updatedPlace: Place) => handlePlaceUpdate(place.id, updatedPlace)}
-                          onAttractionAccepted={handleAttractionAccepted}
                         />
                       ))}
                     </div>
@@ -885,6 +883,9 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
               new Set(places.find((p) => p.id === selectedPlaceId)?.plannedRestaurants.map((r) => r.id) || [])
             }
             onAddToPlan={handleOpenAddDialog}
+            place={selectedPlace}
+            onPlaceUpdate={(updatedPlace) => handlePlaceUpdate(selectedPlace.id, updatedPlace)}
+            onAttractionAccepted={handleAttractionAccepted}
           />
         )}
 
