@@ -19,6 +19,7 @@ Trip Planner is an interactive map-based tool for discovering and organizing tra
 Get intelligent recommendations tailored to your trip plan using conversational AI.
 
 **User capabilities:**
+
 - Click "Suggest" button on any place to get AI recommendations
 - Have multi-turn conversations to refine suggestions ("Show me more affordable restaurants")
 - View AI's step-by-step reasoning (collapsible chain-of-thought)
@@ -26,6 +27,7 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 - Get three types of suggestions: Attractions (🎯), Restaurants (🍽️), Tips (💡)
 
 **Technical details:**
+
 - Uses OpenRouter API with function calling (compatible with Claude, GPT-4, etc.)
 - AI calls `searchAttractions`, `searchRestaurants`, and `getPlaceDetails` tools
 - Parallel tool execution for performance
@@ -35,6 +37,7 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 ### 2. Interactive Map
 
 **User capabilities:**
+
 - Search for places using autocomplete search bar
 - Click anywhere on map to add custom locations (with reverse geocoding)
 - Pan and zoom to explore different areas
@@ -42,6 +45,7 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 - Click markers to select places and view details
 
 **Technical details:**
+
 - Google Maps JavaScript API with `AdvancedMarkerElement`
 - Reverse geocoding for click-to-add functionality
 - Distance-based trigger (~500m threshold) for "Search this area" button
@@ -53,12 +57,14 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 ### 3. Smart Place Autocomplete
 
 **User capabilities:**
+
 - Search adapts to map zoom level (streets vs. cities vs. regions)
 - Results prioritized based on current map view
 - Duplicate prevention
 - Clear input after selection
 
 **Technical details:**
+
 - Zoom-aware filtering: zoom >14 shows only establishments, <14 includes geocode results
 - Viewport-based biasing with dynamic search radius expansion:
   - Zoom 15-18 (streets): ±1km
@@ -70,6 +76,7 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 ### 4. Discover Attractions & Restaurants
 
 **User capabilities:**
+
 - Browse nearby attractions and restaurants when a place is selected
 - View ratings, reviews, price levels, open/closed status
 - See quality scores with detailed breakdowns on hover
@@ -77,6 +84,7 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 - Click items or markers to highlight and navigate
 
 **Technical details:**
+
 - Two-tab interface with lazy loading (restaurants load on first tab open)
 - Smart scoring system:
   - **Quality Score:** Based on rating × log(review_count)
@@ -89,6 +97,7 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 ### 5. Build Your Itinerary
 
 **User capabilities:**
+
 - Add attractions/restaurants to plan with confirmation dialog
 - Drag-and-drop reordering of places and planned items
 - Expand/collapse place cards to view inline planned items
@@ -96,6 +105,7 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 - Remove items from plan
 
 **Technical details:**
+
 - Uses `@dnd-kit` for drag-and-drop functionality
 - Separate lists for planned attractions and restaurants per place
 - Numbered badges and color coding (blue: attractions, red: restaurants)
@@ -106,12 +116,14 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 ### 6. Click-to-Add Custom Locations
 
 **User capabilities:**
+
 - Click anywhere on map to place a marker
 - View coordinates for selected location
 - Automatically resolve to address and place name
 - Confirm or cancel before adding
 
 **Technical details:**
+
 - Temporary green marker with custom styling
 - Google Maps Geocoding API for reverse geocoding
 - Popover UI with loading states and error handling

@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
-import { analyzeNearbyAttractions, AnalyzeNearbyAttractionsInputSchema } from "@/application/attractions";
+import { suggestNearbyAttractions, SuggestNearbyAttractionsInputSchema } from "@/application/attractions";
 import { ValidationError } from "@/infrastructure/http/validation";
 import { toHttpResponse } from "@/infrastructure/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/runtime";
@@ -10,7 +10,7 @@ export const prerender = false;
 
 const validateRequest = (body: unknown) =>
   Effect.gen(function* () {
-    const result = AnalyzeNearbyAttractionsInputSchema.safeParse(body);
+    const result = SuggestNearbyAttractionsInputSchema.safeParse(body);
 
     if (!result.success) {
       return yield* Effect.fail(new ValidationError(result.error));
@@ -24,15 +24,15 @@ export const POST: APIRoute = async ({ request }) => {
 
   const program = Effect.gen(function* () {
     const input = yield* validateRequest(body);
-    const analysis = yield* analyzeNearbyAttractions(input);
-    return { analysis };
+    const suggestions = yield* suggestNearbyAttractions(input);
+    return { suggestions };
   });
 
   const response = await Runtime.runPromise(AppRuntime)(
     program.pipe(
       Effect.catchAllDefect((defect) =>
         Effect.gen(function* () {
-          yield* Effect.logError("Unexpected error in /api/attractions/analyze", { defect });
+          yield* Effect.logError("Unexpected error in /api/attractions/suggest", { defect });
           return yield* Effect.fail(new UnexpectedError("Internal server error", defect));
         })
       ),

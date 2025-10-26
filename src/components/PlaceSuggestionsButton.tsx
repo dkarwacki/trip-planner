@@ -70,17 +70,17 @@ export default function PlaceSuggestionsButton({
     }
   }, [scrollToGroupIndex, suggestionGroups]);
 
-  const handleAnalyze = useCallback(
+  const handleSuggest = useCallback(
     async (userMessage?: string) => {
       setIsLoading(true);
       setError(null);
       if (!userMessage) {
-        // Starting fresh analysis - clear all groups
+        // Starting fresh suggestions - clear all groups
         setSuggestionGroups([]);
         setLatestSummary("");
         setLatestThinking([]);
         setAcceptedSuggestions(new Set());
-        // Reset local state to current place state when starting fresh analysis
+        // Reset local state to current place state when starting fresh suggestions
         setLocalPlannedAttractions(place.plannedAttractions);
         setLocalPlannedRestaurants(place.plannedRestaurants);
         // Expand the planned items list so user can see changes
@@ -90,7 +90,7 @@ export default function PlaceSuggestionsButton({
       }
 
       try {
-        const response = await fetch("/api/attractions/analyze", {
+        const response = await fetch("/api/attractions/suggest", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -113,7 +113,7 @@ export default function PlaceSuggestionsButton({
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to analyze trip");
+          throw new Error(errorData.message || "Failed to get suggestions");
         }
 
         const data = await response.json();
@@ -126,7 +126,7 @@ export default function PlaceSuggestionsButton({
               ...prev,
               {
                 userMessage,
-                suggestions: data.analysis.suggestions,
+                suggestions: data.suggestions.suggestions,
               },
             ];
             // Trigger scroll to the new group (after render)
@@ -138,14 +138,14 @@ export default function PlaceSuggestionsButton({
           setSuggestionGroups([
             {
               userMessage: null,
-              suggestions: data.analysis.suggestions,
+              suggestions: data.suggestions.suggestions,
             },
           ]);
         }
 
         // Always update summary and thinking to latest
-        setLatestSummary(data.analysis.summary);
-        setLatestThinking(data.analysis._thinking);
+        setLatestSummary(data.suggestions.summary);
+        setLatestThinking(data.suggestions._thinking);
         setIsOpen(true);
 
         // Update conversation history
@@ -153,7 +153,7 @@ export default function PlaceSuggestionsButton({
           setConversationHistory((prev) => [
             ...prev,
             { role: "user", content: userMessage },
-            { role: "assistant", content: data.analysis.summary },
+            { role: "assistant", content: data.suggestions.summary },
           ]);
         }
       } catch (err) {
@@ -295,9 +295,9 @@ export default function PlaceSuggestionsButton({
     if (!refinementMessage.trim()) return;
 
     setShowRefinementInput(false);
-    await handleAnalyze(refinementMessage);
+    await handleSuggest(refinementMessage);
     setRefinementMessage("");
-  }, [refinementMessage, handleAnalyze]);
+  }, [refinementMessage, handleSuggest]);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
@@ -335,7 +335,7 @@ export default function PlaceSuggestionsButton({
       <Button
         onClick={(e) => {
           e.stopPropagation();
-          handleAnalyze();
+          handleSuggest();
         }}
         disabled={disabled || isLoading}
         variant="outline"
