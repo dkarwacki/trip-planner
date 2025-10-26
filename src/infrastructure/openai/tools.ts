@@ -24,8 +24,8 @@ export const tools: ChatCompletionTool[] = [
           },
           radius: {
             type: "number",
-            description: "Search radius in meters (default: 5000, min: 100, max: 50000)",
-            default: 5000,
+            description: "Search radius in meters (default: 2000, min: 100, max: 50000)",
+            default: 2000,
           },
           limit: {
             type: "number",
@@ -57,8 +57,8 @@ export const tools: ChatCompletionTool[] = [
           },
           radius: {
             type: "number",
-            description: "Search radius in meters (default: 5000, min: 100, max: 50000)",
-            default: 5000,
+            description: "Search radius in meters (default: 2000, min: 100, max: 50000)",
+            default: 2000,
           },
           limit: {
             type: "number",

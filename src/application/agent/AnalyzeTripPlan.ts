@@ -250,7 +250,7 @@ const executeToolCall = (toolCall: ToolCall) =>
           const result = yield* getTopAttractions({
             lat: args.lat,
             lng: args.lng,
-            radius: args.radius ?? 5000,
+            radius: args.radius ?? 2000,
             limit: args.limit ?? 10,
           });
           return JSON.stringify({ attractions: result });
@@ -260,7 +260,7 @@ const executeToolCall = (toolCall: ToolCall) =>
           const result = yield* getTopRestaurants({
             lat: args.lat,
             lng: args.lng,
-            radius: args.radius ?? 5000,
+            radius: args.radius ?? 2000,
             limit: args.limit ?? 10,
           });
           return JSON.stringify({ restaurants: result });

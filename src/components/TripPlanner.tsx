@@ -23,6 +23,7 @@ import PlaceAutocomplete from "@/components/PlaceAutocomplete";
 import PlaceListItem from "@/components/PlaceListItem";
 import AddToPlanDialog from "@/components/AddToPlanDialog";
 import { Button } from "@/components/ui/button";
+import { calculateDistance, SEARCH_NEARBY_DISTANCE_THRESHOLD } from "@/lib/map-utils";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -101,6 +102,13 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const [pendingAttraction, setPendingAttraction] = useState<Attraction | null>(null);
   const [pendingType, setPendingType] = useState<"attraction" | "restaurant" | null>(null);
 
+  // Search nearby button state
+  const [initialSearchCenter, setInitialSearchCenter] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [showSearchNearbyButton, setShowSearchNearbyButton] = useState(false);
+
   interface MarkerData {
     marker: google.maps.marker.AdvancedMarkerElement;
     element: HTMLDivElement;
@@ -174,6 +182,10 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       map.panTo({ lat: place.lat, lng: place.lng });
       map.setZoom(14);
 
+      // Store initial search center for button trigger logic
+      setInitialSearchCenter({ lat: place.lat, lng: place.lng });
+      setShowSearchNearbyButton(false);
+
       setAttractions([]);
       setAttractionsError(null);
       setRestaurants([]);
@@ -213,6 +225,58 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     [map, mergeWithPlannedItems]
   );
 
+  /**
+   * Triggered when user clicks "Search this area" button.
+   * Fetches attractions/restaurants centered on current map view.
+   */
+  const handleSearchNearby = useCallback(async () => {
+    if (!map || !selectedPlace) return;
+
+    const center = map.getCenter();
+    if (!center) return;
+
+    const newCenter = { lat: center.lat(), lng: center.lng() };
+
+    // Update initial search center and hide button
+    setInitialSearchCenter(newCenter);
+    setShowSearchNearbyButton(false);
+
+    // Set consistent zoom level for nearby searches
+    map.setZoom(14);
+
+    setIsLoadingAttractions(true);
+    setIsLoadingRestaurants(true);
+    setAttractionsError(null);
+    setRestaurantsError(null);
+
+    // Fetch attractions and restaurants at new center
+    const [attractionsResult, restaurantsResult] = await Promise.allSettled([
+      fetchTopAttractions(newCenter.lat, newCenter.lng),
+      fetchTopRestaurants(newCenter.lat, newCenter.lng),
+    ]);
+
+    if (attractionsResult.status === "fulfilled") {
+      const merged = mergeWithPlannedItems(attractionsResult.value, selectedPlace.plannedAttractions, scoreAttractions);
+      setAttractions(merged);
+    } else {
+      setAttractionsError(
+        attractionsResult.reason instanceof Error ? attractionsResult.reason.message : "Failed to load attractions"
+      );
+    }
+
+    if (restaurantsResult.status === "fulfilled") {
+      const merged = mergeWithPlannedItems(restaurantsResult.value, selectedPlace.plannedRestaurants, scoreRestaurants);
+      setRestaurants(merged);
+    } else {
+      setRestaurantsError(
+        restaurantsResult.reason instanceof Error ? restaurantsResult.reason.message : "Failed to load restaurants"
+      );
+    }
+
+    setIsLoadingAttractions(false);
+    setIsLoadingRestaurants(false);
+  }, [map, selectedPlace, mergeWithPlannedItems]);
+
   const handleCloseAttractions = useCallback(() => {
     setSelectedPlace(null);
     setSelectedPlaceId(null);
@@ -222,6 +286,10 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     setRestaurantsError(null);
     setLoadedTabs(new Set(["attractions"]));
     setActiveTab("attractions");
+
+    // Clear search nearby state
+    setInitialSearchCenter(null);
+    setShowSearchNearbyButton(false);
   }, []);
 
   const handleTabChange = useCallback(
@@ -696,6 +764,32 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     };
   }, [map, markerLibrary, mapId, handleClosePopover]);
 
+  // Track map panning to show/hide "Search this area" button
+  useEffect(() => {
+    if (!map || !initialSearchCenter) return;
+
+    const checkDistance = () => {
+      const center = map.getCenter();
+      if (!center) return;
+
+      const currentCenter = { lat: center.lat(), lng: center.lng() };
+      const distance = calculateDistance(initialSearchCenter, currentCenter);
+
+      setShowSearchNearbyButton(distance > SEARCH_NEARBY_DISTANCE_THRESHOLD);
+    };
+
+    // Check immediately in case map was already panned
+    checkDistance();
+
+    // Use 'idle' event instead of 'center_changed' to only update after map stops moving
+    // This prevents button from flickering during programmatic pans and better matches Google Maps behavior
+    const listener = map.addListener("idle", checkDistance);
+
+    return () => {
+      google.maps.event.removeListener(listener);
+    };
+  }, [map, initialSearchCenter]);
+
   return (
     <div className="flex h-screen">
       <div className="@container w-full sm:w-96 md:w-[28rem] lg:w-[32rem] xl:w-[36rem] flex-shrink-0 flex flex-col bg-white border-r shadow-sm">
@@ -802,6 +896,20 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           type={pendingType || "attraction"}
         />
 
+        {showSearchNearbyButton && selectedPlace && (
+          <div className="absolute top-1/3 left-[calc(50%-12rem)] -translate-x-1/2 -translate-y-1/2 z-[1000]">
+            <Button
+              onClick={handleSearchNearby}
+              size="sm"
+              variant="outline"
+              className="bg-white text-gray-900 hover:bg-gray-50 shadow-lg border-gray-200"
+              aria-label="Search for attractions and restaurants in the current map area"
+            >
+              Search this area
+            </Button>
+          </div>
+        )}
+
         {showAddPlacePopover && clickedLocation && (
           <div className="absolute top-4 left-4 z-50">
             <div className="bg-white rounded-lg shadow-lg border p-4 w-80">
@@ -841,7 +949,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
 export default function TripPlanner({ apiKey, mapId }: TripPlannerProps) {
   return (
-    <APIProvider apiKey={apiKey}>
+    <APIProvider apiKey={apiKey} libraries={["geometry"]}>
       <MapContent mapId={mapId} />
     </APIProvider>
   );
