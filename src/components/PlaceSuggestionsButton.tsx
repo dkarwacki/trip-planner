@@ -338,24 +338,24 @@ export default function PlaceSuggestionsButton({
           handleSuggest();
         }}
         disabled={disabled || isLoading}
-        variant="outline"
+        variant="ghost"
         size="sm"
-        className="gap-2 whitespace-nowrap"
+        className="w-full justify-center gap-2 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-none"
       >
         {isLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Analyzing...
+            <span className="text-sm">Analyzing...</span>
           </>
         ) : (
           <>
             <Wand2 className="h-4 w-4" />
-            Suggest
+            <span className="text-sm">Get AI suggestions</span>
           </>
         )}
       </Button>
 
-      {error && <div className="text-xs text-red-500 break-words max-w-full">{error}</div>}
+      {error && <div className="text-xs text-red-500 break-words max-w-full px-4 pb-2">{error}</div>}
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh]">

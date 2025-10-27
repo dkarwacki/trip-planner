@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { X, Star, MapPin, ExternalLink, Check, Plus } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -296,11 +296,11 @@ export default function AttractionsPanel({
 
   return (
     <div className="absolute right-4 top-4 bottom-4 w-96 z-10 pointer-events-auto">
-      <Card className="h-full flex flex-col shadow-xl">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between">
+      <Card className="h-full flex flex-col shadow-xl py-3">
+        <div className="px-4 sm:px-6 pb-6 border-b">
+          <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0 mr-2">
-              <h2 className="text-lg">{headingText}</h2>
+              <h2 className="text-lg font-semibold">{headingText}</h2>
               <p className="text-sm font-normal text-muted-foreground mt-1 line-clamp-2">{placeName}</p>
             </div>
             <button
@@ -310,22 +310,8 @@ export default function AttractionsPanel({
             >
               <X className="h-5 w-5" />
             </button>
-          </CardTitle>
-          <div className="mt-2">
-            <PlaceSuggestionsButton
-              place={place}
-              onPlaceUpdate={onPlaceUpdate}
-              onExpandRequest={() => {
-                /* No-op since we're already in the panel */
-              }}
-              onAttractionAccepted={onAttractionAccepted}
-              onHighlight={() => {
-                /* No-op since place is already selected */
-              }}
-            />
           </div>
-        </CardHeader>
-        <Separator />
+        </div>
         <CardContent className="flex-1 overflow-hidden p-0">
           <Tabs
             value={activeTab}
@@ -340,6 +326,20 @@ export default function AttractionsPanel({
                 Restaurants
               </TabsTrigger>
             </TabsList>
+
+            <div className="border-b bg-muted/20">
+              <PlaceSuggestionsButton
+                place={place}
+                onPlaceUpdate={onPlaceUpdate}
+                onExpandRequest={() => {
+                  /* No-op since we're already in the panel */
+                }}
+                onAttractionAccepted={onAttractionAccepted}
+                onHighlight={() => {
+                  /* No-op since place is already selected */
+                }}
+              />
+            </div>
 
             <TabsContent value="attractions" className="flex-1 overflow-hidden mt-0">
               <ContentList

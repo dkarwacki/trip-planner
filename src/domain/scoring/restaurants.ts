@@ -3,8 +3,12 @@ import { RESTAURANTS_SCORING_CONFIG } from "./config";
 
 const calculateQualityScore = (attraction: Attraction): number => {
   if (attraction.rating <= 0 || attraction.userRatingsTotal <= 0) return 0;
-  const score = attraction.rating * Math.log10(attraction.userRatingsTotal + 1);
-  return Math.min((score / 15) * 100, 100);
+
+  // Separate components: rating (60%) + reviews (40%)
+  const ratingComponent = (attraction.rating / 5) * 60;
+  const reviewComponent = (Math.log10(attraction.userRatingsTotal + 1) / 5) * 40;
+
+  return Math.min(ratingComponent + reviewComponent, 100);
 };
 
 const calculateConfidenceScore = (attraction: Attraction): number => {

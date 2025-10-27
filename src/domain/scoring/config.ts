@@ -11,7 +11,7 @@ export const ATTRACTIONS_SCORING_CONFIG = {
       description: [
         "Based on rating and review count",
         "Higher ratings with more reviews score better",
-        "Formula: rating × log₁₀(reviews + 1)",
+        "Formula: rating (60%) + log₁₀(reviews) (40%)",
       ],
     },
     diversity: {
@@ -48,7 +48,7 @@ export const RESTAURANTS_SCORING_CONFIG = {
       description: [
         "Based on rating and review count",
         "Higher ratings with more reviews score better",
-        "Formula: rating × log₁₀(reviews + 1)",
+        "Formula: rating (60%) + log₁₀(reviews) (40%)",
       ],
     },
     confidence: {

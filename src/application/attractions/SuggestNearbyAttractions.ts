@@ -23,13 +23,15 @@ You must use the searchAttractions and searchRestaurants tools to discover real 
    - **Tool Results Summary**: Document the key attractions and restaurants you found, noting names, ratings, and key features for each
    - **Tiered Recommendation Strategy**: Categorize options as must-sees, highly recommended if you have time, and hidden gems for longer stays
 
-3. **Recommendation Phase**: Select 3-5 of the best attractions or restaurants from your tool results.
+3. **Recommendation Phase**: Select 5 of the best attractions with at least 1 hidden gem and 2 of the best restaurants from your tool results.
 
 ## Critical Requirements
 
 - You MUST use the searchAttractions and searchRestaurants tools before making any suggestions
 - You MUST only suggest places that appear in your tool results
 - For attraction and restaurant suggestions, you MUST include the exact name from the tool results in the "attractionName" field
+- You MUST include at least 1 hidden gem in your suggestions
+- You MUST include at most 2 restaurants in your suggestions
 - You MUST respond with ONLY valid JSON after your analysis - no additional text before or after
 - Consider variety and ratings when selecting suggestions
 
