@@ -6,6 +6,6 @@ export interface AttractionScore {
   breakdown: {
     qualityScore: number;
     diversityScore: number;
-    localityScore: number;
+    confidenceScore: number;
   };
 }

@@ -7,32 +7,20 @@ const calculateQualityScore = (attraction: Attraction): number => {
   return Math.min((score / 15) * 100, 100);
 };
 
-const calculateLocalityScore = (attraction: Attraction): number => {
-  let score = 50;
-
-  if (attraction.userRatingsTotal >= 500 && attraction.userRatingsTotal <= 5000) {
-    score += 25;
-  } else if (attraction.userRatingsTotal > 50000) {
-    score -= 20;
-  }
-
-  if (attraction.priceLevel === 1 || attraction.priceLevel === 2) {
-    score += 15;
-  } else if (attraction.priceLevel === 4) {
-    score -= 10;
-  }
-
-  return Math.max(Math.min(score, 100), 0);
+const calculateConfidenceScore = (attraction: Attraction): number => {
+  if (attraction.userRatingsTotal > 100) return 100;
+  if (attraction.userRatingsTotal > 20) return 70;
+  return 40;
 };
 
 export const scoreRestaurants = (restaurants: Attraction[]): AttractionScore[] => {
   const scored = restaurants.map((restaurant) => {
     const qualityScore = calculateQualityScore(restaurant);
-    const localityScore = calculateLocalityScore(restaurant);
+    const confidenceScore = calculateConfidenceScore(restaurant);
 
     const score =
       qualityScore * RESTAURANTS_SCORING_CONFIG.weights.quality +
-      localityScore * RESTAURANTS_SCORING_CONFIG.weights.locality;
+      confidenceScore * RESTAURANTS_SCORING_CONFIG.weights.confidence;
 
     return {
       attraction: restaurant,
@@ -40,7 +28,7 @@ export const scoreRestaurants = (restaurants: Attraction[]): AttractionScore[] =
       breakdown: {
         qualityScore: Math.round(qualityScore * 10) / 10,
         diversityScore: 0,
-        localityScore: Math.round(localityScore * 10) / 10,
+        confidenceScore: Math.round(confidenceScore * 10) / 10,
       },
     };
   });

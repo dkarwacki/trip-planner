@@ -42,10 +42,10 @@ export function ScoreExplanation({ type }: ScoreExplanationProps) {
 
         <div>
           <p className="font-semibold mb-1">
-            {explanations.locality.title} ({explanations.locality.weight})
+            {explanations.confidence.title} ({explanations.confidence.weight})
           </p>
           <ul className="space-y-0.5 text-muted-foreground">
-            {explanations.locality.description.map((item, idx) => (
+            {explanations.confidence.description.map((item, idx) => (
               <li key={idx}>• {item}</li>
             ))}
           </ul>
@@ -55,7 +55,7 @@ export function ScoreExplanation({ type }: ScoreExplanationProps) {
           <p className="text-muted-foreground italic">
             Overall Score = {Math.round(weights.quality * 100)}% Quality +{" "}
             {"diversity" in weights && `${Math.round(weights.diversity * 100)}% Diversity + `}
-            {Math.round(weights.locality * 100)}% Locality
+            {Math.round(weights.confidence * 100)}% Confidence
           </p>
         </div>
       </div>

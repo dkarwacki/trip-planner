@@ -10,7 +10,7 @@ interface ScoreBadgeProps {
   breakdown: {
     qualityScore: number;
     diversityScore: number;
-    localityScore: number;
+    confidenceScore: number;
   };
   type: ScoreType;
 }
@@ -62,8 +62,8 @@ export function ScoreBadge({ score, breakdown, type }: ScoreBadgeProps) {
                 </div>
               )}
               <div className="flex justify-between text-xs">
-                <span>Locality Score:</span>
-                <span className="font-medium">{breakdown.localityScore}</span>
+                <span>Confidence Score:</span>
+                <span className="font-medium">{breakdown.confidenceScore}</span>
               </div>
             </div>
           )}

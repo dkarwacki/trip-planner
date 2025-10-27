@@ -10,6 +10,14 @@ export const ATTRACTION_TYPES = [
   "amusement_park",
   "cultural_center",
   "performing_arts_theater",
+  "church",
+  "hindu_temple",
+  "mosque",
+  "synagogue",
+  "landmark",
+  "library",
+  "city_hall",
+  "town_square",
 ] as const;
 
 export const RESTAURANT_TYPES = ["restaurant", "cafe", "bar", "bakery", "meal_takeaway"] as const;
@@ -42,6 +50,9 @@ export const BLOCKED_PLACE_TYPES = new Set([
   "real_estate_agency",
   "insurance_agency",
   "accounting",
+  "travel_agency",
+  "moving_company",
+  "courier_service",
   "atm",
   "bank",
   "dentist",
