@@ -835,7 +835,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         {/* Left Sidebar - Places */}
         <div
           className={`${
-            leftSidebarCollapsed ? "w-12" : "@container w-full sm:w-96 md:w-[28rem] lg:w-[32rem] xl:w-[36rem]"
+            leftSidebarCollapsed ? "w-12" : "@container w-full sm:w-72 md:w-80 lg:w-[22rem] xl:w-96"
           } flex-shrink-0 flex flex-col bg-white border-r shadow-sm transition-all duration-300 ease-in-out relative`}
         >
           {leftSidebarCollapsed ? (
@@ -1008,7 +1008,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         {selectedPlace && (
           <div
             className={`${
-              rightSidebarCollapsed ? "w-12" : "w-full sm:w-96 md:w-[28rem] lg:w-[32rem] xl:w-[36rem]"
+              rightSidebarCollapsed ? "w-12" : "w-full sm:w-72 md:w-80 lg:w-[22rem] xl:w-96"
             } flex-shrink-0 flex flex-col bg-white border-l shadow-sm transition-all duration-300 ease-in-out relative`}
           >
             {rightSidebarCollapsed ? (
