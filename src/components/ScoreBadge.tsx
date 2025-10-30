@@ -5,6 +5,9 @@ import { ScoreExplanation } from "@/components/ScoreExplanation";
 
 export type ScoreType = "attractions" | "restaurants";
 
+// Score threshold for premium/gold styling
+const HIGH_SCORE_THRESHOLD = 80;
+
 interface ScoreBadgeProps {
   score: number;
   breakdown: {
@@ -17,6 +20,7 @@ interface ScoreBadgeProps {
 
 export function ScoreBadge({ score, breakdown, type }: ScoreBadgeProps) {
   const [showExplanation, setShowExplanation] = useState(false);
+  const isHighScore = score > HIGH_SCORE_THRESHOLD;
 
   return (
     <TooltipProvider disableHoverableContent={false}>
@@ -29,9 +33,9 @@ export function ScoreBadge({ score, breakdown, type }: ScoreBadgeProps) {
         }}
       >
         <TooltipTrigger asChild>
-          <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-md cursor-help flex-shrink-0">
-            <Info className="h-3 w-3 text-primary" />
-            <span className="text-sm font-semibold text-primary">{score}</span>
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-md cursor-help flex-shrink-0 ${isHighScore ? "bg-amber-600/20" : "bg-primary/10"}`}>
+            <Info className={`h-3 w-3 ${isHighScore ? "text-amber-700" : "text-primary"}`} />
+            <span className={`text-sm font-semibold ${isHighScore ? "text-amber-800" : "text-primary"}`}>{score}</span>
           </div>
         </TooltipTrigger>
         <TooltipContent side="left" className="w-64">

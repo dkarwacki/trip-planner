@@ -46,6 +46,9 @@ const getMarkerSize = (isMobile: boolean) => ({
   },
 });
 
+// Score threshold for premium/gold styling
+const HIGH_SCORE_THRESHOLD = 80;
+
 const MapContent = ({ mapId }: { mapId?: string }) => {
   const map = useMap();
   const markerLibrary = useMapsLibrary("marker");
@@ -293,13 +296,11 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     if (attractionsResult.status === "fulfilled") {
       const merged = mergeWithPlannedItems(attractionsResult.value, selectedPlace.plannedAttractions, scoreAttractions);
 
-      // Filter out duplicates and prepend new items to the top, sorted by score
+      // Filter out duplicates and merge with existing items, sorted by score
       setAttractions((prev) => {
         const existingIds = new Set(prev.map((item) => item.attraction.id));
-        const newItems = merged
-          .filter((item) => !existingIds.has(item.attraction.id))
-          .sort((a, b) => b.score - a.score);
-        return [...newItems, ...prev];
+        const newItems = merged.filter((item) => !existingIds.has(item.attraction.id));
+        return [...prev, ...newItems].sort((a, b) => b.score - a.score);
       });
     } else {
       setAttractionsError(
@@ -310,13 +311,11 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     if (restaurantsResult.status === "fulfilled") {
       const merged = mergeWithPlannedItems(restaurantsResult.value, selectedPlace.plannedRestaurants, scoreRestaurants);
 
-      // Filter out duplicates and prepend new items to the top, sorted by score
+      // Filter out duplicates and merge with existing items, sorted by score
       setRestaurants((prev) => {
         const existingIds = new Set(prev.map((item) => item.attraction.id));
-        const newItems = merged
-          .filter((item) => !existingIds.has(item.attraction.id))
-          .sort((a, b) => b.score - a.score);
-        return [...newItems, ...prev];
+        const newItems = merged.filter((item) => !existingIds.has(item.attraction.id));
+        return [...prev, ...newItems].sort((a, b) => b.score - a.score);
       });
     } else {
       setRestaurantsError(
@@ -731,12 +730,13 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     const data = activeTab === "attractions" ? attractions : restaurants;
     if (data.length === 0) return;
 
-    const iconColor = activeTab === "attractions" ? "#3B82F6" : "#EF4444";
-
     const MARKER_SIZE = getMarkerSize(isMobile);
 
     data.forEach((scored) => {
-      const { attraction } = scored;
+      const { attraction, score } = scored;
+
+      // Use dark gold/bronze color for high scores (>threshold), otherwise use category-specific colors
+      const iconColor = score > HIGH_SCORE_THRESHOLD ? "#D97706" : activeTab === "attractions" ? "#3B82F6" : "#EF4444";
 
       const pinElement = document.createElement("div");
       pinElement.style.width = `${MARKER_SIZE.DEFAULT}px`;
