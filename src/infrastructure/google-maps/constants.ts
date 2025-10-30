@@ -14,10 +14,17 @@ export const ATTRACTION_TYPES = [
   "hindu_temple",
   "mosque",
   "synagogue",
+  "temple",
   "landmark",
   "library",
   "city_hall",
   "town_square",
+  "route",
+  "monument",
+  "stadium",
+  "casino",
+  "natural_feature",
+  "beach",
 ] as const;
 
 export const RESTAURANT_TYPES = ["restaurant", "cafe", "bar", "bakery", "meal_takeaway"] as const;
