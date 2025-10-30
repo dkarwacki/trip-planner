@@ -51,8 +51,8 @@ export const OpenAIClientLive = Layer.effect(
       baseURL: "https://openrouter.ai/api/v1",
       apiKey,
       defaultHeaders: {
-        "HTTP-Referer": "https://trip-planner.dev", // Optional: your site URL
-        "X-Title": "Trip Planner AI", // Optional: your app name
+        "HTTP-Referer": "https://map-planner.dev", // Optional: your site URL
+        "X-Title": "Map Planner AI", // Optional: your app name
       },
     });
 

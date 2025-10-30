@@ -83,8 +83,8 @@ export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsInput) =
   Effect.gen(function* () {
     const openai = yield* OpenAIClient;
 
-    const tripContext = buildTripContext(input);
-    const messages = buildInitialMessages(input, tripContext);
+    const planContext = buildPlanContext(input);
+    const messages = buildInitialMessages(input, planContext);
 
     // Note: Don't use responseFormat for Claude models - they need explicit prompting instead
     let response = yield* openai.chatCompletion({
@@ -115,9 +115,9 @@ export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsInput) =
   });
 
 /**
- * Builds a JSON string representation of the trip context
+ * Builds a JSON string representation of the plan context
  */
-const buildTripContext = (input: SuggestNearbyAttractionsInput): string => {
+const buildPlanContext = (input: SuggestNearbyAttractionsInput): string => {
   return JSON.stringify(
     {
       place: {
@@ -148,7 +148,7 @@ const buildTripContext = (input: SuggestNearbyAttractionsInput): string => {
  */
 const buildInitialMessages = (
   input: SuggestNearbyAttractionsInput,
-  tripContext: string
+  planContext: string
 ): ChatCompletionMessageParam[] => {
   const userMessage = input.userMessage || "Suggest new attractions and restaurants for this place.";
 
@@ -163,7 +163,7 @@ const buildInitialMessages = (
     ),
     {
       role: "user",
-      content: `Here is my current trip plan:\n\n${tripContext}\n\n${userMessage}.`,
+      content: `Here is my current travel plan:\n\n${planContext}\n\n${userMessage}.`,
     },
   ];
 };

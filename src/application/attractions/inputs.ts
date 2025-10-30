@@ -32,7 +32,7 @@ export const GetTopRestaurantsInputSchema = z.object({
 
 export type GetTopRestaurantsInput = z.infer<typeof GetTopRestaurantsInputSchema>;
 
-// Schema for a single place in the trip
+// Schema for a single place in the plan
 const PlaceSchema = z.object({
   id: z.string(),
   name: z.string(),

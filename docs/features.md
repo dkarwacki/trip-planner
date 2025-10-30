@@ -1,12 +1,12 @@
-# Trip Planner Features
+# Map Planner Features
 
-A comprehensive guide to all features available in the Trip Planner application.
+A comprehensive guide to all features available in the Map Planner application.
 
 **Audience:** End users and developers working on the application.
 
 ## Overview
 
-Trip Planner is an interactive map-based tool for discovering and organizing travel destinations with AI-powered recommendations for attractions and restaurants.
+Map Planner is an interactive map-based tool for discovering and organizing travel destinations with AI-powered recommendations for attractions and restaurants.
 
 **Tech Stack:** Astro 5, React 19, TypeScript, Google Maps API, OpenRouter API (AI), Effect (error handling)
 
@@ -14,9 +14,9 @@ Trip Planner is an interactive map-based tool for discovering and organizing tra
 
 ## Core Features
 
-### 1. AI-Powered Trip Suggestions
+### 1. AI-Powered Suggestions
 
-Get intelligent recommendations tailored to your trip plan using conversational AI with priority-based suggestions.
+Get intelligent recommendations tailored to your travel plan using conversational AI with priority-based suggestions.
 
 **User capabilities:**
 

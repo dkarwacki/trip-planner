@@ -31,7 +31,7 @@ import { MobileNavigation, type MobileTab } from "@/components/MobileNavigation"
 
 type CategoryTab = "attractions" | "restaurants";
 
-interface TripPlannerProps {
+interface MapPlannerProps {
   apiKey: string;
   mapId?: string;
 }
@@ -1334,7 +1334,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   );
 };
 
-export default function TripPlanner({ apiKey, mapId }: TripPlannerProps) {
+export default function MapPlanner({ apiKey, mapId }: MapPlannerProps) {
   return (
     <APIProvider apiKey={apiKey} libraries={["geometry"]}>
       <MapContent mapId={mapId} />

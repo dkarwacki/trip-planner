@@ -1,6 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import TripPlanner from "../components/TripPlanner";
+import MapPlanner from "../components/MapPlanner";
 
 export const prerender = false;
 
@@ -19,6 +19,6 @@ if (!apiKey) {
 const mapId = import.meta.env.GOOGLE_MAPS_MAP_ID;
 ---
 
-<Layout title="Trip Planner">
-  <TripPlanner client:load apiKey={apiKey} mapId={mapId} />
+<Layout title="Map Planner">
+  <MapPlanner client:load apiKey={apiKey} mapId={mapId} />
 </Layout>

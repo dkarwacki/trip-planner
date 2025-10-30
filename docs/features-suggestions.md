@@ -1,6 +1,6 @@
-# Trip Planner - Feature Suggestions
+# Map Planner - Feature Suggestions
 
-This document outlines potential features to enhance the trip planning experience beyond the current map-based place discovery.
+This document outlines potential features to enhance the travel planning experience beyond the current map-based place discovery.
 
 ## Suggested Features
 
@@ -109,9 +109,9 @@ Features that provide immediate value with minimal implementation complexity:
 
 ## Highest Impact Features
 
-Based on typical trip planning workflows, prioritized recommendations:
+Based on typical travel planning workflows, prioritized recommendations:
 
-1. **Trip save/persistence** - Essential for users to return to their plans (without this, app has limited utility)
+1. **Plan save/persistence** - Essential for users to return to their plans (without this, app has limited utility)
 2. **Itinerary builder with days** - Core planning feature; transforms place list into actionable schedule
 3. **Notes per place** - High personalization value; helps users remember why they saved something
 4. **Route optimization** - Huge UX improvement; saves travelers time and reduces decision fatigue
@@ -119,7 +119,7 @@ Based on typical trip planning workflows, prioritized recommendations:
 
 ## Discussion Questions
 
-Which features align best with your vision for the trip planner?
+Which features align best with your vision for the map planner?
 
 - Should we focus on solo travelers or collaborative planning?
 - Is this primarily a discovery tool or a detailed planning tool?
@@ -131,7 +131,7 @@ Which features align best with your vision for the trip planner?
 ### Data Model Implications
 
 - **Trips entity** - Need to store trips with metadata (name, dates, collaborators)
-- **TripPlaces join table** - Link places to trips with day/order/notes
+- **PlanPlaces join table** - Link places to travel plans with day/order/notes
 - **User preferences** - Save settings, favorite types, budget preferences
 - **Sharing mechanism** - Public links, user invitations, permissions
 
