@@ -74,12 +74,9 @@ export function MobileNavigation({
               {isActive && !isDisabled && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-b-full" />
               )}
-              
+
               <div className="relative mt-1">
-                <Icon 
-                  className="h-7 w-7" 
-                  strokeWidth={isActive && !isDisabled ? 2.5 : 2} 
-                />
+                <Icon className="h-7 w-7" strokeWidth={isActive && !isDisabled ? 2.5 : 2} />
                 {tab.badge !== undefined && !isDisabled && (
                   <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white text-xs font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1.5 shadow-sm">
                     {tab.badge > 99 ? "99+" : tab.badge}

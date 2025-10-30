@@ -19,6 +19,7 @@ interface PlaceListItemProps {
   onRemoveAttraction: (attractionId: string) => void;
   onRemoveRestaurant: (restaurantId: string) => void;
   onPlannedItemClick?: (attraction: Attraction) => void;
+  isMobile?: boolean;
 }
 
 export default function PlaceListItem({
@@ -34,6 +35,7 @@ export default function PlaceListItem({
   onRemoveAttraction,
   onRemoveRestaurant,
   onPlannedItemClick,
+  isMobile = false,
 }: PlaceListItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -113,7 +115,7 @@ export default function PlaceListItem({
             </div>
           </button>
           <div className="flex items-start gap-1 flex-shrink-0">
-            {hasPlannedItems && (
+            {hasPlannedItems && !isMobile && (
               <CollapsibleTrigger asChild>
                 <button
                   onClick={(e) => e.stopPropagation()}
@@ -139,7 +141,7 @@ export default function PlaceListItem({
           </div>
         </div>
 
-        {hasPlannedItems && (
+        {hasPlannedItems && !isMobile && (
           <CollapsibleContent className="mt-3 space-y-3">
             {plannedAttractions.length > 0 && (
               <div className="space-y-1.5">

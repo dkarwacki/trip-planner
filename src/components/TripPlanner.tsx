@@ -292,7 +292,15 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
     if (attractionsResult.status === "fulfilled") {
       const merged = mergeWithPlannedItems(attractionsResult.value, selectedPlace.plannedAttractions, scoreAttractions);
-      setAttractions(merged);
+
+      // Filter out duplicates and prepend new items to the top, sorted by score
+      setAttractions((prev) => {
+        const existingIds = new Set(prev.map((item) => item.attraction.id));
+        const newItems = merged
+          .filter((item) => !existingIds.has(item.attraction.id))
+          .sort((a, b) => b.score - a.score);
+        return [...newItems, ...prev];
+      });
     } else {
       setAttractionsError(
         attractionsResult.reason instanceof Error ? attractionsResult.reason.message : "Failed to load attractions"
@@ -301,7 +309,15 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
     if (restaurantsResult.status === "fulfilled") {
       const merged = mergeWithPlannedItems(restaurantsResult.value, selectedPlace.plannedRestaurants, scoreRestaurants);
-      setRestaurants(merged);
+
+      // Filter out duplicates and prepend new items to the top, sorted by score
+      setRestaurants((prev) => {
+        const existingIds = new Set(prev.map((item) => item.attraction.id));
+        const newItems = merged
+          .filter((item) => !existingIds.has(item.attraction.id))
+          .sort((a, b) => b.score - a.score);
+        return [...newItems, ...prev];
+      });
     } else {
       setRestaurantsError(
         restaurantsResult.reason instanceof Error ? restaurantsResult.reason.message : "Failed to load restaurants"
@@ -386,6 +402,11 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         // Expand right sidebar when selecting a place
         setRightSidebarCollapsed(false);
 
+        // On mobile, switch to explore tab when selecting a place
+        if (isMobile) {
+          setMobileTab("explore");
+        }
+
         // Load both attractions and restaurants in parallel
         setAttractions([]);
         setAttractionsError(null);
@@ -433,6 +454,12 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       } else {
         // Place is already selected, just switch tabs if needed and expand sidebar
         setRightSidebarCollapsed(false);
+
+        // On mobile, switch to explore tab to show the attraction
+        if (isMobile) {
+          setMobileTab("explore");
+        }
+
         await handleTabChange(targetTab);
       }
 
@@ -442,7 +469,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       setHighlightedAttractionId(attraction.id);
       setScrollToAttractionId(attraction.id);
     },
-    [places, selectedPlaceId, map, handleTabChange, mergeWithPlannedItems]
+    [places, selectedPlaceId, map, handleTabChange, mergeWithPlannedItems, isMobile]
   );
 
   const handleScrollComplete = useCallback(() => {
@@ -732,6 +759,9 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         setScrollToAttractionId(attraction.id);
         setHighlightedAttractionId(attraction.id);
 
+        // Expand nearby attractions panel
+        setRightSidebarCollapsed(false);
+
         // On mobile, switch to explore tab to show the attraction
         if (isMobile) {
           setMobileTab("explore");
@@ -881,7 +911,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         <div
           className={`${
             leftSidebarCollapsed ? "w-12" : "@container w-full sm:w-72 md:w-80 lg:w-[22rem] xl:w-96"
-          } hidden sm:flex flex-shrink-0 flex-col bg-white border-r shadow-sm transition-all duration-300 ease-in-out relative`}
+          } hidden sm:flex flex-shrink-0 flex-col bg-white border-r shadow-sm transition-all duration-300 ease-in-out relative z-20`}
         >
           {leftSidebarCollapsed ? (
             <div className="flex items-center justify-center h-full">
@@ -970,6 +1000,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
                                   handleRemoveFromPlan(place.id, restaurantId, "restaurant")
                                 }
                                 onPlannedItemClick={handlePlannedItemClick}
+                                isMobile={false}
                               />
                             ))}
                           </div>
@@ -1002,7 +1033,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           />
 
           {showSearchNearbyButton && selectedPlace && !(isMobile && mobileTab === "explore") && (
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1000]">
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
               <Button
                 onClick={handleSearchNearby}
                 size="sm"
@@ -1054,7 +1085,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           <div
             className={`${
               rightSidebarCollapsed ? "w-12" : "w-full sm:w-72 md:w-80 lg:w-[22rem] xl:w-96"
-            } hidden sm:flex flex-shrink-0 flex-col bg-white border-l shadow-sm transition-all duration-300 ease-in-out relative`}
+            } hidden sm:flex flex-shrink-0 flex-col bg-white border-l shadow-sm transition-all duration-300 ease-in-out relative z-20`}
           >
             {rightSidebarCollapsed ? (
               <div className="flex items-center justify-center h-full">
@@ -1131,16 +1162,16 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
         {/* Mobile Places Drawer */}
         <Drawer open={isMobile && mobileTab === "places"} onOpenChange={(open) => !open && setMobileTab("map")}>
-          <DrawerContent className="max-h-[85vh]">
-            <DrawerHeader className="pb-3">
+          <DrawerContent className="max-h-[85vh] flex flex-col">
+            <DrawerHeader className="pb-3 flex-shrink-0">
               <DrawerTitle className="text-xl font-bold">Places ({places.length})</DrawerTitle>
             </DrawerHeader>
-            <div className="px-4 pb-3 space-y-2">
+            <div className="px-4 pb-3 space-y-2 flex-shrink-0">
               <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} map={map} />
               {error && <p className="text-sm text-red-500">{error}</p>}
               {isLoading && <p className="text-sm text-muted-foreground">Loading place details...</p>}
             </div>
-            <ScrollArea className="flex-1 px-4 pb-20">
+            <ScrollArea className="flex-1 min-h-0 px-4 pb-20">
               {places.length === 0 ? (
                 <div className="flex items-center justify-center h-32 text-muted-foreground text-center">
                   <p>No places added yet. Search for a place to get started.</p>
@@ -1172,6 +1203,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
                             handleRemoveFromPlan(place.id, restaurantId, "restaurant")
                           }
                           onPlannedItemClick={handlePlannedItemClick}
+                          isMobile={true}
                         />
                       ))}
                     </div>
