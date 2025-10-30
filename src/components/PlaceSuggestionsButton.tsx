@@ -330,6 +330,27 @@ export default function PlaceSuggestionsButton({
     }
   };
 
+  const getPriorityBadgeStyle = (priority?: string): string => {
+    switch (priority) {
+      case "must-see":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800/50";
+      case "highly recommended":
+        return "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800/50";
+      case "hidden gem":
+        return "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800/50";
+      default:
+        return "";
+    }
+  };
+
+  const formatPriority = (priority?: string): string => {
+    if (!priority) return "";
+    return priority
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
   return (
     <div className="flex flex-col gap-1">
       <Button
@@ -460,6 +481,15 @@ export default function PlaceSuggestionsButton({
                                         <Badge variant={getSuggestionBadgeVariant(suggestion.type)}>
                                           {suggestion.type.replace(/_/g, " ")}
                                         </Badge>
+                                        {suggestion.priority &&
+                                          ["add_attraction", "add_restaurant"].includes(suggestion.type) && (
+                                            <Badge
+                                              variant="default"
+                                              className={getPriorityBadgeStyle(suggestion.priority)}
+                                            >
+                                              {formatPriority(suggestion.priority)}
+                                            </Badge>
+                                          )}
                                         {isAccepted && (
                                           <Badge variant="default" className="bg-green-600">
                                             <Check className="h-3 w-3 mr-1" />

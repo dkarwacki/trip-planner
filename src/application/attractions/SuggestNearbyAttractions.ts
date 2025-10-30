@@ -21,7 +21,10 @@ You must use the searchAttractions and searchRestaurants tools to discover real 
 
 2. **Analysis Phase**: Before providing recommendations, conduct your comprehensive planning inside "_thinking" array. In your planning, work through:
    - **Tool Results Summary**: Document the key attractions and restaurants you found, noting names, ratings, and key features for each
-   - **Tiered Recommendation Strategy**: Categorize options as must-sees, highly recommended if you have time, and hidden gems for longer stays
+   - **Tiered Recommendation Strategy**: Categorize options into three priority levels:
+     * **must-see**: Essential attractions/restaurants that are iconic, highly-rated, or central to the destination's identity
+     * **highly recommended**: Excellent options worth visiting if you have time, offering great value or unique experiences
+     * **hidden gem**: Lesser-known but exceptional places perfect for longer stays or travelers seeking authentic local experiences
 
 3. **Recommendation Phase**: Select 5 of the best attractions with at least 1 hidden gem and 2 of the best restaurants from your tool results.
 
@@ -30,6 +33,7 @@ You must use the searchAttractions and searchRestaurants tools to discover real 
 - You MUST use the searchAttractions and searchRestaurants tools before making any suggestions
 - You MUST only suggest places that appear in your tool results
 - For attraction and restaurant suggestions, you MUST include the exact name from the tool results in the "attractionName" field
+- For attraction and restaurant suggestions, you MUST include a "priority" field with one of: "must-see", "highly recommended", or "hidden gem"
 - You MUST include at least 1 hidden gem in your suggestions
 - You MUST include at most 2 restaurants in your suggestions
 - You MUST respond with ONLY valid JSON after your analysis - no additional text before or after
@@ -45,12 +49,14 @@ After your analysis, provide your response as valid JSON in exactly this structu
     {
       "type": "add_attraction",
       "reasoning": "why this attraction fits specific traveler types and what makes it valuable",
-      "attractionName": "Exact Place Name from tool results"
+      "attractionName": "Exact Place Name from tool results",
+      "priority": "must-see"
     },
     {
       "type": "add_restaurant", 
       "reasoning": "why this restaurant is recommended and for which travelers",
-      "attractionName": "Exact Restaurant Name from tool results"
+      "attractionName": "Exact Restaurant Name from tool results",
+      "priority": "highly recommended"
     },
     {
       "type": "general_tip",
@@ -61,9 +67,14 @@ After your analysis, provide your response as valid JSON in exactly this structu
 }
 
 **Suggestion Types:**
-- "add_attraction": For tourist attractions, landmarks, activities (requires exact attractionName from tools)
-- "add_restaurant": For restaurants, cafes, food venues (requires exact attractionName from tools) 
-- "general_tip": For travel advice, timing recommendations, logistical tips (no attractionName needed)`;
+- "add_attraction": For tourist attractions, landmarks, activities (requires exact attractionName from tools and priority field)
+- "add_restaurant": For restaurants, cafes, food venues (requires exact attractionName from tools and priority field) 
+- "general_tip": For travel advice, timing recommendations, logistical tips (no attractionName or priority needed)
+
+**Priority Levels:**
+- "must-see": Essential attractions/restaurants that are iconic, highly-rated, or central to the destination's identity
+- "highly recommended": Excellent options worth visiting if you have time, offering great value or unique experiences
+- "hidden gem": Lesser-known but exceptional places perfect for longer stays or travelers seeking authentic local experiences`;
 
 /**
  * Main agent use case - suggests nearby attractions and restaurants based on user preferences

@@ -17,12 +17,14 @@ export const ConversationId = Brand.nominal<ConversationId>();
 
 // Agent response types
 export type SuggestionType = "add_attraction" | "add_restaurant" | "general_tip";
+export type SuggestionPriority = "hidden gem" | "highly recommended" | "must-see";
 
 export interface Suggestion {
   type: SuggestionType;
   reasoning: string;
   attractionName?: string;
   attractionData?: Attraction;
+  priority?: SuggestionPriority; // Required for add_attraction/add_restaurant, not needed for general_tip
 }
 
 export interface AgentResponse {

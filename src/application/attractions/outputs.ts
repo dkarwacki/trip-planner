@@ -11,6 +11,7 @@ const SuggestionSchema = z
     type: z.enum(["add_attraction", "add_restaurant", "general_tip"]),
     reasoning: z.string(),
     attractionName: z.string().optional(),
+    priority: z.enum(["hidden gem", "highly recommended", "must-see"]).optional(),
     attractionData: z
       .object({
         id: z.string(),
