@@ -116,7 +116,7 @@ const ContentList = ({
   // Loading State
   if (isLoading) {
     return (
-      <div className="p-4 pb-24 space-y-4">
+      <div className="p-4 pb-40 sm:pb-24 space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="space-y-3">
             <Skeleton className="h-5 w-3/4" />
@@ -153,7 +153,7 @@ const ContentList = ({
   // Success State
   return (
     <ScrollArea className="h-full">
-      <div className="p-4 pb-24 space-y-4">
+      <div className="p-4 pb-40 sm:pb-24 space-y-4">
         {data.map((scored) => {
           const { attraction, score, breakdown } = scored;
           const topTypes = attraction.types.slice(0, 3);

@@ -1148,7 +1148,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={places.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-2 pb-4">
+                    <div className="space-y-2 pb-24">
                       {places.map((place, index) => (
                         <PlaceListItem
                           key={place.id}
@@ -1234,7 +1234,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
                   <p>No planned items yet. Add attractions and restaurants from the Explore tab.</p>
                 </div>
               ) : (
-                <div className="space-y-5 pb-4">
+                <div className="space-y-5 pb-24">
                   {places.map((place) => {
                     const plannedItems = [...place.plannedAttractions, ...place.plannedRestaurants];
                     if (plannedItems.length === 0) return null;
