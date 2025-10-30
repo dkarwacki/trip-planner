@@ -1,12 +1,22 @@
 import { z } from "zod";
 
+// Reusable coordinate validation schemas
+const LatitudeSchema = z
+  .number({ required_error: "lat is required" })
+  .refine((val) => val >= -90 && val <= 90, { message: "Latitude must be between -90 and 90" });
+
+const LongitudeSchema = z
+  .number({ required_error: "lng is required" })
+  .refine((val) => val >= -180 && val <= 180, { message: "Longitude must be between -180 and 180" });
+
+const CoordinatesSchema = z.object({
+  lat: LatitudeSchema,
+  lng: LongitudeSchema,
+});
+
 export const GetTopAttractionsInputSchema = z.object({
-  lat: z
-    .number({ required_error: "lat is required" })
-    .refine((val) => val >= -90 && val <= 90, { message: "Latitude must be between -90 and 90" }),
-  lng: z
-    .number({ required_error: "lng is required" })
-    .refine((val) => val >= -180 && val <= 180, { message: "Longitude must be between -180 and 180" }),
+  lat: LatitudeSchema,
+  lng: LongitudeSchema,
   radius: z.number().min(100).max(50000).default(2000),
   limit: z.number().min(1).max(50).default(10),
 });
@@ -14,12 +24,8 @@ export const GetTopAttractionsInputSchema = z.object({
 export type GetTopAttractionsInput = z.infer<typeof GetTopAttractionsInputSchema>;
 
 export const GetTopRestaurantsInputSchema = z.object({
-  lat: z
-    .number({ required_error: "lat is required" })
-    .refine((val) => val >= -90 && val <= 90, { message: "Latitude must be between -90 and 90" }),
-  lng: z
-    .number({ required_error: "lng is required" })
-    .refine((val) => val >= -180 && val <= 180, { message: "Longitude must be between -180 and 180" }),
+  lat: LatitudeSchema,
+  lng: LongitudeSchema,
   radius: z.number().min(100).max(50000).default(2000),
   limit: z.number().min(1).max(50).default(10),
 });
@@ -30,8 +36,6 @@ export type GetTopRestaurantsInput = z.infer<typeof GetTopRestaurantsInputSchema
 const PlaceSchema = z.object({
   id: z.string(),
   name: z.string(),
-  lat: z.number(),
-  lng: z.number(),
   plannedAttractions: z.array(
     z.object({
       id: z.string(),
@@ -73,7 +77,8 @@ const MessageSchema = z.object({
 });
 
 export const SuggestNearbyAttractionsInputSchema = z.object({
-  places: z.array(PlaceSchema).min(1, "At least one place is required"),
+  place: PlaceSchema,
+  mapCoordinates: CoordinatesSchema,
   conversationHistory: z.array(MessageSchema).default([]),
   userMessage: z.string().optional(),
 });

@@ -108,6 +108,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     lng: number;
   } | null>(null);
   const [showSearchNearbyButton, setShowSearchNearbyButton] = useState(false);
+  const [currentMapCenter, setCurrentMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
   interface MarkerData {
     marker: google.maps.marker.AdvancedMarkerElement;
@@ -790,6 +791,28 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     };
   }, [map, initialSearchCenter]);
 
+  // Track current map center for AI suggestions
+  useEffect(() => {
+    if (!map) return;
+
+    const updateMapCenter = () => {
+      const center = map.getCenter();
+      if (center) {
+        setCurrentMapCenter({ lat: center.lat(), lng: center.lng() });
+      }
+    };
+
+    // Update immediately
+    updateMapCenter();
+
+    // Update on map idle event (after panning/dragging stops)
+    const listener = map.addListener("idle", updateMapCenter);
+
+    return () => {
+      google.maps.event.removeListener(listener);
+    };
+  }, [map]);
+
   return (
     <div className="flex h-screen">
       <div className="@container w-full sm:w-96 md:w-[28rem] lg:w-[32rem] xl:w-[36rem] flex-shrink-0 flex flex-col bg-white border-r shadow-sm">
@@ -886,6 +909,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
             place={selectedPlace}
             onPlaceUpdate={(updatedPlace) => handlePlaceUpdate(selectedPlace.id, updatedPlace)}
             onAttractionAccepted={handleAttractionAccepted}
+            mapCenter={currentMapCenter}
           />
         )}
 

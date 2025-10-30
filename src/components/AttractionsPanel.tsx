@@ -34,6 +34,7 @@ interface AttractionsPanelProps {
   place: Place;
   onPlaceUpdate: (updatedPlace: Place) => void;
   onAttractionAccepted?: (placeId: string, attraction: Attraction, type: "attraction" | "restaurant") => void;
+  mapCenter?: { lat: number; lng: number } | null;
 }
 
 const getPriceLevelSymbol = (priceLevel?: number): string => {
@@ -291,6 +292,7 @@ export default function AttractionsPanel({
   place,
   onPlaceUpdate,
   onAttractionAccepted,
+  mapCenter,
 }: AttractionsPanelProps) {
   const headingText = activeTab === "attractions" ? "Nearby Attractions" : "Nearby Restaurants";
 
@@ -338,6 +340,7 @@ export default function AttractionsPanel({
                 onHighlight={() => {
                   /* No-op since place is already selected */
                 }}
+                mapCenter={mapCenter}
               />
             </div>
 

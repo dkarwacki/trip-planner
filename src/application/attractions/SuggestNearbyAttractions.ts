@@ -98,7 +98,7 @@ export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsInput) =
 
     while (response.toolCalls && response.toolCalls.length > 0 && iterations < maxToolCallIterations) {
       iterations++;
-      response = yield* handleToolCallIteration(messages, response, openai);
+      response = yield* handleToolCallIteration(messages, response, openai, input.mapCoordinates);
     }
 
     if (!response.content) {
@@ -120,24 +120,23 @@ export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsInput) =
 const buildTripContext = (input: SuggestNearbyAttractionsInput): string => {
   return JSON.stringify(
     {
-      places: input.places.map((p) => ({
-        id: p.id,
-        name: p.name,
-        location: { lat: p.lat, lng: p.lng },
-        plannedAttractions: p.plannedAttractions.map((a) => ({
+      place: {
+        id: input.place.id,
+        name: input.place.name,
+        plannedAttractions: input.place.plannedAttractions.map((a) => ({
           name: a.name,
           rating: a.rating,
           userRatingsTotal: a.userRatingsTotal,
           types: a.types,
         })),
-        plannedRestaurants: p.plannedRestaurants.map((r) => ({
+        plannedRestaurants: input.place.plannedRestaurants.map((r) => ({
           name: r.name,
           rating: r.rating,
           userRatingsTotal: r.userRatingsTotal,
           types: r.types,
           priceLevel: r.priceLevel,
         })),
-      })),
+      },
     },
     null,
     2
@@ -175,7 +174,8 @@ const buildInitialMessages = (
 const handleToolCallIteration = (
   messages: ChatCompletionMessageParam[],
   response: ChatCompletionResponse,
-  openai: IOpenAIClient
+  openai: IOpenAIClient,
+  mapCoordinates: { lat: number; lng: number }
 ) =>
   Effect.gen(function* () {
     if (!response.toolCalls || response.toolCalls.length === 0) {
@@ -183,7 +183,7 @@ const handleToolCallIteration = (
     }
 
     const toolResults = yield* Effect.all(
-      response.toolCalls.map((toolCall) => executeToolCall(toolCall)),
+      response.toolCalls.map((toolCall) => executeToolCall(toolCall, mapCoordinates)),
       { concurrency: 3 }
     );
 
@@ -254,7 +254,7 @@ const enrichSuggestionsWithAttractionData = (
     return Array.getSomes(suggestionOptions);
   });
 
-const executeToolCall = (toolCall: ToolCall) =>
+const executeToolCall = (toolCall: ToolCall, mapCoordinates: { lat: number; lng: number }) =>
   Effect.gen(function* () {
     try {
       const args = JSON.parse(toolCall.arguments);
@@ -263,19 +263,21 @@ const executeToolCall = (toolCall: ToolCall) =>
 
       switch (toolName) {
         case "searchAttractions": {
+          // Override coordinates with mapCoordinates - AI thinks it's choosing, but we use map center
           const result = yield* getTopAttractions({
-            lat: args.lat,
-            lng: args.lng,
+            lat: mapCoordinates.lat,
+            lng: mapCoordinates.lng,
             radius: args.radius ?? 2000,
-            limit: args.limit ?? 10,
+            limit: args.limit ?? 15,
           });
           return JSON.stringify({ attractions: result });
         }
 
         case "searchRestaurants": {
+          // Override coordinates with mapCoordinates - AI thinks it's choosing, but we use map center
           const result = yield* getTopRestaurants({
-            lat: args.lat,
-            lng: args.lng,
+            lat: mapCoordinates.lat,
+            lng: mapCoordinates.lng,
             radius: args.radius ?? 2000,
             limit: args.limit ?? 10,
           });

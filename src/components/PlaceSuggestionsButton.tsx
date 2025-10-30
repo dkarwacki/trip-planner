@@ -27,6 +27,7 @@ interface PlaceSuggestionsButtonProps {
   onExpandRequest?: () => void;
   onAttractionAccepted?: (placeId: string, attraction: Attraction, type: "attraction" | "restaurant") => void;
   onHighlight?: () => void;
+  mapCenter?: { lat: number; lng: number } | null;
 }
 
 export default function PlaceSuggestionsButton({
@@ -36,6 +37,7 @@ export default function PlaceSuggestionsButton({
   onExpandRequest,
   onAttractionAccepted,
   onHighlight,
+  mapCenter,
 }: PlaceSuggestionsButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,16 +98,13 @@ export default function PlaceSuggestionsButton({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            places: [
-              {
-                id: place.id,
-                name: place.name,
-                lat: place.lat,
-                lng: place.lng,
-                plannedAttractions: place.plannedAttractions,
-                plannedRestaurants: place.plannedRestaurants,
-              },
-            ],
+            place: {
+              id: place.id,
+              name: place.name,
+              plannedAttractions: place.plannedAttractions,
+              plannedRestaurants: place.plannedRestaurants,
+            },
+            mapCoordinates: mapCenter || { lat: place.lat, lng: place.lng },
             conversationHistory,
             userMessage,
           }),
@@ -162,7 +161,7 @@ export default function PlaceSuggestionsButton({
         setIsLoading(false);
       }
     },
-    [place, conversationHistory, onExpandRequest, onHighlight]
+    [place, conversationHistory, onExpandRequest, onHighlight, mapCenter]
   );
 
   const handleAcceptSuggestion = useCallback(
