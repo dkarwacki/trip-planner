@@ -1,12 +1,14 @@
-# Map Planner Features
+# `/map` Route Features
 
-A comprehensive guide to all features available in the Map Planner application.
+A comprehensive guide to all features available on the `/map` page of the Trip Planner application.
 
 **Audience:** End users and developers working on the application.
 
+**Note:** This document describes features specific to the `/map` route. Other routes (e.g., `/` homepage) have separate functionality not covered here.
+
 ## Overview
 
-Map Planner is an interactive map-based tool for discovering and organizing travel destinations with AI-powered recommendations for attractions and restaurants.
+The `/map` page is an interactive map-based tool for discovering and organizing travel destinations with AI-powered recommendations for attractions and restaurants.
 
 **Tech Stack:** Astro 5, React 19, TypeScript, Google Maps API, OpenRouter API (AI), Effect (error handling)
 
