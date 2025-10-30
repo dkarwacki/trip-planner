@@ -16,7 +16,7 @@ Trip Planner is an interactive map-based tool for discovering and organizing tra
 
 ### 1. AI-Powered Trip Suggestions
 
-Get intelligent recommendations tailored to your trip plan using conversational AI.
+Get intelligent recommendations tailored to your trip plan using conversational AI with priority-based suggestions.
 
 **User capabilities:**
 
@@ -25,6 +25,10 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 - View AI's step-by-step reasoning (collapsible chain-of-thought)
 - Accept or reject individual suggestions
 - Get three types of suggestions: Attractions (🎯), Restaurants (🍽️), Tips (💡)
+- See priority badges on suggestions:
+  - **Must-see**: Essential, iconic attractions
+  - **Highly recommended**: Great options if you have time
+  - **Hidden gem**: Lesser-known authentic local experiences
 
 **Technical details:**
 
@@ -33,6 +37,8 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 - Parallel tool execution for performance
 - Conversation history maintained for context-aware refinements
 - Accepted suggestions are added to place-specific itineraries
+- AI required to suggest: 5 attractions (≥1 hidden gem) + 2 restaurants max
+- Uses current map center for location-aware suggestions
 
 ### 2. Interactive Map
 
@@ -87,10 +93,13 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 
 - Two-tab interface with lazy loading (restaurants load on first tab open)
 - Smart scoring system:
-  - **Quality Score:** Based on rating × log(review_count)
-  - **Diversity Score:** Rewards variety in attraction types (attractions only)
-  - **Locality Score:** Prioritizes well-known places with many reviews
-- Results cached per place selection
+  - **Quality Score (60% for attractions, 70% for restaurants):** rating (60%) + log₁₀(reviews) (40%)
+  - **Diversity Score (25% for attractions only):** Rewards places with unique/rare types
+  - **Confidence Score (15% for attractions, 30% for restaurants):** Based on review volume reliability
+    - High confidence: >100 reviews
+    - Medium confidence: 20-100 reviews  
+    - Low confidence: <20 reviews
+- Results cached per place selection, sorted by score, duplicates filtered
 - Marker hover/click synchronization with list items
 - Google Places API (Nearby Search + Place Details)
 
@@ -130,23 +139,73 @@ Get intelligent recommendations tailored to your trip plan using conversational 
 - Duplicate detection before adding
 - Effect-based error handling with tagged errors
 
+### 7. Responsive Mobile Experience
+
+**User capabilities:**
+
+- Native mobile bottom navigation with 4 tabs:
+  - **Places:** View and manage all your saved places
+  - **Map:** Interactive map view with touch-optimized markers
+  - **Explore:** Discover attractions and restaurants for selected place
+  - **Plan:** View all planned items across all places
+- Badge indicators showing counts on Places and Plan tabs
+- Touch-friendly larger markers (24px vs 16px on desktop)
+- Full-screen drawer panels for attractions/restaurants
+- Smart tab switching (auto-switch to Explore when selecting place)
+- Safe area support for devices with notches
+
+**Technical details:**
+
+- Mobile-first responsive design (shows on screens <640px)
+- Uses `vaul` library for drawer animations
+- Fixed bottom navigation with elevation shadow
+- Disabled state for Explore (no place selected) and Plan (no items) tabs
+- Dynamic marker sizing based on device type
+- CSS safe area utilities (`safe-area-bottom`)
+- Active tab indicator with colored accent bar
+
+### 8. Collapsible Sidebars (Desktop)
+
+**User capabilities:**
+
+- Collapse left sidebar (places list) to maximize map space
+- Collapse right sidebar (attractions panel) for focused map viewing
+- Tooltip hints on collapsed sidebar buttons
+- Smooth animations during collapse/expand
+- Auto-expand sidebars when selecting places or attractions
+
+**Technical details:**
+
+- Chevron buttons positioned outside sidebar edges
+- Transition animations (300ms ease-in-out)
+- Collapsed width: 12px (48px), Expanded: 320-384px depending on screen size
+- Auto-expand triggers:
+  - Right sidebar: When selecting a place or viewing attractions
+  - Left sidebar: Manual control only
+- Responsive width classes with Tailwind container queries
+- Hidden on mobile (uses drawer navigation instead)
+
 ---
 
 ## Data Flow
 
-1. **Place Selection:** User searches or clicks → Place details fetched → Stored in state
-2. **Attraction Discovery:** Place selected → Parallel fetch (attractions + restaurants) → Scored and ranked → Displayed in panel
-3. **AI Suggestions:** User clicks "Suggest" → OpenRouter API → Function calls to Google Maps → Results presented with reasoning
-4. **Itinerary Building:** User accepts suggestion/clicks "+" → Added to place-specific plan → Merged with discovery results
+1. **Place Selection:** User searches or clicks → Place details fetched → Stored in state → Auto-expand sidebar/switch tab
+2. **Attraction Discovery:** Place selected → Parallel fetch (attractions + restaurants) → Scored, sorted, deduplicated → Displayed in panel
+3. **AI Suggestions:** User clicks "Suggest" → OpenRouter API with map center context → Function calls to Google Maps → Results with priority badges → Presented with reasoning
+4. **Itinerary Building:** User accepts suggestion/clicks "+" → Added to place-specific plan → Merged with discovery results → Badge counts updated
 5. **Area Search:** User pans map → Distance check → Button appears → Click → New search at current center → Results refresh
+6. **Mobile Navigation:** Tab switch → Content changes → Map/drawers update → Auto-expansion triggers for relevant views
 
 ## State Management
 
 - **Places:** Array of Place objects with planned attractions/restaurants
 - **Selected Place:** Currently active place for viewing attractions
-- **Attractions/Restaurants:** Cached results per place with scores
-- **UI State:** Active tab, loading states, hovered/highlighted items
+- **Attractions/Restaurants:** Cached results per place with scores (sorted, deduplicated)
+- **UI State:** 
+  - Desktop: Active tab, loading states, hovered/highlighted items, sidebar collapse states
+  - Mobile: Active mobile tab (places/map/explore/plan), drawer open states
 - **Search State:** Initial search center tracking for "Search this area" button
+- **Map State:** Current map center coordinates for AI suggestions
 
 ## Error Handling
 
