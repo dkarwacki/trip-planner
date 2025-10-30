@@ -300,7 +300,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     // Clear search nearby state
     setInitialSearchCenter(null);
     setShowSearchNearbyButton(false);
-    
+
     // Collapse right sidebar when closing attractions
     setRightSidebarCollapsed(true);
   }, []);
@@ -957,7 +957,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           />
 
           {showSearchNearbyButton && selectedPlace && (
-            <div className="absolute top-1/3 left-[calc(50%-12rem)] -translate-x-1/2 -translate-y-1/2 z-[1000]">
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1000]">
               <Button
                 onClick={handleSearchNearby}
                 size="sm"
