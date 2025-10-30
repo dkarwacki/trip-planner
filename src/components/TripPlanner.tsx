@@ -23,6 +23,8 @@ import PlaceAutocomplete from "@/components/PlaceAutocomplete";
 import PlaceListItem from "@/components/PlaceListItem";
 import AddToPlanDialog from "@/components/AddToPlanDialog";
 import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { calculateDistance, SEARCH_NEARBY_DISTANCE_THRESHOLD } from "@/lib/map-utils";
 
 type CategoryTab = "attractions" | "restaurants";
@@ -110,6 +112,10 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const [showSearchNearbyButton, setShowSearchNearbyButton] = useState(false);
   const [currentMapCenter, setCurrentMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Sidebar collapse state
+  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
+
   interface MarkerData {
     marker: google.maps.marker.AdvancedMarkerElement;
     element: HTMLDivElement;
@@ -182,6 +188,9 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       setSelectedPlace(place);
       map.panTo({ lat: place.lat, lng: place.lng });
       map.setZoom(14);
+
+      // Expand right sidebar when selecting a place
+      setRightSidebarCollapsed(false);
 
       // Store initial search center for button trigger logic
       setInitialSearchCenter({ lat: place.lat, lng: place.lng });
@@ -291,6 +300,9 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     // Clear search nearby state
     setInitialSearchCenter(null);
     setShowSearchNearbyButton(false);
+    
+    // Collapse right sidebar when closing attractions
+    setRightSidebarCollapsed(true);
   }, []);
 
   const handleTabChange = useCallback(
@@ -346,6 +358,9 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         map.panTo({ lat: attraction.location.lat, lng: attraction.location.lng });
         map.setZoom(15);
 
+        // Expand right sidebar when selecting a place
+        setRightSidebarCollapsed(false);
+
         // Load both attractions and restaurants in parallel
         setAttractions([]);
         setAttractionsError(null);
@@ -391,7 +406,8 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
         setActiveTab(targetTab);
       } else {
-        // Place is already selected, just switch tabs if needed
+        // Place is already selected, just switch tabs if needed and expand sidebar
+        setRightSidebarCollapsed(false);
         await handleTabChange(targetTab);
       }
 
@@ -814,161 +830,261 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   }, [map]);
 
   return (
-    <div className="flex h-screen">
-      <div className="@container w-full sm:w-96 md:w-[28rem] lg:w-[32rem] xl:w-[36rem] flex-shrink-0 flex flex-col bg-white border-r shadow-sm">
-        <div className="p-4 border-b space-y-3">
-          <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} map={map} />
-          {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
-          {isLoading && <p className="text-sm text-muted-foreground mt-1">Loading place details...</p>}
+    <TooltipProvider>
+      <div className="flex h-screen">
+        {/* Left Sidebar - Places */}
+        <div
+          className={`${
+            leftSidebarCollapsed ? "w-12" : "@container w-full sm:w-96 md:w-[28rem] lg:w-[32rem] xl:w-[36rem]"
+          } flex-shrink-0 flex flex-col bg-white border-r shadow-sm transition-all duration-300 ease-in-out relative`}
+        >
+          {leftSidebarCollapsed ? (
+            <div className="flex items-center justify-center h-full">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setLeftSidebarCollapsed(false)}
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label="Expand places sidebar"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Show Places</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          ) : (
+            <>
+              <div className="p-4 border-b space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1">
+                    <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} map={map} />
+                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => setLeftSidebarCollapsed(true)}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 flex-shrink-0"
+                        aria-label="Collapse places sidebar"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p>Hide Places</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+                {isLoading && <p className="text-sm text-muted-foreground mt-1">Loading place details...</p>}
+              </div>
+
+              <Card className="flex-1 m-4 flex flex-col rounded-lg min-h-0">
+                <CardHeader className="pb-3 flex-shrink-0">
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Places</span>
+                    <Badge variant="secondary">{places.length}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
+                  {places.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-muted-foreground px-6 text-center">
+                      <p>No places added yet. Search for a place to get started.</p>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-full w-full px-4 sm:px-6 pb-6">
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={places.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                          <div className="space-y-2">
+                            {places.map((place, index) => (
+                              <PlaceListItem
+                                key={place.id}
+                                place={place}
+                                index={index}
+                                isSelected={selectedPlaceId === place.id}
+                                onSelect={handlePanToPlace}
+                                onRemove={handleRemovePlace}
+                                plannedAttractions={place.plannedAttractions}
+                                plannedRestaurants={place.plannedRestaurants}
+                                onReorderAttractions={(oldIndex: number, newIndex: number) =>
+                                  handleReorderPlannedItems(place.id, "attraction", oldIndex, newIndex)
+                                }
+                                onReorderRestaurants={(oldIndex: number, newIndex: number) =>
+                                  handleReorderPlannedItems(place.id, "restaurant", oldIndex, newIndex)
+                                }
+                                onRemoveAttraction={(attractionId: string) =>
+                                  handleRemoveFromPlan(place.id, attractionId, "attraction")
+                                }
+                                onRemoveRestaurant={(restaurantId: string) =>
+                                  handleRemoveFromPlan(place.id, restaurantId, "restaurant")
+                                }
+                                onPlannedItemClick={handlePlannedItemClick}
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                    </ScrollArea>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
 
-        <Card className="flex-1 m-4 flex flex-col rounded-lg min-h-0">
-          <CardHeader className="pb-3 flex-shrink-0">
-            <CardTitle className="flex items-center justify-between">
-              <span>Places</span>
-              <Badge variant="secondary">{places.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
-            {places.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground px-6 text-center">
-                <p>No places added yet. Search for a place to get started.</p>
-              </div>
-            ) : (
-              <ScrollArea className="h-full w-full px-4 sm:px-6 pb-6">
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={places.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-2">
-                      {places.map((place, index) => (
-                        <PlaceListItem
-                          key={place.id}
-                          place={place}
-                          index={index}
-                          isSelected={selectedPlaceId === place.id}
-                          onSelect={handlePanToPlace}
-                          onRemove={handleRemovePlace}
-                          plannedAttractions={place.plannedAttractions}
-                          plannedRestaurants={place.plannedRestaurants}
-                          onReorderAttractions={(oldIndex: number, newIndex: number) =>
-                            handleReorderPlannedItems(place.id, "attraction", oldIndex, newIndex)
-                          }
-                          onReorderRestaurants={(oldIndex: number, newIndex: number) =>
-                            handleReorderPlannedItems(place.id, "restaurant", oldIndex, newIndex)
-                          }
-                          onRemoveAttraction={(attractionId: string) =>
-                            handleRemoveFromPlan(place.id, attractionId, "attraction")
-                          }
-                          onRemoveRestaurant={(restaurantId: string) =>
-                            handleRemoveFromPlan(place.id, restaurantId, "restaurant")
-                          }
-                          onPlannedItemClick={handlePlannedItemClick}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              </ScrollArea>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex-1 relative">
-        <Map
-          defaultCenter={{ lat: 0, lng: 0 }}
-          defaultZoom={2}
-          gestureHandling="greedy"
-          disableDefaultUI={false}
-          mapId={mapId}
-        />
-
-        {selectedPlace && (
-          <AttractionsPanel
-            attractions={attractions}
-            isLoadingAttractions={isLoadingAttractions}
-            attractionsError={attractionsError}
-            restaurants={restaurants}
-            isLoadingRestaurants={isLoadingRestaurants}
-            restaurantsError={restaurantsError}
-            placeName={selectedPlace.name}
-            onClose={handleCloseAttractions}
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            onAttractionHover={setHoveredAttractionId}
-            scrollToAttractionId={scrollToAttractionId}
-            onScrollComplete={handleScrollComplete}
-            highlightedAttractionId={highlightedAttractionId}
-            onAttractionClick={setHighlightedAttractionId}
-            plannedAttractionIds={
-              new Set(places.find((p) => p.id === selectedPlaceId)?.plannedAttractions.map((a) => a.id) || [])
-            }
-            plannedRestaurantIds={
-              new Set(places.find((p) => p.id === selectedPlaceId)?.plannedRestaurants.map((r) => r.id) || [])
-            }
-            onAddToPlan={handleOpenAddDialog}
-            place={selectedPlace}
-            onPlaceUpdate={(updatedPlace) => handlePlaceUpdate(selectedPlace.id, updatedPlace)}
-            onAttractionAccepted={handleAttractionAccepted}
-            mapCenter={currentMapCenter}
+        {/* Map - Center */}
+        <div className="flex-1 relative">
+          <Map
+            defaultCenter={{ lat: 0, lng: 0 }}
+            defaultZoom={2}
+            gestureHandling="greedy"
+            disableDefaultUI={false}
+            mapId={mapId}
           />
-        )}
 
-        <AddToPlanDialog
-          attraction={pendingAttraction}
-          isOpen={dialogOpen}
-          onConfirm={handleConfirmAdd}
-          onCancel={handleCancelAdd}
-          type={pendingType || "attraction"}
-        />
+          <AddToPlanDialog
+            attraction={pendingAttraction}
+            isOpen={dialogOpen}
+            onConfirm={handleConfirmAdd}
+            onCancel={handleCancelAdd}
+            type={pendingType || "attraction"}
+          />
 
-        {showSearchNearbyButton && selectedPlace && (
-          <div className="absolute top-1/3 left-[calc(50%-12rem)] -translate-x-1/2 -translate-y-1/2 z-[1000]">
-            <Button
-              onClick={handleSearchNearby}
-              size="sm"
-              variant="outline"
-              className="bg-white text-gray-900 hover:bg-gray-50 shadow-lg border-gray-200"
-              aria-label="Search for attractions and restaurants in the current map area"
-            >
-              Search this area
-            </Button>
-          </div>
-        )}
+          {showSearchNearbyButton && selectedPlace && (
+            <div className="absolute top-1/3 left-[calc(50%-12rem)] -translate-x-1/2 -translate-y-1/2 z-[1000]">
+              <Button
+                onClick={handleSearchNearby}
+                size="sm"
+                variant="outline"
+                className="bg-white text-gray-900 hover:bg-gray-50 shadow-lg border-gray-200"
+                aria-label="Search for attractions and restaurants in the current map area"
+              >
+                Search this area
+              </Button>
+            </div>
+          )}
 
-        {showAddPlacePopover && clickedLocation && (
-          <div className="absolute top-4 left-4 z-50">
-            <div className="bg-white rounded-lg shadow-lg border p-4 w-80">
-              <div className="space-y-3">
-                <div>
-                  <h3 className="font-semibold text-sm mb-1">Add Location to Places</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {clickedLocation.lat.toFixed(6)}, {clickedLocation.lng.toFixed(6)}
-                  </p>
+          {showAddPlacePopover && clickedLocation && (
+            <div className="absolute top-4 left-4 z-50">
+              <div className="bg-white rounded-lg shadow-lg border p-4 w-80">
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-sm mb-1">Add Location to Places</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {clickedLocation.lat.toFixed(6)}, {clickedLocation.lng.toFixed(6)}
+                    </p>
+                  </div>
+
+                  {geocodingError && <p className="text-sm text-red-500">{geocodingError}</p>}
+
+                  {isReverseGeocoding ? (
+                    <div className="flex items-center justify-center py-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                      <span className="ml-2 text-sm text-muted-foreground">Finding address...</span>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button onClick={handleAddPlace} className="flex-1" size="sm">
+                        Add to Places
+                      </Button>
+                      <Button onClick={handleClosePopover} variant="outline" className="flex-1" size="sm">
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
                 </div>
-
-                {geocodingError && <p className="text-sm text-red-500">{geocodingError}</p>}
-
-                {isReverseGeocoding ? (
-                  <div className="flex items-center justify-center py-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-                    <span className="ml-2 text-sm text-muted-foreground">Finding address...</span>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button onClick={handleAddPlace} className="flex-1" size="sm">
-                      Add to Places
-                    </Button>
-                    <Button onClick={handleClosePopover} variant="outline" className="flex-1" size="sm">
-                      Cancel
-                    </Button>
-                  </div>
-                )}
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Right Sidebar - Nearby Attractions */}
+        {selectedPlace && (
+          <div
+            className={`${
+              rightSidebarCollapsed ? "w-12" : "w-full sm:w-96 md:w-[28rem] lg:w-[32rem] xl:w-[36rem]"
+            } flex-shrink-0 flex flex-col bg-white border-l shadow-sm transition-all duration-300 ease-in-out relative`}
+          >
+            {rightSidebarCollapsed ? (
+              <div className="flex items-center justify-center h-full">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => setRightSidebarCollapsed(false)}
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label="Expand attractions sidebar"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p>Show Nearby Attractions</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            ) : (
+              <>
+                <AttractionsPanel
+                  attractions={attractions}
+                  isLoadingAttractions={isLoadingAttractions}
+                  attractionsError={attractionsError}
+                  restaurants={restaurants}
+                  isLoadingRestaurants={isLoadingRestaurants}
+                  restaurantsError={restaurantsError}
+                  placeName={selectedPlace.name}
+                  onClose={handleCloseAttractions}
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
+                  onAttractionHover={setHoveredAttractionId}
+                  scrollToAttractionId={scrollToAttractionId}
+                  onScrollComplete={handleScrollComplete}
+                  highlightedAttractionId={highlightedAttractionId}
+                  onAttractionClick={setHighlightedAttractionId}
+                  plannedAttractionIds={
+                    new Set(places.find((p) => p.id === selectedPlaceId)?.plannedAttractions.map((a) => a.id) || [])
+                  }
+                  plannedRestaurantIds={
+                    new Set(places.find((p) => p.id === selectedPlaceId)?.plannedRestaurants.map((r) => r.id) || [])
+                  }
+                  onAddToPlan={handleOpenAddDialog}
+                  place={selectedPlace}
+                  onPlaceUpdate={(updatedPlace) => handlePlaceUpdate(selectedPlace.id, updatedPlace)}
+                  onAttractionAccepted={handleAttractionAccepted}
+                  mapCenter={currentMapCenter}
+                  onCollapse={() => setRightSidebarCollapsed(true)}
+                />
+                <div className="absolute top-4 left-0 -translate-x-1/2 z-10">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => setRightSidebarCollapsed(true)}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 bg-white border border-gray-200 shadow-sm hover:bg-gray-50"
+                        aria-label="Collapse attractions sidebar"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <p>Hide Nearby Attractions</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 

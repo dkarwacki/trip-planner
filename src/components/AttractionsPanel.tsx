@@ -35,6 +35,7 @@ interface AttractionsPanelProps {
   onPlaceUpdate: (updatedPlace: Place) => void;
   onAttractionAccepted?: (placeId: string, attraction: Attraction, type: "attraction" | "restaurant") => void;
   mapCenter?: { lat: number; lng: number } | null;
+  onCollapse?: () => void;
 }
 
 const getPriceLevelSymbol = (priceLevel?: number): string => {
@@ -293,12 +294,13 @@ export default function AttractionsPanel({
   onPlaceUpdate,
   onAttractionAccepted,
   mapCenter,
+  onCollapse,
 }: AttractionsPanelProps) {
   const headingText = activeTab === "attractions" ? "Nearby Attractions" : "Nearby Restaurants";
 
   return (
-    <div className="absolute right-4 top-4 bottom-4 w-96 z-10 pointer-events-auto">
-      <Card className="h-full flex flex-col shadow-xl py-3">
+    <div className="h-screen flex flex-col bg-white">
+      <Card className="h-full flex flex-col border-0 shadow-none py-3">
         <div className="px-4 sm:px-6 pb-6 border-b">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0 mr-2">
@@ -306,7 +308,7 @@ export default function AttractionsPanel({
               <p className="text-sm font-normal text-muted-foreground mt-1 line-clamp-2">{placeName}</p>
             </div>
             <button
-              onClick={onClose}
+              onClick={onCollapse || onClose}
               className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
               aria-label="Close attractions panel"
             >
