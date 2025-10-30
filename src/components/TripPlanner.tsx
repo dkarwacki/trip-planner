@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { calculateDistance, SEARCH_NEARBY_DISTANCE_THRESHOLD } from "@/lib/map-utils";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { MobileNavigation, type MobileTab } from "@/components/MobileNavigation";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -34,15 +36,15 @@ interface TripPlannerProps {
   mapId?: string;
 }
 
-// Marker size constants
-const MARKER_SIZE = {
-  DEFAULT: 16,
-  HOVERED: 24,
+// Marker size constants - larger on mobile for better touch targets
+const getMarkerSize = (isMobile: boolean) => ({
+  DEFAULT: isMobile ? 24 : 16,
+  HOVERED: isMobile ? 32 : 24,
   BORDER: {
-    DEFAULT: 2,
-    HOVERED: 3,
+    DEFAULT: isMobile ? 3 : 2,
+    HOVERED: isMobile ? 4 : 3,
   },
-} as const;
+});
 
 const MapContent = ({ mapId }: { mapId?: string }) => {
   const map = useMap();
@@ -112,7 +114,22 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const [showSearchNearbyButton, setShowSearchNearbyButton] = useState(false);
   const [currentMapCenter, setCurrentMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Sidebar collapse state
+  // Track if we're on mobile for responsive behavior
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Mobile navigation state
+  const [mobileTab, setMobileTab] = useState<MobileTab>("places");
+
+  // Sidebar collapse state (for desktop)
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
 
@@ -124,45 +141,6 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const attractionMarkersRef = useRef<Map<string, MarkerData> | null>(null);
   const tempMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
-
-  const handlePlaceSelect = useCallback(
-    async (place: google.maps.places.PlaceResult) => {
-      if (!place.place_id) return;
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const placeDetails = await Effect.runPromise(
-          getPlaceDetails(place.place_id).pipe(
-            Effect.catchAll((error) => {
-              if (error._tag === "PlaceNotFoundError") {
-                return Effect.fail(`No details found for this place`);
-              }
-              if (error._tag === "PlacesAPIError") {
-                return Effect.fail(error.message);
-              }
-              return Effect.fail("An unexpected error occurred");
-            })
-          )
-        );
-
-        const isDuplicate = places.some((p) => p.id === placeDetails.id);
-        if (isDuplicate) {
-          setError("This place has already been added");
-          setIsLoading(false);
-          return;
-        }
-
-        setPlaces((prev) => [...prev, placeDetails]);
-      } catch (err) {
-        setError(typeof err === "string" ? err : "An error occurred");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [places]
-  );
 
   const handleRemovePlace = useCallback(
     (placeId: string) => {
@@ -191,6 +169,11 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
       // Expand right sidebar when selecting a place
       setRightSidebarCollapsed(false);
+
+      // On mobile, switch to explore tab when a place is selected
+      if (isMobile) {
+        setMobileTab("explore");
+      }
 
       // Store initial search center for button trigger logic
       setInitialSearchCenter({ lat: place.lat, lng: place.lng });
@@ -232,7 +215,49 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       setIsLoadingAttractions(false);
       setIsLoadingRestaurants(false);
     },
-    [map, mergeWithPlannedItems]
+    [map, mergeWithPlannedItems, isMobile]
+  );
+
+  const handlePlaceSelect = useCallback(
+    async (place: google.maps.places.PlaceResult) => {
+      if (!place.place_id) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const placeDetails = await Effect.runPromise(
+          getPlaceDetails(place.place_id).pipe(
+            Effect.catchAll((error) => {
+              if (error._tag === "PlaceNotFoundError") {
+                return Effect.fail(`No details found for this place`);
+              }
+              if (error._tag === "PlacesAPIError") {
+                return Effect.fail(error.message);
+              }
+              return Effect.fail("An unexpected error occurred");
+            })
+          )
+        );
+
+        const isDuplicate = places.some((p) => p.id === placeDetails.id);
+        if (isDuplicate) {
+          setError("This place has already been added");
+          setIsLoading(false);
+          return;
+        }
+
+        setPlaces((prev) => [...prev, placeDetails]);
+
+        // Automatically select and highlight the newly added place
+        await handlePanToPlace(placeDetails);
+      } catch (err) {
+        setError(typeof err === "string" ? err : "An error occurred");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [places, handlePanToPlace]
   );
 
   /**
@@ -628,7 +653,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       });
 
       marker.addListener("click", () => {
-        setSelectedPlaceId(place.id);
+        handlePanToPlace(place);
       });
 
       return marker;
@@ -640,7 +665,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       markersRef.current.forEach((marker) => (marker.map = null));
       markersRef.current = [];
     };
-  }, [map, markerLibrary, places, mapId]);
+  }, [map, markerLibrary, places, mapId, handlePanToPlace]);
 
   // Separate effect to handle initial map positioning when places are added/removed
   const placesCountRef = useRef(places.length);
@@ -681,6 +706,8 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
 
     const iconColor = activeTab === "attractions" ? "#3B82F6" : "#EF4444";
 
+    const MARKER_SIZE = getMarkerSize(isMobile);
+
     data.forEach((scored) => {
       const { attraction } = scored;
 
@@ -704,6 +731,11 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       marker.addListener("click", () => {
         setScrollToAttractionId(attraction.id);
         setHighlightedAttractionId(attraction.id);
+
+        // On mobile, switch to explore tab to show the attraction
+        if (isMobile) {
+          setMobileTab("explore");
+        }
       });
 
       pinElement.addEventListener("mouseenter", () => {
@@ -721,10 +753,12 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
       markersMap.forEach(({ marker }) => (marker.map = null));
       markersMap.clear();
     };
-  }, [map, markerLibrary, selectedPlace, attractions, restaurants, activeTab, mapId]);
+  }, [map, markerLibrary, selectedPlace, attractions, restaurants, activeTab, mapId, isMobile]);
 
   useEffect(() => {
     if (!attractionMarkersRef.current) return;
+
+    const MARKER_SIZE = getMarkerSize(isMobile);
 
     attractionMarkersRef.current.forEach(({ element }, placeId) => {
       if (placeId === hoveredAttractionId || placeId === highlightedAttractionId) {
@@ -741,7 +775,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
         element.style.zIndex = "auto";
       }
     });
-  }, [hoveredAttractionId, highlightedAttractionId]);
+  }, [hoveredAttractionId, highlightedAttractionId, isMobile]);
 
   useEffect(() => {
     if (!map || !markerLibrary || !mapId) return;
@@ -829,14 +863,25 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     };
   }, [map]);
 
+  // Calculate total planned items across all places
+  const totalPlannedItems = places.reduce(
+    (sum, place) => sum + place.plannedAttractions.length + place.plannedRestaurants.length,
+    0
+  );
+
+  // Handle mobile tab navigation
+  const handleMobileTabChange = (tab: MobileTab) => {
+    setMobileTab(tab);
+  };
+
   return (
     <TooltipProvider>
-      <div className="flex h-screen">
-        {/* Left Sidebar - Places */}
+      <div className="flex h-screen relative">
+        {/* Left Sidebar - Places (Desktop only) */}
         <div
           className={`${
             leftSidebarCollapsed ? "w-12" : "@container w-full sm:w-72 md:w-80 lg:w-[22rem] xl:w-96"
-          } flex-shrink-0 flex flex-col bg-white border-r shadow-sm transition-all duration-300 ease-in-out relative`}
+          } hidden sm:flex flex-shrink-0 flex-col bg-white border-r shadow-sm transition-all duration-300 ease-in-out relative`}
         >
           {leftSidebarCollapsed ? (
             <div className="flex items-center justify-center h-full">
@@ -956,7 +1001,7 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
             type={pendingType || "attraction"}
           />
 
-          {showSearchNearbyButton && selectedPlace && (
+          {showSearchNearbyButton && selectedPlace && !(isMobile && mobileTab === "explore") && (
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1000]">
               <Button
                 onClick={handleSearchNearby}
@@ -1004,12 +1049,12 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
           )}
         </div>
 
-        {/* Right Sidebar - Nearby Attractions */}
+        {/* Right Sidebar - Nearby Attractions (Desktop only) */}
         {selectedPlace && (
           <div
             className={`${
               rightSidebarCollapsed ? "w-12" : "w-full sm:w-72 md:w-80 lg:w-[22rem] xl:w-96"
-            } flex-shrink-0 flex flex-col bg-white border-l shadow-sm transition-all duration-300 ease-in-out relative`}
+            } hidden sm:flex flex-shrink-0 flex-col bg-white border-l shadow-sm transition-all duration-300 ease-in-out relative`}
           >
             {rightSidebarCollapsed ? (
               <div className="flex items-center justify-center h-full">
@@ -1082,6 +1127,175 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
               </>
             )}
           </div>
+        )}
+
+        {/* Mobile Places Drawer */}
+        <Drawer open={isMobile && mobileTab === "places"} onOpenChange={(open) => !open && setMobileTab("map")}>
+          <DrawerContent className="max-h-[85vh]">
+            <DrawerHeader className="pb-3">
+              <DrawerTitle className="text-xl font-bold">Places ({places.length})</DrawerTitle>
+            </DrawerHeader>
+            <div className="px-4 pb-3 space-y-2">
+              <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} map={map} />
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              {isLoading && <p className="text-sm text-muted-foreground">Loading place details...</p>}
+            </div>
+            <ScrollArea className="flex-1 px-4 pb-20">
+              {places.length === 0 ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-center">
+                  <p>No places added yet. Search for a place to get started.</p>
+                </div>
+              ) : (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={places.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-2 pb-4">
+                      {places.map((place, index) => (
+                        <PlaceListItem
+                          key={place.id}
+                          place={place}
+                          index={index}
+                          isSelected={selectedPlaceId === place.id}
+                          onSelect={handlePanToPlace}
+                          onRemove={handleRemovePlace}
+                          plannedAttractions={place.plannedAttractions}
+                          plannedRestaurants={place.plannedRestaurants}
+                          onReorderAttractions={(oldIndex: number, newIndex: number) =>
+                            handleReorderPlannedItems(place.id, "attraction", oldIndex, newIndex)
+                          }
+                          onReorderRestaurants={(oldIndex: number, newIndex: number) =>
+                            handleReorderPlannedItems(place.id, "restaurant", oldIndex, newIndex)
+                          }
+                          onRemoveAttraction={(attractionId: string) =>
+                            handleRemoveFromPlan(place.id, attractionId, "attraction")
+                          }
+                          onRemoveRestaurant={(restaurantId: string) =>
+                            handleRemoveFromPlan(place.id, restaurantId, "restaurant")
+                          }
+                          onPlannedItemClick={handlePlannedItemClick}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+            </ScrollArea>
+          </DrawerContent>
+        </Drawer>
+
+        {/* Mobile Explore Drawer (Attractions) */}
+        <Drawer
+          open={isMobile && mobileTab === "explore" && selectedPlace !== null}
+          onOpenChange={(open) => !open && setMobileTab("map")}
+        >
+          <DrawerContent className="max-h-[85vh] pb-20">
+            {selectedPlace && (
+              <AttractionsPanel
+                attractions={attractions}
+                isLoadingAttractions={isLoadingAttractions}
+                attractionsError={attractionsError}
+                restaurants={restaurants}
+                isLoadingRestaurants={isLoadingRestaurants}
+                restaurantsError={restaurantsError}
+                placeName={selectedPlace.name}
+                onClose={() => setMobileTab("map")}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                onAttractionHover={setHoveredAttractionId}
+                scrollToAttractionId={scrollToAttractionId}
+                onScrollComplete={handleScrollComplete}
+                highlightedAttractionId={highlightedAttractionId}
+                onAttractionClick={setHighlightedAttractionId}
+                plannedAttractionIds={
+                  new Set(places.find((p) => p.id === selectedPlaceId)?.plannedAttractions.map((a) => a.id) || [])
+                }
+                plannedRestaurantIds={
+                  new Set(places.find((p) => p.id === selectedPlaceId)?.plannedRestaurants.map((r) => r.id) || [])
+                }
+                onAddToPlan={handleOpenAddDialog}
+                place={selectedPlace}
+                onPlaceUpdate={(updatedPlace) => handlePlaceUpdate(selectedPlace.id, updatedPlace)}
+                onAttractionAccepted={handleAttractionAccepted}
+                mapCenter={currentMapCenter}
+                onCollapse={() => setMobileTab("map")}
+              />
+            )}
+          </DrawerContent>
+        </Drawer>
+
+        {/* Mobile Plan Drawer */}
+        <Drawer open={isMobile && mobileTab === "plan"} onOpenChange={(open) => !open && setMobileTab("map")}>
+          <DrawerContent className="max-h-[85vh]">
+            <DrawerHeader className="pb-3">
+              <DrawerTitle className="text-xl font-bold">Your Plan ({totalPlannedItems} items)</DrawerTitle>
+            </DrawerHeader>
+            <ScrollArea className="flex-1 px-4 pb-20 pt-2">
+              {totalPlannedItems === 0 ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-center">
+                  <p>No planned items yet. Add attractions and restaurants from the Explore tab.</p>
+                </div>
+              ) : (
+                <div className="space-y-5 pb-4">
+                  {places.map((place) => {
+                    const plannedItems = [...place.plannedAttractions, ...place.plannedRestaurants];
+                    if (plannedItems.length === 0) return null;
+
+                    return (
+                      <div key={place.id} className="space-y-3">
+                        <h3 className="font-bold text-lg text-gray-900">{place.name}</h3>
+                        {place.plannedAttractions.length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                              Attractions ({place.plannedAttractions.length})
+                            </h4>
+                            <div className="space-y-2">
+                              {place.plannedAttractions.map((attraction) => (
+                                <button
+                                  key={attraction.id}
+                                  className="w-full text-left text-sm p-3 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-100 active:bg-blue-200 transition-colors"
+                                  onClick={() => handlePlannedItemClick(attraction)}
+                                >
+                                  <span className="font-medium text-gray-900">{attraction.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {place.plannedRestaurants.length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                              Restaurants ({place.plannedRestaurants.length})
+                            </h4>
+                            <div className="space-y-2">
+                              {place.plannedRestaurants.map((restaurant) => (
+                                <button
+                                  key={restaurant.id}
+                                  className="w-full text-left text-sm p-3 bg-orange-50 border border-orange-100 rounded-lg hover:bg-orange-100 active:bg-orange-200 transition-colors"
+                                  onClick={() => handlePlannedItemClick(restaurant)}
+                                >
+                                  <span className="font-medium text-gray-900">{restaurant.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+          </DrawerContent>
+        </Drawer>
+
+        {/* Mobile Bottom Navigation */}
+        {isMobile && (
+          <MobileNavigation
+            activeTab={mobileTab}
+            onTabChange={handleMobileTabChange}
+            placesCount={places.length}
+            plannedItemsCount={totalPlannedItems}
+            hasSelectedPlace={selectedPlace !== null}
+          />
         )}
       </div>
     </TooltipProvider>
