@@ -18,6 +18,7 @@ import { reverseGeocode } from "@/infrastructure/http/clients";
 import type { Place, AttractionScore, Attraction } from "@/domain/models";
 import { scoreAttractions } from "@/domain/scoring/attractions";
 import { scoreRestaurants } from "@/domain/scoring/restaurants";
+import { HIGH_SCORE_THRESHOLD } from "@/domain/scoring";
 import AttractionsPanel from "@/components/AttractionsPanel";
 import PlaceAutocomplete from "@/components/PlaceAutocomplete";
 import PlaceListItem from "@/components/PlaceListItem";
@@ -45,9 +46,6 @@ const getMarkerSize = (isMobile: boolean) => ({
     HOVERED: isMobile ? 4 : 3,
   },
 });
-
-// Score threshold for premium/gold styling
-const HIGH_SCORE_THRESHOLD = 80;
 
 const MapContent = ({ mapId }: { mapId?: string }) => {
   const map = useMap();

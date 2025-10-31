@@ -2,11 +2,9 @@ import { useState } from "react";
 import { Info, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScoreExplanation } from "@/components/ScoreExplanation";
+import { HIGH_SCORE_THRESHOLD } from "@/domain/scoring";
 
 export type ScoreType = "attractions" | "restaurants";
-
-// Score threshold for premium/gold styling
-const HIGH_SCORE_THRESHOLD = 80;
 
 interface ScoreBadgeProps {
   score: number;
@@ -33,7 +31,9 @@ export function ScoreBadge({ score, breakdown, type }: ScoreBadgeProps) {
         }}
       >
         <TooltipTrigger asChild>
-          <div className={`relative flex items-center gap-1 px-2 py-1 rounded-md cursor-help flex-shrink-0 bg-primary/10 ${isHighScore ? "border border-amber-500" : ""}`}>
+          <div
+            className={`relative flex items-center gap-1 px-2 py-1 rounded-md cursor-help flex-shrink-0 bg-primary/10 ${isHighScore ? "border border-amber-500" : ""}`}
+          >
             {isHighScore && <span className="absolute -top-1.5 -right-1.5 text-[10px]">🏆</span>}
             <Info className="h-3 w-3 text-primary" />
             <span className="text-sm font-semibold text-primary">{score}</span>
