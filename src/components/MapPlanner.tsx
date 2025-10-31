@@ -735,15 +735,18 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
     data.forEach((scored) => {
       const { attraction, score } = scored;
 
-      // Use dark gold/bronze color for high scores (>threshold), otherwise use category-specific colors
-      const iconColor = score > HIGH_SCORE_THRESHOLD ? "#D97706" : activeTab === "attractions" ? "#3B82F6" : "#EF4444";
+      // Use category-specific colors
+      const iconColor = activeTab === "attractions" ? "#3B82F6" : "#EF4444";
+      const isHighScore = score > HIGH_SCORE_THRESHOLD;
 
       const pinElement = document.createElement("div");
+      pinElement.style.position = "relative";
       pinElement.style.width = `${MARKER_SIZE.DEFAULT}px`;
       pinElement.style.height = `${MARKER_SIZE.DEFAULT}px`;
       pinElement.style.borderRadius = "50%";
       pinElement.style.backgroundColor = iconColor;
       pinElement.style.border = `${MARKER_SIZE.BORDER.DEFAULT}px solid white`;
+      pinElement.style.outline = isHighScore ? "1px solid #F59E0B" : "none";
       pinElement.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
       pinElement.style.transition = "all 0.2s ease-in-out";
       pinElement.style.cursor = "pointer";
