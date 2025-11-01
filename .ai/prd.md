@@ -2,15 +2,17 @@
 
 ## 1. Product Overview
 
-TripGenie is an AI-powered trip planning application that personalizes travel recommendations based on user preferences. The product addresses the complexity and time investment required in planning engaging trips by leveraging AI to suggest destinations, attractions, and restaurants tailored to individual traveler personas.
+TripGenie is an AI-powered trip planning application that personalizes travel recommendations based on user preferences. The product addresses the complexity and time investment required in planning engaging trips by leveraging AI to suggest places and destinations where travelers can discover meaningful experiences.
 
-The application operates through two integrated modules:
-- Destination Discovery: An AI chat interface that provides personalized place recommendations based on selected traveler personas
-- Detailed Planning: An interactive map interface for visualizing locations, exploring local attractions, and building concrete itineraries
+The application operates through two integrated stages:
+- Place Discovery: An AI chat interface that provides personalized place and destination recommendations based on selected traveler personas. These places serve as starting points for detailed planning.
+- Attraction Planning: An interactive map interface where users explore attractions and restaurants near their selected places, with quality scoring to aid decision-making.
 
 Key differentiators include:
-- Persona-based recommendations supporting multiple traveler types (general tourists, nature lovers, first-time visitors, art enthusiasts)
-- AI-driven suggestions with quality/diversity/confidence scoring
+- Persona-based place recommendations supporting multiple traveler types (general tourists, nature lovers, first-time visitors, art enthusiasts)
+- Two-stage workflow separating destination selection from attraction discovery
+- Quality/diversity/confidence scoring for attractions and restaurants on the map
+- Place validation through Google Maps to ensure searchability
 - Seamless transition from discovery to planning with export functionality
 - Persistent user profiles with saved preferences and trip history
 
@@ -51,24 +53,34 @@ The application serves four primary personas:
 - Even weighting applied when multiple personas are active
 - Persistent persona choices across sessions
 - Visual feedback for selected personas
+- Personas influence place and destination recommendations only
+- Attraction and restaurant discovery on the map is not persona-driven
 
 ### 3.3 AI Chat Interface
 - Natural language input for travel queries
+- AI suggests places and destinations only (cities, landmarks, beaches, trails, viewpoints, districts)
+- Suggested places serve as starting points for discovering nearby attractions and restaurants on the map
+- Attractions and restaurants are not suggested in chat
+- If users ask about attractions or restaurants, AI directs them to use the map interface
 - Concise, actionable list responses by default
 - Inline "Show details" expandable sections per suggestion
 - Persistent expanded state across chat responses
 - Add/remove buttons for itinerary management
 - Context-aware responses based on selected personas
+- Suggested place names are validated through Google Maps
 
-### 3.4 Suggestion Management
-- Quality/diversity/confidence scoring for all suggestions
-- Persona-influenced recommendations via prompt adjustments
-- Visual score badges with explanations
-- Support for attractions and restaurants
-- Location-based filtering and relevance
+### 3.4 Place Validation
+- Place names are validated through Google Maps when user adds them to itinerary
+- Validation ensures suggested places can be located and searched on the map
+- Error messages displayed if validation fails
+- Failed places are not added to itinerary
+- Persona-influenced recommendations apply to place and destination suggestions only
 
 ### 3.5 Itinerary Building
-- Unordered collection of selected places
+- Ordered collection of selected places
+- Order suggests a route or visit sequence
+- Order is preserved when exporting to map
+- Place validation occurs when adding to itinerary
 - Add/remove functionality from chat interface
 - Real-time itinerary preview
 - Export to map functionality
@@ -76,7 +88,12 @@ The application serves four primary personas:
 
 ### 3.6 Map Interface
 - Interactive map visualization of selected places
-- Discovery of local attractions and restaurants
+- Places from itinerary appear in order on the map
+- Discovery of local attractions and restaurants near selected places
+- Quality/diversity/confidence scoring for attractions and restaurants only
+- Discovery is generic and not influenced by personas
+- Visual score badges with explanations for attractions and restaurants
+- This is where detailed planning of attractions and restaurants happens
 - Place details display
 - Existing /map functionality preserved
 - Support for imported itineraries
@@ -85,6 +102,7 @@ The application serves four primary personas:
 - Timestamped export titles (e.g., "Trip Plan - 2025-11-01 14:30")
 - History panel in planning interface
 - Automatic saving of all changes made on /map view
+- Saved content includes selected places and any discovered attractions or restaurants
 - Ability to reopen previous map exports with all modifications preserved
 - Chronological listing of past trips
 - Quick access to saved itineraries with their final state
@@ -100,8 +118,10 @@ The application serves four primary personas:
 ### In Scope for MVP
 - Single-user planning flow
 - Four predefined personas with even weighting
-- AI chat with expandable details
-- Basic itinerary management (add/remove)
+- AI chat for place/destination suggestions (not attractions/restaurants) with expandable details
+- Place validation through Google Maps
+- Basic itinerary management (add/remove) with ordered sequence
+- Scoring system for attractions and restaurants on map interface only
 - Map export and history
 - Google OAuth authentication
 - Desktop and mobile responsive design
@@ -142,7 +162,7 @@ The application serves four primary personas:
 ### US-002
 - ID: US-002
 - Title: Select Travel Personas
-- Description: As a user, I want to select my travel personas so that recommendations match my interests
+- Description: As a user, I want to select my travel personas so that place recommendations match my interests
 - Acceptance Criteria:
   - Four persona options are displayed (general tourist, nature lover, first-time visitor, art enthusiast)
   - User can select multiple personas simultaneously
@@ -150,6 +170,8 @@ The application serves four primary personas:
   - Mobile shows personas in dropdown format
   - Selected personas are visually highlighted
   - Selections persist across sessions for logged-in users
+  - Personas influence place and destination recommendations in chat
+  - Attraction and restaurant discovery on map is not persona-driven
 
 ### US-003
 - ID: US-003
@@ -163,22 +185,27 @@ The application serves four primary personas:
 
 ### US-004
 - ID: US-004
-- Title: Chat with AI for Recommendations
-- Description: As a user, I want to chat with an AI assistant to receive personalized travel recommendations
+- Title: Chat with AI for Place Recommendations
+- Description: As a user, I want to chat with an AI assistant to receive personalized place and destination recommendations
 - Acceptance Criteria:
   - Text input field accepts natural language queries
+  - AI responds with places and destinations (cities, landmarks, beaches, trails, etc.)
+  - Attractions and restaurants are not suggested in chat
+  - If asked about attractions or restaurants, AI directs user to map interface
   - AI responds with concise, actionable lists
   - Responses reflect selected personas
   - Chat history is maintained during session
 
 ### US-005
 - ID: US-005
-- Title: Expand Suggestion Details
-- Description: As a user, I want to expand individual suggestions to see more details about recommended places
+- Title: Expand Place Details
+- Description: As a user, I want to expand individual place suggestions to see more details and understand why they're recommended
 - Acceptance Criteria:
   - Each suggestion has a "Show details" button
   - Clicking expands additional information inline
   - Details include description and reasons for recommendation
+  - Details include why this place matches selected personas
+  - Details explain this is a starting point for finding nearby attractions on the map
   - Multiple suggestions can be expanded simultaneously
 
 ### US-006
@@ -187,7 +214,9 @@ The application serves four primary personas:
 - Description: As a user, I want to add recommended places to my itinerary directly from the chat interface
 - Acceptance Criteria:
   - Each suggestion has an "Add to itinerary" button
-  - Clicking adds the place to the current itinerary
+  - Place is validated through Google Maps when added
+  - Error message appears if place cannot be validated
+  - Clicking adds the validated place to the current itinerary
   - Visual confirmation appears when place is added
   - Button changes to "Added" state after selection
   - Itinerary count updates in real-time
@@ -205,26 +234,29 @@ The application serves four primary personas:
 
 ### US-008
 - ID: US-008
-- Title: View Current Itinerary
+- Title: View and Reorder Current Itinerary
 - Description: As a user, I want to see all places in my current itinerary as an ordered collection
 - Acceptance Criteria:
   - Dedicated section shows all selected places
   - Places display name and basic information
+  - Places are displayed in order suggesting a visit sequence
   - Count of total places is visible
   - Empty state message when no places selected
   - Itinerary updates in real-time as places are added/removed
   - Newly added places are added at the end of the list
   - We should be able to reorder places by drag and drop
+  - Reordering changes affect the sequence on exported map
 
 ### US-009
 - ID: US-009
 - Title: Export Itinerary to Map
-- Description: As a user, I want to export my itinerary to an interactive map for detailed planning
+- Description: As a user, I want to export my itinerary to an interactive map to discover attractions and restaurants
 - Acceptance Criteria:
   - "Export to Map" button is available when itinerary has places
   - Clicking creates timestamped export (e.g., "Trip Plan - 2025-11-01 14:30")
   - User is redirected to /map with imported places
   - All itinerary places appear on the map
+  - Places appear on map in the order from itinerary
   - Initial export state is saved to user's history
   - All subsequent changes on /map are automatically persisted to the same history entry
 
@@ -243,9 +275,10 @@ The application serves four primary personas:
 ### US-011
 - ID: US-011
 - Title: Explore Map Interface
-- Description: As a user, I want to interact with an interactive map to visualize and explore my selected places
+- Description: As a user, I want to interact with an interactive map to visualize my selected places and discover nearby attractions and restaurants
 - Acceptance Criteria:
-  - Map displays all imported places with markers
+  - Map displays all imported places from itinerary with markers
+  - Attractions and restaurants are discovered separately near these places
   - Clicking markers shows place details
   - Map supports zoom and pan functionality
   - Current location can be centered if permitted
@@ -267,23 +300,25 @@ The application serves four primary personas:
 
 ### US-013
 - ID: US-013
-- Title: Discover Local Attractions on Map
+- Title: Discover Local Attractions and Restaurants on Map
 - Description: As a user, I want to discover nearby attractions and restaurants while viewing the map
 - Acceptance Criteria:
   - "Suggest nearby" functionality available on map
-  - Suggestions based on current map view
+  - Suggestions based on current map view and places from itinerary
+  - Discovery is generic and not influenced by personas
   - Quality/diversity/confidence scores displayed
   - Filters available for attraction types
 
 ### US-014
 - ID: US-014
-- Title: View Place Scores
-- Description: As a user, I want to see quality scores for recommended places to make informed decisions
+- Title: View Attraction and Restaurant Scores on Map
+- Description: As a user, I want to see quality scores for attractions and restaurants on the map to make informed decisions
 - Acceptance Criteria:
-  - Score badges displayed for each place
+  - Score badges displayed for each attraction and restaurant
   - Scores show quality, diversity, and confidence metrics
   - Click score for detailed explanation
-  - Consistent scoring across chat and map interfaces
+  - Scores only appear in map interface, not in chat
+  - Scores apply to attractions and restaurants, not places
   - Visual indicators for score ranges
 
 ### US-015
@@ -349,6 +384,8 @@ The application serves four primary personas:
   - Persona changes take effect immediately
   - No page reload required
   - AI responses adapt to new personas
+  - Existing itinerary preserved when personas change
+  - Only future suggestions reflect new persona selection
   - Previous suggestions remain visible
   - Clear indication of active personas
 
@@ -362,6 +399,27 @@ The application serves four primary personas:
   - Progress indication for map exports
   - Disabled state for buttons during operations
   - Smooth transitions between states
+
+### US-022
+- ID: US-022
+- Title: Place Validation and Error Handling
+- Description: As a user, I want suggested places validated through Google Maps when I add them so I can trust they exist and are searchable
+- Acceptance Criteria:
+  - Places validated when user adds them to itinerary
+  - Error message displayed if validation fails
+  - Failed places not added to itinerary
+  - Successfully validated places can be located on the map
+  - User can choose different suggestion if validation fails
+
+### US-023
+- ID: US-023
+- Title: Clear Guidance for Attraction/Restaurant Queries
+- Description: As a user, I want clear guidance when I ask about attractions or restaurants in chat so I understand where to find that information
+- Acceptance Criteria:
+  - AI politely explains attractions/restaurants are found on map interface
+  - Response suggests adding relevant places to itinerary first
+  - User understands the two-stage workflow
+  - Helpful and friendly tone maintained
 
 ## 6. Success Metrics
 
