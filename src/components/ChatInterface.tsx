@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Send, Bot, User as UserIcon, ChevronDown, ChevronRight } from "lucide-react";
+import { Send, Bot, User as UserIcon, ChevronDown, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 import type { ChatMessage, PersonaType, Place } from "@/domain/models";
 import { createUserMessage, createAssistantMessage } from "@/domain/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/models";
@@ -17,9 +17,18 @@ interface ChatInterfaceProps {
   itinerary: Place[];
   onAddPlace: (place: Place) => void;
   onRemovePlace: (placeId: string) => void;
+  isFullScreen?: boolean;
+  onToggleFullScreen?: () => void;
 }
 
-export default function ChatInterface({ personas, itinerary, onAddPlace, onRemovePlace }: ChatInterfaceProps) {
+export default function ChatInterface({
+  personas,
+  itinerary,
+  onAddPlace,
+  onRemovePlace,
+  isFullScreen = false,
+  onToggleFullScreen,
+}: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -140,9 +149,22 @@ export default function ChatInterface({ personas, itinerary, onAddPlace, onRemov
   return (
     <Card className="h-full flex flex-col min-h-0 overflow-hidden">
       <CardHeader className="border-b flex-shrink-0 px-4 py-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Bot className="h-4 w-4" />
-          Travel Assistant
+        <CardTitle className="flex items-center justify-between text-base">
+          <div className="flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            Travel Assistant
+          </div>
+          {onToggleFullScreen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleFullScreen}
+              className="h-8 w-8"
+              title={isFullScreen ? "Exit full screen" : "Enter full screen"}
+            >
+              {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
 
@@ -152,7 +174,7 @@ export default function ChatInterface({ personas, itinerary, onAddPlace, onRemov
             <div className="text-center text-gray-500 py-8">
               <Bot className="h-12 w-12 mx-auto mb-3 text-gray-400" />
               <p className="text-sm">Ask me about places to visit!</p>
-              <p className="text-xs mt-1">I'll suggest great starting points for your trip exploration.</p>
+              <p className="text-xs mt-1">I&apos;ll suggest great starting points for your trip exploration.</p>
             </div>
           )}
 

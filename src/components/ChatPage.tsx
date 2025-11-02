@@ -21,6 +21,7 @@ export default function ChatPage() {
   const [personas, setPersonas] = useState<PersonaType[]>([PERSONA_TYPES.GENERAL_TOURIST]);
   const [itinerary, setItinerary] = useState<Place[]>([]);
   const [tripHistory, setTripHistory] = useState<SavedTrip[]>([]);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Load initial state from localStorage
   useEffect(() => {
@@ -93,50 +94,61 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto p-4 max-w-7xl">
+      <div className={isFullScreen ? "h-screen flex flex-col" : "container mx-auto p-4 max-w-7xl"}>
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Trip Planner</h1>
-          <p className="text-gray-600">Plan your perfect trip with AI-powered place recommendations</p>
-        </div>
+        {!isFullScreen && (
+          <>
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Trip Planner</h1>
+              <p className="text-gray-600">Plan your perfect trip with AI-powered place recommendations</p>
+            </div>
 
-        {/* Persona Selector */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
-          <PersonaSelector selected={personas} onChange={handlePersonasChange} />
-        </div>
+            {/* Persona Selector */}
+            <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
+              <PersonaSelector selected={personas} onChange={handlePersonasChange} />
+            </div>
+          </>
+        )}
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ height: "calc(100vh - 280px)" }}>
+        <div
+          className={isFullScreen ? "flex-1 flex flex-col min-h-0" : "grid grid-cols-1 lg:grid-cols-3 gap-6"}
+          style={!isFullScreen ? { height: "calc(100vh - 280px)" } : undefined}
+        >
           {/* Left Column - Chat Interface */}
-          <div className="lg:col-span-2 flex flex-col h-full min-h-0">
+          <div className={isFullScreen ? "flex flex-col h-full min-h-0" : "lg:col-span-2 flex flex-col h-full min-h-0"}>
             <ChatInterface
               personas={personas}
               itinerary={itinerary}
               onAddPlace={handleAddPlace}
               onRemovePlace={handleRemovePlace}
+              isFullScreen={isFullScreen}
+              onToggleFullScreen={() => setIsFullScreen(!isFullScreen)}
             />
           </div>
 
           {/* Right Column - Tabbed Panel */}
-          <div className="flex flex-col h-full min-h-0">
-            <Tabs defaultValue="itinerary" className="flex flex-col h-full min-h-0">
-              <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
-                <TabsTrigger value="itinerary">My Itinerary ({itinerary.length})</TabsTrigger>
-                <TabsTrigger value="history">Trip History ({tripHistory.length})</TabsTrigger>
-              </TabsList>
-              <TabsContent value="itinerary" className="flex-1 min-h-0 mt-0">
-                <ItineraryPanel
-                  places={itinerary}
-                  onReorder={handleReorderPlaces}
-                  onRemove={handleRemovePlace}
-                  onExport={handleExportToMap}
-                />
-              </TabsContent>
-              <TabsContent value="history" className="flex-1 min-h-0 mt-0">
-                <TripHistoryPanel trips={tripHistory} onOpenTrip={handleOpenTrip} onDeleteTrip={handleDeleteTrip} />
-              </TabsContent>
-            </Tabs>
-          </div>
+          {!isFullScreen && (
+            <div className="flex flex-col h-full min-h-0">
+              <Tabs defaultValue="itinerary" className="flex flex-col h-full min-h-0">
+                <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
+                  <TabsTrigger value="itinerary">My Itinerary ({itinerary.length})</TabsTrigger>
+                  <TabsTrigger value="history">Trip History ({tripHistory.length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="itinerary" className="flex-1 min-h-0 mt-0">
+                  <ItineraryPanel
+                    places={itinerary}
+                    onReorder={handleReorderPlaces}
+                    onRemove={handleRemovePlace}
+                    onExport={handleExportToMap}
+                  />
+                </TabsContent>
+                <TabsContent value="history" className="flex-1 min-h-0 mt-0">
+                  <TripHistoryPanel trips={tripHistory} onOpenTrip={handleOpenTrip} onDeleteTrip={handleDeleteTrip} />
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
         </div>
       </div>
     </div>
