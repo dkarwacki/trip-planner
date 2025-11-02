@@ -4,4 +4,3 @@
  * and receive special visual treatment (gold border, trophy icon)
  */
 export const HIGH_SCORE_THRESHOLD = 85;
-

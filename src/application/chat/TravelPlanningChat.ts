@@ -45,6 +45,82 @@ Before providing your suggestions, think through your reasoning:
 Respond with your recommendations in the specified JSON format.`;
 };
 
+const buildNarrativePrompt = (personas: string[]): string => {
+  const personaDescriptions = personas
+    .map((p) => {
+      const metadata = PERSONA_METADATA[p];
+      return metadata ? `- ${metadata.label}: ${metadata.description}` : null;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  return `You are a travel planning assistant that creates engaging narrative descriptions of destination recommendations.
+
+Selected traveler personas:
+${personaDescriptions}
+
+Your role:
+- Write a flowing narrative that describes each selected place
+- For each place, write 1-2 natural sentences that explain why it's a great match for the user
+- Wrap ONLY the place names with double asterisks (**Place Name**) wherever they naturally appear in your sentences
+- Write naturally - place names can appear at the start, middle, or end of sentences
+- Use a warm, conversational tone
+- Keep each description concise but engaging
+- Write all place descriptions as one continuous narrative paragraph
+
+CRITICAL: Wrap place names with **double asterisks** so they become clickable links. Return ONLY the narrative text, not JSON.
+
+Example output:
+Start your adventure in **Piotrkowska Street**, one of the longest commercial streets in Europe, where you'll find a vibrant mix of historical architecture and bustling cafes. Just a short walk away, **Manufaktura** offers a fantastic blend of shopping, dining, and cultural attractions in a beautifully revitalized 19th-century factory complex.`;
+};
+
+const formatPlacesForNarrative = (places: PlaceSuggestion[]): string => {
+  return places.map((place, idx) => `${idx + 1}. ${place.name}: ${place.reasoning}`).join("\n");
+};
+
+const generateNarrative = (userMessage: string, personas: string[], places: PlaceSuggestion[], thinking: string[]) =>
+  Effect.gen(function* () {
+    const openai = yield* OpenAIClient;
+
+    // Build narrative-focused system prompt
+    const narrativePrompt = buildNarrativePrompt(personas);
+
+    // Prepare place descriptions for narrative generation
+    const placeContext = formatPlacesForNarrative(places);
+
+    // Include thinking steps in the context
+    const thinkingContext =
+      thinking.length > 0 ? `\n\nReasoning process:\n${thinking.map((t, i) => `${i + 1}. ${t}`).join("\n")}` : "";
+
+    // Make OpenAI call for plain text narrative
+    const response = yield* openai.chatCompletion({
+      messages: [
+        { role: "system" as const, content: narrativePrompt },
+        {
+          role: "user" as const,
+          content: `User asked: "${userMessage}"${thinkingContext}\n\nPlaces selected:\n${placeContext}`,
+        },
+      ],
+      temperature: 0.8, // Slightly higher for more creative narrative
+      maxTokens: 2000,
+    });
+
+    // Log finish reason to check if response was cut off
+    yield* Effect.logDebug("Narrative generation response", {
+      finishReason: response.finishReason,
+      hasContent: !!response.content,
+      contentLength: response.content?.length,
+    });
+
+    // Return the narrative directly
+    if (response.content && response.content.trim()) {
+      return response.content.trim();
+    }
+
+    yield* Effect.logWarning("No content in narrative response");
+    return "Here are some great places to explore based on your interests:";
+  });
+
 export const TravelPlanningChat = (input: ChatRequestInput) =>
   Effect.gen(function* () {
     const openai = yield* OpenAIClient;
@@ -131,6 +207,17 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
       }
     }
 
+    // Generate narrative response if we have suggested places
+    if (suggestedPlaces.length > 0) {
+      try {
+        const narrative = yield* generateNarrative(input.message, input.personas, suggestedPlaces, thinking);
+        assistantMessage = narrative;
+      } catch (error) {
+        yield* Effect.logWarning("Failed to generate narrative, using default message", { error });
+        // Keep the default assistantMessage if narrative generation fails
+      }
+    }
+
     // Fetch photos for each suggested place
     if (suggestedPlaces.length > 0) {
       const placesWithPhotos = yield* Effect.forEach(
@@ -140,10 +227,10 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
             try {
               // First, use text search to find the place and get its ID
               const searchResult = yield* googleMaps.textSearch(place.name);
-              
+
               // Then fetch detailed place info with photos
               const placeDetails = yield* googleMaps.placeDetails(searchResult.id, true);
-              
+
               // Add photos and coordinates to the suggestion
               return {
                 ...place,
@@ -159,7 +246,7 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
           }),
         { concurrency: 3 } // Fetch photos for up to 3 places at a time
       );
-      
+
       suggestedPlaces = placesWithPhotos;
     }
 

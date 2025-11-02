@@ -117,6 +117,13 @@
   body {
     @apply bg-background text-foreground;
   }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* No custom components needed - using Tailwind utilities */
 }
 
 @layer utilities {

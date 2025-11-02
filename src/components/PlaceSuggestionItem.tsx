@@ -23,6 +23,12 @@ export default function PlaceSuggestionItem({
 }: PlaceSuggestionItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Create URL-safe ID from place name for anchor linking
+  const placeId = suggestion.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
   const handleToggleAdd = () => {
     if (isAdded) {
       // Don't allow removing from here - user should remove from itinerary panel
@@ -32,11 +38,11 @@ export default function PlaceSuggestionItem({
   };
 
   return (
-    <Card className="transition-shadow hover:shadow-md overflow-hidden">
+    <Card id={`place-${placeId}`} className="transition-shadow hover:shadow-md overflow-hidden scroll-mt-4">
       {/* Photos Section */}
       {suggestion.photos && suggestion.photos.length > 0 && (
         <div className="relative">
-          <div className={`grid ${suggestion.photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-0.5`}>
+          <div className={`grid ${suggestion.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-0.5`}>
             {suggestion.photos.map((photo, index) => (
               <div key={index} className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                 <img
@@ -46,7 +52,7 @@ export default function PlaceSuggestionItem({
                   loading="lazy"
                   onError={(e) => {
                     // Hide broken images
-                    e.currentTarget.parentElement?.classList.add('hidden');
+                    e.currentTarget.parentElement?.classList.add("hidden");
                   }}
                 />
               </div>
@@ -54,7 +60,7 @@ export default function PlaceSuggestionItem({
           </div>
         </div>
       )}
-      
+
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0 overflow-hidden">

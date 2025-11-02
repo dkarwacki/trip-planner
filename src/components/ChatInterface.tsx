@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Send, Bot, User as UserIcon, ChevronDown, ChevronRight } from "lucide-react";
-import type { ChatMessage, PersonaType, Place, PlaceSuggestion } from "@/domain/models";
+import type { ChatMessage, PersonaType, Place } from "@/domain/models";
 import { createUserMessage, createAssistantMessage } from "@/domain/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/models";
 import PlaceSuggestionItem from "./PlaceSuggestionItem";
+import NarrativeDisplay from "./NarrativeDisplay";
 
 interface ChatInterfaceProps {
   personas: PersonaType[];
@@ -169,7 +170,11 @@ export default function ChatInterface({ personas, itinerary, onAddPlace, onRemov
                     message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                  {message.role === "assistant" && message.content.includes("**") ? (
+                    <NarrativeDisplay content={message.content} />
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                  )}
                 </div>
 
                 {message.role === "assistant" && message.thinking && message.thinking.length > 0 && (
