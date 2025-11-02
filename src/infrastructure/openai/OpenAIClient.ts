@@ -16,6 +16,7 @@ export interface ChatCompletionRequest {
   responseFormat?: {
     type: "json_object";
   };
+  tools?: ChatCompletionTool[];
 }
 
 export interface ToolCall {
@@ -64,7 +65,7 @@ export const OpenAIClientLive = Layer.effect(
             messages: request.messages,
             temperature: request.temperature ?? 0.7,
             max_tokens: request.maxTokens ?? 2000,
-            tools,
+            tools: request.tools ?? tools,
             tool_choice: "auto",
           };
 

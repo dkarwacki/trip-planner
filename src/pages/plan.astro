@@ -1,0 +1,11 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ChatPage from "../components/ChatPage";
+
+export const prerender = false;
+---
+
+<Layout title="Trip Planner - Chat">
+  <ChatPage client:load />
+</Layout>
+

@@ -18,6 +18,7 @@ import { reverseGeocode } from "@/infrastructure/http/clients";
 import type { Place, AttractionScore, Attraction } from "@/domain/models";
 import { scoreAttractions } from "@/domain/scoring/attractions";
 import { scoreRestaurants } from "@/domain/scoring/restaurants";
+import { loadTripById } from "@/lib/storage";
 import { HIGH_SCORE_THRESHOLD } from "@/domain/scoring";
 import AttractionsPanel from "@/components/AttractionsPanel";
 import PlaceAutocomplete from "@/components/PlaceAutocomplete";
@@ -35,6 +36,7 @@ type CategoryTab = "attractions" | "restaurants";
 interface MapPlannerProps {
   apiKey: string;
   mapId?: string;
+  tripId?: string | null;
 }
 
 // Marker size constants - larger on mobile for better touch targets
@@ -47,7 +49,7 @@ const getMarkerSize = (isMobile: boolean) => ({
   },
 });
 
-const MapContent = ({ mapId }: { mapId?: string }) => {
+const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null }) => {
   const map = useMap();
   const markerLibrary = useMapsLibrary("marker");
 
@@ -62,6 +64,20 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+
+  // Load places from trip history if tripId is provided
+  useEffect(() => {
+    if (tripId && typeof window !== "undefined") {
+      try {
+        const trip = loadTripById(tripId);
+        if (trip && trip.places) {
+          setPlaces(trip.places);
+        }
+      } catch (error) {
+        console.error("Failed to load trip from history:", error);
+      }
+    }
+  }, [tripId]);
 
   // Helper function to merge API results with planned items
   const mergeWithPlannedItems = useCallback(
@@ -1335,10 +1351,10 @@ const MapContent = ({ mapId }: { mapId?: string }) => {
   );
 };
 
-export default function MapPlanner({ apiKey, mapId }: MapPlannerProps) {
+export default function MapPlanner({ apiKey, mapId, tripId }: MapPlannerProps) {
   return (
     <APIProvider apiKey={apiKey} libraries={["geometry"]}>
-      <MapContent mapId={mapId} />
+      <MapContent mapId={mapId} tripId={tripId} />
     </APIProvider>
   );
 }
