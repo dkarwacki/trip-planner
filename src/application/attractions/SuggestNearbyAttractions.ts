@@ -12,7 +12,7 @@ import { parseAndValidateJson } from "@/infrastructure/http/json-parsing";
 /**
  * Tool definitions for searching attractions and restaurants near specific coordinates
  */
-const attractionsTools: ChatCompletionTool[] = [
+const tools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
@@ -182,7 +182,7 @@ export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsInput) =
       messages,
       temperature: 0.7,
       maxTokens: 8192,
-      tools: attractionsTools,
+      tools: tools,
     });
 
     const maxToolCallIterations = 5;
@@ -307,7 +307,7 @@ const handleToolCallIteration = (
       messages,
       temperature: 0.7,
       maxTokens: 8192,
-      tools: attractionsTools,
+      tools: tools,
     });
   });
 

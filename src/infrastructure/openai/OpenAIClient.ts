@@ -13,9 +13,16 @@ export interface ChatCompletionRequest {
   messages: ChatCompletionMessageParam[];
   temperature?: number;
   maxTokens?: number;
-  responseFormat?: {
-    type: "json_object";
-  };
+  responseFormat?:
+    | { type: "json_object" }
+    | {
+        type: "json_schema";
+        json_schema: {
+          name: string;
+          strict?: boolean;
+          schema: Record<string, unknown>;
+        };
+      };
   tools?: ChatCompletionTool[];
 }
 
@@ -71,7 +78,14 @@ export const OpenAIClientLive = Layer.effect(
 
           // Add response format for JSON mode if requested
           if (request.responseFormat) {
-            params.response_format = request.responseFormat;
+            if (request.responseFormat.type === "json_schema") {
+              params.response_format = {
+                type: "json_schema",
+                json_schema: request.responseFormat.json_schema,
+              };
+            } else {
+              params.response_format = request.responseFormat;
+            }
           }
 
           yield* Effect.logDebug("Calling OpenRouter API", {

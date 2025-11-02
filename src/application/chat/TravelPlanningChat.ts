@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 import { OpenAIClient } from "@/infrastructure/openai";
-import { chatTools } from "@/infrastructure/openai/tools";
 import type { ChatRequestInput } from "./inputs";
 import type { PlaceSuggestion } from "@/domain/models";
 import { PERSONA_METADATA } from "@/domain/models";
@@ -42,7 +41,7 @@ Before providing your suggestions, think through your reasoning:
 - Select diverse options that appeal to different aspects of the user's interests
 - Ensure place names are specific enough to be found on Google Maps
 
-Always use the suggestPlaces function to provide your recommendations. Keep your responses concise and actionable.`;
+Respond with your recommendations in the specified JSON format.`;
 };
 
 export const TravelPlanningChat = (input: ChatRequestInput) =>
@@ -59,37 +58,74 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
       { role: "user" as const, content: input.message },
     ];
 
-    // Call OpenAI with chat tools
+    // Call OpenAI with structured outputs
     const response = yield* openai.chatCompletion({
       messages,
       temperature: 0.7,
       maxTokens: 2000,
-      tools: chatTools,
+      responseFormat: {
+        type: "json_schema",
+        json_schema: {
+          name: "place_suggestions",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              thinking: {
+                type: "array",
+                description: "Array of thinking steps showing your reasoning process for selecting these places",
+                items: {
+                  type: "string",
+                },
+              },
+              places: {
+                type: "array",
+                description: "Array of place suggestions (typically 5-8 places to provide diverse options)",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: {
+                      type: "string",
+                      description: "Specific, searchable place name",
+                    },
+                    description: {
+                      type: "string",
+                      description: "Brief description of what makes this place a good exploration hub",
+                    },
+                    reasoning: {
+                      type: "string",
+                      description: "Why this place matches the user's personas and interests",
+                    },
+                  },
+                  required: ["name", "description", "reasoning"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["places"],
+            additionalProperties: false,
+          },
+        },
+      },
     });
 
-    // Extract suggested places from tool calls
+    // Parse the structured JSON response
     let suggestedPlaces: PlaceSuggestion[] = [];
     let thinking: string[] = [];
-    let assistantMessage = response.content || "I'm having trouble processing your request. Please try again.";
+    let assistantMessage = "Here are some great places to explore based on your interests:";
 
-    if (response.toolCalls && response.toolCalls.length > 0) {
-      for (const toolCall of response.toolCalls) {
-        if (toolCall.name === "suggestPlaces") {
-          try {
-            const args = JSON.parse(toolCall.arguments);
-            if (args.places && Array.isArray(args.places)) {
-              suggestedPlaces = args.places;
-            }
-            if (args.thinking && Array.isArray(args.thinking)) {
-              thinking = args.thinking;
-            }
-
-            // Generate a natural message based on the suggestions
-            assistantMessage = `Here are some great places to explore based on your interests:`;
-          } catch (error) {
-            yield* Effect.logWarning("Failed to parse tool call arguments", { error, toolCall });
-          }
+    if (response.content) {
+      try {
+        const parsed = JSON.parse(response.content);
+        if (parsed.places && Array.isArray(parsed.places)) {
+          suggestedPlaces = parsed.places;
         }
+        if (parsed.thinking && Array.isArray(parsed.thinking)) {
+          thinking = parsed.thinking;
+        }
+      } catch (error) {
+        yield* Effect.logWarning("Failed to parse structured output", { error, content: response.content });
+        assistantMessage = "I'm having trouble processing your request. Please try again.";
       }
     }
 

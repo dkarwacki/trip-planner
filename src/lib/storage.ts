@@ -126,6 +126,3 @@ export const deleteTripFromHistory = (tripId: string): void => {
     console.error("Failed to delete trip from history:", error);
   }
 };
-
-
-
