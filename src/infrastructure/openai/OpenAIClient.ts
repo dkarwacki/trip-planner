@@ -3,11 +3,11 @@ import OpenAI from "openai";
 import type {
   ChatCompletionMessageParam,
   ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionTool,
 } from "openai/resources/chat/completions";
 import { ConfigService } from "@/infrastructure/config";
 import { AgentError, ModelResponseError } from "@/domain/errors";
 import { ToolName, ToolCallId } from "@/domain/models";
-import { tools } from "./tools";
 
 export interface ChatCompletionRequest {
   messages: ChatCompletionMessageParam[];
@@ -65,7 +65,7 @@ export const OpenAIClientLive = Layer.effect(
             messages: request.messages,
             temperature: request.temperature ?? 0.7,
             max_tokens: request.maxTokens ?? 2000,
-            tools: request.tools ?? tools,
+            tools: request.tools,
             tool_choice: "auto",
           };
 

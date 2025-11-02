@@ -41,7 +41,6 @@ The project follows **Clean Architecture** principles with clear separation of c
 - `./src/pages` - Astro pages (file-based routing)
 - `./src/pages/api` - API endpoints (call application use cases)
 - `./src/middleware/index.ts` - Astro middleware
-- `./src/db` - Supabase clients and types
 - `./src/components` - Components (Astro for static, React for interactive)
 - `./src/components/ui` - Shadcn/ui components
 
@@ -55,14 +54,15 @@ The project follows **Clean Architecture** principles with clear separation of c
 - `./src/application` - **Application layer** (use cases, orchestration)
   - `./src/application/{domain}` - Use cases per domain (attractions, places, geocoding)
   - `./src/application/{domain}/index.ts` - Public API exports
-  - `./src/application/{domain}/inputs.ts` - Zod schemas for input validation (validate incoming data)
-  - `./src/application/{domain}/outputs.ts` - Zod schemas for output validation with transforms (convert raw data to branded types)
+  - `./src/application/{domain}/inputs.ts` - Zod schemas for input validation
+  - `./src/application/{domain}/outputs.ts` - Zod schemas for output validation with transforms
 
 - `./src/infrastructure` - **Infrastructure layer** (external services, I/O)
   - `./src/infrastructure/google-maps` - Google Maps API client implementation
   - `./src/infrastructure/cache` - Caching services (Effect Cache)
   - `./src/infrastructure/config` - Configuration management
   - `./src/infrastructure/http` - HTTP utilities (validation, response mappers, browser clients)
+  - `./src/infrastructure/db` - Supabase clients and types
   - `./src/infrastructure/runtime.ts` - Effect runtime configuration with all dependencies
 
 - `./src/lib` - Shared utilities (utils.ts)

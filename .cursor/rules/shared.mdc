@@ -35,7 +35,6 @@ When introducing changes to the project, always follow the directory structure b
 - `./src/pages` - Astro pages
 - `./src/pages/api` - API endpoints (thin adapters calling application use cases)
 - `./src/middleware/index.ts` - Astro middleware
-- `./src/db` - Supabase clients and types
 - `./src/components` - Client-side components written in Astro (static) and React (dynamic)
 - `./src/components/ui` - Client-side components from Shadcn/ui
 - `./src/domain` - Domain layer (pure business logic, no dependencies)
@@ -45,12 +44,13 @@ When introducing changes to the project, always follow the directory structure b
 - `./src/application` - Application layer (use cases with Effect)
   - `./src/application/{domain}` - Use cases per domain
   - `./src/application/{domain}/inputs.ts` - Zod input schemas (validate incoming data)
-  - `./src/application/{domain}/outputs.ts` - Zod output schemas with transforms (convert raw data to branded types)
+  - `./src/application/{domain}/outputs.ts` - Zod output schemas
 - `./src/infrastructure` - Infrastructure layer (external services, I/O)
   - `./src/infrastructure/google-maps` - Google Maps API client
   - `./src/infrastructure/cache` - Effect cache services
   - `./src/infrastructure/config` - Configuration service
   - `./src/infrastructure/http` - Validation, response mappers, browser API clients
+  - `./src/infrastructure/db` - Supabase clients and types
   - `./src/infrastructure/runtime.ts` - Effect runtime with all dependencies
 - `./src/lib` - Shared utilities (utils.ts only)
 - `./src/assets` - static internal assets
