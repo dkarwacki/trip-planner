@@ -5,8 +5,8 @@
 TripGenie is an AI-powered trip planning application that personalizes travel recommendations based on user preferences. The product addresses the complexity and time investment required in planning engaging trips by leveraging AI to suggest places and destinations where travelers can discover meaningful experiences.
 
 The application operates through two integrated stages:
-- Place Discovery: An AI chat interface that provides personalized place and destination recommendations based on selected traveler personas. These places serve as starting points for detailed planning.
-- Attraction Planning: An interactive map interface where users explore attractions and restaurants near their selected places, with quality scoring to aid decision-making.
+- Place Discovery: An AI chat interface that provides personalized place and destination recommendations based on selected traveler personas. These places are selected as starting points or exploration hubs chosen for their potential to have interesting nearby attractions - the place itself doesn't need to be a major attraction, but rather a good location from which to discover surrounding points of interest.
+- Attraction Planning: An interactive map interface where users explore attractions and restaurants near their selected starting point places, with quality scoring to aid decision-making.
 
 Key differentiators include:
 - Persona-based place recommendations supporting multiple traveler types (general tourists, nature lovers, first-time visitors, art enthusiasts)
@@ -59,7 +59,10 @@ The application serves four primary personas:
 ### 3.3 AI Chat Interface
 - Natural language input for travel queries
 - AI suggests places and destinations only (cities, landmarks, beaches, trails, viewpoints, districts)
-- Suggested places serve as starting points for discovering nearby attractions and restaurants on the map
+- Suggested places are selected as starting points or exploration hubs based on their potential for nearby attraction discovery
+- The place itself doesn't need to be a major attraction - it's chosen for what's around it
+- These starting point places can be neighborhoods, districts, central areas, or landmarks - all serving as bases for exploration
+- All suggested places must be specific, geocodable locations with a valid Google Maps place ID and defined coordinates (latitude and longitude)
 - Attractions and restaurants are not suggested in chat
 - If users ask about attractions or restaurants, AI directs them to use the map interface
 - Concise, actionable list responses by default
@@ -71,8 +74,9 @@ The application serves four primary personas:
 
 ### 3.4 Place Validation
 - Place names are validated through Google Maps when user adds them to itinerary
-- Validation ensures suggested places can be located and searched on the map
-- Error messages displayed if validation fails
+- Validation ensures suggested places can be located and returns a valid Google Maps place ID and specific coordinates (latitude and longitude)
+- Place ID and coordinates are required to display the place on the map and discover nearby attractions
+- Error messages displayed if validation fails or place ID and coordinates cannot be obtained
 - Failed places are not added to itinerary
 - Persona-influenced recommendations apply to place and destination suggestions only
 
@@ -89,7 +93,8 @@ The application serves four primary personas:
 ### 3.6 Map Interface
 - Interactive map visualization of selected places
 - Places from itinerary appear in order on the map
-- Discovery of local attractions and restaurants near selected places
+- Discovery of local attractions and restaurants near the starting point places from chat
+- This is where users discover why certain places were suggested - exploring the rich surrounding area of attractions and restaurants
 - Quality/diversity/confidence scoring for attractions and restaurants only
 - Discovery is generic and not influenced by personas
 - Visual score badges with explanations for attractions and restaurants
@@ -186,10 +191,11 @@ The application serves four primary personas:
 ### US-004
 - ID: US-004
 - Title: Chat with AI for Place Recommendations
-- Description: As a user, I want to chat with an AI assistant to receive personalized place and destination recommendations
+- Description: As a user, I want to chat with an AI assistant to receive personalized place and destination recommendations that serve as starting points for discovering nearby attractions
 - Acceptance Criteria:
   - Text input field accepts natural language queries
   - AI responds with places and destinations (cities, landmarks, beaches, trails, etc.)
+  - Places are suggested as starting points or exploration hubs chosen for their nearby attraction potential
   - Attractions and restaurants are not suggested in chat
   - If asked about attractions or restaurants, AI directs user to map interface
   - AI responds with concise, actionable lists
@@ -199,13 +205,14 @@ The application serves four primary personas:
 ### US-005
 - ID: US-005
 - Title: Expand Place Details
-- Description: As a user, I want to expand individual place suggestions to see more details and understand why they're recommended
+- Description: As a user, I want to expand individual place suggestions to see more details and understand why they're recommended as starting points for exploration
 - Acceptance Criteria:
   - Each suggestion has a "Show details" button
   - Clicking expands additional information inline
   - Details include description and reasons for recommendation
   - Details include why this place matches selected personas
-  - Details explain this is a starting point for finding nearby attractions on the map
+  - Details emphasize this is a starting point or exploration hub chosen for its nearby attraction potential
+  - Details explain that the map interface will reveal attractions and restaurants in the surrounding area
   - Multiple suggestions can be expanded simultaneously
 
 ### US-006
@@ -215,8 +222,9 @@ The application serves four primary personas:
 - Acceptance Criteria:
   - Each suggestion has an "Add to itinerary" button
   - Place is validated through Google Maps when added
-  - Error message appears if place cannot be validated
-  - Clicking adds the validated place to the current itinerary
+  - Validation confirms the place exists and retrieves a valid Google Maps place ID and specific coordinates (latitude and longitude)
+  - Error message appears if place cannot be validated or place ID and coordinates cannot be obtained
+  - Clicking adds the validated place with place ID and coordinates to the current itinerary
   - Visual confirmation appears when place is added
   - Button changes to "Added" state after selection
   - Itinerary count updates in real-time
@@ -250,11 +258,12 @@ The application serves four primary personas:
 ### US-009
 - ID: US-009
 - Title: Export Itinerary to Map
-- Description: As a user, I want to export my itinerary to an interactive map to discover attractions and restaurants
+- Description: As a user, I want to export my itinerary to an interactive map to discover attractions and restaurants near my selected starting point places
 - Acceptance Criteria:
   - "Export to Map" button is available when itinerary has places
   - Clicking creates timestamped export (e.g., "Trip Plan - 2025-11-01 14:30")
   - User is redirected to /map with imported places
+  - Export transitions from selecting exploration hubs to discovering their nearby attractions and restaurants
   - All itinerary places appear on the map
   - Places appear on map in the order from itinerary
   - Initial export state is saved to user's history
@@ -403,12 +412,14 @@ The application serves four primary personas:
 ### US-022
 - ID: US-022
 - Title: Place Validation and Error Handling
-- Description: As a user, I want suggested places validated through Google Maps when I add them so I can trust they exist and are searchable
+- Description: As a user, I want suggested places validated through Google Maps when I add them so I can trust they exist and have a valid place ID and coordinates for map display
 - Acceptance Criteria:
   - Places validated when user adds them to itinerary
-  - Error message displayed if validation fails
+  - Validation retrieves a valid Google Maps place ID and specific coordinates (latitude and longitude) for each place
+  - Error message displayed if validation fails or place ID and coordinates cannot be obtained
   - Failed places not added to itinerary
-  - Successfully validated places can be located on the map
+  - Successfully validated places with place ID and coordinates can be displayed on the map
+  - Place ID and coordinates enable discovery of nearby attractions and restaurants
   - User can choose different suggestion if validation fails
 
 ### US-023
