@@ -1,4 +1,5 @@
 import { Brand } from "effect";
+import type { PlacePhoto } from "./Place";
 
 // Branded types
 export type MessageId = string & Brand.Brand<"MessageId">;
@@ -21,6 +22,7 @@ export interface PlaceSuggestion {
   reasoning: string;
   lat?: number;
   lng?: number;
+  photos?: PlacePhoto[];
 }
 
 export const createUserMessage = (content: string): ChatMessage => ({

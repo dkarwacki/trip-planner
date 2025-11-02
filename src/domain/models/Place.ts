@@ -11,6 +11,13 @@ export const PlaceId = Brand.nominal<PlaceId>();
 export const Latitude = Brand.nominal<Latitude>();
 export const Longitude = Brand.nominal<Longitude>();
 
+export interface PlacePhoto {
+  url: string;
+  width: number;
+  height: number;
+  attributions: string[];
+}
+
 export interface Place {
   id: PlaceId;
   name: string;
@@ -18,4 +25,5 @@ export interface Place {
   lng: Longitude;
   plannedAttractions: Attraction[];
   plannedRestaurants: Attraction[];
+  photos?: PlacePhoto[];
 }

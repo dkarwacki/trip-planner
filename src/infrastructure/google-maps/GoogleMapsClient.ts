@@ -1,6 +1,6 @@
 import { Effect, Context, Layer } from "effect";
 import { ZodError } from "zod";
-import type { Attraction, Place } from "@/domain/models";
+import type { Attraction, Place, PlacePhoto } from "@/domain/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/models";
 import {
   NoAttractionsFoundError,
@@ -49,7 +49,8 @@ export interface IGoogleMapsClient {
   ) => Effect.Effect<Place, NoResultsError | GeocodingError | MissingGoogleMapsAPIKeyError>;
 
   readonly placeDetails: (
-    placeId: string
+    placeId: string,
+    includePhotos?: boolean
   ) => Effect.Effect<Place, PlaceNotFoundError | PlacesAPIError | MissingGoogleMapsAPIKeyError>;
 
   readonly textSearch: (
@@ -292,7 +293,8 @@ export const GoogleMapsClientLive = Layer.effect(
       });
 
     const placeDetails = (
-      placeId: string
+      placeId: string,
+      includePhotos = false
     ): Effect.Effect<Place, PlaceNotFoundError | PlacesAPIError | MissingGoogleMapsAPIKeyError> =>
       Effect.gen(function* () {
         const apiKey = yield* config.getGoogleMapsApiKey();
@@ -302,7 +304,11 @@ export const GoogleMapsClientLive = Layer.effect(
           catch: (error) => new PlaceNotFoundError(error instanceof ZodError ? error.errors[0].message : placeId),
         });
 
-        const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(validatedPlaceId)}&fields=place_id,name,formatted_address,geometry&key=${apiKey}`;
+        const fields = includePhotos
+          ? "place_id,name,formatted_address,geometry,photos"
+          : "place_id,name,formatted_address,geometry";
+
+        const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(validatedPlaceId)}&fields=${fields}&key=${apiKey}`;
 
         const response = yield* Effect.tryPromise({
           try: () => fetch(url),
@@ -346,6 +352,21 @@ export const GoogleMapsClientLive = Layer.effect(
           plannedAttractions: [],
           plannedRestaurants: [],
         };
+
+        // Add photos if requested and available
+        if (includePhotos && result.photos && result.photos.length > 0) {
+          // Generate photo URLs from photo references (max 2 photos)
+          place.photos = result.photos.slice(0, 2).map(
+            (photo): PlacePhoto => ({
+              url: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=${encodeURIComponent(
+                photo.photo_reference
+              )}&key=${apiKey}`,
+              width: photo.width,
+              height: photo.height,
+              attributions: photo.html_attributions,
+            })
+          );
+        }
 
         return place;
       });

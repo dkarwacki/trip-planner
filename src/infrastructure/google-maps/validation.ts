@@ -75,11 +75,19 @@ export const GeocodeResponseSchema = z.object({
   error_message: z.string().optional(),
 });
 
+const PhotoSchema = z.object({
+  photo_reference: z.string(),
+  width: z.number(),
+  height: z.number(),
+  html_attributions: z.array(z.string()).default([]),
+});
+
 const PlaceDetailsResultSchema = z.object({
   place_id: z.string(),
   formatted_address: z.string(),
   name: z.string().optional(),
   geometry: GeometrySchema,
+  photos: z.array(PhotoSchema).optional(),
 });
 
 export const PlaceDetailsResponseSchema = z.object({

@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { OpenAIClient } from "@/infrastructure/openai";
+import { GoogleMapsClient } from "@/infrastructure/google-maps";
 import type { ChatRequestInput } from "./inputs";
 import type { PlaceSuggestion } from "@/domain/models";
 import { PERSONA_METADATA } from "@/domain/models";
@@ -47,6 +48,7 @@ Respond with your recommendations in the specified JSON format.`;
 export const TravelPlanningChat = (input: ChatRequestInput) =>
   Effect.gen(function* () {
     const openai = yield* OpenAIClient;
+    const googleMaps = yield* GoogleMapsClient;
 
     // Build system prompt based on personas
     const systemPrompt = buildSystemPrompt(input.personas);
@@ -127,6 +129,38 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
         yield* Effect.logWarning("Failed to parse structured output", { error, content: response.content });
         assistantMessage = "I'm having trouble processing your request. Please try again.";
       }
+    }
+
+    // Fetch photos for each suggested place
+    if (suggestedPlaces.length > 0) {
+      const placesWithPhotos = yield* Effect.forEach(
+        suggestedPlaces,
+        (place) =>
+          Effect.gen(function* () {
+            try {
+              // First, use text search to find the place and get its ID
+              const searchResult = yield* googleMaps.textSearch(place.name);
+              
+              // Then fetch detailed place info with photos
+              const placeDetails = yield* googleMaps.placeDetails(searchResult.id, true);
+              
+              // Add photos and coordinates to the suggestion
+              return {
+                ...place,
+                lat: placeDetails.lat,
+                lng: placeDetails.lng,
+                photos: placeDetails.photos,
+              } satisfies PlaceSuggestion;
+            } catch (error) {
+              // If we can't find the place or get photos, return the suggestion without them
+              yield* Effect.logWarning(`Failed to fetch photos for ${place.name}`, { error });
+              return place;
+            }
+          }),
+        { concurrency: 3 } // Fetch photos for up to 3 places at a time
+      );
+      
+      suggestedPlaces = placesWithPhotos;
     }
 
     return {

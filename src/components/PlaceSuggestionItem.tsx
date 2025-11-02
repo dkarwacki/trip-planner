@@ -32,7 +32,29 @@ export default function PlaceSuggestionItem({
   };
 
   return (
-    <Card className="transition-shadow hover:shadow-md">
+    <Card className="transition-shadow hover:shadow-md overflow-hidden">
+      {/* Photos Section */}
+      {suggestion.photos && suggestion.photos.length > 0 && (
+        <div className="relative">
+          <div className={`grid ${suggestion.photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-0.5`}>
+            {suggestion.photos.map((photo, index) => (
+              <div key={index} className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                <img
+                  src={photo.url}
+                  alt={`${suggestion.name} - Photo ${index + 1}`}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    // Hide broken images
+                    e.currentTarget.parentElement?.classList.add('hidden');
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0 overflow-hidden">
