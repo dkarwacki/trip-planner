@@ -5,6 +5,7 @@ import PersonaSelector from "./PersonaSelector";
 import ChatInterface from "./ChatInterface";
 import ItineraryPanel from "./ItineraryPanel";
 import TripHistoryPanel from "./TripHistoryPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   savePersonas,
   loadPersonas,
@@ -105,12 +106,9 @@ export default function ChatPage() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ height: "calc(100vh - 280px)" }}>
           {/* Left Column - Chat Interface */}
-          <div
-            className="lg:col-span-2 flex flex-col min-h-0"
-            style={{ minHeight: "500px", maxHeight: "calc(100vh - 320px)" }}
-          >
+          <div className="lg:col-span-2 flex flex-col h-full min-h-0">
             <ChatInterface
               personas={personas}
               itinerary={itinerary}
@@ -119,22 +117,25 @@ export default function ChatPage() {
             />
           </div>
 
-          {/* Right Column - Itinerary and History */}
-          <div className="flex flex-col gap-6 min-h-0">
-            {/* Itinerary Panel */}
-            <div className="flex-1 flex flex-col min-h-0" style={{ minHeight: "300px" }}>
-              <ItineraryPanel
-                places={itinerary}
-                onReorder={handleReorderPlaces}
-                onRemove={handleRemovePlace}
-                onExport={handleExportToMap}
-              />
-            </div>
-
-            {/* Trip History Panel */}
-            <div className="flex-1 flex flex-col min-h-0" style={{ minHeight: "300px" }}>
-              <TripHistoryPanel trips={tripHistory} onOpenTrip={handleOpenTrip} onDeleteTrip={handleDeleteTrip} />
-            </div>
+          {/* Right Column - Tabbed Panel */}
+          <div className="flex flex-col h-full min-h-0">
+            <Tabs defaultValue="itinerary" className="flex flex-col h-full min-h-0">
+              <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
+                <TabsTrigger value="itinerary">My Itinerary ({itinerary.length})</TabsTrigger>
+                <TabsTrigger value="history">Trip History ({tripHistory.length})</TabsTrigger>
+              </TabsList>
+              <TabsContent value="itinerary" className="flex-1 min-h-0 mt-0">
+                <ItineraryPanel
+                  places={itinerary}
+                  onReorder={handleReorderPlaces}
+                  onRemove={handleRemovePlace}
+                  onExport={handleExportToMap}
+                />
+              </TabsContent>
+              <TabsContent value="history" className="flex-1 min-h-0 mt-0">
+                <TripHistoryPanel trips={tripHistory} onOpenTrip={handleOpenTrip} onDeleteTrip={handleDeleteTrip} />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>

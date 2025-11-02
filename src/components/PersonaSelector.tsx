@@ -60,9 +60,6 @@ export default function PersonaSelector({ selected, onChange }: PersonaSelectorP
           );
         })}
       </div>
-      <p className="text-xs text-gray-500">
-        {selected.length === 1 ? "1 travel style selected" : `${selected.length} travel styles selected`}
-      </p>
     </div>
   );
 }

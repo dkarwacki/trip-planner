@@ -138,9 +138,9 @@ export default function ChatInterface({ personas, itinerary, onAddPlace, onRemov
 
   return (
     <Card className="h-full flex flex-col min-h-0 overflow-hidden">
-      <CardHeader className="border-b flex-shrink-0">
-        <CardTitle className="flex items-center gap-2">
-          <Bot className="h-5 w-5" />
+      <CardHeader className="border-b flex-shrink-0 px-4 py-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Bot className="h-4 w-4" />
           Travel Assistant
         </CardTitle>
       </CardHeader>
@@ -215,7 +215,7 @@ export default function ChatInterface({ personas, itinerary, onAddPlace, onRemov
         </div>
       </ScrollArea>
 
-      <CardContent className="border-t p-4 flex-shrink-0">
+      <CardContent className="border-t p-3 flex-shrink-0">
         <div className="flex gap-2">
           <Input
             placeholder="Ask about places to visit..."
@@ -229,7 +229,6 @@ export default function ChatInterface({ personas, itinerary, onAddPlace, onRemov
             <Send className="h-4 w-4" />
           </Button>
         </div>
-        <p className="text-xs text-gray-500 mt-2">Ask about cities, neighborhoods, landmarks, or regions to explore</p>
       </CardContent>
     </Card>
   );

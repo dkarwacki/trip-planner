@@ -1,5 +1,5 @@
 import type { PersonaType, Place, SavedTrip } from "@/domain/models";
-import { TripId, TripTimestamp, createSavedTrip, updateTripPlaces } from "@/domain/models";
+import { createSavedTrip, updateTripPlaces } from "@/domain/models";
 
 const STORAGE_KEYS = {
   PERSONAS: "trip-planner:personas",
@@ -126,3 +126,4 @@ export const deleteTripFromHistory = (tripId: string): void => {
     console.error("Failed to delete trip from history:", error);
   }
 };
+

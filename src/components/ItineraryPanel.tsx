@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -94,13 +93,13 @@ export default function ItineraryPanel({ places, onReorder, onRemove, onExport }
 
   return (
     <Card className="h-full flex flex-col min-h-0 overflow-hidden">
-      <CardHeader className="border-b flex-shrink-0">
-        <CardTitle className="flex items-center justify-between">
+      <CardHeader className="border-b flex-shrink-0 px-4 py-2">
+        <CardTitle className="flex items-center justify-between text-base">
           <span className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
+            <MapPin className="h-4 w-4" />
             My Itinerary
           </span>
-          <span className="text-sm font-normal text-gray-500">{places.length} places</span>
+          <span className="text-xs font-normal text-gray-500">{places.length} places</span>
         </CardTitle>
       </CardHeader>
 
@@ -112,8 +111,8 @@ export default function ItineraryPanel({ places, onReorder, onRemove, onExport }
             <p className="text-xs mt-1">Start by asking the assistant for suggestions</p>
             <div className="mt-4 space-y-1 text-xs text-gray-400">
               <p>Try asking:</p>
-              <p>"What are some great places to explore in Tokyo?"</p>
-              <p>"Recommend nature spots in Iceland"</p>
+              <p>&quot;What are some great places to explore in Tokyo?&quot;</p>
+              <p>&quot;Recommend nature spots in Iceland&quot;</p>
             </div>
           </div>
         ) : (
@@ -129,12 +128,11 @@ export default function ItineraryPanel({ places, onReorder, onRemove, onExport }
         )}
       </ScrollArea>
 
-      <CardContent className="border-t p-4 flex-shrink-0">
-        <Button onClick={onExport} disabled={isEmpty} className="w-full" size="lg">
+      <CardContent className="border-t p-3 flex-shrink-0">
+        <Button onClick={onExport} disabled={isEmpty} className="w-full">
           <Map className="mr-2 h-4 w-4" />
           Export to Map
         </Button>
-        {isEmpty && <p className="text-xs text-gray-500 text-center mt-2">Add places to enable export</p>}
       </CardContent>
     </Card>
   );

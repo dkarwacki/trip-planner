@@ -15,9 +15,9 @@ export default function TripHistoryPanel({ trips, onOpenTrip, onDeleteTrip }: Tr
 
   return (
     <Card className="h-full flex flex-col min-h-0 overflow-hidden">
-      <CardHeader className="border-b flex-shrink-0">
-        <CardTitle className="flex items-center gap-2">
-          <History className="h-5 w-5" />
+      <CardHeader className="border-b flex-shrink-0 px-4 py-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <History className="h-4 w-4" />
           Trip History
         </CardTitle>
       </CardHeader>
