@@ -45,3 +45,5 @@ export const updateTripPlaces = (trip: SavedTrip, places: Place[]): SavedTrip =>
   places,
   placeCount: places.length,
 });
+
+

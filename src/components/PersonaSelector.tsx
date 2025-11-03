@@ -1,6 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { getAllPersonas, type PersonaType } from "@/domain/models";
-import { Compass, MapPin, Palette, TreePine } from "lucide-react";
+import { 
+  MapPin, 
+  TreePine, 
+  Palette, 
+  Utensils, 
+  Mountain, 
+  Laptop, 
+  Landmark,
+  Camera 
+} from "lucide-react";
 
 interface PersonaSelectorProps {
   selected: PersonaType[];
@@ -13,10 +22,18 @@ const getIconComponent = (iconName: string) => {
       return MapPin;
     case "tree-pine":
       return TreePine;
-    case "compass":
-      return Compass;
     case "palette":
       return Palette;
+    case "utensils":
+      return Utensils;
+    case "mountain":
+      return Mountain;
+    case "laptop":
+      return Laptop;
+    case "landmark":
+      return Landmark;
+    case "camera":
+      return Camera;
     default:
       return MapPin;
   }

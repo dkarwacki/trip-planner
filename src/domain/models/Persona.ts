@@ -8,8 +8,12 @@ export const PersonaType = Brand.nominal<PersonaType>();
 export const PERSONA_TYPES = {
   GENERAL_TOURIST: PersonaType("general_tourist"),
   NATURE_LOVER: PersonaType("nature_lover"),
-  FIRST_TIME_VISITOR: PersonaType("first_time_visitor"),
   ART_ENTHUSIAST: PersonaType("art_enthusiast"),
+  FOODIE_TRAVELER: PersonaType("foodie_traveler"),
+  ADVENTURE_SEEKER: PersonaType("adventure_seeker"),
+  DIGITAL_NOMAD: PersonaType("digital_nomad"),
+  HISTORY_BUFF: PersonaType("history_buff"),
+  PHOTOGRAPHY_ENTHUSIAST: PersonaType("photography_enthusiast"),
 } as const;
 
 export interface PersonaMetadata {
@@ -32,17 +36,41 @@ export const PERSONA_METADATA: Record<string, PersonaMetadata> = {
     description: "Outdoor activities, parks, and natural landscapes",
     icon: "tree-pine",
   },
-  [PERSONA_TYPES.FIRST_TIME_VISITOR]: {
-    type: PERSONA_TYPES.FIRST_TIME_VISITOR,
-    label: "First-Time Visitor",
-    description: "Must-see spots and comprehensive guidance",
-    icon: "compass",
-  },
   [PERSONA_TYPES.ART_ENTHUSIAST]: {
     type: PERSONA_TYPES.ART_ENTHUSIAST,
     label: "Art Enthusiast",
     description: "Museums, galleries, and cultural experiences",
     icon: "palette",
+  },
+  [PERSONA_TYPES.FOODIE_TRAVELER]: {
+    type: PERSONA_TYPES.FOODIE_TRAVELER,
+    label: "Foodie Traveler",
+    description: "Culinary experiences, local cuisine, and food markets",
+    icon: "utensils",
+  },
+  [PERSONA_TYPES.ADVENTURE_SEEKER]: {
+    type: PERSONA_TYPES.ADVENTURE_SEEKER,
+    label: "Adventure Seeker",
+    description: "Extreme sports, hiking trails, and adrenaline activities",
+    icon: "mountain",
+  },
+  [PERSONA_TYPES.DIGITAL_NOMAD]: {
+    type: PERSONA_TYPES.DIGITAL_NOMAD,
+    label: "Digital Nomad",
+    description: "Co-working spaces, cafes with WiFi, and work-friendly spots",
+    icon: "laptop",
+  },
+  [PERSONA_TYPES.HISTORY_BUFF]: {
+    type: PERSONA_TYPES.HISTORY_BUFF,
+    label: "History Buff",
+    description: "Historical sites, monuments, and heritage tours",
+    icon: "landmark",
+  },
+  [PERSONA_TYPES.PHOTOGRAPHY_ENTHUSIAST]: {
+    type: PERSONA_TYPES.PHOTOGRAPHY_ENTHUSIAST,
+    label: "Photography Enthusiast",
+    description: "Scenic viewpoints, Instagram-worthy spots, and unique perspectives",
+    icon: "camera",
   },
 };
 
