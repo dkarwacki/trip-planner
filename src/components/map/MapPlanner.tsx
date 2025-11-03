@@ -30,7 +30,7 @@ import { ChevronLeft, ChevronRight, List, Map as MapIcon, Compass, CheckSquare }
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { calculateDistance, SEARCH_NEARBY_DISTANCE_THRESHOLD } from "@/lib/map/map-utils";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { MobileNavigation, type MapTab } from "@/components/common/MobileNavigation";
+import { MobileNavigation, type MapTab, type MobileTab } from "@/components/common/MobileNavigation";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -114,6 +114,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   const [hoveredAttractionId, setHoveredAttractionId] = useState<string | null>(null);
   const [scrollToAttractionId, setScrollToAttractionId] = useState<string | null>(null);
   const [highlightedAttractionId, setHighlightedAttractionId] = useState<string | null>(null);
+  const [showHighScoresOnly, setShowHighScoresOnly] = useState(false);
 
   const [clickedLocation, setClickedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showAddPlacePopover, setShowAddPlacePopover] = useState(false);
@@ -203,6 +204,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       setRestaurantsError(null);
       setLoadedTabs(new Set(["attractions", "restaurants"]));
       setActiveTab("attractions");
+      setShowHighScoresOnly(false);
 
       setIsLoadingAttractions(true);
       setIsLoadingRestaurants(true);
@@ -351,6 +353,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
     setRestaurantsError(null);
     setLoadedTabs(new Set(["attractions"]));
     setActiveTab("attractions");
+    setShowHighScoresOnly(false);
 
     // Clear search nearby state
     setInitialSearchCenter(null);
@@ -365,6 +368,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       if (!selectedPlace) return;
 
       setActiveTab(tab);
+      setShowHighScoresOnly(false);
 
       if (loadedTabs.has(tab)) return;
 
@@ -745,9 +749,12 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
     const data = activeTab === "attractions" ? attractions : restaurants;
     if (data.length === 0) return;
 
+    // Filter data based on high scores filter
+    const filteredData = showHighScoresOnly ? data.filter((scored) => scored.score >= HIGH_SCORE_THRESHOLD) : data;
+
     const MARKER_SIZE = getMarkerSize(isMobile);
 
-    data.forEach((scored) => {
+    filteredData.forEach((scored) => {
       const { attraction, score } = scored;
 
       // Use category-specific colors
@@ -801,7 +808,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       markersMap.forEach(({ marker }) => (marker.map = null));
       markersMap.clear();
     };
-  }, [map, markerLibrary, selectedPlace, attractions, restaurants, activeTab, mapId, isMobile]);
+  }, [map, markerLibrary, selectedPlace, attractions, restaurants, activeTab, mapId, isMobile, showHighScoresOnly]);
 
   useEffect(() => {
     if (!attractionMarkersRef.current) return;
@@ -918,8 +925,11 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   );
 
   // Handle mobile tab navigation
-  const handleMobileTabChange = (tab: MapTab) => {
-    setMobileTab(tab as MapTab);
+  const handleMobileTabChange = (tab: MobileTab) => {
+    // Only handle MapTab types in this component
+    if (tab === "places" || tab === "map" || tab === "explore" || tab === "plan") {
+      setMobileTab(tab);
+    }
   };
 
   // Mobile tab configurations
@@ -1184,6 +1194,8 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
                   onAttractionAccepted={handleAttractionAccepted}
                   mapCenter={currentMapCenter}
                   onCollapse={() => setRightSidebarCollapsed(true)}
+                  showHighScoresOnly={showHighScoresOnly}
+                  onFilterChange={setShowHighScoresOnly}
                 />
                 <div className="absolute top-4 left-0 -translate-x-1/2 z-10">
                   <Tooltip>
@@ -1297,6 +1309,8 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
                 onAttractionAccepted={handleAttractionAccepted}
                 mapCenter={currentMapCenter}
                 onCollapse={() => setMobileTab("map")}
+                showHighScoresOnly={showHighScoresOnly}
+                onFilterChange={setShowHighScoresOnly}
               />
             )}
           </DrawerContent>
