@@ -26,11 +26,11 @@ import PlaceAutocomplete from "@/components/map/PlaceAutocomplete";
 import PlaceListItem from "@/components/map/PlaceListItem";
 import AddToPlanDialog from "@/components/common/AddToPlanDialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, List, Map as MapIcon, Compass, CheckSquare } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { calculateDistance, SEARCH_NEARBY_DISTANCE_THRESHOLD } from "@/lib/map/map-utils";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { MobileNavigation, type MobileTab } from "@/components/common/MobileNavigation";
+import { MobileNavigation, type MapTab } from "@/components/common/MobileNavigation";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -145,7 +145,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   }, []);
 
   // Mobile navigation state
-  const [mobileTab, setMobileTab] = useState<MobileTab>("places");
+  const [mobileTab, setMobileTab] = useState<MapTab>("places");
 
   // Sidebar collapse state (for desktop)
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
@@ -918,9 +918,39 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   );
 
   // Handle mobile tab navigation
-  const handleMobileTabChange = (tab: MobileTab) => {
-    setMobileTab(tab);
+  const handleMobileTabChange = (tab: MapTab) => {
+    setMobileTab(tab as MapTab);
   };
+
+  // Mobile tab configurations
+  const mobileTabs = [
+    {
+      id: "places" as MapTab,
+      label: "Places",
+      icon: List,
+      badge: places.length > 0 ? places.length : undefined,
+      disabled: false,
+    },
+    {
+      id: "map" as MapTab,
+      label: "Map",
+      icon: MapIcon,
+      disabled: false,
+    },
+    {
+      id: "explore" as MapTab,
+      label: "Explore",
+      icon: Compass,
+      disabled: !selectedPlace,
+    },
+    {
+      id: "plan" as MapTab,
+      label: "Plan",
+      icon: CheckSquare,
+      badge: totalPlannedItems > 0 ? totalPlannedItems : undefined,
+      disabled: totalPlannedItems === 0,
+    },
+  ];
 
   return (
     <TooltipProvider>
@@ -1338,15 +1368,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
         </Drawer>
 
         {/* Mobile Bottom Navigation */}
-        {isMobile && (
-          <MobileNavigation
-            activeTab={mobileTab}
-            onTabChange={handleMobileTabChange}
-            placesCount={places.length}
-            plannedItemsCount={totalPlannedItems}
-            hasSelectedPlace={selectedPlace !== null}
-          />
-        )}
+        {isMobile && <MobileNavigation activeTab={mobileTab} onTabChange={handleMobileTabChange} tabs={mobileTabs} />}
       </div>
     </TooltipProvider>
   );

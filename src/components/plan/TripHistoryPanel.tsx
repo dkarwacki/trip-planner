@@ -14,7 +14,7 @@ export default function TripHistoryPanel({ trips, onOpenTrip, onDeleteTrip }: Tr
   const isEmpty = trips.length === 0;
 
   return (
-    <Card className="h-full flex flex-col min-h-0 overflow-hidden">
+    <Card className="h-full w-full flex flex-col min-h-0 overflow-hidden">
       <CardHeader className="border-b flex-shrink-0 px-4 py-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <History className="h-4 w-4" />
@@ -38,10 +38,12 @@ export default function TripHistoryPanel({ trips, onOpenTrip, onDeleteTrip }: Tr
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0 overflow-hidden">
-                    <h4 className="text-sm font-medium text-gray-900 mb-1 truncate">{trip.title}</h4>
+                    <h4 className="text-sm font-medium text-gray-900 mb-1 break-words" style={{ overflowWrap: "anywhere" }}>
+                      {trip.title}
+                    </h4>
                     <p className="text-xs text-gray-500 flex items-center gap-1">
                       <MapPin className="h-3 w-3 flex-shrink-0" />
-                      <span className="truncate">
+                      <span className="break-words">
                         {trip.placeCount} {trip.placeCount === 1 ? "place" : "places"}
                       </span>
                     </p>

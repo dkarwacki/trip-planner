@@ -53,9 +53,11 @@ function SortablePlaceItem({ place, onRemove }: SortablePlaceItemProps) {
 
       <MapPin className="h-4 w-4 text-blue-600 flex-shrink-0" />
 
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{place.name}</p>
-        <p className="text-xs text-gray-500">
+      <div className="flex-1 min-w-0 overflow-hidden">
+        <p className="text-sm font-medium text-gray-900 break-words" style={{ overflowWrap: "anywhere" }}>
+          {place.name}
+        </p>
+        <p className="text-xs text-gray-500 break-words">
           {place.lat.toFixed(4)}, {place.lng.toFixed(4)}
         </p>
       </div>
@@ -92,7 +94,7 @@ export default function ItineraryPanel({ places, onReorder, onRemove, onExport }
   const isEmpty = places.length === 0;
 
   return (
-    <Card className="h-full flex flex-col min-h-0 overflow-hidden">
+    <Card className="h-full w-full flex flex-col min-h-0 overflow-hidden">
       <CardHeader className="border-b flex-shrink-0 px-4 py-2">
         <CardTitle className="flex items-center justify-between text-base">
           <span className="flex items-center gap-2">

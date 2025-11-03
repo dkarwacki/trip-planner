@@ -37,7 +37,7 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
   };
 
   return (
-    <Card id={`place-${suggestion.id}`} className="transition-shadow hover:shadow-md overflow-hidden scroll-mt-4">
+    <Card id={`place-${suggestion.id}`} className="transition-shadow hover:shadow-md overflow-hidden scroll-mt-4 w-full max-w-full">
       {/* Photos Section */}
       {suggestion.photos && suggestion.photos.length > 0 && (
         <div className="relative">
@@ -69,13 +69,17 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
       )}
 
       <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 w-full max-w-full">
           <div className="flex-1 min-w-0 overflow-hidden">
-            <h4 className="font-medium text-gray-900 mb-1 truncate">{suggestion.name}</h4>
-            <p className="text-sm text-gray-600 line-clamp-2 break-words">{suggestion.description}</p>
+            <h4 className="font-medium text-gray-900 mb-1 break-words" style={{ overflowWrap: "anywhere" }}>
+              {suggestion.name}
+            </h4>
+            <p className="text-sm text-gray-600 break-words" style={{ overflowWrap: "anywhere" }}>
+              {suggestion.description}
+            </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <Button variant="outline" size="icon" asChild title="Open in Google Maps" className="h-8 w-8">
               <a href={getGoogleMapsUrl()} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-4 w-4" />
@@ -86,7 +90,8 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
               onClick={handleToggleAdd}
               disabled={isValidating || isAdded}
               title={isAdded ? "This place is already in your itinerary" : "Add to itinerary"}
-              className="gap-2 h-8"
+              size="icon"
+              className="h-8 w-8"
             >
               {isValidating ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -95,9 +100,6 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              <span className="hidden md:inline text-sm">
-                {isValidating ? "Adding..." : isAdded ? "Already added" : "Add to itinerary"}
-              </span>
             </Button>
           </div>
         </div>
@@ -112,7 +114,9 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
           <CollapsibleContent className="mt-2 space-y-2">
             <div className="rounded-md bg-gray-50 p-3">
               <p className="text-xs font-medium text-gray-700 mb-1">Why this place?</p>
-              <p className="text-xs text-gray-600 break-words">{suggestion.reasoning}</p>
+              <p className="text-xs text-gray-600 break-words" style={{ overflowWrap: "anywhere" }}>
+                {suggestion.reasoning}
+              </p>
             </div>
           </CollapsibleContent>
         </Collapsible>

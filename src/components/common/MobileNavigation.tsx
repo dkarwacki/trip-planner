@@ -1,50 +1,25 @@
-import { Map, List, Compass, CheckSquare } from "lucide-react";
+import { Map, List, Compass, CheckSquare, Bot, MapPin, History } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-export type MobileTab = "places" | "map" | "explore" | "plan";
+export type MapTab = "places" | "map" | "explore" | "plan";
+export type PlanTab = "assistant" | "itinerary" | "history";
+export type MobileTab = MapTab | PlanTab;
+
+interface TabConfig {
+  id: MobileTab;
+  label: string;
+  icon: LucideIcon;
+  badge?: number;
+  disabled?: boolean;
+}
 
 interface MobileNavigationProps {
   activeTab: MobileTab;
   onTabChange: (tab: MobileTab) => void;
-  placesCount?: number;
-  plannedItemsCount?: number;
-  hasSelectedPlace?: boolean;
+  tabs: TabConfig[];
 }
 
-export function MobileNavigation({
-  activeTab,
-  onTabChange,
-  placesCount = 0,
-  plannedItemsCount = 0,
-  hasSelectedPlace = false,
-}: MobileNavigationProps) {
-  const tabs = [
-    {
-      id: "places" as MobileTab,
-      label: "Places",
-      icon: List,
-      badge: placesCount > 0 ? placesCount : undefined,
-      disabled: false,
-    },
-    {
-      id: "map" as MobileTab,
-      label: "Map",
-      icon: Map,
-      disabled: false,
-    },
-    {
-      id: "explore" as MobileTab,
-      label: "Explore",
-      icon: Compass,
-      disabled: !hasSelectedPlace,
-    },
-    {
-      id: "plan" as MobileTab,
-      label: "Plan",
-      icon: CheckSquare,
-      badge: plannedItemsCount > 0 ? plannedItemsCount : undefined,
-      disabled: plannedItemsCount === 0,
-    },
-  ];
+export function MobileNavigation({ activeTab, onTabChange, tabs }: MobileNavigationProps) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 sm:hidden safe-area-bottom">

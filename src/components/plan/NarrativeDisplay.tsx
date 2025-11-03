@@ -83,7 +83,8 @@ function renderNarrative(content: string, places: PlaceSuggestion[]): React.Reac
           <button
             key={`place-${index}`}
             onClick={() => scrollToPlace(placeId)}
-            className="font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 hover:text-blue-800 px-2 py-0.5 rounded cursor-pointer transition-all"
+            className="font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 hover:text-blue-800 px-2 py-0.5 rounded cursor-pointer transition-all inline-block break-words"
+            style={{ overflowWrap: "anywhere" }}
           >
             {placeName}
           </button>
@@ -112,7 +113,7 @@ export default function NarrativeDisplay({ content, places = [] }: NarrativeDisp
   }
 
   return (
-    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
+    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words" style={{ overflowWrap: "anywhere" }}>
       {renderNarrative(content, places)}
     </p>
   );

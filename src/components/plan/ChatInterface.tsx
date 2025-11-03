@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Send, Bot, User as UserIcon, ChevronDown, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
+import { Send, Bot, User as UserIcon, ChevronDown, ChevronRight } from "lucide-react";
 import type { ChatMessage, PersonaType } from "@/domain/plan/models";
 import type { Place } from "@/domain/common/models";
 import { createUserMessage, createAssistantMessage } from "@/domain/plan/models/ChatMessage";
@@ -18,17 +18,9 @@ interface ChatInterfaceProps {
   itinerary: Place[];
   onAddPlace: (place: Place) => void;
   onRemovePlace: (placeId: string) => void;
-  isFullScreen?: boolean;
-  onToggleFullScreen?: () => void;
 }
 
-export default function ChatInterface({
-  personas,
-  itinerary,
-  onAddPlace,
-  isFullScreen = false,
-  onToggleFullScreen,
-}: ChatInterfaceProps) {
+export default function ChatInterface({ personas, itinerary, onAddPlace }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -190,29 +182,16 @@ export default function ChatInterface({
   };
 
   return (
-    <Card className="h-full flex flex-col min-h-0 overflow-hidden">
-      <CardHeader className="border-b flex-shrink-0 px-4 py-2">
-        <CardTitle className="flex items-center justify-between text-base">
-          <div className="flex items-center gap-2">
-            <Bot className="h-4 w-4" />
-            Travel Assistant
-          </div>
-          {onToggleFullScreen && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleFullScreen}
-              className="h-8 w-8"
-              title={isFullScreen ? "Exit full screen" : "Enter full screen"}
-            >
-              {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </Button>
-          )}
+    <Card className="h-full w-full flex flex-col min-h-0 overflow-hidden mb-16 sm:mb-0">
+      <CardHeader className="border-b flex-shrink-0 px-4 py-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Bot className="h-5 w-5" />
+          Travel Assistant
         </CardTitle>
       </CardHeader>
 
-      <ScrollArea className="flex-1 min-h-0 p-4" ref={scrollRef}>
-        <div className="space-y-4">
+      <ScrollArea className="flex-1 min-h-0 p-4 w-full" ref={scrollRef}>
+        <div className="space-y-4 w-full max-w-full">
           {messages.length === 0 && (
             <div className="text-center text-gray-500 py-8">
               <Bot className="h-12 w-12 mx-auto mb-3 text-gray-400" />
@@ -222,34 +201,40 @@ export default function ChatInterface({
           )}
 
           {messages.map((message) => (
-            <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div
+              key={message.id}
+              className={`flex gap-3 w-full max-w-full ${message.role === "user" ? "justify-end" : "justify-start"}`}
+            >
               {message.role === "assistant" && (
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                   <Bot className="h-4 w-4 text-blue-600" />
                 </div>
               )}
 
-              <div className={`flex-1 min-w-0 max-w-[80%] ${message.role === "user" ? "text-right" : ""}`}>
+              <div className={`flex-1 min-w-0 max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}>
                 <div
-                  className={`inline-block rounded-lg px-4 py-2 max-w-full ${
+                  className={`inline-block rounded-lg px-4 py-2 break-words ${
                     message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
                   }`}
+                  style={{ overflowWrap: "anywhere", wordBreak: "break-word", maxWidth: "100%" }}
                 >
                   {message.role === "assistant" && message.content.includes("**") ? (
                     <NarrativeDisplay content={message.content} places={message.suggestedPlaces} />
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    <p className="text-sm whitespace-pre-wrap break-words" style={{ overflowWrap: "anywhere" }}>
+                      {message.content}
+                    </p>
                   )}
                 </div>
 
                 {message.role === "assistant" && message.thinking && message.thinking.length > 0 && (
-                  <div className="mt-3">
+                  <div className="mt-3 max-w-full">
                     <ThinkingSection thinking={message.thinking} />
                   </div>
                 )}
 
                 {message.suggestedPlaces && message.suggestedPlaces.length > 0 && (
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3 space-y-2 w-full">
                     {message.suggestedPlaces.map((suggestion) => (
                       <PlaceSuggestionItem
                         key={suggestion.id}
@@ -323,7 +308,9 @@ function ThinkingSection({ thinking }: ThinkingSectionProps) {
           {thinking.map((thought: string, index: number) => (
             <div key={index} className="text-xs text-gray-600 flex gap-2">
               <span className="font-mono text-gray-400 flex-shrink-0">{index + 1}.</span>
-              <span className="break-words">{thought}</span>
+              <span className="break-words overflow-wrap-anywhere" style={{ overflowWrap: "anywhere" }}>
+                {thought}
+              </span>
             </div>
           ))}
         </div>
