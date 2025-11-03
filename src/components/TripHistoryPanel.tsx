@@ -18,7 +18,7 @@ export default function TripHistoryPanel({ trips, onOpenTrip, onDeleteTrip }: Tr
       <CardHeader className="border-b flex-shrink-0 px-4 py-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <History className="h-4 w-4" />
-          Trip History
+          History
         </CardTitle>
       </CardHeader>
 

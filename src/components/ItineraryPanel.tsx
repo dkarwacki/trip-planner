@@ -97,7 +97,7 @@ export default function ItineraryPanel({ places, onReorder, onRemove, onExport }
         <CardTitle className="flex items-center justify-between text-base">
           <span className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
-            My Itinerary
+            Itinerary
           </span>
           <span className="text-xs font-normal text-gray-500">{places.length} places</span>
         </CardTitle>
@@ -109,11 +109,6 @@ export default function ItineraryPanel({ places, onReorder, onRemove, onExport }
             <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-400" />
             <p className="text-sm font-medium">No places added yet</p>
             <p className="text-xs mt-1">Start by asking the assistant for suggestions</p>
-            <div className="mt-4 space-y-1 text-xs text-gray-400">
-              <p>Try asking:</p>
-              <p>&quot;What are some great places to explore in Tokyo?&quot;</p>
-              <p>&quot;Recommend nature spots in Iceland&quot;</p>
-            </div>
           </div>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

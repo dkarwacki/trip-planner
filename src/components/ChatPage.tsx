@@ -95,25 +95,17 @@ export default function ChatPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className={isFullScreen ? "h-screen flex flex-col" : "container mx-auto p-4 max-w-7xl"}>
-        {/* Header */}
+        {/* Persona Selector */}
         {!isFullScreen && (
-          <>
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Trip Planner</h1>
-              <p className="text-gray-600">Plan your perfect trip with AI-powered place recommendations</p>
-            </div>
-
-            {/* Persona Selector */}
-            <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
-              <PersonaSelector selected={personas} onChange={handlePersonasChange} />
-            </div>
-          </>
+          <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
+            <PersonaSelector selected={personas} onChange={handlePersonasChange} />
+          </div>
         )}
 
         {/* Main Content Grid */}
         <div
           className={isFullScreen ? "flex-1 flex flex-col min-h-0" : "grid grid-cols-1 lg:grid-cols-3 gap-6"}
-          style={!isFullScreen ? { height: "calc(100vh - 280px)" } : undefined}
+          style={!isFullScreen ? { height: "calc(100vh - 180px)" } : undefined}
         >
           {/* Left Column - Chat Interface */}
           <div className={isFullScreen ? "flex flex-col h-full min-h-0" : "lg:col-span-2 flex flex-col h-full min-h-0"}>
@@ -132,8 +124,8 @@ export default function ChatPage() {
             <div className="flex flex-col h-full min-h-0">
               <Tabs defaultValue="itinerary" className="flex flex-col h-full min-h-0">
                 <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
-                  <TabsTrigger value="itinerary">My Itinerary ({itinerary.length})</TabsTrigger>
-                  <TabsTrigger value="history">Trip History ({tripHistory.length})</TabsTrigger>
+                  <TabsTrigger value="itinerary">Itinerary ({itinerary.length})</TabsTrigger>
+                  <TabsTrigger value="history">History ({tripHistory.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="itinerary" className="flex-1 min-h-0 mt-0">
                   <ItineraryPanel
