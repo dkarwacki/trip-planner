@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PERSONA_TYPES } from "@/domain/models";
+import { PERSONA_TYPES } from "@/domain/plan/models";
 
 const PersonaTypeSchema = z.enum([
   PERSONA_TYPES.GENERAL_TOURIST,

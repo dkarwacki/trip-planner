@@ -1,10 +1,10 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
-import { getTopRestaurants, GetTopRestaurantsInputSchema } from "@/application/attractions";
-import { ValidationError } from "@/infrastructure/http/validation";
-import { toHttpResponse } from "@/infrastructure/http/response-mappers";
-import { AppRuntime } from "@/infrastructure/runtime";
-import { UnexpectedError } from "@/domain/errors";
+import { getTopRestaurants, GetTopRestaurantsInputSchema } from "@/application/map/attractions";
+import { ValidationError } from "@/infrastructure/common/http/validation";
+import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
+import { AppRuntime } from "@/infrastructure/common/runtime";
+import { UnexpectedError } from "@/domain/common/errors";
 
 export const prerender = false;
 

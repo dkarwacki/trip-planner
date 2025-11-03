@@ -1,9 +1,10 @@
 import { Effect } from "effect";
-import { OpenAIClient } from "@/infrastructure/openai";
-import { GoogleMapsClient } from "@/infrastructure/google-maps";
+import { OpenAIClient } from "@/infrastructure/common/openai";
+import { GoogleMapsClient } from "@/infrastructure/common/google-maps";
 import type { ChatRequestInput } from "./inputs";
-import type { PlaceSuggestion, Place } from "@/domain/models";
-import { PERSONA_METADATA } from "@/domain/models";
+import type { PlaceSuggestion } from "@/domain/plan/models";
+import type { Place } from "@/domain/common/models";
+import { PERSONA_METADATA } from "@/domain/plan/models";
 
 interface ChatResponse {
   message: string;

@@ -30,29 +30,56 @@ alwaysApply: true
 
 When introducing changes to the project, always follow the directory structure below:
 
+The project follows **Clean Architecture** principles with clear separation of concerns, organized by **feature domains**: `map` (interactive map exploration), `plan` (trip planning chat), and `common` (shared utilities).
+
 - `./src` - source code
 - `./src/layouts` - Astro layouts
 - `./src/pages` - Astro pages
 - `./src/pages/api` - API endpoints (thin adapters calling application use cases)
 - `./src/middleware/index.ts` - Astro middleware
-- `./src/components` - Client-side components written in Astro (static) and React (dynamic)
-- `./src/components/ui` - Client-side components from Shadcn/ui
+
+### Feature-based Organization
+
 - `./src/domain` - Domain layer (pure business logic, no dependencies)
-  - `./src/domain/models` - Entities and branded types
-  - `./src/domain/scoring` - Business rules and algorithms
-  - `./src/domain/errors` - Tagged errors
+  - `./src/domain/common/` - Shared domain logic
+    - `models/` - Core entities
+    - `errors/` - Shared errors
+  - `./src/domain/map/` - Map feature domain
+    - `models/` - Map entities
+    - `errors/` - Map errors
+    - `scoring/` - Business rules and algorithms
+  - `./src/domain/plan/` - Plan feature domain
+    - `models/` - Plan entities
+    - `errors/` - Plan errors
+
 - `./src/application` - Application layer (use cases with Effect)
-  - `./src/application/{domain}` - Use cases per domain
-  - `./src/application/{domain}/inputs.ts` - Zod input schemas (validate incoming data)
-  - `./src/application/{domain}/outputs.ts` - Zod output schemas
+  - `./src/application/map/` - Map use cases
+    - `{usecase}/inputs.ts` - Zod input schemas
+    - `{usecase}/outputs.ts` - Zod output schemas
+  - `./src/application/plan/` - Plan use cases
+    - `inputs.ts` - Zod input schemas
+  
 - `./src/infrastructure` - Infrastructure layer (external services, I/O)
-  - `./src/infrastructure/google-maps` - Google Maps API client
-  - `./src/infrastructure/cache` - Effect cache services
-  - `./src/infrastructure/config` - Configuration service
-  - `./src/infrastructure/http` - Validation, response mappers, browser API clients
-  - `./src/infrastructure/db` - Supabase clients and types
-  - `./src/infrastructure/runtime.ts` - Effect runtime with all dependencies
-- `./src/lib` - Shared utilities (utils.ts only)
+  - `./src/infrastructure/common/` - Shared infrastructure
+    - `config/` - Configuration service
+    - `google-maps/` - Google Maps API client
+    - `openai/` - OpenAI client
+    - `http/` - Validation, response mappers, base HTTP utilities
+    - `runtime.ts` - Effect runtime with all dependencies
+  - `./src/infrastructure/map/` - Map-specific infrastructure
+    - `cache/` - Effect cache services
+    - `clients/` - Browser API clients
+
+- `./src/components` - Client-side components
+  - `./src/components/common/` - Shared components
+  - `./src/components/map/` - Map components
+  - `./src/components/plan/` - Plan components
+  - `./src/components/ui/` - Shadcn/ui components
+
+- `./src/lib` - Shared utilities
+  - `./src/lib/common/` - Shared utilities (storage, utils)
+  - `./src/lib/map/` - Map utilities (map-utils)
+
 - `./src/assets` - static internal assets
 - `./public` - public assets
 

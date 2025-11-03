@@ -34,40 +34,68 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Structure
 
-The project follows **Clean Architecture** principles with clear separation of concerns:
+The project follows **Clean Architecture** principles with clear separation of concerns, organized by **feature domains**: `map` (interactive map exploration), `plan` (trip planning chat), and `common` (shared utilities).
 
 - `./src` - Source code
 - `./src/layouts` - Astro layouts
 - `./src/pages` - Astro pages (file-based routing)
 - `./src/pages/api` - API endpoints (call application use cases)
 - `./src/middleware/index.ts` - Astro middleware
-- `./src/components` - Components (Astro for static, React for interactive)
-- `./src/components/ui` - Shadcn/ui components
 
-### Clean Architecture Layers
+### Clean Architecture Layers (Feature-based)
 
 - `./src/domain` - **Domain layer** (pure business logic, no external dependencies)
-  - `./src/domain/models` - Domain entities and branded types (Place, Attraction, etc.)
-  - `./src/domain/scoring` - Business rules and scoring algorithms
-  - `./src/domain/errors` - Tagged errors for type-safe error handling
+  - `./src/domain/common/` - Shared domain logic
+    - `models/` - Core entities
+    - `errors/` - Shared errors
+  - `./src/domain/map/` - Map feature domain
+    - `models/` - Map entities
+    - `errors/` - Map errors
+    - `scoring/` - Business rules and scoring algorithms
+  - `./src/domain/plan/` - Plan feature domain
+    - `models/` - Plan entities
+    - `errors/` - Plan errors
 
 - `./src/application` - **Application layer** (use cases, orchestration)
-  - `./src/application/{domain}` - Use cases per domain (attractions, places, geocoding)
-  - `./src/application/{domain}/index.ts` - Public API exports
-  - `./src/application/{domain}/inputs.ts` - Zod schemas for input validation
-  - `./src/application/{domain}/outputs.ts` - Zod schemas for output validation with transforms
+  - `./src/application/map/` - Map use cases
+    - `{usecase}/` - Use case per subdirectory
+    - `{usecase}/index.ts` - Public API exports
+    - `{usecase}/inputs.ts` - Zod schemas for input validation
+    - `{usecase}/outputs.ts` - Zod schemas for output validation with transforms
+  - `./src/application/plan/` - Plan use cases
+    - `index.ts` - Public API exports
+    - `inputs.ts` - Zod schemas for input validation
 
 - `./src/infrastructure` - **Infrastructure layer** (external services, I/O)
-  - `./src/infrastructure/google-maps` - Google Maps API client implementation
-  - `./src/infrastructure/cache` - Caching services (Effect Cache)
-  - `./src/infrastructure/config` - Configuration management
-  - `./src/infrastructure/http` - HTTP utilities (validation, response mappers, browser clients)
-  - `./src/infrastructure/db` - Supabase clients and types
-  - `./src/infrastructure/runtime.ts` - Effect runtime configuration with all dependencies
+  - `./src/infrastructure/common/` - Shared infrastructure
+    - `config/` - Configuration management
+    - `google-maps/` - Google Maps API client (used by both features)
+    - `openai/` - OpenAI client (used by both features)
+    - `http/` - HTTP utilities (validation, response mappers)
+    - `runtime.ts` - Effect runtime configuration with all dependencies
+  - `./src/infrastructure/map/` - Map-specific infrastructure
+    - `cache/` - Caching services
+    - `clients/` - Browser API clients
 
-- `./src/lib` - Shared utilities (utils.ts)
+- `./src/components` - Components (Astro for static, React for interactive)
+  - `./src/components/common/` - Shared components
+  - `./src/components/map/` - Map components
+  - `./src/components/plan/` - Plan components
+  - `./src/components/ui/` - Shadcn/ui components
+
+- `./src/lib` - Shared utilities
+  - `./src/lib/common/` - Shared utilities
+  - `./src/lib/map/` - Map utilities
+
 - `./src/assets` - Static internal assets
 - `./public` - Public assets
+
+### Feature Organization Rationale
+
+- **`common/`** - Code used by multiple features or core to the application
+- **`map/`** - Everything related to the interactive map and place exploration
+- **`plan/`** - Everything related to AI-powered trip planning and chat interface
+- API routes and pages remain flat for simplicity
 
 ## Important Configuration
 
