@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp, Plus, Check, Loader2 } from "lucide-react";
 import type { PlaceSuggestion } from "@/domain/models";
 
@@ -10,35 +9,22 @@ interface PlaceSuggestionItemProps {
   suggestion: PlaceSuggestion;
   isAdded: boolean;
   isValidating: boolean;
-  onAdd: (placeName: string) => void;
-  onRemove: (placeName: string) => void;
+  onAdd: (suggestionId: string) => void;
 }
 
-export default function PlaceSuggestionItem({
-  suggestion,
-  isAdded,
-  isValidating,
-  onAdd,
-  onRemove,
-}: PlaceSuggestionItemProps) {
+export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating, onAdd }: PlaceSuggestionItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-
-  // Create URL-safe ID from place name for anchor linking
-  const placeId = suggestion.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 
   const handleToggleAdd = () => {
     if (isAdded) {
       // Don't allow removing from here - user should remove from itinerary panel
       return;
     }
-    onAdd(suggestion.name);
+    onAdd(suggestion.id);
   };
 
   return (
-    <Card id={`place-${placeId}`} className="transition-shadow hover:shadow-md overflow-hidden scroll-mt-4">
+    <Card id={`place-${suggestion.id}`} className="transition-shadow hover:shadow-md overflow-hidden scroll-mt-4">
       {/* Photos Section */}
       {suggestion.photos && suggestion.photos.length > 0 && (
         <div className="relative">
@@ -69,32 +55,23 @@ export default function PlaceSuggestionItem({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            {isAdded && (
-              <Badge variant="secondary" className="text-xs">
-                <Check className="mr-1 h-3 w-3" />
-                Added
-              </Badge>
-            )}
             <Button
-              size="sm"
               variant={isAdded ? "outline" : "default"}
               onClick={handleToggleAdd}
               disabled={isValidating || isAdded}
-              title={isAdded ? "This place is already in your itinerary" : undefined}
+              title={isAdded ? "This place is already in your itinerary" : "Add to itinerary"}
+              className="gap-2 h-8"
             >
               {isValidating ? (
-                <>
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  Validating
-                </>
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : isAdded ? (
-                "Added"
+                <Check className="h-4 w-4" />
               ) : (
-                <>
-                  <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Add
-                </>
+                <Plus className="h-4 w-4" />
               )}
+              <span className="hidden md:inline text-sm">
+                {isValidating ? "Adding..." : isAdded ? "Already added" : "Add to itinerary"}
+              </span>
             </Button>
           </div>
         </div>

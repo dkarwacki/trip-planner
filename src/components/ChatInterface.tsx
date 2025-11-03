@@ -25,7 +25,6 @@ export default function ChatInterface({
   personas,
   itinerary,
   onAddPlace,
-  onRemovePlace,
   isFullScreen = false,
   onToggleFullScreen,
 }: ChatInterfaceProps) {
@@ -42,8 +41,17 @@ export default function ChatInterface({
     }
   }, [messages]);
 
-  const isPlaceInItinerary = (placeName: string): boolean => {
-    return itinerary.some((place) => place.name.toLowerCase() === placeName.toLowerCase());
+  const isSuggestionInItinerary = (suggestion: { lat?: number; lng?: number; name: string }): boolean => {
+    // If suggestion has coordinates, check by coordinates (more accurate)
+    if (suggestion.lat !== undefined && suggestion.lng !== undefined) {
+      const suggestionLat = suggestion.lat;
+      const suggestionLng = suggestion.lng;
+      return itinerary.some(
+        (place) => Math.abs(place.lat - suggestionLat) < 0.0001 && Math.abs(place.lng - suggestionLng) < 0.0001
+      );
+    }
+    // Fallback to name matching if no coordinates
+    return itinerary.some((place) => place.name.toLowerCase().includes(suggestion.name.toLowerCase()));
   };
 
   const handleSendMessage = async () => {
@@ -84,19 +92,27 @@ export default function ChatInterface({
     }
   };
 
-  const handleAddPlace = async (placeName: string) => {
-    // Check if place is already in itinerary before making API call
-    if (isPlaceInItinerary(placeName)) {
+  const handleAddPlace = async (suggestionId: string) => {
+    // Find the suggestion
+    const suggestion = messages.flatMap((m) => m.suggestedPlaces || []).find((s) => s.id === suggestionId);
+
+    if (!suggestion) {
+      console.error("Suggestion not found:", suggestionId);
       return;
     }
 
-    setValidatingPlaces((prev) => new Set(prev).add(placeName));
+    // Check if suggestion is already in itinerary
+    if (isSuggestionInItinerary(suggestion)) {
+      return;
+    }
+
+    setValidatingPlaces((prev) => new Set(prev).add(suggestionId));
 
     try {
       const response = await fetch("/api/places/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: placeName }),
+        body: JSON.stringify({ query: suggestion.name }),
       });
 
       if (!response.ok) {
@@ -113,29 +129,20 @@ export default function ChatInterface({
         plannedRestaurants: [],
       };
 
-      // Double-check after getting place data (in case name matching didn't catch it)
-      const alreadyExists = itinerary.some(
-        (p) => p.id === place.id || p.name.toLowerCase() === place.name.toLowerCase()
-      );
+      // Double-check after getting place data (in case place ID already exists)
+      const alreadyExists = itinerary.some((p) => p.id === place.id);
       if (!alreadyExists) {
         onAddPlace(place);
       }
     } catch (error) {
       console.error("Error validating place:", error);
-      alert(`Failed to add "${placeName}". Please try a different name or check if the place exists.`);
+      alert(`Failed to add "${suggestion.name}". Please try a different name or check if the place exists.`);
     } finally {
       setValidatingPlaces((prev) => {
         const next = new Set(prev);
-        next.delete(placeName);
+        next.delete(suggestionId);
         return next;
       });
-    }
-  };
-
-  const handleRemovePlace = (placeName: string) => {
-    const place = itinerary.find((p) => p.name.toLowerCase() === placeName.toLowerCase());
-    if (place) {
-      onRemovePlace(place.id);
     }
   };
 
@@ -193,7 +200,7 @@ export default function ChatInterface({
                   }`}
                 >
                   {message.role === "assistant" && message.content.includes("**") ? (
-                    <NarrativeDisplay content={message.content} />
+                    <NarrativeDisplay content={message.content} places={message.suggestedPlaces} />
                   ) : (
                     <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                   )}
@@ -211,10 +218,9 @@ export default function ChatInterface({
                       <PlaceSuggestionItem
                         key={`${message.id}-${idx}`}
                         suggestion={suggestion}
-                        isAdded={isPlaceInItinerary(suggestion.name)}
-                        isValidating={validatingPlaces.has(suggestion.name)}
+                        isAdded={isSuggestionInItinerary(suggestion)}
+                        isValidating={validatingPlaces.has(suggestion.id)}
                         onAdd={handleAddPlace}
-                        onRemove={handleRemovePlace}
                       />
                     ))}
                   </div>

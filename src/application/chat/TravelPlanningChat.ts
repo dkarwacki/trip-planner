@@ -190,13 +190,18 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
     // Parse the structured JSON response
     let suggestedPlaces: PlaceSuggestion[] = [];
     let thinking: string[] = [];
-    let assistantMessage = "Here are some great places to explore based on your interests:";
+    let assistantMessage =
+      "I'm having trouble finding specific places for your request. Could you provide more details?";
 
     if (response.content) {
       try {
         const parsed = JSON.parse(response.content);
         if (parsed.places && Array.isArray(parsed.places)) {
-          suggestedPlaces = parsed.places;
+          // Add unique IDs to each place suggestion
+          suggestedPlaces = parsed.places.map((place: Omit<PlaceSuggestion, "id">) => ({
+            ...place,
+            id: crypto.randomUUID(),
+          }));
         }
         if (parsed.thinking && Array.isArray(parsed.thinking)) {
           thinking = parsed.thinking;
@@ -207,14 +212,15 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
       }
     }
 
-    // Generate narrative response if we have suggested places
+    // Generate narrative response ONLY if we have suggested places
     if (suggestedPlaces.length > 0) {
       try {
         const narrative = yield* generateNarrative(input.message, input.personas, suggestedPlaces, thinking);
         assistantMessage = narrative;
       } catch (error) {
-        yield* Effect.logWarning("Failed to generate narrative, using default message", { error });
-        // Keep the default assistantMessage if narrative generation fails
+        yield* Effect.logWarning("Failed to generate narrative, using fallback message", { error });
+        // Fallback to a simple message if narrative generation fails
+        assistantMessage = "Here are some great places to explore based on your interests:";
       }
     }
 
