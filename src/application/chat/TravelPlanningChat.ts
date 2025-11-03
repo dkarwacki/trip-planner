@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { OpenAIClient } from "@/infrastructure/openai";
 import { GoogleMapsClient } from "@/infrastructure/google-maps";
 import type { ChatRequestInput } from "./inputs";
-import type { PlaceSuggestion } from "@/domain/models";
+import type { PlaceSuggestion, Place } from "@/domain/models";
 import { PERSONA_METADATA } from "@/domain/models";
 
 interface ChatResponse {
@@ -102,7 +102,7 @@ const generateNarrative = (userMessage: string, personas: string[], places: Plac
         },
       ],
       temperature: 0.8, // Slightly higher for more creative narrative
-      maxTokens: 2000,
+      maxTokens: 10000,
     });
 
     // Log finish reason to check if response was cut off
@@ -140,7 +140,7 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
     const response = yield* openai.chatCompletion({
       messages,
       temperature: 0.7,
-      maxTokens: 2000,
+      maxTokens: 15000,
       responseFormat: {
         type: "json_schema",
         json_schema: {
@@ -197,11 +197,7 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
       try {
         const parsed = JSON.parse(response.content);
         if (parsed.places && Array.isArray(parsed.places)) {
-          // Add unique IDs to each place suggestion
-          suggestedPlaces = parsed.places.map((place: Omit<PlaceSuggestion, "id">) => ({
-            ...place,
-            id: crypto.randomUUID(),
-          }));
+          suggestedPlaces = parsed.places;
         }
         if (parsed.thinking && Array.isArray(parsed.thinking)) {
           thinking = parsed.thinking;
@@ -230,25 +226,44 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
         suggestedPlaces,
         (place) =>
           Effect.gen(function* () {
-            try {
-              // First, use text search to find the place and get its ID
-              const searchResult = yield* googleMaps.textSearch(place.name);
+            // First, use search to find the place and get its ID
+            const searchResult = yield* googleMaps.searchPlace(place.name).pipe(
+              Effect.catchAll((error) =>
+                Effect.gen(function* () {
+                  // If we can't find the place, log warning and return null
+                  yield* Effect.logWarning(`Failed to find place "${place.name}"`, { error });
+                  return null as Place | null;
+                })
+              )
+            );
 
-              // Then fetch detailed place info with photos
-              const placeDetails = yield* googleMaps.placeDetails(searchResult.id, true);
-
-              // Add photos and coordinates to the suggestion
-              return {
-                ...place,
-                lat: placeDetails.lat,
-                lng: placeDetails.lng,
-                photos: placeDetails.photos,
-              } satisfies PlaceSuggestion;
-            } catch (error) {
-              // If we can't find the place or get photos, return the suggestion without them
-              yield* Effect.logWarning(`Failed to fetch photos for ${place.name}`, { error });
+            if (!searchResult) {
               return place;
             }
+
+            // Then fetch detailed place info with photos
+            const placeDetails = yield* googleMaps.placeDetails(searchResult.id, true).pipe(
+              Effect.catchAll((error) =>
+                Effect.gen(function* () {
+                  // If we can't get place details, log warning and return null
+                  yield* Effect.logWarning(`Failed to get details for "${place.name}"`, { error });
+                  return null as Place | null;
+                })
+              )
+            );
+
+            if (!placeDetails) {
+              return place;
+            }
+
+            // Add photos and coordinates to the suggestion
+            return {
+              ...place,
+              id: placeDetails.id,
+              lat: placeDetails.lat,
+              lng: placeDetails.lng,
+              photos: placeDetails.photos,
+            } satisfies PlaceSuggestion;
           }),
         { concurrency: 3 } // Fetch photos for up to 3 places at a time
       );

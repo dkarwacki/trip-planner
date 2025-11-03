@@ -131,7 +131,7 @@ export default function ItineraryPanel({ places, onReorder, onRemove, onExport }
       <CardContent className="border-t p-3 flex-shrink-0">
         <Button onClick={onExport} disabled={isEmpty} className="w-full">
           <Map className="mr-2 h-4 w-4" />
-          Export to Map
+          Show on Map
         </Button>
       </CardContent>
     </Card>

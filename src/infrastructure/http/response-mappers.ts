@@ -2,6 +2,7 @@ import type { ValidationError } from "./validation";
 import type {
   NoAttractionsFoundError,
   AttractionsAPIError,
+  AttractionNotFoundError,
   PlaceNotFoundError,
   PlacesAPIError,
   NoResultsError,
@@ -22,6 +23,7 @@ type AppError =
   | MissingOpenRouterModelError
   | NoAttractionsFoundError
   | AttractionsAPIError
+  | AttractionNotFoundError
   | PlaceNotFoundError
   | PlacesAPIError
   | NoResultsError
@@ -97,6 +99,18 @@ export const toHttpResponse = (error: AppError, successData?: Record<string, unk
           JSON.stringify({
             success: false,
             error: `No results found for "${error.query}"`,
+          }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+      case "AttractionNotFoundError":
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `No attraction found for "${error.query}"`,
           }),
           {
             status: 404,

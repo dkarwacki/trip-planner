@@ -41,17 +41,20 @@ export default function ChatInterface({
     }
   }, [messages]);
 
-  const isSuggestionInItinerary = (suggestion: { lat?: number; lng?: number; name: string }): boolean => {
-    // If suggestion has coordinates, check by coordinates (more accurate)
+  const isSuggestionInItinerary = (suggestion: { id: string; name: string; lat?: number; lng?: number }): boolean => {
+    // Match by coordinates if available, otherwise fallback to id
     if (suggestion.lat !== undefined && suggestion.lng !== undefined) {
       const suggestionLat = suggestion.lat;
       const suggestionLng = suggestion.lng;
-      return itinerary.some(
-        (place) => Math.abs(place.lat - suggestionLat) < 0.0001 && Math.abs(place.lng - suggestionLng) < 0.0001
-      );
+      return itinerary.some((place) => {
+        const placeLat = Number(place.lat);
+        const placeLng = Number(place.lng);
+        // Compare with small tolerance for floating point precision
+        return Math.abs(placeLat - suggestionLat) < 0.0001 && Math.abs(placeLng - suggestionLng) < 0.0001;
+      });
     }
-    // Fallback to name matching if no coordinates
-    return itinerary.some((place) => place.name.toLowerCase().includes(suggestion.name.toLowerCase()));
+    // Fallback to id matching if coordinates not available
+    return itinerary.some((place) => String(place.id) === String(suggestion.id));
   };
 
   const handleSendMessage = async () => {
@@ -130,7 +133,7 @@ export default function ChatInterface({
       };
 
       // Double-check after getting place data (in case place ID already exists)
-      const alreadyExists = itinerary.some((p) => p.id === place.id);
+      const alreadyExists = itinerary.some((p) => String(p.id) === String(place.id));
       if (!alreadyExists) {
         onAddPlace(place);
       }
@@ -214,9 +217,9 @@ export default function ChatInterface({
 
                 {message.suggestedPlaces && message.suggestedPlaces.length > 0 && (
                   <div className="mt-3 space-y-2">
-                    {message.suggestedPlaces.map((suggestion, idx) => (
+                    {message.suggestedPlaces.map((suggestion) => (
                       <PlaceSuggestionItem
-                        key={`${message.id}-${idx}`}
+                        key={suggestion.id}
                         suggestion={suggestion}
                         isAdded={isSuggestionInItinerary(suggestion)}
                         isValidating={validatingPlaces.has(suggestion.id)}

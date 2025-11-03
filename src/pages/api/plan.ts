@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
     return response;
   });
 
-  const response = await Runtime.runPromise(AppRuntime)(
+  const result = await Runtime.runPromise(AppRuntime)(
     program.pipe(
       Effect.catchAllDefect((defect) =>
         Effect.gen(function* () {
@@ -36,12 +36,23 @@ export const POST: APIRoute = async ({ request }) => {
           return yield* Effect.fail(new UnexpectedError("Internal server error", defect));
         })
       ),
-      Effect.match({
-        onFailure: (error) => toHttpResponse(error),
-        onSuccess: (data) => toHttpResponse(data as unknown as Parameters<typeof toHttpResponse>[0], data),
-      })
+      Effect.either
     )
   );
 
-  return response;
+  if (result._tag === "Left") {
+    return toHttpResponse(result.left as Parameters<typeof toHttpResponse>[0]);
+  }
+
+  // Success case - create response directly
+  return new Response(
+    JSON.stringify({
+      success: true,
+      ...result.right,
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 };

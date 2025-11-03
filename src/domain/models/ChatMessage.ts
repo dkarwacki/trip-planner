@@ -17,7 +17,7 @@ export interface ChatMessage {
 }
 
 export interface PlaceSuggestion {
-  id: string; // Unique identifier for linking narrative to cards
+  id: string;
   name: string;
   description: string;
   reasoning: string;

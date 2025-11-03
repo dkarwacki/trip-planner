@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Plus, Check, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Check, Loader2, ExternalLink } from "lucide-react";
 import type { PlaceSuggestion } from "@/domain/models";
+import PhotoLightbox from "./PhotoLightbox";
 
 interface PlaceSuggestionItemProps {
   suggestion: PlaceSuggestion;
@@ -14,6 +15,8 @@ interface PlaceSuggestionItemProps {
 
 export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating, onAdd }: PlaceSuggestionItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
   const handleToggleAdd = () => {
     if (isAdded) {
@@ -23,6 +26,16 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
     onAdd(suggestion.id);
   };
 
+  const handlePhotoClick = (index: number) => {
+    setSelectedPhotoIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const getGoogleMapsUrl = () => {
+    // Use place ID for more accurate Google Maps linking
+    return `https://www.google.com/maps/place/?q=place_id:${suggestion.id}`;
+  };
+
   return (
     <Card id={`place-${suggestion.id}`} className="transition-shadow hover:shadow-md overflow-hidden scroll-mt-4">
       {/* Photos Section */}
@@ -30,18 +43,26 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
         <div className="relative">
           <div className={`grid ${suggestion.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-0.5`}>
             {suggestion.photos.map((photo, index) => (
-              <div key={index} className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+              <button
+                key={index}
+                type="button"
+                onClick={() => handlePhotoClick(index)}
+                className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                aria-label={`View ${suggestion.name} photo ${index + 1} in full size`}
+              >
                 <img
                   src={photo.url}
-                  alt={`${suggestion.name} - Photo ${index + 1}`}
-                  className="h-full w-full object-cover"
+                  alt={`${suggestion.name} ${index + 1}`}
+                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                   loading="lazy"
                   onError={(e) => {
                     // Hide broken images
                     e.currentTarget.parentElement?.classList.add("hidden");
                   }}
                 />
-              </div>
+                {/* Hover overlay to indicate clickability */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
+              </button>
             ))}
           </div>
         </div>
@@ -55,6 +76,11 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
+            <Button variant="outline" size="icon" asChild title="Open in Google Maps" className="h-8 w-8">
+              <a href={getGoogleMapsUrl()} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </Button>
             <Button
               variant={isAdded ? "outline" : "default"}
               onClick={handleToggleAdd}
@@ -88,12 +114,20 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
               <p className="text-xs font-medium text-gray-700 mb-1">Why this place?</p>
               <p className="text-xs text-gray-600 break-words">{suggestion.reasoning}</p>
             </div>
-            <p className="text-xs text-gray-500 italic">
-              This place is selected as a starting point for discovering nearby attractions and restaurants on the map.
-            </p>
           </CollapsibleContent>
         </Collapsible>
       </CardContent>
+
+      {/* Photo Lightbox */}
+      {suggestion.photos && suggestion.photos.length > 0 && (
+        <PhotoLightbox
+          photos={suggestion.photos}
+          initialIndex={selectedPhotoIndex}
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+          placeName={suggestion.name}
+        />
+      )}
     </Card>
   );
 }

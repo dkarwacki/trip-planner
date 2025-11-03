@@ -87,7 +87,7 @@ The application serves four primary personas:
 - Place validation occurs when adding to itinerary
 - Add/remove functionality from chat interface
 - Real-time itinerary preview
-- Export to map functionality
+- Show on map functionality
 - Automatic timestamp generation for exports
 
 ### 3.6 Map Interface
@@ -260,7 +260,7 @@ The application serves four primary personas:
 - Title: Export Itinerary to Map
 - Description: As a user, I want to export my itinerary to an interactive map to discover attractions and restaurants near my selected starting point places
 - Acceptance Criteria:
-  - "Export to Map" button is available when itinerary has places
+  - "Show on Map" button is available when itinerary has places
   - Clicking creates timestamped export (e.g., "Trip Plan - 2025-11-01 14:30")
   - User is redirected to /map with imported places
   - Export transitions from selecting exploration hubs to discovering their nearby attractions and restaurants

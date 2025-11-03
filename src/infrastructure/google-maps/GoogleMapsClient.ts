@@ -56,6 +56,10 @@ export interface IGoogleMapsClient {
   readonly textSearch: (
     query: string
   ) => Effect.Effect<Attraction, AttractionNotFoundError | AttractionsAPIError | MissingGoogleMapsAPIKeyError>;
+
+  readonly searchPlace: (
+    query: string
+  ) => Effect.Effect<Place, PlaceNotFoundError | PlacesAPIError | MissingGoogleMapsAPIKeyError>;
 }
 
 export class GoogleMapsClient extends Context.Tag("GoogleMapsClient")<GoogleMapsClient, IGoogleMapsClient>() {}
@@ -527,12 +531,77 @@ export const GoogleMapsClientLive = Layer.effect(
         return attraction;
       });
 
+    const searchPlace = (
+      query: string
+    ): Effect.Effect<Place, PlaceNotFoundError | PlacesAPIError | MissingGoogleMapsAPIKeyError> =>
+      Effect.gen(function* () {
+        const apiKey = yield* config.getGoogleMapsApiKey();
+
+        const validatedQuery = yield* Effect.try({
+          try: () => validateNonEmptyString(query),
+          catch: (error) => new PlaceNotFoundError(error instanceof ZodError ? error.errors[0].message : query),
+        });
+
+        const encodedQuery = encodeURIComponent(validatedQuery);
+        const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodedQuery}&key=${apiKey}`;
+
+        const response = yield* Effect.tryPromise({
+          try: () => fetch(url),
+          catch: (error) =>
+            new PlacesAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
+        });
+
+        const json = yield* Effect.tryPromise({
+          try: () => response.json(),
+          catch: () => new PlacesAPIError("Failed to parse API response"),
+        });
+
+        const data = yield* Effect.try({
+          try: () => TextSearchResponseSchema.parse(json),
+          catch: (error) =>
+            new PlacesAPIError(
+              error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
+            ),
+        });
+
+        if (data.status === "ZERO_RESULTS") {
+          return yield* Effect.fail(new PlaceNotFoundError(query));
+        }
+
+        if (data.status !== "OK") {
+          const errorMessage = data.error_message || `Text Search API error: ${data.status}`;
+          return yield* Effect.fail(new PlacesAPIError(errorMessage));
+        }
+
+        if (data.results.length === 0) {
+          return yield* Effect.fail(new PlaceNotFoundError(query));
+        }
+
+        const result = data.results[0];
+
+        if (!result.geometry?.location) {
+          return yield* Effect.fail(new PlaceNotFoundError(query));
+        }
+
+        const place: Place = {
+          id: PlaceId(result.place_id),
+          name: result.name,
+          lat: Latitude(result.geometry.location.lat),
+          lng: Longitude(result.geometry.location.lng),
+          plannedAttractions: [],
+          plannedRestaurants: [],
+        };
+
+        return place;
+      });
+
     return {
       nearbySearch,
       geocode,
       reverseGeocode,
       placeDetails,
       textSearch,
+      searchPlace,
     };
   })
 );
