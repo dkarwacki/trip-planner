@@ -24,7 +24,7 @@ import { HIGH_SCORE_THRESHOLD } from "@/domain/map/scoring";
 import AttractionsPanel from "@/components/map/AttractionsPanel";
 import PlaceAutocomplete from "@/components/map/PlaceAutocomplete";
 import PlaceListItem from "@/components/map/PlaceListItem";
-import AddToPlanDialog from "@/components/common/AddToPlanDialog";
+import AttractionDetailsDialog from "@/components/map/AttractionDetailsDialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, List, Map as MapIcon, Compass, CheckSquare } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -124,6 +124,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingAttraction, setPendingAttraction] = useState<Attraction | null>(null);
   const [pendingType, setPendingType] = useState<"attraction" | "restaurant" | null>(null);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
 
   // Search nearby button state
   const [initialSearchCenter, setInitialSearchCenter] = useState<{
@@ -558,11 +559,48 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
     });
   }, []);
 
-  const handleOpenAddDialog = useCallback((attraction: Attraction, type: "attraction" | "restaurant") => {
-    setPendingAttraction(attraction);
-    setPendingType(type);
-    setDialogOpen(true);
-  }, []);
+  const handleOpenAddDialog = useCallback(
+    async (attractionId: string, type: "attraction" | "restaurant") => {
+      // Find the attraction in current data
+      const allAttractions = type === "attraction" ? attractions : restaurants;
+      const attractionData = allAttractions.find((a) => a.attraction.id === attractionId);
+
+      if (!attractionData) {
+        console.error("Attraction not found:", attractionId);
+        return;
+      }
+
+      // Set initial data and open dialog
+      setPendingAttraction(attractionData.attraction);
+      setPendingType(type);
+      setDialogOpen(true);
+
+      // Fetch photos in the background
+      setIsLoadingPhotos(true);
+      try {
+        const program = getPlaceDetails(attractionId, true);
+        const result = await Effect.runPromise(program);
+
+        // Check if the result is an Attraction (has photos) or a Place
+        // The API returns a Place, but we need to merge it with attraction data
+        if (result.photos && result.photos.length > 0) {
+          setPendingAttraction((prev) => {
+            if (!prev || prev.id !== attractionId) return prev;
+            return {
+              ...prev,
+              photos: result.photos,
+            };
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch photos:", error);
+        // Continue without photos - dialog is already open with basic info
+      } finally {
+        setIsLoadingPhotos(false);
+      }
+    },
+    [attractions, restaurants]
+  );
 
   const handleConfirmAdd = useCallback(() => {
     if (!pendingAttraction || !pendingType || !selectedPlaceId) {
@@ -781,6 +819,11 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       });
 
       marker.addListener("click", () => {
+        // Open details dialog
+        const attractionType = activeTab === "attractions" ? "attraction" : "restaurant";
+        handleOpenAddDialog(attraction.id, attractionType);
+
+        // Also highlight and scroll to it
         setScrollToAttractionId(attraction.id);
         setHighlightedAttractionId(attraction.id);
 
@@ -808,7 +851,18 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       markersMap.forEach(({ marker }) => (marker.map = null));
       markersMap.clear();
     };
-  }, [map, markerLibrary, selectedPlace, attractions, restaurants, activeTab, mapId, isMobile, showHighScoresOnly]);
+  }, [
+    map,
+    markerLibrary,
+    selectedPlace,
+    attractions,
+    restaurants,
+    activeTab,
+    mapId,
+    isMobile,
+    showHighScoresOnly,
+    handleOpenAddDialog,
+  ]);
 
   useEffect(() => {
     if (!attractionMarkersRef.current) return;
@@ -1082,9 +1136,10 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
             mapId={mapId}
           />
 
-          <AddToPlanDialog
+          <AttractionDetailsDialog
             attraction={pendingAttraction}
             isOpen={dialogOpen}
+            isLoadingPhotos={isLoadingPhotos}
             onConfirm={handleConfirmAdd}
             onCancel={handleCancelAdd}
             type={pendingType || "attraction"}
@@ -1181,14 +1236,16 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
                   scrollToAttractionId={scrollToAttractionId}
                   onScrollComplete={handleScrollComplete}
                   highlightedAttractionId={highlightedAttractionId}
-                  onAttractionClick={setHighlightedAttractionId}
+                  onAttractionClick={(attractionId) => {
+                    setHighlightedAttractionId(attractionId);
+                    handleOpenAddDialog(attractionId, activeTab === "attractions" ? "attraction" : "restaurant");
+                  }}
                   plannedAttractionIds={
                     new Set(places.find((p) => p.id === selectedPlaceId)?.plannedAttractions.map((a) => a.id) || [])
                   }
                   plannedRestaurantIds={
                     new Set(places.find((p) => p.id === selectedPlaceId)?.plannedRestaurants.map((r) => r.id) || [])
                   }
-                  onAddToPlan={handleOpenAddDialog}
                   place={selectedPlace}
                   onPlaceUpdate={(updatedPlace) => handlePlaceUpdate(selectedPlace.id, updatedPlace)}
                   onAttractionAccepted={handleAttractionAccepted}
@@ -1296,14 +1353,16 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
                 scrollToAttractionId={scrollToAttractionId}
                 onScrollComplete={handleScrollComplete}
                 highlightedAttractionId={highlightedAttractionId}
-                onAttractionClick={setHighlightedAttractionId}
+                onAttractionClick={(attractionId) => {
+                  setHighlightedAttractionId(attractionId);
+                  handleOpenAddDialog(attractionId, activeTab === "attractions" ? "attraction" : "restaurant");
+                }}
                 plannedAttractionIds={
                   new Set(places.find((p) => p.id === selectedPlaceId)?.plannedAttractions.map((a) => a.id) || [])
                 }
                 plannedRestaurantIds={
                   new Set(places.find((p) => p.id === selectedPlaceId)?.plannedRestaurants.map((r) => r.id) || [])
                 }
-                onAddToPlan={handleOpenAddDialog}
                 place={selectedPlace}
                 onPlaceUpdate={(updatedPlace) => handlePlaceUpdate(selectedPlace.id, updatedPlace)}
                 onAttractionAccepted={handleAttractionAccepted}

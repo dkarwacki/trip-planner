@@ -5,6 +5,6 @@ import type { GetPlaceDetailsInput } from "./inputs";
 export const getPlaceDetails = (input: GetPlaceDetailsInput) =>
   Effect.gen(function* () {
     const googleMaps = yield* GoogleMapsClient;
-    const place = yield* googleMaps.placeDetails(input.placeId);
+    const place = yield* googleMaps.placeDetails(input.placeId, input.includePhotos ?? false);
     return place;
   });

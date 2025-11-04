@@ -91,7 +91,9 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 - View ratings, reviews, price levels, open/closed status
 - See quality scores with detailed breakdowns on hover
 - Interactive map markers that sync with list items
-- Click items or markers to highlight and navigate
+- Click list items or map markers to open a rich details dialog
+- Preview up to two top-rated photos before adding items to a plan
+- Add items directly from the details dialog without leaving context
 
 **Technical details:**
 
@@ -104,6 +106,8 @@ Get intelligent recommendations tailored to your travel plan using conversationa
     - Medium confidence: 20-100 reviews  
     - Low confidence: <20 reviews
 - Results cached per place selection, sorted by score, duplicates filtered
+- Details dialog fetches Google Place photos on demand (effect runtime) and reuses them across openings
+- Dialog exposes `Add to Plan` as the primary action
 - Marker hover/click synchronization with list items
 - Google Places API (Nearby Search + Place Details)
 

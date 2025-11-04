@@ -57,7 +57,10 @@ export const searchPlace = (query: string): Effect.Effect<Place, PlaceNotFoundEr
     return data.place;
   });
 
-export const getPlaceDetails = (placeId: string): Effect.Effect<Place, PlaceNotFoundError | PlacesAPIError> =>
+export const getPlaceDetails = (
+  placeId: string,
+  includePhotos = false
+): Effect.Effect<Place, PlaceNotFoundError | PlacesAPIError> =>
   Effect.gen(function* () {
     if (!placeId.trim()) {
       return yield* Effect.fail(new PlaceNotFoundError(placeId));
@@ -70,7 +73,7 @@ export const getPlaceDetails = (placeId: string): Effect.Effect<Place, PlaceNotF
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ placeId: placeId.trim() }),
+          body: JSON.stringify({ placeId: placeId.trim(), includePhotos }),
         }),
       catch: (error) =>
         new PlacesAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),

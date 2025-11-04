@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { X, Star, MapPin, ExternalLink, Check, Plus, Filter } from "lucide-react";
+import { X, Star, MapPin, ExternalLink, Check, Filter } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,6 @@ interface AttractionsPanelProps {
   onAttractionClick?: (placeId: string) => void;
   plannedAttractionIds: Set<string>;
   plannedRestaurantIds: Set<string>;
-  onAddToPlan: (attraction: Attraction, type: "attraction" | "restaurant") => void;
   place: Place;
   onPlaceUpdate: (updatedPlace: Place) => void;
   onAttractionAccepted?: (placeId: string, attraction: Attraction, type: "attraction" | "restaurant") => void;
@@ -85,7 +84,6 @@ interface ContentListProps {
   highlightedAttractionId?: string | null;
   onAttractionClick?: (placeId: string) => void;
   plannedIds: Set<string>;
-  onAddToPlan: (attraction: Attraction, type: "attraction" | "restaurant") => void;
   showHighScoresOnly: boolean;
   onFilteredCountChange?: (filtered: number, total: number) => void;
 }
@@ -102,7 +100,6 @@ const ContentList = ({
   highlightedAttractionId,
   onAttractionClick,
   plannedIds,
-  onAddToPlan,
   showHighScoresOnly,
   onFilteredCountChange,
 }: ContentListProps) => {
@@ -210,7 +207,7 @@ const ContentList = ({
                     {attraction.name}
                   </h3>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {isPlanned ? (
+                    {isPlanned && (
                       <div
                         className="p-1 rounded-md bg-primary/10 text-primary"
                         title="Added to plan"
@@ -218,18 +215,6 @@ const ContentList = ({
                       >
                         <Check className="h-4 w-4" />
                       </div>
-                    ) : (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddToPlan(attraction, type === "attractions" ? "attraction" : "restaurant");
-                        }}
-                        className="p-1 rounded-md hover:bg-primary hover:text-primary-foreground text-muted-foreground transition-colors"
-                        aria-label={`Add ${attraction.name} to plan`}
-                        title="Add to plan"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
                     )}
                     <a
                       href={`https://www.google.com/maps/place/?q=place_id:${attraction.id}`}
@@ -309,7 +294,6 @@ export default function AttractionsPanel({
   onAttractionClick,
   plannedAttractionIds,
   plannedRestaurantIds,
-  onAddToPlan,
   place,
   onPlaceUpdate,
   onAttractionAccepted,
@@ -423,7 +407,6 @@ export default function AttractionsPanel({
                 highlightedAttractionId={highlightedAttractionId}
                 onAttractionClick={onAttractionClick}
                 plannedIds={plannedAttractionIds}
-                onAddToPlan={onAddToPlan}
                 showHighScoresOnly={showHighScoresOnly}
                 onFilteredCountChange={handleAttractionsFilteredCountChange}
               />
@@ -461,7 +444,6 @@ export default function AttractionsPanel({
                 highlightedAttractionId={highlightedAttractionId}
                 onAttractionClick={onAttractionClick}
                 plannedIds={plannedRestaurantIds}
-                onAddToPlan={onAddToPlan}
                 showHighScoresOnly={showHighScoresOnly}
                 onFilteredCountChange={handleRestaurantsFilteredCountChange}
               />
