@@ -25,6 +25,7 @@ import AttractionsPanel from "@/components/map/AttractionsPanel";
 import PlaceAutocomplete from "@/components/map/PlaceAutocomplete";
 import PlaceListItem from "@/components/map/PlaceListItem";
 import AttractionDetailsDialog from "@/components/map/AttractionDetailsDialog";
+import { MarkerTooltip } from "@/components/map/MarkerTooltip";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, List, Map as MapIcon, Compass, CheckSquare } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -115,6 +116,13 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   const [scrollToAttractionId, setScrollToAttractionId] = useState<string | null>(null);
   const [highlightedAttractionId, setHighlightedAttractionId] = useState<string | null>(null);
   const [showHighScoresOnly, setShowHighScoresOnly] = useState(false);
+
+  // Tooltip state for map markers
+  const [hoveredAttraction, setHoveredAttraction] = useState<{
+    attraction: Attraction;
+    type: "attraction" | "restaurant";
+  } | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
 
   const [clickedLocation, setClickedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showAddPlacePopover, setShowAddPlacePopover] = useState(false);
@@ -838,10 +846,51 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
 
       pinElement.addEventListener("mouseenter", () => {
         setHoveredAttractionId(attraction.id);
+
+        // Calculate tooltip position from marker position
+        if (map) {
+          const projection = map.getProjection();
+          if (projection) {
+            const position = new google.maps.LatLng(attraction.location.lat, attraction.location.lng);
+            const point = projection.fromLatLngToPoint(position);
+
+            if (point) {
+              const scale = Math.pow(2, map.getZoom() || 0);
+              const worldPoint = new google.maps.Point(point.x * scale, point.y * scale);
+
+              const mapContainer = map.getDiv();
+              const bounds = mapContainer.getBoundingClientRect();
+              const mapCenter = map.getCenter();
+
+              if (mapCenter) {
+                const centerPoint = projection.fromLatLngToPoint(mapCenter);
+                if (centerPoint) {
+                  const centerWorldPoint = new google.maps.Point(centerPoint.x * scale, centerPoint.y * scale);
+
+                  const pixelOffset = new google.maps.Point(
+                    worldPoint.x - centerWorldPoint.x,
+                    worldPoint.y - centerWorldPoint.y
+                  );
+
+                  const x = bounds.width / 2 + pixelOffset.x;
+                  const y = bounds.height / 2 + pixelOffset.y;
+
+                  setTooltipPosition({ x, y });
+                }
+              }
+            }
+          }
+        }
+
+        // Set full attraction data for tooltip
+        const attractionType = activeTab === "attractions" ? "attraction" : "restaurant";
+        setHoveredAttraction({ attraction, type: attractionType });
       });
 
       pinElement.addEventListener("mouseleave", () => {
         setHoveredAttractionId(null);
+        setHoveredAttraction(null);
+        setTooltipPosition(null);
       });
 
       markersMap.set(attraction.id, { marker, element: pinElement });
@@ -969,6 +1018,26 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
 
     return () => {
       google.maps.event.removeListener(listener);
+    };
+  }, [map]);
+
+  // Hide tooltip when map is being dragged or zoomed
+  useEffect(() => {
+    if (!map) return;
+
+    const dragStartListener = map.addListener("dragstart", () => {
+      setHoveredAttraction(null);
+      setTooltipPosition(null);
+    });
+
+    const zoomChangedListener = map.addListener("zoom_changed", () => {
+      setHoveredAttraction(null);
+      setTooltipPosition(null);
+    });
+
+    return () => {
+      google.maps.event.removeListener(dragStartListener);
+      google.maps.event.removeListener(zoomChangedListener);
     };
   }, [map]);
 
@@ -1135,6 +1204,15 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
             disableDefaultUI={false}
             mapId={mapId}
           />
+
+          {/* Marker Tooltip - Only show on desktop (hover not available on mobile) */}
+          {!isMobile && hoveredAttraction && tooltipPosition && (
+            <MarkerTooltip
+              attraction={hoveredAttraction.attraction}
+              position={tooltipPosition}
+              type={hoveredAttraction.type}
+            />
+          )}
 
           <AttractionDetailsDialog
             attraction={pendingAttraction}

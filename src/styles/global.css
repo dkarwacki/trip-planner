@@ -142,3 +142,15 @@
     min-width: 44px;
   }
 }
+
+/* Smooth tooltip animation */
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
