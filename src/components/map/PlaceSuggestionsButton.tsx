@@ -10,6 +10,7 @@ import type { Place } from "@/domain/common/models";
 import type { Attraction } from "@/domain/map/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import type { AgentResponse } from "@/application/map/attractions";
+import PhotoLightbox from "./PhotoLightbox";
 
 interface ConversationMessage {
   role: "user" | "assistant" | "system";
@@ -55,6 +56,12 @@ export default function PlaceSuggestionsButton({
   const [localPlannedRestaurants, setLocalPlannedRestaurants] = useState<Attraction[]>(place.plannedRestaurants);
   const userMessageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const [scrollToGroupIndex, setScrollToGroupIndex] = useState<number | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [selectedPhotos, setSelectedPhotos] = useState<
+    { url: string; width: number; height: number; attributions: string[] }[]
+  >([]);
+  const [selectedPlaceName, setSelectedPlaceName] = useState("");
 
   // Sync local state with place prop changes (from parent updates)
   useEffect(() => {
@@ -500,6 +507,45 @@ export default function PlaceSuggestionsButton({
 
                                       {!isAccepted && (
                                         <>
+                                          {suggestion.photos && suggestion.photos.length > 0 && (
+                                            <div className="mb-2">
+                                              <div
+                                                className={`grid ${
+                                                  suggestion.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"
+                                                } gap-0.5 rounded overflow-hidden`}
+                                              >
+                                                {suggestion.photos.map((photo, photoIndex) => (
+                                                  <button
+                                                    key={photoIndex}
+                                                    type="button"
+                                                    onClick={() => {
+                                                      setSelectedPhotos(suggestion.photos || []);
+                                                      setSelectedPhotoIndex(photoIndex);
+                                                      setSelectedPlaceName(
+                                                        suggestion.attractionData?.name ||
+                                                          suggestion.attractionName ||
+                                                          ""
+                                                      );
+                                                      setLightboxOpen(true);
+                                                    }}
+                                                    className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                                    aria-label={`View ${suggestion.attractionData?.name || suggestion.attractionName} photo ${photoIndex + 1} in full size`}
+                                                  >
+                                                    <img
+                                                      src={photo.url}
+                                                      alt={`${suggestion.attractionData?.name || suggestion.attractionName} ${photoIndex + 1}`}
+                                                      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                                                      loading="lazy"
+                                                      onError={(e) => {
+                                                        e.currentTarget.parentElement?.classList.add("hidden");
+                                                      }}
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
+                                                  </button>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
                                           <p className="text-sm">{suggestion.reasoning}</p>
                                           {suggestion.attractionData && (
                                             <div className="bg-muted/50 rounded p-3 mt-2 text-sm">
@@ -621,6 +667,15 @@ export default function PlaceSuggestionsButton({
             </div>
           </div>
         </DialogContent>
+        {selectedPhotos.length > 0 && (
+          <PhotoLightbox
+            photos={selectedPhotos}
+            initialIndex={selectedPhotoIndex}
+            isOpen={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+            placeName={selectedPlaceName}
+          />
+        )}
       </Dialog>
     </div>
   );

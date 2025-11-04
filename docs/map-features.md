@@ -31,6 +31,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
   - **Must-see**: Essential, iconic attractions
   - **Highly recommended**: Great options if you have time
   - **Hidden gem**: Lesser-known authentic local experiences
+- **Photo previews**: See up to two high-rated images for each suggested place with lightbox viewing
 
 **Technical details:**
 
@@ -41,6 +42,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 - Accepted suggestions are added to place-specific itineraries
 - AI required to suggest: 5 attractions (≥1 hidden gem) + 2 restaurants max
 - Uses current map center for location-aware suggestions
+- Pulls Google Places photo metadata directly from Text Search results and surfaces top 2 photos per suggestion
 
 ### 2. Interactive Map
 

@@ -2,10 +2,13 @@ import { z } from "zod";
 import type { AgentResponse, Suggestion } from "@/domain/plan/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 
-/**
- * Schema for validating and transforming suggestion data from AI responses.
- * Transforms raw JSON data (strings, numbers) into branded types (PlaceId, Latitude, Longitude).
- */
+const PlacePhotoSchema = z.object({
+  url: z.string(),
+  width: z.number(),
+  height: z.number(),
+  attributions: z.array(z.string()).default([]),
+});
+
 const SuggestionSchema = z
   .object({
     type: z.enum(["add_attraction", "add_restaurant", "general_tip"]),
@@ -26,11 +29,12 @@ const SuggestionSchema = z
           lat: z.number(),
           lng: z.number(),
         }),
+        photos: z.array(PlacePhotoSchema).optional(),
       })
       .optional(),
+    photos: z.array(PlacePhotoSchema).optional(),
   })
   .transform((data): Suggestion => {
-    // Transform raw data to branded types
     if (data.attractionData) {
       return {
         ...data,

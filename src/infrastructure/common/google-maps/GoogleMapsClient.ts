@@ -55,7 +55,8 @@ export interface IGoogleMapsClient {
   ) => Effect.Effect<Place, PlaceNotFoundError | PlacesAPIError | MissingGoogleMapsAPIKeyError>;
 
   readonly textSearch: (
-    query: string
+    query: string,
+    includePhotos?: boolean
   ) => Effect.Effect<Attraction, AttractionNotFoundError | AttractionsAPIError | MissingGoogleMapsAPIKeyError>;
 
   readonly searchPlace: (
@@ -466,7 +467,8 @@ export const GoogleMapsClientLive = Layer.effect(
       });
 
     const textSearch = (
-      query: string
+      query: string,
+      includePhotos = false
     ): Effect.Effect<Attraction, AttractionNotFoundError | AttractionsAPIError | MissingGoogleMapsAPIKeyError> =>
       Effect.gen(function* () {
         const apiKey = yield* config.getGoogleMapsApiKey();
@@ -528,6 +530,19 @@ export const GoogleMapsClientLive = Layer.effect(
             lng: Longitude(result.geometry.location.lng),
           },
         };
+
+        if (includePhotos && result.photos && result.photos.length > 0) {
+          attraction.photos = result.photos.slice(0, 2).map(
+            (photo): PlacePhoto => ({
+              url: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=${encodeURIComponent(
+                photo.photo_reference
+              )}&key=${apiKey}`,
+              width: photo.width,
+              height: photo.height,
+              attributions: photo.html_attributions || [],
+            })
+          );
+        }
 
         return attraction;
       });

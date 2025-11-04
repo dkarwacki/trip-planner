@@ -1,5 +1,10 @@
 import { Effect, Either, Option, Array } from "effect";
-import { OpenAIClient, type ToolCall, type ChatCompletionResponse, type IOpenAIClient } from "@/infrastructure/common/openai";
+import {
+  OpenAIClient,
+  type ToolCall,
+  type ChatCompletionResponse,
+  type IOpenAIClient,
+} from "@/infrastructure/common/openai";
 import { getTopAttractions, getTopRestaurants } from "@/application/map/attractions";
 import { getPlaceDetails } from "@/application/map/places";
 import { GoogleMapsClient } from "@/infrastructure/common/google-maps";
@@ -311,9 +316,6 @@ const handleToolCallIteration = (
     });
   });
 
-/**
- * Enriches suggestions with full attraction data from Google Maps
- */
 const enrichSuggestionsWithAttractionData = (
   validated: AgentResponse
 ): Effect.Effect<Suggestion[], never, GoogleMapsClient> =>
@@ -323,21 +325,24 @@ const enrichSuggestionsWithAttractionData = (
     const suggestionOptions = yield* Effect.all(
       validated.suggestions.map((suggestion) =>
         Effect.gen(function* () {
-          // General tips don't need attraction data
           if (suggestion.type === "general_tip") {
             return Option.some(suggestion);
           }
 
           if (suggestion.attractionName) {
-            const attraction = yield* Effect.either(googleMaps.textSearch(suggestion.attractionName));
+            const attraction = yield* googleMaps.textSearch(suggestion.attractionName, true).pipe(Effect.either);
 
             return Either.match(attraction, {
-              onLeft: () => Option.none(), // Filter out failed lookups
-              onRight: (attractionData) => Option.some({ ...suggestion, attractionData }),
+              onLeft: () => Option.none(),
+              onRight: (attractionData) =>
+                Option.some({
+                  ...suggestion,
+                  attractionData,
+                  photos: attractionData.photos,
+                }),
             });
           }
 
-          // Filter out attractions/restaurants without names
           return Option.none();
         })
       ),

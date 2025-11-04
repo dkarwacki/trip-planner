@@ -1,5 +1,6 @@
 import { Brand } from "effect";
 import type { Attraction } from "@/domain/map/models";
+import type { PlacePhoto } from "@/domain/common/models";
 
 // Branded types for OpenRouter/AI agent
 export type OpenRouterApiKey = string & Brand.Brand<"OpenRouterApiKey">;
@@ -24,7 +25,8 @@ export interface Suggestion {
   reasoning: string;
   attractionName?: string;
   attractionData?: Attraction;
-  priority?: SuggestionPriority; // Required for add_attraction/add_restaurant, not needed for general_tip
+  priority?: SuggestionPriority;
+  photos?: PlacePhoto[];
 }
 
 export interface AgentResponse {

@@ -1,4 +1,4 @@
-import type { PlaceId, Latitude, Longitude } from "@/domain/common/models";
+import type { PlaceId, Latitude, Longitude, PlacePhoto } from "@/domain/common/models";
 
 export interface Attraction {
   id: PlaceId;
@@ -10,4 +10,5 @@ export interface Attraction {
   priceLevel?: number;
   openNow?: boolean;
   location: { lat: Latitude; lng: Longitude };
+  photos?: PlacePhoto[];
 }

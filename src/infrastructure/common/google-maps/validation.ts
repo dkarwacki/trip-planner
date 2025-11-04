@@ -45,6 +45,13 @@ const OpeningHoursSchema = z
   })
   .optional();
 
+const PhotoSchema = z.object({
+  photo_reference: z.string(),
+  width: z.number(),
+  height: z.number(),
+  html_attributions: z.array(z.string()).default([]),
+});
+
 export const PlaceResultSchema = z.object({
   place_id: z.string(),
   name: z.string(),
@@ -55,6 +62,7 @@ export const PlaceResultSchema = z.object({
   price_level: z.number().int().min(0).max(4).optional(),
   opening_hours: OpeningHoursSchema,
   geometry: GeometrySchema.optional(),
+  photos: z.array(PhotoSchema).optional(),
 });
 
 export const NearbySearchResponseSchema = z.object({
@@ -73,13 +81,6 @@ export const GeocodeResponseSchema = z.object({
   status: z.string(),
   results: z.array(GeocodeResultSchema).default([]),
   error_message: z.string().optional(),
-});
-
-const PhotoSchema = z.object({
-  photo_reference: z.string(),
-  width: z.number(),
-  height: z.number(),
-  html_attributions: z.array(z.string()).default([]),
 });
 
 const PlaceDetailsResultSchema = z.object({
