@@ -4,10 +4,20 @@ import type {
   ChatCompletionMessageParam,
   ChatCompletionCreateParamsNonStreaming,
   ChatCompletionTool,
+  ChatCompletionMessage,
 } from "openai/resources/chat/completions";
 import { ConfigService } from "@/infrastructure/common/config";
 import { AgentError, ModelResponseError } from "@/domain/common/errors";
 import { ToolName, ToolCallId } from "@/domain/plan/models";
+
+// Extended types for reasoning models
+interface ReasoningParams {
+  reasoning_effort?: "low" | "medium" | "high";
+}
+
+interface ReasoningMessage extends ChatCompletionMessage {
+  reasoning_content?: string;
+}
 
 export interface ChatCompletionRequest {
   messages: ChatCompletionMessageParam[];
@@ -24,6 +34,7 @@ export interface ChatCompletionRequest {
         };
       };
   tools?: ChatCompletionTool[];
+  reasoningEffort?: "low" | "medium" | "high"; // For reasoning models like Grok
 }
 
 export interface ToolCall {
@@ -37,6 +48,7 @@ export interface ChatCompletionResponse {
   content: string | null;
   toolCalls?: ToolCall[];
   finishReason: string | null;
+  reasoning?: string;
 }
 
 export interface IOpenAIClient {
@@ -67,7 +79,7 @@ export const OpenAIClientLive = Layer.effect(
     return {
       chatCompletion: (request: ChatCompletionRequest) =>
         Effect.gen(function* () {
-          const params: ChatCompletionCreateParamsNonStreaming = {
+          const params: ChatCompletionCreateParamsNonStreaming & ReasoningParams = {
             model,
             messages: request.messages,
             temperature: request.temperature ?? 0.7,
@@ -90,6 +102,10 @@ export const OpenAIClientLive = Layer.effect(
             } else {
               params.response_format = request.responseFormat;
             }
+          }
+
+          if (request.reasoningEffort) {
+            params.reasoning_effort = request.reasoningEffort;
           }
 
           yield* Effect.logDebug("Calling OpenRouter API", {
@@ -124,7 +140,7 @@ export const OpenAIClientLive = Layer.effect(
             return yield* Effect.fail(new ModelResponseError("No response choice returned from model"));
           }
 
-          const message = choice.message;
+          const message = choice.message as ReasoningMessage;
 
           // Extract tool calls if present with branded types
           const toolCalls = message.tool_calls
@@ -135,8 +151,12 @@ export const OpenAIClientLive = Layer.effect(
               arguments: call.function.arguments,
             }));
 
+          // Extract reasoning content if present (for reasoning models)
+          const reasoning = message.reasoning_content;
+
           yield* Effect.logDebug("OpenRouter response received", {
             hasContent: !!message.content,
+            hasReasoning: !!reasoning,
             toolCallsCount: toolCalls?.length ?? 0,
             finishReason: choice.finish_reason,
           });
@@ -146,6 +166,7 @@ export const OpenAIClientLive = Layer.effect(
             toolCalls,
             finishReason: choice.finish_reason,
             usage: completion.usage,
+            reasoning,
           };
         }),
     };

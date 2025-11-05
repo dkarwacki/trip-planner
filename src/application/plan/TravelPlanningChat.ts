@@ -150,7 +150,6 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
       { role: "user" as const, content: input.message },
     ];
 
-    // Call OpenAI with JSON object mode (more widely supported than strict json_schema)
     const response = yield* openai.chatCompletion({
       messages,
       temperature: 0.7,
@@ -158,7 +157,13 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
       responseFormat: {
         type: "json_object",
       },
+      reasoningEffort: "high",
     });
+
+    // Log reasoning if provided by the model
+    if (response.reasoning) {
+      yield* Effect.logInfo("Model reasoning", { reasoning: response.reasoning });
+    }
 
     // Parse the structured JSON response
     let suggestedPlaces: PlaceSuggestion[] = [];
