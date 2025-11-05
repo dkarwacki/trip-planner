@@ -3,8 +3,8 @@ import type { PlaceId, Latitude, Longitude, PlacePhoto } from "@/domain/common/m
 export interface Attraction {
   id: PlaceId;
   name: string;
-  rating: number;
-  userRatingsTotal: number;
+  rating?: number; // Optional for geographic locations (towns, cities)
+  userRatingsTotal?: number; // Optional for geographic locations (towns, cities)
   types: string[];
   vicinity: string;
   priceLevel?: number;

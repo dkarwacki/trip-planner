@@ -23,7 +23,7 @@ export const AttractionsCacheLayer = Layer.effect(
     const cache: Cache.Cache<CacheKey, Attraction[], NoAttractionsFoundError | AttractionsAPIError> = yield* Cache.make(
       {
         capacity: 100,
-        timeToLive: Duration.minutes(5),
+        timeToLive: Duration.minutes(30),
         lookup: (key: CacheKey) =>
           Effect.gen(function* () {
             const result = yield* googleMaps.nearbySearch(key.lat, key.lng, key.radius, ATTRACTION_TYPES);

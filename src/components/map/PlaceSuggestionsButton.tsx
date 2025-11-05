@@ -10,6 +10,7 @@ import type { Place } from "@/domain/common/models";
 import type { Attraction } from "@/domain/map/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import type { AgentResponse } from "@/application/map/attractions";
+import PhotoImage from "@/components/common/PhotoImage";
 import PhotoLightbox from "./PhotoLightbox";
 
 interface ConversationMessage {
@@ -531,14 +532,11 @@ export default function PlaceSuggestionsButton({
                                                     className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                                     aria-label={`View ${suggestion.attractionData?.name || suggestion.attractionName} photo ${photoIndex + 1} in full size`}
                                                   >
-                                                    <img
-                                                      src={photo.url}
+                                                    <PhotoImage
+                                                      photoReference={photo.photoReference}
                                                       alt={`${suggestion.attractionData?.name || suggestion.attractionName} ${photoIndex + 1}`}
+                                                      maxWidth={800}
                                                       className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                                                      loading="lazy"
-                                                      onError={(e) => {
-                                                        e.currentTarget.parentElement?.classList.add("hidden");
-                                                      }}
                                                     />
                                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
                                                   </button>

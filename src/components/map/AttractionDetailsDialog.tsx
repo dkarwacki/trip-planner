@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Attraction } from "@/domain/map/models";
+import PhotoImage from "@/components/common/PhotoImage";
 import PhotoLightbox from "./PhotoLightbox";
 
 interface AttractionDetailsDialogProps {
@@ -92,14 +93,11 @@ export default function AttractionDetailsDialog({
                       className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary"
                       aria-label={`View ${attraction.name} photo ${index + 1} in full size`}
                     >
-                      <img
-                        src={photo.url}
+                      <PhotoImage
+                        photoReference={photo.photoReference}
                         alt={`${attraction.name} ${index + 1}`}
+                        maxWidth={800}
                         className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                        loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.parentElement?.classList.add("hidden");
-                        }}
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
                     </button>

@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, Plus, Check, Loader2, ExternalLink } from "lucide-react";
 import type { PlaceSuggestion } from "@/domain/plan/models";
+import PhotoImage from "@/components/common/PhotoImage";
 import PhotoLightbox from "./PhotoLightbox";
 
 interface PlaceSuggestionItemProps {
@@ -50,15 +51,11 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
                 className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 aria-label={`View ${suggestion.name} photo ${index + 1} in full size`}
               >
-                <img
-                  src={photo.url}
+                <PhotoImage
+                  photoReference={photo.photoReference}
                   alt={`${suggestion.name} ${index + 1}`}
+                  maxWidth={800}
                   className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                  loading="lazy"
-                  onError={(e) => {
-                    // Hide broken images
-                    e.currentTarget.parentElement?.classList.add("hidden");
-                  }}
                 />
                 {/* Hover overlay to indicate clickability */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />

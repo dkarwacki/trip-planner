@@ -20,11 +20,29 @@ const validateRequest = (body: unknown) =>
   });
 
 export const POST: APIRoute = async ({ request }) => {
-  const body = await request.json();
+  console.log("[API /api/attractions] POST request received");
+
+  let body;
+  try {
+    body = await request.json();
+    console.log("[API /api/attractions] Request body:", JSON.stringify(body));
+  } catch (error) {
+    console.error("[API /api/attractions] Failed to parse JSON body:", error);
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   const program = Effect.gen(function* () {
+    console.log("[API /api/attractions] Starting validation...");
     const input = yield* validateRequest(body);
+    console.log("[API /api/attractions] Validation successful:", JSON.stringify(input));
+
+    console.log("[API /api/attractions] Fetching attractions...");
     const attractions = yield* getTopAttractions(input);
+    console.log(`[API /api/attractions] Found ${attractions.length} attractions`);
+
     return { attractions };
   });
 
@@ -32,16 +50,24 @@ export const POST: APIRoute = async ({ request }) => {
     program.pipe(
       Effect.catchAllDefect((defect) =>
         Effect.gen(function* () {
+          console.error("[API /api/attractions] Defect caught:", defect);
           yield* Effect.logError("Unexpected error in /api/attractions", { defect });
           return yield* Effect.fail(new UnexpectedError("Internal server error", defect));
         })
       ),
       Effect.match({
-        onFailure: (error) => toHttpResponse(error),
-        onSuccess: (data) => toHttpResponse(data as unknown as Parameters<typeof toHttpResponse>[0], data),
+        onFailure: (error) => {
+          console.error("[API /api/attractions] Request failed:", error);
+          return toHttpResponse(error);
+        },
+        onSuccess: (data) => {
+          console.log("[API /api/attractions] Request successful");
+          return toHttpResponse(data as unknown as Parameters<typeof toHttpResponse>[0], data);
+        },
       })
     )
   );
 
+  console.log(`[API /api/attractions] Returning response with status ${response.status}`);
   return response;
 };

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import PhotoImage from "@/components/common/PhotoImage";
 import type { PlacePhoto } from "@/domain/common/models";
 
 interface PhotoLightboxProps {
@@ -60,9 +61,10 @@ export default function PhotoLightbox({ photos, initialIndex, isOpen, onClose, p
 
           {/* Image */}
           <div className="relative w-full h-[90vh] flex items-center justify-center">
-            <img
-              src={photos[currentIndex].url}
+            <PhotoImage
+              photoReference={photos[currentIndex].photoReference}
               alt={`${placeName} - view ${currentIndex + 1}`}
+              maxWidth={1600}
               className="max-w-full max-h-full w-full object-contain"
             />
           </div>

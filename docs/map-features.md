@@ -88,17 +88,24 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 **User capabilities:**
 
 - Browse nearby attractions and restaurants when a place is selected
+- **View photo thumbnails directly in the list** - Each item shows a preview image on the right (when available)
 - View ratings, reviews, price levels, open/closed status
-- See quality scores with detailed breakdowns on hover
+- See quality scores with detailed breakdowns on hover (positioned inline with ratings)
 - Interactive map markers that sync with list items
 - **Hover over map markers to see instant tooltips** with key information (desktop only)
 - Click list items or map markers to open a rich details dialog
-- Preview up to two top-rated photos before adding items to a plan
+- Preview up to two top-rated photos in details dialog before adding items to a plan
 - Add items directly from the details dialog without leaving context
+- Filter results to show only high-scoring items (scores ≥7.0)
 
 **Technical details:**
 
 - Two-tab interface with lazy loading (restaurants load on first tab open)
+- **Photo integration:** 
+  - List view displays 96x96px thumbnail (400px source) fetched from Google Places Nearby Search API
+  - Limited to 1 photo per item in list for performance
+  - Details dialog fetches up to 2 high-quality photos (800px) on demand
+  - Graceful fallback when photos unavailable or fail to load
 - Smart scoring system:
   - **Quality Score (60% for attractions, 70% for restaurants):** rating (60%) + log₁₀(reviews) (40%)
   - **Diversity Score (25% for attractions only):** Rewards places with unique/rare types
@@ -106,12 +113,20 @@ Get intelligent recommendations tailored to your travel plan using conversationa
     - High confidence: >100 reviews
     - Medium confidence: 20-100 reviews  
     - Low confidence: <20 reviews
+  - Score badge displayed inline with rating information for better visual hierarchy
+- **High-score filter:** Toggle button to show only items with scores ≥7.0
+  - Shows filtered count (e.g., "15 of 42 results")
+  - Applies independently to attractions and restaurants tabs
 - Results cached per place selection, sorted by score, duplicates filtered
 - Details dialog fetches Google Place photos on demand (effect runtime) and reuses them across openings
 - Dialog exposes `Add to Plan` as the primary action
 - Marker hover/click synchronization with list items
 - **Hover tooltips:** Display name, star rating, review count, price level, address, and open/closed status
   - Desktop only (hover not available on mobile touch devices)
+- **Layout optimizations:**
+  - Address with MapPin icon only shown when vicinity data is available
+  - Open/closed status positioned below address for better information flow
+  - Checkmark indicator for already-planned items
 - Google Places API (Nearby Search + Place Details)
 
 ### 5. Build Your Itinerary

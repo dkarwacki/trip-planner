@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   PERSONAS: "trip-planner:personas",
   CURRENT_ITINERARY: "trip-planner:current-itinerary",
   TRIP_HISTORY: "trip-planner:trip-history",
+  PERSONA_FILTER_ENABLED: "trip-planner:persona-filter-enabled",
 } as const;
 
 // Helper to safely parse JSON from localStorage
@@ -128,3 +129,22 @@ export const deleteTripFromHistory = (tripId: string): void => {
   }
 };
 
+// Persona filter preference storage
+export const savePersonaFilterEnabled = (enabled: boolean): void => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.PERSONA_FILTER_ENABLED, JSON.stringify(enabled));
+  } catch (error) {
+    console.error("Failed to save persona filter preference:", error);
+  }
+};
+
+export const loadPersonaFilterEnabled = (): boolean => {
+  try {
+    const json = localStorage.getItem(STORAGE_KEYS.PERSONA_FILTER_ENABLED);
+    // Default to false (show all attractions)
+    return safeJsonParse(json, false);
+  } catch (error) {
+    console.error("Failed to load persona filter preference:", error);
+    return false;
+  }
+};

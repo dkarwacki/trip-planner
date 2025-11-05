@@ -17,13 +17,15 @@ export interface ChatMessage {
 }
 
 export interface PlaceSuggestion {
-  id: string;
+  id?: string; // Optional since unvalidated places won't have this
   name: string;
   description: string;
   reasoning: string;
   lat?: number;
   lng?: number;
   photos?: PlacePhoto[];
+  validationStatus?: "verified" | "not_found" | "partial"; // Track validation state
+  searchQuery?: string; // Track what was actually searched for debugging
 }
 
 export const createUserMessage = (content: string): ChatMessage => ({

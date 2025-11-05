@@ -52,7 +52,8 @@ const PhotoSchema = z.object({
   html_attributions: z.array(z.string()).default([]),
 });
 
-export const PlaceResultSchema = z.object({
+// Legacy schemas (used by textSearch and searchPlace - to be migrated)
+const PlaceResultLegacySchema = z.object({
   place_id: z.string(),
   name: z.string(),
   rating: z.number().optional(),
@@ -65,9 +66,9 @@ export const PlaceResultSchema = z.object({
   photos: z.array(PhotoSchema).optional(),
 });
 
-export const NearbySearchResponseSchema = z.object({
+const NearbySearchResponseLegacySchema = z.object({
   status: z.string(),
-  results: z.array(PlaceResultSchema).default([]),
+  results: z.array(PlaceResultLegacySchema).default([]),
   error_message: z.string().optional(),
 });
 
@@ -83,27 +84,71 @@ export const GeocodeResponseSchema = z.object({
   error_message: z.string().optional(),
 });
 
-const PlaceDetailsResultSchema = z.object({
-  place_id: z.string(),
-  formatted_address: z.string(),
-  name: z.string().optional(),
-  geometry: GeometrySchema,
-  photos: z.array(PhotoSchema).optional(),
+export const TextSearchResponseSchema = NearbySearchResponseLegacySchema;
+export type PlaceResult = z.infer<typeof PlaceResultLegacySchema>;
+
+// Places API schemas
+const DisplayNameSchema = z.object({
+  text: z.string(),
+  languageCode: z.string().optional(),
 });
 
+const PlaceLocationSchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+});
+
+const CurrentOpeningHoursSchema = z
+  .object({
+    openNow: z.boolean().optional(),
+  })
+  .optional();
+
+const PlacePhotoSchema = z.object({
+  name: z.string(), // Format: places/{place_id}/photos/{photo_reference}
+  widthPx: z.number(),
+  heightPx: z.number(),
+  authorAttributions: z
+    .array(
+      z.object({
+        displayName: z.string().optional(),
+        uri: z.string().optional(),
+        photoUri: z.string().optional(),
+      })
+    )
+    .optional(),
+});
+
+const PlaceSchema = z.object({
+  id: z.string(),
+  displayName: DisplayNameSchema.optional(),
+  types: z.array(z.string()).optional(),
+  location: PlaceLocationSchema.optional(),
+  rating: z.number().optional(),
+  userRatingCount: z.number().int().optional(),
+  priceLevel: z.string().optional(), // "PRICE_LEVEL_FREE", "PRICE_LEVEL_INEXPENSIVE", etc.
+  currentOpeningHours: CurrentOpeningHoursSchema,
+  photos: z.array(PlacePhotoSchema).optional(),
+});
+
+export const NearbySearchResponseSchema = z.object({
+  places: z.array(PlaceSchema).default([]),
+});
+
+// Place Details API response schema
 export const PlaceDetailsResponseSchema = z.object({
-  status: z.string(),
-  result: PlaceDetailsResultSchema.optional(),
-  error_message: z.string().optional(),
+  id: z.string(),
+  displayName: DisplayNameSchema.optional(),
+  formattedAddress: z.string().optional(),
+  location: PlaceLocationSchema.optional(),
+  photos: z.array(PlacePhotoSchema).optional(),
 });
 
-export const TextSearchResponseSchema = NearbySearchResponseSchema;
-
-export type PlaceResult = z.infer<typeof PlaceResultSchema>;
-export type NearbySearchResponse = z.infer<typeof NearbySearchResponseSchema>;
 export type GeocodeResponse = z.infer<typeof GeocodeResponseSchema>;
-export type PlaceDetailsResponse = z.infer<typeof PlaceDetailsResponseSchema>;
 export type TextSearchResponse = z.infer<typeof TextSearchResponseSchema>;
+export type Place = z.infer<typeof PlaceSchema>;
+export type NearbySearchResponse = z.infer<typeof NearbySearchResponseSchema>;
+export type PlaceDetailsResponse = z.infer<typeof PlaceDetailsResponseSchema>;
 
 export const validateSearchRadius = (radius: number): SearchRadius => {
   const validated = SearchRadiusSchema.parse(radius);

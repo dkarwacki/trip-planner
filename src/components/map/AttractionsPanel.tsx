@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { X, Star, MapPin, ExternalLink, Check, Filter } from "lucide-react";
+import { X, Star, MapPin, Check, Filter } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { ScoreBadge } from "@/components/map/ScoreBadge";
 import PlaceSuggestionsButton from "@/components/map/PlaceSuggestionsButton";
+import PhotoImage from "@/components/common/PhotoImage";
 import type { AttractionScore, Attraction } from "@/domain/map/models";
 import type { Place } from "@/domain/common/models";
 import { HIGH_SCORE_THRESHOLD } from "@/domain/map/scoring";
+import { savePersonaFilterEnabled, loadPersonaFilterEnabled } from "@/lib/common/storage";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -201,71 +205,78 @@ const ContentList = ({
               onMouseEnter={() => onAttractionHover?.(attraction.id)}
               onMouseLeave={() => onAttractionHover?.(null)}
             >
-              <div>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-semibold text-base leading-tight flex-1 line-clamp-2 min-w-0">
-                    {attraction.name}
-                  </h3>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex gap-3">
+                {/* Main content area */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-semibold text-base leading-tight flex-1 line-clamp-2 min-w-0">
+                      {attraction.name}
+                    </h3>
                     {isPlanned && (
                       <div
-                        className="p-1 rounded-md bg-primary/10 text-primary"
+                        className="p-1 rounded-md bg-primary/10 text-primary flex-shrink-0"
                         title="Added to plan"
                         aria-label="Added to plan"
                       >
                         <Check className="h-4 w-4" />
                       </div>
                     )}
-                    <a
-                      href={`https://www.google.com/maps/place/?q=place_id:${attraction.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-primary transition-colors"
-                      aria-label={`View ${attraction.name} in Google Maps`}
-                      title="View in Google Maps"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                    <ScoreBadge score={score} breakdown={breakdown} type={type} />
                   </div>
-                </div>
 
-                <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{attraction.rating.toFixed(1)}</span>
-                    <span>({formatReviewCount(attraction.userRatingsTotal)})</span>
-                  </div>
-                  {attraction.priceLevel && (
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2 flex-wrap">
                     <div className="flex items-center gap-1">
-                      <span>{getPriceLevelSymbol(attraction.priceLevel)}</span>
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-medium">{attraction.rating?.toFixed(1) ?? "N/A"}</span>
+                      <span>({formatReviewCount(attraction.userRatingsTotal ?? 0)})</span>
+                    </div>
+                    <ScoreBadge score={score} breakdown={breakdown} type={type} />
+                    {attraction.priceLevel && (
+                      <div className="flex items-center gap-1">
+                        <span>{getPriceLevelSymbol(attraction.priceLevel)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {attraction.vicinity && (
+                    <div className="flex items-start gap-1 text-sm text-muted-foreground mb-2">
+                      <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <span className="line-clamp-2">{attraction.vicinity}</span>
                     </div>
                   )}
+
                   {attraction.openNow !== undefined && (
-                    <Badge variant={attraction.openNow ? "default" : "secondary"} className="text-xs">
-                      {attraction.openNow ? "Open" : "Closed"}
-                    </Badge>
+                    <div className="mb-3">
+                      <Badge variant={attraction.openNow ? "default" : "secondary"} className="text-xs">
+                        {attraction.openNow ? "Open" : "Closed"}
+                      </Badge>
+                    </div>
                   )}
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {topTypes.map((type) => (
+                      <Badge key={type} variant="outline" className={`text-xs ${getCategoryColor(type)}`}>
+                        {formatTypeName(type)}
+                      </Badge>
+                    ))}
+                    {attraction.types.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{attraction.types.length - 3} more
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex items-start gap-1 text-sm text-muted-foreground mb-3">
-                  <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <span className="line-clamp-2">{attraction.vicinity}</span>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {topTypes.map((type) => (
-                    <Badge key={type} variant="outline" className={`text-xs ${getCategoryColor(type)}`}>
-                      {formatTypeName(type)}
-                    </Badge>
-                  ))}
-                  {attraction.types.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{attraction.types.length - 3} more
-                    </Badge>
-                  )}
-                </div>
+                {/* Photo thumbnail */}
+                {attraction.photos && attraction.photos.length > 0 && (
+                  <div className="flex-shrink-0 w-24 h-24">
+                    <PhotoImage
+                      photoReference={attraction.photos[0].photoReference}
+                      alt={attraction.name}
+                      maxWidth={400}
+                      className="w-24 h-24 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
               </div>
               <Separator />
             </div>
@@ -308,8 +319,14 @@ export default function AttractionsPanel({
   const [restaurantsFilteredCount, setRestaurantsFilteredCount] = useState<{ filtered: number; total: number } | null>(
     null
   );
+  const [personaFilterEnabled, setPersonaFilterEnabled] = useState(() => loadPersonaFilterEnabled());
 
   const headingText = activeTab === "attractions" ? "Nearby Attractions" : "Nearby Restaurants";
+
+  // Save persona filter preference when it changes
+  useEffect(() => {
+    savePersonaFilterEnabled(personaFilterEnabled);
+  }, [personaFilterEnabled]);
 
   const handleAttractionsFilteredCountChange = useCallback((filtered: number, total: number) => {
     setAttractionsFilteredCount({ filtered, total });
@@ -376,24 +393,41 @@ export default function AttractionsPanel({
             </div>
 
             <TabsContent value="attractions" className="flex-1 overflow-hidden mt-0 flex flex-col min-h-0">
-              <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/5">
-                <span className="text-sm text-muted-foreground">
-                  {attractionsFilteredCount
-                    ? `${attractionsFilteredCount.filtered} of ${attractionsFilteredCount.total} results`
-                    : `${attractions.length} results`}
-                </span>
-                <button
-                  onClick={() => onFilterChange(!showHighScoresOnly)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                    showHighScoresOnly
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
-                  aria-label={showHighScoresOnly ? "Show all results" : "Show high scores only"}
-                >
-                  <Filter className="h-3.5 w-3.5" />
-                  <span>High scores</span>
-                </button>
+              <div className="border-b bg-muted/5">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-sm text-muted-foreground">
+                    {attractionsFilteredCount
+                      ? `${attractionsFilteredCount.filtered} of ${attractionsFilteredCount.total} results`
+                      : `${attractions.length} results`}
+                  </span>
+                  <button
+                    onClick={() => onFilterChange(!showHighScoresOnly)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                      showHighScoresOnly
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    }`}
+                    aria-label={showHighScoresOnly ? "Show all results" : "Show high scores only"}
+                  >
+                    <Filter className="h-3.5 w-3.5" />
+                    <span>High scores</span>
+                  </button>
+                </div>
+                <div className="flex items-center justify-between px-4 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="persona-filter"
+                      checked={personaFilterEnabled}
+                      onCheckedChange={setPersonaFilterEnabled}
+                    />
+                    <Label htmlFor="persona-filter" className="text-sm cursor-pointer">
+                      {personaFilterEnabled ? "Personalized for You" : "All Attractions"}
+                    </Label>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {personaFilterEnabled ? "Filtered by preferences" : "Showing all types"}
+                  </span>
+                </div>
               </div>
               <ContentList
                 data={attractions}

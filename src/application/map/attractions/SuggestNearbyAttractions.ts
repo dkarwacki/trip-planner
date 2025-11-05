@@ -7,7 +7,7 @@ import {
 } from "@/infrastructure/common/openai";
 import { getTopAttractions, getTopRestaurants } from "@/application/map/attractions";
 import { getPlaceDetails } from "@/application/map/places";
-import { GoogleMapsClient } from "@/infrastructure/common/google-maps";
+import { TextSearchCache } from "@/infrastructure/map/cache";
 import type { SuggestNearbyAttractionsInput } from "./inputs";
 import { AgentResponseSchema, type AgentResponse, type Suggestion } from "./outputs";
 import { InvalidToolCallError, ModelResponseError } from "@/domain/common/errors";
@@ -318,9 +318,9 @@ const handleToolCallIteration = (
 
 const enrichSuggestionsWithAttractionData = (
   validated: AgentResponse
-): Effect.Effect<Suggestion[], never, GoogleMapsClient> =>
+): Effect.Effect<Suggestion[], never, TextSearchCache> =>
   Effect.gen(function* () {
-    const googleMaps = yield* GoogleMapsClient;
+    const textSearchCache = yield* TextSearchCache;
 
     const suggestionOptions = yield* Effect.all(
       validated.suggestions.map((suggestion) =>
@@ -330,7 +330,13 @@ const enrichSuggestionsWithAttractionData = (
           }
 
           if (suggestion.attractionName) {
-            const attraction = yield* googleMaps.textSearch(suggestion.attractionName, true).pipe(Effect.either);
+            const attraction = yield* textSearchCache
+              .get({
+                query: suggestion.attractionName,
+                includePhotos: true,
+                requireRatings: true, // Attractions should have ratings
+              })
+              .pipe(Effect.either);
 
             return Either.match(attraction, {
               onLeft: () => Option.none(),

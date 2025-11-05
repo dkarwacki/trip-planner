@@ -22,7 +22,7 @@ export const RestaurantsCacheLayer = Layer.effect(
 
     const cache = yield* Cache.make({
       capacity: 100,
-      timeToLive: Duration.minutes(5),
+      timeToLive: Duration.minutes(30),
       lookup: (key: CacheKey) =>
         googleMaps.nearbySearch(key.lat, key.lng, key.radius, RESTAURANT_TYPES).pipe(
           Effect.catchTag("MissingGoogleMapsAPIKeyError", () =>

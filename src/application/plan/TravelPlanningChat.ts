@@ -1,9 +1,8 @@
 import { Effect } from "effect";
 import { OpenAIClient } from "@/infrastructure/common/openai";
-import { GoogleMapsClient } from "@/infrastructure/common/google-maps";
+import { TextSearchCache } from "@/infrastructure/map/cache";
 import type { ChatRequestInput } from "./inputs";
 import type { PlaceSuggestion } from "@/domain/plan/models";
-import type { Place } from "@/domain/common/models";
 import { PERSONA_METADATA } from "@/domain/plan/models";
 
 interface ChatResponse {
@@ -125,7 +124,7 @@ const generateNarrative = (userMessage: string, personas: string[], places: Plac
 export const TravelPlanningChat = (input: ChatRequestInput) =>
   Effect.gen(function* () {
     const openai = yield* OpenAIClient;
-    const googleMaps = yield* GoogleMapsClient;
+    const textSearchCache = yield* TextSearchCache;
 
     // Build system prompt based on personas
     const systemPrompt = buildSystemPrompt(input.personas);
@@ -221,55 +220,106 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
       }
     }
 
-    // Fetch photos for each suggested place
+    // Validate each suggested place against Google Maps
     if (suggestedPlaces.length > 0) {
-      const placesWithPhotos = yield* Effect.forEach(
+      const validationResults = yield* Effect.forEach(
         suggestedPlaces,
         (place) =>
           Effect.gen(function* () {
-            // First, use search to find the place and get its ID
-            const searchResult = yield* googleMaps.searchPlace(place.name).pipe(
-              Effect.catchAll((error) =>
-                Effect.gen(function* () {
-                  // If we can't find the place, log warning and return null
-                  yield* Effect.logWarning(`Failed to find place "${place.name}"`, { error });
-                  return null as Place | null;
-                })
-              )
-            );
+            // Try primary search with full name
+            const primarySearch = yield* textSearchCache
+              .get({
+                query: place.name,
+                includePhotos: true,
+                requireRatings: false, // Allow geographic locations (towns, cities) without ratings
+              })
+              .pipe(
+                Effect.map((attraction) => ({ attraction, searchQuery: place.name })),
+                Effect.catchAll(() => Effect.succeed(null))
+              );
 
-            if (!searchResult) {
-              return place;
+            if (primarySearch) {
+              return {
+                ...place,
+                id: primarySearch.attraction.id,
+                lat: primarySearch.attraction.location.lat,
+                lng: primarySearch.attraction.location.lng,
+                photos: primarySearch.attraction.photos,
+                validationStatus: "verified" as const,
+                searchQuery: primarySearch.searchQuery,
+              } satisfies PlaceSuggestion;
             }
 
-            // Then fetch detailed place info with photos
-            const placeDetails = yield* googleMaps.placeDetails(searchResult.id, true).pipe(
-              Effect.catchAll((error) =>
-                Effect.gen(function* () {
-                  // If we can't get place details, log warning and return null
-                  yield* Effect.logWarning(`Failed to get details for "${place.name}"`, { error });
-                  return null as Place | null;
-                })
-              )
-            );
+            // Fallback: Try simplified name (remove descriptive parts after comma/dash)
+            const simplifiedName = place.name.split(/[,-]/)[0].trim();
+            if (simplifiedName !== place.name) {
+              yield* Effect.logDebug(
+                `Trying fallback search for "${place.name}" with simplified name "${simplifiedName}"`
+              );
 
-            if (!placeDetails) {
-              return place;
+              const fallbackSearch = yield* textSearchCache
+                .get({
+                  query: simplifiedName,
+                  includePhotos: true,
+                  requireRatings: false, // Allow geographic locations (towns, cities) without ratings
+                })
+                .pipe(
+                  Effect.map((attraction) => ({ attraction, searchQuery: simplifiedName })),
+                  Effect.catchAll(() => Effect.succeed(null))
+                );
+
+              if (fallbackSearch) {
+                return {
+                  ...place,
+                  id: fallbackSearch.attraction.id,
+                  lat: fallbackSearch.attraction.location.lat,
+                  lng: fallbackSearch.attraction.location.lng,
+                  photos: fallbackSearch.attraction.photos,
+                  validationStatus: "verified" as const,
+                  searchQuery: fallbackSearch.searchQuery,
+                } satisfies PlaceSuggestion;
+              }
             }
 
-            // Add photos and coordinates to the suggestion
+            // If all searches fail, mark as not found
+            yield* Effect.logWarning(`Failed to validate place "${place.name}"`);
             return {
               ...place,
-              id: placeDetails.id,
-              lat: placeDetails.lat,
-              lng: placeDetails.lng,
-              photos: placeDetails.photos,
+              validationStatus: "not_found" as const,
+              searchQuery: place.name,
             } satisfies PlaceSuggestion;
           }),
-        { concurrency: 3 } // Fetch photos for up to 3 places at a time
+        { concurrency: 3 } // Validate up to 3 places at a time
       );
 
-      suggestedPlaces = placesWithPhotos;
+      // Filter out unvalidated places (Option A)
+      const validatedPlaces = validationResults.filter((p) => p.validationStatus === "verified");
+      const rejectedCount = validationResults.length - validatedPlaces.length;
+
+      if (rejectedCount > 0) {
+        const rejectedNames = validationResults
+          .filter((p) => p.validationStatus !== "verified")
+          .map((p) => p.name)
+          .join(", ");
+
+        yield* Effect.logInfo(`Filtered out ${rejectedCount} unvalidated place(s): ${rejectedNames}`);
+
+        // Add user feedback about filtered places
+        if (validatedPlaces.length > 0) {
+          // Some places were validated
+          assistantMessage += `\n\n*Note: ${rejectedCount} suggested place${rejectedCount > 1 ? "s" : ""} could not be verified on Google Maps and ${rejectedCount > 1 ? "were" : "was"} filtered out.*`;
+        } else {
+          // No places were validated - show more helpful message
+          assistantMessage = `I couldn't find any of the suggested places on Google Maps. This might be because:
+- The places don't exist or have different names
+- The area you're asking about needs more specific details
+- Try asking about a specific city or region
+
+Could you provide more details about where you'd like to explore?`;
+        }
+      }
+
+      suggestedPlaces = validatedPlaces;
     }
 
     return {
