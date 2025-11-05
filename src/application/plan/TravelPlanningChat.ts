@@ -29,7 +29,8 @@ Your role:
 - Suggest SPECIFIC PLACES that serve as central points for exploration (cities, neighborhoods, districts, village centers, visitor centers, trailheads, beaches, viewpoints)
 - For broad areas (large parks, regions, or destinations), suggest SPECIFIC LOCATIONS WITHIN them that serve as good starting points for exploration
 - Choose places that can serve as a central point where users can discover nearby attractions and restaurants on the map
-- Provide searchable place names with enough specificity to get a clear map location
+- Provide clean, searchable place names that work well with Google Maps (e.g., "Fisherman's Wharf", "Golden Gate Park", "The Mission District")
+- AVOID adding parenthetical clarifications or extra context to place names - keep them simple and direct
 - DO NOT suggest individual small attractions (museums, monuments) or specific restaurants - users will discover those on the map interface
 - Consider the user's selected personas when making suggestions
 - When suggesting places, provide 5-8 diverse options to give users multiple exploration hubs to choose from
@@ -48,14 +49,14 @@ You MUST respond with a valid JSON object following this exact structure:
   "thinking": ["step 1", "step 2", ...],  // Array of thinking steps (optional)
   "places": [
     {
-      "name": "Specific place name",
+      "name": "Fisherman's Wharf",  // Clean name without parentheses or extra context
       "description": "Brief description of what makes this place a good exploration hub",
       "reasoning": "Why this place matches the user's personas and interests"
     }
   ]
 }
 
-Respond ONLY with valid JSON, no additional text.`;
+You MUST respond ONLY with valid JSON, no additional text.`;
 };
 
 const buildNarrativePrompt = (personas: string[]): string => {
@@ -222,9 +223,14 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
               } satisfies PlaceSuggestion;
             }
 
-            // Fallback: Try simplified name (remove descriptive parts after comma/dash)
-            const simplifiedName = place.name.split(/[,-]/)[0].trim();
-            if (simplifiedName !== place.name) {
+            // Fallback: Try simplified name by removing parentheses and taking first part before comma
+            // "Golden Gate Park (near Academy), SF" -> "Golden Gate Park"
+            const simplifiedName = place.name
+              .replace(/\s*\([^)]*\)/g, "") // Remove parentheses and content
+              .split(/[,]/)[0] // Take first part before comma
+              .trim();
+
+            if (simplifiedName !== place.name && simplifiedName.length > 0) {
               yield* Effect.logDebug(
                 `Trying fallback search for "${place.name}" with simplified name "${simplifiedName}"`
               );
