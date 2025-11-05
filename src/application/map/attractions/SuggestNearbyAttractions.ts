@@ -182,7 +182,7 @@ export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsInput) =
     const planContext = buildPlanContext(input);
     const messages = buildInitialMessages(input, planContext);
 
-    // Note: Don't use responseFormat for Claude models - they need explicit prompting instead
+    // First call: use tools to gather data (no JSON mode yet - let model choose to call tools)
     let response = yield* openai.chatCompletion({
       messages,
       temperature: 0.7,
@@ -193,6 +193,7 @@ export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsInput) =
     const maxToolCallIterations = 5;
     let iterations = 0;
 
+    // Process tool calls until model is ready to provide final answer
     while (response.toolCalls && response.toolCalls.length > 0 && iterations < maxToolCallIterations) {
       iterations++;
       response = yield* handleToolCallIteration(messages, response, openai, input.mapCoordinates);
@@ -308,6 +309,7 @@ const handleToolCallIteration = (
       }
     });
 
+    // Subsequent calls: continue allowing tool calls or final JSON response
     return yield* openai.chatCompletion({
       messages,
       temperature: 0.7,

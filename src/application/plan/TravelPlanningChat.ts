@@ -42,7 +42,20 @@ Before providing your suggestions, think through your reasoning:
 - Select diverse options that appeal to different aspects of the user's interests
 - Ensure place names are specific enough to be found on Google Maps
 
-Respond with your recommendations in the specified JSON format.`;
+## Response Format
+You MUST respond with a valid JSON object following this exact structure:
+{
+  "thinking": ["step 1", "step 2", ...],  // Array of thinking steps (optional)
+  "places": [
+    {
+      "name": "Specific place name",
+      "description": "Brief description of what makes this place a good exploration hub",
+      "reasoning": "Why this place matches the user's personas and interests"
+    }
+  ]
+}
+
+Respond ONLY with valid JSON, no additional text.`;
 };
 
 const buildNarrativePrompt = (personas: string[]): string => {
@@ -136,54 +149,13 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
       { role: "user" as const, content: input.message },
     ];
 
-    // Call OpenAI with structured outputs
+    // Call OpenAI with JSON object mode (more widely supported than strict json_schema)
     const response = yield* openai.chatCompletion({
       messages,
       temperature: 0.7,
-      maxTokens: 15000,
+      maxTokens: 10000,
       responseFormat: {
-        type: "json_schema",
-        json_schema: {
-          name: "place_suggestions",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              thinking: {
-                type: "array",
-                description: "Array of thinking steps showing your reasoning process for selecting these places",
-                items: {
-                  type: "string",
-                },
-              },
-              places: {
-                type: "array",
-                description: "Array of place suggestions (typically 5-8 places to provide diverse options)",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: {
-                      type: "string",
-                      description: "Specific, searchable place name",
-                    },
-                    description: {
-                      type: "string",
-                      description: "Brief description of what makes this place a good exploration hub",
-                    },
-                    reasoning: {
-                      type: "string",
-                      description: "Why this place matches the user's personas and interests",
-                    },
-                  },
-                  required: ["name", "description", "reasoning"],
-                  additionalProperties: false,
-                },
-              },
-            },
-            required: ["places"],
-            additionalProperties: false,
-          },
-        },
+        type: "json_object",
       },
     });
 

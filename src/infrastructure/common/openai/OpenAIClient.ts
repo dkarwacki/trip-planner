@@ -72,9 +72,13 @@ export const OpenAIClientLive = Layer.effect(
             messages: request.messages,
             temperature: request.temperature ?? 0.7,
             max_tokens: request.maxTokens ?? 2000,
-            tools: request.tools,
-            tool_choice: "auto",
           };
+
+          // Only add tools if they are provided
+          if (request.tools && request.tools.length > 0) {
+            params.tools = request.tools;
+            params.tool_choice = "auto";
+          }
 
           // Add response format for JSON mode if requested
           if (request.responseFormat) {
