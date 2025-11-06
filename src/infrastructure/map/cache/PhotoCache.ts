@@ -56,14 +56,15 @@ export const PhotoCacheLayer = Layer.effect(
 
             const contentType = response.headers.get("content-type") || "image/jpeg";
 
-            return {
+            const photoData: PhotoData = {
               data: Buffer.from(arrayBuffer),
               contentType,
             };
+
+            return photoData;
           }),
       });
 
     return cache;
   })
 );
-

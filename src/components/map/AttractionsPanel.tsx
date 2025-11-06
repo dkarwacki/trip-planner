@@ -6,15 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { ScoreBadge } from "@/components/map/ScoreBadge";
 import PlaceSuggestionsButton from "@/components/map/PlaceSuggestionsButton";
 import PhotoImage from "@/components/common/PhotoImage";
 import type { AttractionScore, Attraction } from "@/domain/map/models";
 import type { Place } from "@/domain/common/models";
 import { HIGH_SCORE_THRESHOLD } from "@/domain/map/scoring";
-import { savePersonaFilterEnabled, loadPersonaFilterEnabled } from "@/lib/common/storage";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -319,14 +316,8 @@ export default function AttractionsPanel({
   const [restaurantsFilteredCount, setRestaurantsFilteredCount] = useState<{ filtered: number; total: number } | null>(
     null
   );
-  const [personaFilterEnabled, setPersonaFilterEnabled] = useState(() => loadPersonaFilterEnabled());
 
   const headingText = activeTab === "attractions" ? "Nearby Attractions" : "Nearby Restaurants";
-
-  // Save persona filter preference when it changes
-  useEffect(() => {
-    savePersonaFilterEnabled(personaFilterEnabled);
-  }, [personaFilterEnabled]);
 
   const handleAttractionsFilteredCountChange = useCallback((filtered: number, total: number) => {
     setAttractionsFilteredCount({ filtered, total });
@@ -412,21 +403,6 @@ export default function AttractionsPanel({
                     <Filter className="h-3.5 w-3.5" />
                     <span>High scores</span>
                   </button>
-                </div>
-                <div className="flex items-center justify-between px-4 pb-3">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="persona-filter"
-                      checked={personaFilterEnabled}
-                      onCheckedChange={setPersonaFilterEnabled}
-                    />
-                    <Label htmlFor="persona-filter" className="text-sm cursor-pointer">
-                      {personaFilterEnabled ? "Personalized for You" : "All Attractions"}
-                    </Label>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {personaFilterEnabled ? "Filtered by preferences" : "Showing all types"}
-                  </span>
                 </div>
               </div>
               <ContentList

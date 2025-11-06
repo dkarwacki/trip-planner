@@ -32,4 +32,3 @@ export const fetchPhoto = async (photoReference: string, maxWidth: number = 800)
   const blob = await response.blob();
   return URL.createObjectURL(blob);
 };
-

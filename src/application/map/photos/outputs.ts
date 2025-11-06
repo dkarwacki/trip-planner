@@ -6,4 +6,3 @@ export const GetPhotoOutputSchema = z.object({
 });
 
 export type GetPhotoOutput = z.infer<typeof GetPhotoOutputSchema>;
-

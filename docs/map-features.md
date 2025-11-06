@@ -96,7 +96,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 - Click list items or map markers to open a rich details dialog
 - Preview up to two top-rated photos in details dialog before adding items to a plan
 - Add items directly from the details dialog without leaving context
-- Filter results to show only high-scoring items (scores ≥7.0)
+- Filter results to show only high-scoring items (scores ≥8.5)
 
 **Technical details:**
 
@@ -114,7 +114,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
     - Medium confidence: 20-100 reviews  
     - Low confidence: <20 reviews
   - Score badge displayed inline with rating information for better visual hierarchy
-- **High-score filter:** Toggle button to show only items with scores ≥7.0
+- **High-score filter:** Toggle button to show only items with scores ≥8.5
   - Shows filtered count (e.g., "15 of 42 results")
   - Applies independently to attractions and restaurants tabs
 - Results cached per place selection, sorted by score, duplicates filtered
@@ -127,6 +127,10 @@ Get intelligent recommendations tailored to your travel plan using conversationa
   - Address with MapPin icon only shown when vicinity data is available
   - Open/closed status positioned below address for better information flow
   - Checkmark indicator for already-planned items
+- **Persona-aware scoring:** Results personalized based on user's travel style preferences
+  - Automatically applies if persona selected in /plan chat interface
+  - 30% boost for attractions matching persona (e.g., Art Enthusiast → museums, galleries)
+  - Eight personas: General Tourist, Nature Lover, Art Enthusiast, Foodie, Adventure Seeker, Digital Nomad, History Buff, Photography Enthusiast
 - Google Places API (Nearby Search + Place Details)
 
 ### 5. Build Your Itinerary

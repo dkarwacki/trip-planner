@@ -36,8 +36,3 @@ export default function PersonaSelectorDrawer({ selected, onChange }: PersonaSel
     </Drawer>
   );
 }
-
-
-
-
-

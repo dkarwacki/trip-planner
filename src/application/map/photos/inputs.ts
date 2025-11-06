@@ -6,4 +6,3 @@ export const GetPhotoInputSchema = z.object({
 });
 
 export type GetPhotoInput = z.infer<typeof GetPhotoInputSchema>;
-

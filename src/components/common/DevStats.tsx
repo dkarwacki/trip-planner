@@ -49,9 +49,7 @@ export function DevStats() {
     return null;
   }
 
-  const totalCalls = stats
-    ? Object.values(stats).reduce((sum, count) => sum + count, 0)
-    : 0;
+  const totalCalls = stats ? Object.values(stats).reduce((sum, count) => sum + count, 0) : 0;
 
   return (
     <div className="fixed top-4 right-4 z-[9999] font-mono text-xs">
@@ -96,10 +94,7 @@ function StatRow({ label, count }: { label: string; count: number }) {
   return (
     <div className="flex justify-between items-center py-0.5">
       <span className="text-gray-300">{label}:</span>
-      <span className={`font-semibold ${count > 0 ? "text-green-400" : "text-gray-500"}`}>
-        {count}
-      </span>
+      <span className={`font-semibold ${count > 0 ? "text-green-400" : "text-gray-500"}`}>{count}</span>
     </div>
   );
 }
-

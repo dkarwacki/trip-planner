@@ -51,4 +51,3 @@ export const usePhoto = (photoReference: string | undefined, maxWidth: number = 
 
   return { photoUrl, isLoading, error };
 };
-

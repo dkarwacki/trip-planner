@@ -33,9 +33,8 @@ export const UNIVERSAL_ATTRACTION_TYPES = [
   "botanical_garden",
 ] as const;
 
-// Persona-specific types for filtering and scoring
-// Used for: 1) "Personalized" filter mode - determines which types to search
-//           2) "All Attractions" mode - these types get a scoring boost
+// Persona-specific types for scoring boost
+// These types get a 1.3x scoring boost when they match the user's selected persona
 export const PERSONA_FILTER_TYPES = {
   GENERAL_TOURIST: ["tourist_attraction", "museum", "park", "historical_landmark", "plaza", "visitor_center"],
   NATURE_LOVER: ["national_park", "state_park", "hiking_area", "botanical_garden", "wildlife_park", "wildlife_refuge"],
@@ -99,17 +98,6 @@ export const PHOTOGRAPHY_ENTHUSIAST_TYPES = PERSONA_FILTER_TYPES.PHOTOGRAPHY_ENT
 export const ATTRACTION_TYPES = UNIVERSAL_ATTRACTION_TYPES;
 
 export const RESTAURANT_TYPES = ["restaurant", "cafe", "bar", "bakery"] as const;
-
-// Helper function to get attraction types based on persona filter settings
-export const getAttractionTypes = (
-  personaFilterEnabled: boolean,
-  persona?: keyof typeof PERSONA_FILTER_TYPES
-): readonly string[] => {
-  if (personaFilterEnabled && persona && persona in PERSONA_FILTER_TYPES) {
-    return PERSONA_FILTER_TYPES[persona];
-  }
-  return UNIVERSAL_ATTRACTION_TYPES;
-};
 
 // Place types to block from general attraction suggestions
 // These are typically services, accommodations, or non-tourist-oriented businesses

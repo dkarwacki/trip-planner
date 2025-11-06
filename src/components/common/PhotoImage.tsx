@@ -38,4 +38,3 @@ export default function PhotoImage({ photoReference, alt, maxWidth = 800, classN
     />
   );
 }
-

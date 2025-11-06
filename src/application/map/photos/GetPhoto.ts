@@ -13,4 +13,3 @@ export const GetPhoto = (input: GetPhotoInput) =>
 
     return photoData;
   });
-

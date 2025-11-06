@@ -19,7 +19,8 @@ import type { Place } from "@/domain/common/models";
 import type { AttractionScore, Attraction } from "@/domain/map/models";
 import { scoreAttractions } from "@/domain/map/scoring/attractions";
 import { scoreRestaurants } from "@/domain/map/scoring/restaurants";
-import { loadTripById } from "@/lib/common/storage";
+import { loadTripById, loadPersonas } from "@/lib/common/storage";
+import type { PersonaType } from "@/domain/plan/models";
 import { HIGH_SCORE_THRESHOLD } from "@/domain/map/scoring";
 import AttractionsPanel from "@/components/map/AttractionsPanel";
 import PlaceAutocomplete from "@/components/map/PlaceAutocomplete";
@@ -66,6 +67,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const personas = useState<PersonaType[]>(() => loadPersonas())[0];
 
   // Load places from trip history if tripId is provided
   useEffect(() => {
@@ -81,13 +83,9 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
     }
   }, [tripId]);
 
-  // Helper function to merge API results with planned items
-  const mergeWithPlannedItems = useCallback(
-    (
-      apiResults: AttractionScore[],
-      plannedItems: Attraction[],
-      scoringFn: (items: Attraction[]) => AttractionScore[]
-    ): AttractionScore[] => {
+  // Helper function to merge API results with planned attractions (persona-aware)
+  const mergeAttractionsWithPlanned = useCallback(
+    (apiResults: AttractionScore[], plannedItems: Attraction[]): AttractionScore[] => {
       const apiIds = new Set(apiResults.map((r) => r.attraction.id));
       const missingItems = plannedItems.filter((item) => !apiIds.has(item.id));
 
@@ -95,7 +93,23 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
         return apiResults;
       }
 
-      const scoredMissing = scoringFn(missingItems);
+      const scoredMissing = scoreAttractions(missingItems, personas[0]);
+      return [...apiResults, ...scoredMissing];
+    },
+    [personas]
+  );
+
+  // Helper function to merge API results with planned restaurants (no persona)
+  const mergeRestaurantsWithPlanned = useCallback(
+    (apiResults: AttractionScore[], plannedItems: Attraction[]): AttractionScore[] => {
+      const apiIds = new Set(apiResults.map((r) => r.attraction.id));
+      const missingItems = plannedItems.filter((item) => !apiIds.has(item.id));
+
+      if (missingItems.length === 0) {
+        return apiResults;
+      }
+
+      const scoredMissing = scoreRestaurants(missingItems);
       return [...apiResults, ...scoredMissing];
     },
     []
@@ -224,7 +238,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       ]);
 
       if (attractionsResult.status === "fulfilled") {
-        const merged = mergeWithPlannedItems(attractionsResult.value, place.plannedAttractions, scoreAttractions);
+        const merged = mergeAttractionsWithPlanned(attractionsResult.value, place.plannedAttractions);
         setAttractions(merged);
       } else {
         setAttractionsError(
@@ -233,7 +247,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       }
 
       if (restaurantsResult.status === "fulfilled") {
-        const merged = mergeWithPlannedItems(restaurantsResult.value, place.plannedRestaurants, scoreRestaurants);
+        const merged = mergeRestaurantsWithPlanned(restaurantsResult.value, place.plannedRestaurants);
         setRestaurants(merged);
       } else {
         setRestaurantsError(
@@ -244,7 +258,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       setIsLoadingAttractions(false);
       setIsLoadingRestaurants(false);
     },
-    [map, mergeWithPlannedItems, isMobile]
+    [map, mergeAttractionsWithPlanned, mergeRestaurantsWithPlanned, isMobile]
   );
 
   const handlePlaceSelect = useCallback(
@@ -320,7 +334,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
     ]);
 
     if (attractionsResult.status === "fulfilled") {
-      const merged = mergeWithPlannedItems(attractionsResult.value, selectedPlace.plannedAttractions, scoreAttractions);
+      const merged = mergeAttractionsWithPlanned(attractionsResult.value, selectedPlace.plannedAttractions);
 
       // Filter out duplicates and merge with existing items, sorted by score
       setAttractions((prev) => {
@@ -335,7 +349,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
     }
 
     if (restaurantsResult.status === "fulfilled") {
-      const merged = mergeWithPlannedItems(restaurantsResult.value, selectedPlace.plannedRestaurants, scoreRestaurants);
+      const merged = mergeRestaurantsWithPlanned(restaurantsResult.value, selectedPlace.plannedRestaurants);
 
       // Filter out duplicates and merge with existing items, sorted by score
       setRestaurants((prev) => {
@@ -351,7 +365,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
 
     setIsLoadingAttractions(false);
     setIsLoadingRestaurants(false);
-  }, [map, selectedPlace, mergeWithPlannedItems]);
+  }, [map, selectedPlace, mergeAttractionsWithPlanned, mergeRestaurantsWithPlanned]);
 
   const handleCloseAttractions = useCallback(() => {
     setSelectedPlace(null);
@@ -389,7 +403,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
 
         try {
           const restaurantsResult = await fetchTopRestaurants(selectedPlace.lat, selectedPlace.lng);
-          const merged = mergeWithPlannedItems(restaurantsResult, selectedPlace.plannedRestaurants, scoreRestaurants);
+          const merged = mergeRestaurantsWithPlanned(restaurantsResult, selectedPlace.plannedRestaurants);
 
           setRestaurants(merged);
         } catch (err) {
@@ -399,7 +413,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
         }
       }
     },
-    [selectedPlace, loadedTabs, mergeWithPlannedItems]
+    [selectedPlace, loadedTabs, mergeRestaurantsWithPlanned]
   );
 
   const handlePlannedItemClick = useCallback(
@@ -449,11 +463,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
         ]);
 
         if (attractionsResult.status === "fulfilled") {
-          const merged = mergeWithPlannedItems(
-            attractionsResult.value,
-            parentPlace.plannedAttractions,
-            scoreAttractions
-          );
+          const merged = mergeAttractionsWithPlanned(attractionsResult.value, parentPlace.plannedAttractions);
           setAttractions(merged);
         } else {
           setAttractionsError(
@@ -462,11 +472,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
         }
 
         if (restaurantsResult.status === "fulfilled") {
-          const merged = mergeWithPlannedItems(
-            restaurantsResult.value,
-            parentPlace.plannedRestaurants,
-            scoreRestaurants
-          );
+          const merged = mergeRestaurantsWithPlanned(restaurantsResult.value, parentPlace.plannedRestaurants);
           setRestaurants(merged);
         } else {
           setRestaurantsError(
@@ -496,7 +502,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       setHighlightedAttractionId(attraction.id);
       setScrollToAttractionId(attraction.id);
     },
-    [places, selectedPlaceId, map, handleTabChange, mergeWithPlannedItems, isMobile]
+    [places, selectedPlaceId, map, handleTabChange, mergeAttractionsWithPlanned, mergeRestaurantsWithPlanned, isMobile]
   );
 
   const handleScrollComplete = useCallback(() => {
@@ -706,7 +712,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
         const exists = attractions.some((a) => a.attraction.id === attraction.id);
         if (!exists) {
           // Score the single attraction and add it to the list
-          const scored = scoreAttractions([attraction]);
+          const scored = scoreAttractions([attraction], personas[0]);
           setAttractions((prev) => [...prev, ...scored]);
         }
       } else {
@@ -719,7 +725,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
         }
       }
     },
-    [attractions, restaurants, selectedPlaceId]
+    [attractions, restaurants, selectedPlaceId, personas]
   );
 
   useEffect(() => {
