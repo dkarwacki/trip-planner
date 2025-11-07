@@ -12,9 +12,9 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { getPlaceDetails } from "@/infrastructure/map/clients";
 import { fetchTopAttractions, fetchTopRestaurants } from "@/infrastructure/map/clients";
-import { reverseGeocode } from "@/infrastructure/map/clients";
+import { reverseGeocode } from "@/infrastructure/map/clients/geocoding";
+import { getPlaceDetails } from "@/infrastructure/map/clients";
 import type { Place } from "@/domain/common/models";
 import type { AttractionScore, Attraction } from "@/domain/map/models";
 import { scoreAttractions } from "@/domain/map/scoring/attractions";
@@ -146,7 +146,6 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingAttraction, setPendingAttraction] = useState<Attraction | null>(null);
   const [pendingType, setPendingType] = useState<"attraction" | "restaurant" | null>(null);
-  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
 
   // Search nearby button state
   const [initialSearchCenter, setInitialSearchCenter] = useState<{
@@ -574,7 +573,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   }, []);
 
   const handleOpenAddDialog = useCallback(
-    async (attractionId: string, type: "attraction" | "restaurant") => {
+    (attractionId: string, type: "attraction" | "restaurant") => {
       // Find the attraction in current data
       const allAttractions = type === "attraction" ? attractions : restaurants;
       const attractionData = allAttractions.find((a) => a.attraction.id === attractionId);
@@ -584,34 +583,10 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
         return;
       }
 
-      // Set initial data and open dialog
+      // Set data and open dialog - photos are already loaded from nearbySearch (5 photos)
       setPendingAttraction(attractionData.attraction);
       setPendingType(type);
       setDialogOpen(true);
-
-      // Fetch photos in the background
-      setIsLoadingPhotos(true);
-      try {
-        const program = getPlaceDetails(attractionId, true);
-        const result = await Effect.runPromise(program);
-
-        // Check if the result is an Attraction (has photos) or a Place
-        // The API returns a Place, but we need to merge it with attraction data
-        if (result.photos && result.photos.length > 0) {
-          setPendingAttraction((prev) => {
-            if (!prev || prev.id !== attractionId) return prev;
-            return {
-              ...prev,
-              photos: result.photos,
-            };
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch photos:", error);
-        // Continue without photos - dialog is already open with basic info
-      } finally {
-        setIsLoadingPhotos(false);
-      }
     },
     [attractions, restaurants]
   );
@@ -1223,7 +1198,6 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
           <AttractionDetailsDialog
             attraction={pendingAttraction}
             isOpen={dialogOpen}
-            isLoadingPhotos={isLoadingPhotos}
             onConfirm={handleConfirmAdd}
             onCancel={handleCancelAdd}
             type={pendingType || "attraction"}

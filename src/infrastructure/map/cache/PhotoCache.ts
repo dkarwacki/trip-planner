@@ -35,7 +35,7 @@ export const PhotoCacheLayer = Layer.effect(
           Effect.gen(function* () {
             const apiKey = yield* config.getGoogleMapsApiKey();
 
-            const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${key.maxWidth}&photoreference=${encodeURIComponent(key.photoReference)}&key=${apiKey}`;
+            const url = `https://places.googleapis.com/v1/places/-/photos/${key.photoReference}/media?maxWidthPx=${key.maxWidth}&key=${apiKey}`;
 
             const response = yield* Effect.tryPromise({
               try: () => fetch(url),

@@ -3,7 +3,6 @@ import { Star, MapPin, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { Attraction } from "@/domain/map/models";
 import PhotoImage from "@/components/common/PhotoImage";
 import PhotoLightbox from "./PhotoLightbox";
@@ -11,7 +10,6 @@ import PhotoLightbox from "./PhotoLightbox";
 interface AttractionDetailsDialogProps {
   attraction: Attraction | null;
   isOpen: boolean;
-  isLoadingPhotos?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   type: "attraction" | "restaurant";
@@ -51,7 +49,6 @@ const formatTypeName = (type: string): string => {
 export default function AttractionDetailsDialog({
   attraction,
   isOpen,
-  isLoadingPhotos = false,
   onConfirm,
   onCancel,
 }: AttractionDetailsDialogProps) {
@@ -72,39 +69,29 @@ export default function AttractionDetailsDialog({
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
-          {/* Photos Section */}
-          {isLoadingPhotos ? (
+          {/* Photos Section - Display first 2 photos, all available in lightbox */}
+          {hasPhotos && attraction.photos && (
             <div className="pt-6">
-              <div className="grid grid-cols-2 gap-0.5">
-                <Skeleton className="aspect-[4/3] w-full" />
-                <Skeleton className="aspect-[4/3] w-full" />
+              <div className={`grid ${attraction.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-0.5`}>
+                {attraction.photos.slice(0, 2).map((photo, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handlePhotoClick(index)}
+                    className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary"
+                    aria-label={`View ${attraction.name} photo ${index + 1} in full size`}
+                  >
+                    <PhotoImage
+                      photoReference={photo.photoReference}
+                      alt={`${attraction.name} ${index + 1}`}
+                      maxWidth={800}
+                      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
+                  </button>
+                ))}
               </div>
             </div>
-          ) : (
-            hasPhotos &&
-            attraction.photos && (
-              <div className="pt-6">
-                <div className={`grid ${attraction.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-0.5`}>
-                  {attraction.photos.map((photo, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => handlePhotoClick(index)}
-                      className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary"
-                      aria-label={`View ${attraction.name} photo ${index + 1} in full size`}
-                    >
-                      <PhotoImage
-                        photoReference={photo.photoReference}
-                        alt={`${attraction.name} ${index + 1}`}
-                        maxWidth={800}
-                        className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )
           )}
 
           <div className="px-6 pb-6">

@@ -2,7 +2,7 @@ import { Effect, Cache, Duration, Context, Layer } from "effect";
 import type { Attraction } from "@/domain/map/models";
 import { NoAttractionsFoundError, AttractionsAPIError } from "@/domain/map/errors";
 import { GoogleMapsClient } from "@/infrastructure/common/google-maps";
-import { ATTRACTION_TYPES } from "@/infrastructure/common/google-maps/constants";
+import { UNIVERSAL_ATTRACTION_TYPES } from "@/infrastructure/common/google-maps/constants";
 
 interface CacheKey {
   lat: number;
@@ -26,7 +26,7 @@ export const AttractionsCacheLayer = Layer.effect(
         timeToLive: Duration.minutes(30),
         lookup: (key: CacheKey) =>
           Effect.gen(function* () {
-            const result = yield* googleMaps.nearbySearch(key.lat, key.lng, key.radius, ATTRACTION_TYPES);
+            const result = yield* googleMaps.nearbySearch(key.lat, key.lng, key.radius, UNIVERSAL_ATTRACTION_TYPES);
             return result;
           }).pipe(
             Effect.catchTag("MissingGoogleMapsAPIKeyError", () =>

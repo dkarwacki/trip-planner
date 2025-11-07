@@ -1,9 +1,14 @@
 import type { AttractionScore } from "@/domain/map/models";
 
 // API response types
-interface SuccessResponse {
+interface AttractionsSuccessResponse {
   success: true;
   attractions: AttractionScore[];
+}
+
+interface RestaurantsSuccessResponse {
+  success: true;
+  restaurants: AttractionScore[];
 }
 
 interface ErrorResponse {
@@ -11,7 +16,8 @@ interface ErrorResponse {
   error: string;
 }
 
-type APIResponse = SuccessResponse | ErrorResponse;
+type AttractionsAPIResponse = AttractionsSuccessResponse | ErrorResponse;
+type RestaurantsAPIResponse = RestaurantsSuccessResponse | ErrorResponse;
 
 /**
  * Fetch top scored attractions from backend API
@@ -26,7 +32,7 @@ export const fetchTopAttractions = async (lat: number, lng: number): Promise<Att
     body: JSON.stringify({ lat, lng }),
   });
 
-  const data: APIResponse = await response.json();
+  const data: AttractionsAPIResponse = await response.json();
 
   if (!data.success) {
     throw new Error(data.error || "Failed to load attractions");
@@ -48,11 +54,11 @@ export const fetchTopRestaurants = async (lat: number, lng: number): Promise<Att
     body: JSON.stringify({ lat, lng }),
   });
 
-  const data: APIResponse = await response.json();
+  const data: RestaurantsAPIResponse = await response.json();
 
   if (!data.success) {
     throw new Error(data.error || "Failed to load restaurants");
   }
 
-  return data.attractions;
+  return data.restaurants;
 };

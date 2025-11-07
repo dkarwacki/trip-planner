@@ -108,7 +108,6 @@ export const GoogleMapsClientLive = Layer.effect(
 
       seenPlaceIds.add(place.id);
 
-      // Convert price level string to number (legacy format compatibility)
       let priceLevel: number | undefined;
       if (place.priceLevel) {
         const priceLevelMap: Record<string, number> = {
@@ -135,9 +134,9 @@ export const GoogleMapsClientLive = Layer.effect(
         },
       };
 
-      // Add photos if available (max 2 photos for dialog preview)
+      // Add photos if available (max 5 photos - display 2 in dialog, 5 in lightbox)
       if (place.photos && place.photos.length > 0) {
-        attraction.photos = place.photos.slice(0, 2).map(
+        attraction.photos = place.photos.slice(0, 5).map(
           (photo): PlacePhoto => ({
             // Extract photo reference from name: "places/{place_id}/photos/{photo_reference}"
             photoReference: photo.name.split("/").pop() || photo.name,
@@ -563,7 +562,7 @@ export const GoogleMapsClientLive = Layer.effect(
           return yield* Effect.fail(new AttractionNotFoundError(query));
         }
 
-        // Convert price level string to number (legacy format compatibility)
+        // Convert price level from NEW API string format to number
         let priceLevel: number | undefined;
         if (place.priceLevel) {
           const priceLevelMap: Record<string, number> = {
@@ -591,7 +590,7 @@ export const GoogleMapsClientLive = Layer.effect(
         };
 
         if (includePhotos && place.photos && place.photos.length > 0) {
-          attraction.photos = place.photos.slice(0, 2).map(
+          attraction.photos = place.photos.slice(0, 5).map(
             (photo): PlacePhoto => ({
               // Extract photo reference from name: "places/{place_id}/photos/{photo_reference}"
               photoReference: photo.name.split("/").pop() || photo.name,

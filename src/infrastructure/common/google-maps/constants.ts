@@ -84,19 +84,6 @@ export const PERSONA_FILTER_TYPES = {
   ],
 } as const;
 
-// Legacy exports for backward compatibility (deprecated - use PERSONA_FILTER_TYPES instead)
-export const GENERAL_TOURIST_TYPES = PERSONA_FILTER_TYPES.GENERAL_TOURIST;
-export const NATURE_LOVER_TYPES = PERSONA_FILTER_TYPES.NATURE_LOVER;
-export const ART_ENTHUSIAST_TYPES = PERSONA_FILTER_TYPES.ART_ENTHUSIAST;
-export const FOODIE_TRAVELER_TYPES = ["restaurant", "cafe", "bar", "bakery"] as const;
-export const ADVENTURE_SEEKER_TYPES = PERSONA_FILTER_TYPES.ADVENTURE_SEEKER;
-export const DIGITAL_NOMAD_TYPES = PERSONA_FILTER_TYPES.DIGITAL_NOMAD;
-export const HISTORY_BUFF_TYPES = PERSONA_FILTER_TYPES.HISTORY_BUFF;
-export const PHOTOGRAPHY_ENTHUSIAST_TYPES = PERSONA_FILTER_TYPES.PHOTOGRAPHY_ENTHUSIAST;
-
-// Union of all persona types for general attraction searches (deprecated - use UNIVERSAL_ATTRACTION_TYPES instead)
-export const ATTRACTION_TYPES = UNIVERSAL_ATTRACTION_TYPES;
-
 export const RESTAURANT_TYPES = ["restaurant", "cafe", "bar", "bakery"] as const;
 
 // Place types to block from general attraction suggestions

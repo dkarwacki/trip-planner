@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
   const program = Effect.gen(function* () {
     const input = yield* validateRequest(body);
     const restaurants = yield* getTopRestaurants(input);
-    return { attractions: restaurants }; // Keep "attractions" key for backwards compat
+    return { restaurants };
   });
 
   const response = await Runtime.runPromise(AppRuntime)(
