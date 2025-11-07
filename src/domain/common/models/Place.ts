@@ -1,5 +1,5 @@
+import type { Attraction } from "@/domain/map/models/Attraction";
 import { Brand } from "effect";
-import type { Attraction } from "./Attraction";
 
 // Branded types for type safety
 export type PlaceId = string & Brand.Brand<"PlaceId">;

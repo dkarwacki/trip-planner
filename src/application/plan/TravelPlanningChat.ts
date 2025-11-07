@@ -119,12 +119,6 @@ const generateNarrative = (userMessage: string, personas: string[], places: Plac
       maxTokens: 10000,
     });
 
-    // Log finish reason to check if response was cut off
-    yield* Effect.logDebug("Narrative generation response", {
-      finishReason: response.finishReason,
-      hasContent: !!response.content,
-      contentLength: response.content?.length,
-    });
 
     // Return the narrative directly
     if (response.content && response.content.trim()) {
@@ -200,20 +194,11 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
 
     // Validate each suggested place against Google Maps
     if (suggestedPlaces.length > 0) {
-      yield* Effect.logDebug("Starting place validation", {
-        placeCount: suggestedPlaces.length,
-        placeNames: suggestedPlaces.map((p) => p.name),
-      });
 
       const validationResults = yield* Effect.forEach(
         suggestedPlaces,
         (place) =>
           Effect.gen(function* () {
-            yield* Effect.logDebug("Validating place", {
-              placeName: place.name,
-              placeDescription: place.description,
-            });
-
             // Try primary search with full name
             const searchParams = {
               query: place.name,
@@ -221,24 +206,7 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
               requireRatings: false, // Allow geographic locations (towns, cities) without ratings
             };
 
-            yield* Effect.logDebug("Calling text search cache", {
-              query: searchParams.query,
-              includePhotos: searchParams.includePhotos,
-              requireRatings: searchParams.requireRatings,
-            });
-
             const searchResult = yield* textSearchCache.get(searchParams).pipe(
-              Effect.tap((attraction) =>
-                Effect.logDebug("Text search succeeded", {
-                  placeName: place.name,
-                  attractionId: attraction.id,
-                  attractionName: attraction.name,
-                  lat: attraction.location.lat,
-                  lng: attraction.location.lng,
-                  hasPhotos: !!attraction.photos && attraction.photos.length > 0,
-                  photoCount: attraction.photos?.length || 0,
-                })
-              ),
               Effect.map((attraction) => ({ attraction, searchQuery: place.name })),
               Effect.catchAll((error) =>
                 Effect.gen(function* () {
@@ -263,11 +231,6 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
                 validationStatus: "verified" as const,
                 searchQuery: searchResult.searchQuery,
               } satisfies PlaceSuggestion;
-
-              yield* Effect.logDebug("Place validation succeeded", {
-                placeName: place.name,
-                validationStatus: result.validationStatus,
-              });
 
               return result;
             }

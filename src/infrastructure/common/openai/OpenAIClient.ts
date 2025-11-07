@@ -108,11 +108,6 @@ export const OpenAIClientLive = Layer.effect(
             params.reasoning_effort = request.reasoningEffort;
           }
 
-          yield* Effect.logDebug("Calling OpenRouter API", {
-            model,
-            messageCount: request.messages.length,
-          });
-
           const completion = yield* Effect.tryPromise({
             try: () => client.chat.completions.create(params),
             catch: (error) => {
@@ -153,13 +148,6 @@ export const OpenAIClientLive = Layer.effect(
 
           // Extract reasoning content if present (for reasoning models)
           const reasoning = message.reasoning_content;
-
-          yield* Effect.logDebug("OpenRouter response received", {
-            hasContent: !!message.content,
-            hasReasoning: !!reasoning,
-            toolCallsCount: toolCalls?.length ?? 0,
-            finishReason: choice.finish_reason,
-          });
 
           return {
             content: message.content,

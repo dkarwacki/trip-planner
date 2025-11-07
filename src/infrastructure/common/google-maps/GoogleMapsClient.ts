@@ -361,12 +361,6 @@ export const GoogleMapsClientLive = Layer.effect(
         apiCallStats.textSearch++;
         const apiKey = yield* config.getGoogleMapsApiKey();
 
-        yield* Effect.logDebug("Starting text search", {
-          query,
-          includePhotos,
-          requireRatings,
-        });
-
         const validatedQuery = yield* Effect.try({
           try: () => validateNonEmptyString(query),
           catch: (error) =>
@@ -385,11 +379,6 @@ export const GoogleMapsClientLive = Layer.effect(
         if (includePhotos) {
           fieldMask += ",places.photos";
         }
-
-        yield* Effect.logDebug("Calling Google Maps Text Search API (New)", {
-          query: validatedQuery,
-          includePhotos,
-        });
 
         const response = yield* Effect.tryPromise({
           try: () =>
@@ -411,32 +400,12 @@ export const GoogleMapsClientLive = Layer.effect(
           catch: () => new AttractionsAPIError("Failed to parse API response"),
         });
 
-        // Log raw API response for debugging
-        yield* Effect.logDebug("Raw API response", {
-          query: validatedQuery,
-          status: response.status,
-          statusText: response.statusText,
-          hasError: !!json.error,
-          errorMessage: json.error?.message,
-          placesCount: json.places?.length ?? 0,
-          rawResponse: JSON.stringify(json).substring(0, 500), // First 500 chars
-        });
-
         const data = yield* Effect.try({
           try: () => TextSearchResponseSchema.parse(json),
           catch: (error) =>
             new AttractionsAPIError(
               error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
             ),
-        });
-
-        yield* Effect.logDebug("Google Maps Text Search API response", {
-          resultCount: data.places.length,
-          firstResultName: data.places[0]?.displayName?.text,
-          firstResultId: data.places[0]?.id,
-          firstResultHasLocation: !!data.places[0]?.location,
-          firstResultRating: data.places[0]?.rating,
-          firstResultUserRatingCount: data.places[0]?.userRatingCount,
         });
 
         if (data.places.length === 0) {
@@ -509,18 +478,6 @@ export const GoogleMapsClientLive = Layer.effect(
             })
           );
         }
-
-        yield* Effect.logDebug("Text Search returning attraction", {
-          query,
-          attractionId: attraction.id,
-          attractionName: attraction.name,
-          lat: attraction.location.lat,
-          lng: attraction.location.lng,
-          hasPhotos: !!attraction.photos && attraction.photos.length > 0,
-          photoCount: attraction.photos?.length || 0,
-          rating: attraction.rating,
-          userRatingsTotal: attraction.userRatingsTotal,
-        });
 
         return attraction;
       });

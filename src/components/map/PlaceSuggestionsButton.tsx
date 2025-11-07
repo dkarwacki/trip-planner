@@ -541,7 +541,9 @@ export default function PlaceSuggestionsButton({
                                                     {/* Show indicator on second photo if there are more photos */}
                                                     {photoIndex === 1 && suggestion.photos.length > 2 && (
                                                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
-                                                        <span className="text-white font-semibold text-sm">+{suggestion.photos.length - 2} more</span>
+                                                        <span className="text-white font-semibold text-sm">
+                                                          +{suggestion.photos.length - 2} more
+                                                        </span>
                                                       </div>
                                                     )}
                                                   </button>
