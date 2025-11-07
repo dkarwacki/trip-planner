@@ -514,7 +514,7 @@ export default function PlaceSuggestionsButton({
                                                   suggestion.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"
                                                 } gap-0.5 rounded overflow-hidden`}
                                               >
-                                                {suggestion.photos.map((photo, photoIndex) => (
+                                                {suggestion.photos.slice(0, 2).map((photo, photoIndex) => (
                                                   <button
                                                     key={photoIndex}
                                                     type="button"
@@ -538,6 +538,12 @@ export default function PlaceSuggestionsButton({
                                                       className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                                                     />
                                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
+                                                    {/* Show indicator on second photo if there are more photos */}
+                                                    {photoIndex === 1 && suggestion.photos.length > 2 && (
+                                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
+                                                        <span className="text-white font-semibold text-sm">+{suggestion.photos.length - 2} more</span>
+                                                      </div>
+                                                    )}
                                                   </button>
                                                 ))}
                                               </div>
