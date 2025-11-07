@@ -108,11 +108,19 @@ export default function PlaceAutocomplete({
 
     const listener = autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace();
+      console.log("[DEBUG PlaceAutocomplete] place_changed event fired", {
+        place_id: place.place_id,
+        name: place.name,
+        hasGeometry: !!place.geometry,
+        hasLocation: !!place.geometry?.location,
+      });
 
       if (!place.geometry || !place.geometry.location) {
+        console.log("[DEBUG PlaceAutocomplete] Place rejected - missing geometry or location");
         return;
       }
 
+      console.log("[DEBUG PlaceAutocomplete] Calling onPlaceSelectRef.current", place);
       onPlaceSelectRef.current(place);
 
       requestAnimationFrame(() => {

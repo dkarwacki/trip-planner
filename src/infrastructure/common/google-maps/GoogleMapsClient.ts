@@ -17,7 +17,6 @@ import { ConfigService } from "@/infrastructure/common/config";
 import {
   NearbySearchResponseSchema,
   GeocodeResponseSchema,
-  PlaceDetailsResponseSchema,
   TextSearchResponseSchema,
   validateSearchRadius,
   validateNonEmptyString,
@@ -32,7 +31,6 @@ const apiCallStats = {
   nearbySearch: 0,
   geocode: 0,
   reverseGeocode: 0,
-  placeDetails: 0,
   textSearch: 0,
   searchPlace: 0,
 };
@@ -60,11 +58,6 @@ export interface IGoogleMapsClient {
     lat: number,
     lng: number
   ) => Effect.Effect<Place, NoResultsError | GeocodingError | MissingGoogleMapsAPIKeyError>;
-
-  readonly placeDetails: (
-    placeId: string,
-    includePhotos?: boolean
-  ) => Effect.Effect<Place, PlaceNotFoundError | PlacesAPIError | MissingGoogleMapsAPIKeyError>;
 
   readonly textSearch: (
     query: string,
@@ -138,8 +131,8 @@ export const GoogleMapsClientLive = Layer.effect(
       if (place.photos && place.photos.length > 0) {
         attraction.photos = place.photos.slice(0, 5).map(
           (photo): PlacePhoto => ({
-            // Extract photo reference from name: "places/{place_id}/photos/{photo_reference}"
-            photoReference: photo.name.split("/").pop() || photo.name,
+            // Use full photo name as reference: "places/{place_id}/photos/{photo_reference}"
+            photoReference: photo.name,
             width: photo.widthPx,
             height: photo.heightPx,
             attributions: photo.authorAttributions?.map((attr) => attr.displayName || attr.uri || "") || [],
@@ -359,90 +352,6 @@ export const GoogleMapsClientLive = Layer.effect(
         return place;
       });
 
-    const placeDetails = (
-      placeId: string,
-      includePhotos = false
-    ): Effect.Effect<Place, PlaceNotFoundError | PlacesAPIError | MissingGoogleMapsAPIKeyError> =>
-      Effect.gen(function* () {
-        apiCallStats.placeDetails++;
-        const apiKey = yield* config.getGoogleMapsApiKey();
-
-        const validatedPlaceId = yield* Effect.try({
-          try: () => validateNonEmptyString(placeId),
-          catch: (error) => new PlaceNotFoundError(error instanceof ZodError ? error.errors[0].message : placeId),
-        });
-
-        // Use Place Details API
-        const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(validatedPlaceId)}`;
-
-        const fieldMask = includePhotos
-          ? "id,displayName,formattedAddress,location,photos"
-          : "id,displayName,formattedAddress,location";
-
-        const response = yield* Effect.tryPromise({
-          try: () =>
-            fetch(url, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Goog-Api-Key": apiKey,
-                "X-Goog-FieldMask": fieldMask,
-              },
-            }),
-          catch: (error) =>
-            new PlacesAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            return yield* Effect.fail(new PlaceNotFoundError(placeId));
-          }
-          return yield* Effect.fail(new PlacesAPIError(`API error: ${response.status} ${response.statusText}`));
-        }
-
-        const json = yield* Effect.tryPromise({
-          try: () => response.json(),
-          catch: () => new PlacesAPIError("Failed to parse API response"),
-        });
-
-        const data = yield* Effect.try({
-          try: () => PlaceDetailsResponseSchema.parse(json),
-          catch: (error) =>
-            new PlacesAPIError(
-              error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
-            ),
-        });
-
-        if (!data.location) {
-          return yield* Effect.fail(new PlaceNotFoundError(placeId));
-        }
-
-        const place: Place = {
-          id: PlaceId(data.id),
-          name: data.displayName?.text || data.formattedAddress || "Unknown",
-          lat: Latitude(data.location.latitude),
-          lng: Longitude(data.location.longitude),
-          plannedAttractions: [],
-          plannedRestaurants: [],
-        };
-
-        // Add photos if requested and available
-        if (includePhotos && data.photos && data.photos.length > 0) {
-          // Store photo references (max 2 photos)
-          place.photos = data.photos.slice(0, 2).map(
-            (photo): PlacePhoto => ({
-              // Extract photo reference from name: "places/{place_id}/photos/{photo_reference}"
-              photoReference: photo.name.split("/").pop() || photo.name,
-              width: photo.widthPx,
-              height: photo.heightPx,
-              attributions: photo.authorAttributions?.map((attr) => attr.displayName || attr.uri || "") || [],
-            })
-          );
-        }
-
-        return place;
-      });
-
     const textSearch = (
       query: string,
       includePhotos = false,
@@ -592,8 +501,8 @@ export const GoogleMapsClientLive = Layer.effect(
         if (includePhotos && place.photos && place.photos.length > 0) {
           attraction.photos = place.photos.slice(0, 5).map(
             (photo): PlacePhoto => ({
-              // Extract photo reference from name: "places/{place_id}/photos/{photo_reference}"
-              photoReference: photo.name.split("/").pop() || photo.name,
+              // Use full photo name as reference: "places/{place_id}/photos/{photo_reference}"
+              photoReference: photo.name,
               width: photo.widthPx,
               height: photo.heightPx,
               attributions: photo.authorAttributions?.map((attr) => attr.displayName || attr.uri || "") || [],
@@ -689,7 +598,6 @@ export const GoogleMapsClientLive = Layer.effect(
       nearbySearch,
       geocode,
       reverseGeocode,
-      placeDetails,
       textSearch,
       searchPlace,
     };

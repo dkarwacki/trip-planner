@@ -14,8 +14,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { fetchTopAttractions, fetchTopRestaurants } from "@/infrastructure/map/clients";
 import { reverseGeocode } from "@/infrastructure/map/clients/geocoding";
-import { getPlaceDetails } from "@/infrastructure/map/clients";
 import type { Place } from "@/domain/common/models";
+import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import type { AttractionScore, Attraction } from "@/domain/map/models";
 import { scoreAttractions } from "@/domain/map/scoring/attractions";
 import { scoreRestaurants } from "@/domain/map/scoring/restaurants";
@@ -82,6 +82,15 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       }
     }
   }, [tripId]);
+
+  // Debug: Track places changes
+  useEffect(() => {
+    console.log("[DEBUG MapPlanner] places state changed", {
+      count: places.length,
+      placeIds: places.map((p) => p.id),
+      placeNames: places.map((p) => p.name),
+    });
+  }, [places]);
 
   // Helper function to merge API results with planned attractions (persona-aware)
   const mergeAttractionsWithPlanned = useCallback(
@@ -262,38 +271,70 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
 
   const handlePlaceSelect = useCallback(
     async (place: google.maps.places.PlaceResult) => {
-      if (!place.place_id) return;
+      console.log("[DEBUG MapPlanner] handlePlaceSelect called", {
+        place_id: place.place_id,
+        name: place.name,
+        hasGeometry: !!place.geometry,
+        hasLocation: !!place.geometry?.location,
+        currentPlacesCount: places.length,
+      });
+
+      if (!place.place_id || !place.geometry?.location) {
+        console.log("[DEBUG MapPlanner] Place rejected - missing place_id or geometry/location");
+        return;
+      }
 
       setIsLoading(true);
       setError(null);
 
       try {
-        const placeDetails = await Effect.runPromise(
-          getPlaceDetails(place.place_id).pipe(
-            Effect.catchAll((error) => {
-              if (error._tag === "PlaceNotFoundError") {
-                return Effect.fail(`No details found for this place`);
-              }
-              if (error._tag === "PlacesAPIError") {
-                return Effect.fail(error.message);
-              }
-              return Effect.fail("An unexpected error occurred");
-            })
-          )
-        );
+        // Convert autocomplete result directly to Place
+        const placeDetails: Place = {
+          id: PlaceId(place.place_id),
+          name: place.name || place.formatted_address || "Unknown",
+          lat: Latitude(place.geometry.location.lat()),
+          lng: Longitude(place.geometry.location.lng()),
+          plannedAttractions: [],
+          plannedRestaurants: [],
+        };
 
+        console.log("[DEBUG MapPlanner] Created placeDetails", placeDetails);
+
+        // Check for duplicates first (before state update to show error)
+        // Note: This uses the closure's `places`, but in practice this is fine since
+        // JavaScript is single-threaded and React batches state updates
         const isDuplicate = places.some((p) => p.id === placeDetails.id);
+        console.log("[DEBUG MapPlanner] Duplicate check", {
+          isDuplicate,
+          existingIds: places.map((p) => p.id),
+          newPlaceId: placeDetails.id,
+        });
+
         if (isDuplicate) {
+          console.log("[DEBUG MapPlanner] Place is duplicate, showing error");
           setError("This place has already been added");
           setIsLoading(false);
           return;
         }
 
-        setPlaces((prev) => [...prev, placeDetails]);
+        // Add place atomically
+        console.log("[DEBUG MapPlanner] Before setPlaces - current count:", places.length);
+        setPlaces((prev) => {
+          const newPlaces = [...prev, placeDetails];
+          console.log("[DEBUG MapPlanner] Inside setPlaces callback", {
+            prevCount: prev.length,
+            newCount: newPlaces.length,
+            newPlaceId: placeDetails.id,
+          });
+          return newPlaces;
+        });
+        console.log("[DEBUG MapPlanner] After setPlaces call");
 
         // Automatically select and highlight the newly added place
         await handlePanToPlace(placeDetails);
+        console.log("[DEBUG MapPlanner] After handlePanToPlace");
       } catch (err) {
+        console.error("[DEBUG MapPlanner] Error in handlePlaceSelect", err);
         setError(typeof err === "string" ? err : "An error occurred");
       } finally {
         setIsLoading(false);
@@ -1507,7 +1548,7 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
 
 export default function MapPlanner({ apiKey, mapId, tripId }: MapPlannerProps) {
   return (
-    <APIProvider apiKey={apiKey} libraries={["geometry"]}>
+    <APIProvider apiKey={apiKey} libraries={["geometry", "places"]}>
       <MapContent mapId={mapId} tripId={tripId} />
     </APIProvider>
   );

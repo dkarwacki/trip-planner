@@ -4,7 +4,6 @@ interface ApiCallStats {
   nearbySearch: number;
   geocode: number;
   reverseGeocode: number;
-  placeDetails: number;
   textSearch: number;
   searchPlace: number;
 }
@@ -76,7 +75,6 @@ export function DevStats() {
                 <StatRow label="nearbySearch" count={stats.nearbySearch} />
                 <StatRow label="geocode" count={stats.geocode} />
                 <StatRow label="reverseGeocode" count={stats.reverseGeocode} />
-                <StatRow label="placeDetails" count={stats.placeDetails} />
                 <StatRow label="textSearch" count={stats.textSearch} />
                 <StatRow label="searchPlace" count={stats.searchPlace} />
               </div>

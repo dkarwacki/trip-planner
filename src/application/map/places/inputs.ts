@@ -5,10 +5,3 @@ export const SearchPlaceInputSchema = z.object({
 });
 
 export type SearchPlaceInput = z.infer<typeof SearchPlaceInputSchema>;
-
-export const GetPlaceDetailsInputSchema = z.object({
-  placeId: z.string({ required_error: "placeId is required" }).min(1, "placeId cannot be empty"),
-  includePhotos: z.boolean().optional(),
-});
-
-export type GetPlaceDetailsInput = z.infer<typeof GetPlaceDetailsInputSchema>;

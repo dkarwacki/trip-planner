@@ -1,5 +1,5 @@
-import { usePhoto } from "@/lib/common/use-photo";
-import { Skeleton } from "@/components/ui/skeleton";
+import { getPhotoUrl } from "@/lib/common/photo-utils";
+import { useState } from "react";
 
 interface PhotoImageProps {
   photoReference: string;
@@ -9,18 +9,21 @@ interface PhotoImageProps {
   onError?: () => void;
 }
 
+/**
+ * Displays a photo from Google Places API via our proxy endpoint
+ *
+ * With GET requests + Cache-Control headers, the browser automatically caches photos for 48 hours.
+ * No need to manually manage blob URLs or client-side caching - just use the URL directly!
+ */
 export default function PhotoImage({ photoReference, alt, maxWidth = 800, className, onError }: PhotoImageProps) {
-  const { photoUrl, isLoading, error } = usePhoto(photoReference, maxWidth);
+  const [hasError, setHasError] = useState(false);
 
-  if (isLoading) {
-    return <Skeleton className={className} />;
-  }
+  // Generate the URL that points to our proxy endpoint
+  // Browser will cache this automatically based on Cache-Control headers
+  const photoUrl = getPhotoUrl(photoReference, maxWidth);
 
-  if (error || !photoUrl) {
+  if (hasError) {
     // Hide the component if there's an error
-    if (onError) {
-      onError();
-    }
     return null;
   }
 
@@ -31,6 +34,7 @@ export default function PhotoImage({ photoReference, alt, maxWidth = 800, classN
       className={className}
       loading="lazy"
       onError={() => {
+        setHasError(true);
         if (onError) {
           onError();
         }

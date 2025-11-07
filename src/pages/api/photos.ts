@@ -6,9 +6,15 @@ import { AppRuntime } from "@/infrastructure/common/runtime";
 
 export const prerender = false;
 
-const validateRequest = (body: unknown) =>
+const validateRequest = (params: URLSearchParams) =>
   Effect.gen(function* () {
-    const result = GetPhotoInputSchema.safeParse(body);
+    const photoReference = params.get("ref");
+    const maxWidth = params.get("width");
+
+    const result = GetPhotoInputSchema.safeParse({
+      photoReference,
+      maxWidth: maxWidth ? parseInt(maxWidth, 10) : 800,
+    });
 
     if (!result.success) {
       return yield* Effect.fail(new ValidationError(result.error));
@@ -17,11 +23,9 @@ const validateRequest = (body: unknown) =>
     return result.data;
   });
 
-export const POST: APIRoute = async ({ request }) => {
-  const body = await request.json();
-
+export const GET: APIRoute = async ({ url }) => {
   const program = Effect.gen(function* () {
-    const input = yield* validateRequest(body);
+    const input = yield* validateRequest(url.searchParams);
     const photoData = yield* GetPhoto(input);
     return photoData;
   });
@@ -50,11 +54,13 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   // Return the photo binary data with appropriate content type
-  return new Response(result.data.data, {
+  // Browsers will cache this for 48 hours
+  // Convert Buffer to Uint8Array for Response constructor
+  return new Response(new Uint8Array(result.data.data), {
     status: 200,
     headers: {
       "Content-Type": result.data.contentType,
-      "Cache-Control": "public, max-age=172800", // 48 hours
+      "Cache-Control": "public, max-age=172800, immutable", // 48 hours, immutable for better caching
     },
   });
 };
