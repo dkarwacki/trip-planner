@@ -38,12 +38,15 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
   };
 
   return (
-    <Card id={`place-${suggestion.id}`} className="transition-shadow hover:shadow-md overflow-hidden scroll-mt-4 w-full max-w-full">
+    <Card
+      id={`place-${suggestion.id}`}
+      className="transition-shadow hover:shadow-md overflow-hidden scroll-mt-4 w-full max-w-full"
+    >
       {/* Photos Section */}
       {suggestion.photos && suggestion.photos.length > 0 && (
         <div className="relative">
           <div className={`grid ${suggestion.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-0.5`}>
-            {suggestion.photos.map((photo, index) => (
+            {suggestion.photos.slice(0, 2).map((photo, index) => (
               <button
                 key={index}
                 type="button"
@@ -59,6 +62,12 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
                 />
                 {/* Hover overlay to indicate clickability */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
+                {/* Show indicator on second photo if there are more photos */}
+                {index === 1 && suggestion.photos.length > 2 && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
+                    <span className="text-white font-semibold text-sm">+{suggestion.photos.length - 2} more</span>
+                  </div>
+                )}
               </button>
             ))}
           </div>

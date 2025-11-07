@@ -12,6 +12,7 @@ import PhotoImage from "@/components/common/PhotoImage";
 import type { AttractionScore, Attraction } from "@/domain/map/models";
 import type { Place } from "@/domain/common/models";
 import { HIGH_SCORE_THRESHOLD } from "@/domain/map/scoring";
+import { getCategoryColor } from "@/lib/map/map-utils";
 
 type CategoryTab = "attractions" | "restaurants";
 
@@ -54,17 +55,6 @@ const formatReviewCount = (count: number): string => {
   return count.toString();
 };
 
-const getCategoryColor = (type: string): string => {
-  const colors: Record<string, string> = {
-    museum: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    restaurant: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-    cafe: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-    park: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    art_gallery: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
-    tourist_attraction: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  };
-  return colors[type] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
-};
 
 const formatTypeName = (type: string): string => {
   return type
