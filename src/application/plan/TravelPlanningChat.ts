@@ -200,72 +200,84 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
 
     // Validate each suggested place against Google Maps
     if (suggestedPlaces.length > 0) {
+      yield* Effect.logDebug("Starting place validation", {
+        placeCount: suggestedPlaces.length,
+        placeNames: suggestedPlaces.map((p) => p.name),
+      });
+
       const validationResults = yield* Effect.forEach(
         suggestedPlaces,
         (place) =>
           Effect.gen(function* () {
+            yield* Effect.logDebug("Validating place", {
+              placeName: place.name,
+              placeDescription: place.description,
+            });
+
             // Try primary search with full name
-            const primarySearch = yield* textSearchCache
-              .get({
-                query: place.name,
-                includePhotos: true,
-                requireRatings: false, // Allow geographic locations (towns, cities) without ratings
-              })
-              .pipe(
-                Effect.map((attraction) => ({ attraction, searchQuery: place.name })),
-                Effect.catchAll(() => Effect.succeed(null))
-              );
+            const searchParams = {
+              query: place.name,
+              includePhotos: true,
+              requireRatings: false, // Allow geographic locations (towns, cities) without ratings
+            };
 
-            if (primarySearch) {
-              return {
-                ...place,
-                id: primarySearch.attraction.id,
-                lat: primarySearch.attraction.location.lat,
-                lng: primarySearch.attraction.location.lng,
-                photos: primarySearch.attraction.photos,
-                validationStatus: "verified" as const,
-                searchQuery: primarySearch.searchQuery,
-              } satisfies PlaceSuggestion;
-            }
+            yield* Effect.logDebug("Calling text search cache", {
+              query: searchParams.query,
+              includePhotos: searchParams.includePhotos,
+              requireRatings: searchParams.requireRatings,
+            });
 
-            // Fallback: Try simplified name by removing parentheses and taking first part before comma
-            // "Golden Gate Park (near Academy), SF" -> "Golden Gate Park"
-            const simplifiedName = place.name
-              .replace(/\s*\([^)]*\)/g, "") // Remove parentheses and content
-              .split(/[,]/)[0] // Take first part before comma
-              .trim();
-
-            if (simplifiedName !== place.name && simplifiedName.length > 0) {
-              yield* Effect.logDebug(
-                `Trying fallback search for "${place.name}" with simplified name "${simplifiedName}"`
-              );
-
-              const fallbackSearch = yield* textSearchCache
-                .get({
-                  query: simplifiedName,
-                  includePhotos: true,
-                  requireRatings: false, // Allow geographic locations (towns, cities) without ratings
+            const searchResult = yield* textSearchCache.get(searchParams).pipe(
+              Effect.tap((attraction) =>
+                Effect.logDebug("Text search succeeded", {
+                  placeName: place.name,
+                  attractionId: attraction.id,
+                  attractionName: attraction.name,
+                  lat: attraction.location.lat,
+                  lng: attraction.location.lng,
+                  hasPhotos: !!attraction.photos && attraction.photos.length > 0,
+                  photoCount: attraction.photos?.length || 0,
                 })
-                .pipe(
-                  Effect.map((attraction) => ({ attraction, searchQuery: simplifiedName })),
-                  Effect.catchAll(() => Effect.succeed(null))
-                );
+              ),
+              Effect.map((attraction) => ({ attraction, searchQuery: place.name })),
+              Effect.catchAll((error) =>
+                Effect.gen(function* () {
+                  yield* Effect.logWarning("Text search failed", {
+                    placeName: place.name,
+                    errorTag: error._tag,
+                    errorMessage: error instanceof Error ? error.message : String(error),
+                    errorDetails: error,
+                  });
+                  return null;
+                })
+              )
+            );
 
-              if (fallbackSearch) {
-                return {
-                  ...place,
-                  id: fallbackSearch.attraction.id,
-                  lat: fallbackSearch.attraction.location.lat,
-                  lng: fallbackSearch.attraction.location.lng,
-                  photos: fallbackSearch.attraction.photos,
-                  validationStatus: "verified" as const,
-                  searchQuery: fallbackSearch.searchQuery,
-                } satisfies PlaceSuggestion;
-              }
+            if (searchResult) {
+              const result = {
+                ...place,
+                id: searchResult.attraction.id,
+                lat: searchResult.attraction.location.lat,
+                lng: searchResult.attraction.location.lng,
+                photos: searchResult.attraction.photos,
+                validationStatus: "verified" as const,
+                searchQuery: searchResult.searchQuery,
+              } satisfies PlaceSuggestion;
+
+              yield* Effect.logDebug("Place validation succeeded", {
+                placeName: place.name,
+                validationStatus: result.validationStatus,
+              });
+
+              return result;
             }
 
             // If all searches fail, mark as not found
-            yield* Effect.logWarning(`Failed to validate place "${place.name}"`);
+            yield* Effect.logWarning("Failed to validate place", {
+              placeName: place.name,
+              validationStatus: "not_found",
+            });
+
             return {
               ...place,
               validationStatus: "not_found" as const,
@@ -274,6 +286,20 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
           }),
         { concurrency: 3 } // Validate up to 3 places at a time
       );
+
+      // Log validation results for debugging
+      yield* Effect.logInfo("Place validation results", {
+        totalPlaces: validationResults.length,
+        validatedCount: validationResults.filter((p) => p.validationStatus === "verified").length,
+        notFoundCount: validationResults.filter((p) => p.validationStatus === "not_found").length,
+        results: validationResults.map((p) => ({
+          name: p.name,
+          validationStatus: p.validationStatus,
+          searchQuery: p.searchQuery,
+          hasId: !!p.id,
+          hasLocation: !!(p.lat && p.lng),
+        })),
+      });
 
       // Filter out unvalidated places (Option A)
       const validatedPlaces = validationResults.filter((p) => p.validationStatus === "verified");
@@ -285,7 +311,15 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
           .map((p) => p.name)
           .join(", ");
 
-        yield* Effect.logInfo(`Filtered out ${rejectedCount} unvalidated place(s): ${rejectedNames}`);
+        yield* Effect.logWarning(`Filtered out ${rejectedCount} unvalidated place(s): ${rejectedNames}`, {
+          rejectedPlaces: validationResults
+            .filter((p) => p.validationStatus !== "verified")
+            .map((p) => ({
+              name: p.name,
+              validationStatus: p.validationStatus,
+              searchQuery: p.searchQuery,
+            })),
+        });
 
         // Add user feedback about filtered places
         if (validatedPlaces.length > 0) {

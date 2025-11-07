@@ -39,39 +39,6 @@ const GeometrySchema = z.object({
   location: LocationSchema,
 });
 
-const OpeningHoursSchema = z
-  .object({
-    open_now: z.boolean().optional(),
-  })
-  .optional();
-
-const PhotoSchema = z.object({
-  photo_reference: z.string(),
-  width: z.number(),
-  height: z.number(),
-  html_attributions: z.array(z.string()).default([]),
-});
-
-// Legacy schemas (used by textSearch and searchPlace - to be migrated)
-const PlaceResultLegacySchema = z.object({
-  place_id: z.string(),
-  name: z.string(),
-  rating: z.number().optional(),
-  user_ratings_total: z.number().int().optional(),
-  types: z.array(z.string()).optional(),
-  vicinity: z.string().optional(),
-  price_level: z.number().int().min(0).max(4).optional(),
-  opening_hours: OpeningHoursSchema,
-  geometry: GeometrySchema.optional(),
-  photos: z.array(PhotoSchema).optional(),
-});
-
-const NearbySearchResponseLegacySchema = z.object({
-  status: z.string(),
-  results: z.array(PlaceResultLegacySchema).default([]),
-  error_message: z.string().optional(),
-});
-
 const GeocodeResultSchema = z.object({
   formatted_address: z.string(),
   place_id: z.string(),
@@ -83,9 +50,6 @@ export const GeocodeResponseSchema = z.object({
   results: z.array(GeocodeResultSchema).default([]),
   error_message: z.string().optional(),
 });
-
-export const TextSearchResponseSchema = NearbySearchResponseLegacySchema;
-export type PlaceResult = z.infer<typeof PlaceResultLegacySchema>;
 
 // Places API schemas
 const DisplayNameSchema = z.object({
@@ -131,9 +95,13 @@ const PlaceSchema = z.object({
   photos: z.array(PlacePhotoSchema).optional(),
 });
 
-export const NearbySearchResponseSchema = z.object({
+// Shared response schema for Places API (New) endpoints
+const PlacesResponseSchema = z.object({
   places: z.array(PlaceSchema).default([]),
 });
+
+export const NearbySearchResponseSchema = PlacesResponseSchema;
+export const TextSearchResponseSchema = PlacesResponseSchema;
 
 // Place Details API response schema
 export const PlaceDetailsResponseSchema = z.object({

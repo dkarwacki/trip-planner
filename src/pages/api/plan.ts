@@ -32,6 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
     program.pipe(
       Effect.catchAllDefect((defect) =>
         Effect.gen(function* () {
+          console.error("[API /api/plan] Defect caught:", defect);
           yield* Effect.logError("Unexpected error in /api/plan", { defect });
           return yield* Effect.fail(new UnexpectedError("Internal server error", defect));
         })
@@ -41,6 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
   );
 
   if (result._tag === "Left") {
+    console.error("[API /api/plan] Request failed:", result.left);
     return toHttpResponse(result.left as Parameters<typeof toHttpResponse>[0]);
   }
 

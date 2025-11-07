@@ -1,1 +1,1 @@
-export type { PlaceResult, NearbySearchResponse, GeocodeResponse, PlaceDetailsResponse } from "./validation";
+export type { NearbySearchResponse, GeocodeResponse, PlaceDetailsResponse, TextSearchResponse } from "./validation";

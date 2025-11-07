@@ -454,17 +454,47 @@ export const GoogleMapsClientLive = Layer.effect(
         apiCallStats.textSearch++;
         const apiKey = yield* config.getGoogleMapsApiKey();
 
+        yield* Effect.logDebug("Starting text search", {
+          query,
+          includePhotos,
+          requireRatings,
+        });
+
         const validatedQuery = yield* Effect.try({
           try: () => validateNonEmptyString(query),
           catch: (error) =>
             new AttractionsAPIError(error instanceof ZodError ? error.errors[0].message : "Invalid query"),
         });
 
-        const encodedQuery = encodeURIComponent(validatedQuery);
-        const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodedQuery}&key=${apiKey}`;
+        // Use Text Search API (New)
+        const url = `https://places.googleapis.com/v1/places:searchText`;
+
+        const requestBody = {
+          textQuery: validatedQuery,
+        };
+
+        let fieldMask =
+          "places.id,places.displayName,places.types,places.location,places.rating,places.userRatingCount,places.priceLevel,places.currentOpeningHours";
+        if (includePhotos) {
+          fieldMask += ",places.photos";
+        }
+
+        yield* Effect.logDebug("Calling Google Maps Text Search API (New)", {
+          query: validatedQuery,
+          includePhotos,
+        });
 
         const response = yield* Effect.tryPromise({
-          try: () => fetch(url),
+          try: () =>
+            fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": apiKey,
+                "X-Goog-FieldMask": fieldMask,
+              },
+              body: JSON.stringify(requestBody),
+            }),
           catch: (error) =>
             new AttractionsAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
         });
@@ -472,6 +502,17 @@ export const GoogleMapsClientLive = Layer.effect(
         const json = yield* Effect.tryPromise({
           try: () => response.json(),
           catch: () => new AttractionsAPIError("Failed to parse API response"),
+        });
+
+        // Log raw API response for debugging
+        yield* Effect.logDebug("Raw API response", {
+          query: validatedQuery,
+          status: response.status,
+          statusText: response.statusText,
+          hasError: !!json.error,
+          errorMessage: json.error?.message,
+          placesCount: json.places?.length ?? 0,
+          rawResponse: JSON.stringify(json).substring(0, 500), // First 500 chars
         });
 
         const data = yield* Effect.try({
@@ -482,52 +523,98 @@ export const GoogleMapsClientLive = Layer.effect(
             ),
         });
 
-        if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-          const errorMessage = data.error_message || `Text Search API error: ${data.status}`;
-          return yield* Effect.fail(new AttractionsAPIError(errorMessage));
-        }
+        yield* Effect.logDebug("Google Maps Text Search API response", {
+          resultCount: data.places.length,
+          firstResultName: data.places[0]?.displayName?.text,
+          firstResultId: data.places[0]?.id,
+          firstResultHasLocation: !!data.places[0]?.location,
+          firstResultRating: data.places[0]?.rating,
+          firstResultUserRatingCount: data.places[0]?.userRatingCount,
+        });
 
-        if (data.results.length === 0) {
+        if (data.places.length === 0) {
+          yield* Effect.logWarning("Text Search returned no results", {
+            query,
+          });
           return yield* Effect.fail(new AttractionNotFoundError(query));
         }
 
-        const result = data.results[0];
+        const place = data.places[0];
 
         // Validate location is present
-        if (!result.geometry?.location) {
+        if (!place.location) {
+          yield* Effect.logWarning("Text Search result missing location", {
+            query,
+            placeId: place.id,
+            placeName: place.displayName?.text,
+          });
           return yield* Effect.fail(new AttractionNotFoundError(query));
         }
 
         // Validate ratings if required (for attractions/restaurants) but not for geographic locations (towns/cities)
-        if (requireRatings && (!result.rating || !result.user_ratings_total)) {
+        if (requireRatings && (!place.rating || !place.userRatingCount)) {
+          yield* Effect.logWarning("Text Search result missing required ratings", {
+            query,
+            placeId: place.id,
+            placeName: place.displayName?.text,
+            hasRating: !!place.rating,
+            hasUserRatingCount: !!place.userRatingCount,
+            requireRatings,
+          });
           return yield* Effect.fail(new AttractionNotFoundError(query));
         }
 
+        // Convert price level string to number (legacy format compatibility)
+        let priceLevel: number | undefined;
+        if (place.priceLevel) {
+          const priceLevelMap: Record<string, number> = {
+            PRICE_LEVEL_FREE: 0,
+            PRICE_LEVEL_INEXPENSIVE: 1,
+            PRICE_LEVEL_MODERATE: 2,
+            PRICE_LEVEL_EXPENSIVE: 3,
+            PRICE_LEVEL_VERY_EXPENSIVE: 4,
+          };
+          priceLevel = priceLevelMap[place.priceLevel];
+        }
+
         const attraction: Attraction = {
-          id: PlaceId(result.place_id),
-          name: result.name,
-          rating: result.rating,
-          userRatingsTotal: result.user_ratings_total,
-          types: result.types || [],
-          vicinity: result.vicinity || "",
-          priceLevel: result.price_level,
-          openNow: result.opening_hours?.open_now,
+          id: PlaceId(place.id),
+          name: place.displayName?.text || "Unknown",
+          rating: place.rating,
+          userRatingsTotal: place.userRatingCount,
+          types: place.types || [],
+          vicinity: "", // Not available in new API response
+          priceLevel,
+          openNow: place.currentOpeningHours?.openNow,
           location: {
-            lat: Latitude(result.geometry.location.lat),
-            lng: Longitude(result.geometry.location.lng),
+            lat: Latitude(place.location.latitude),
+            lng: Longitude(place.location.longitude),
           },
         };
 
-        if (includePhotos && result.photos && result.photos.length > 0) {
-          attraction.photos = result.photos.slice(0, 2).map(
+        if (includePhotos && place.photos && place.photos.length > 0) {
+          attraction.photos = place.photos.slice(0, 2).map(
             (photo): PlacePhoto => ({
-              photoReference: photo.photo_reference,
-              width: photo.width,
-              height: photo.height,
-              attributions: photo.html_attributions || [],
+              // Extract photo reference from name: "places/{place_id}/photos/{photo_reference}"
+              photoReference: photo.name.split("/").pop() || photo.name,
+              width: photo.widthPx,
+              height: photo.heightPx,
+              attributions: photo.authorAttributions?.map((attr) => attr.displayName || attr.uri || "") || [],
             })
           );
         }
+
+        yield* Effect.logDebug("Text Search returning attraction", {
+          query,
+          attractionId: attraction.id,
+          attractionName: attraction.name,
+          lat: attraction.location.lat,
+          lng: attraction.location.lng,
+          hasPhotos: !!attraction.photos && attraction.photos.length > 0,
+          photoCount: attraction.photos?.length || 0,
+          rating: attraction.rating,
+          userRatingsTotal: attraction.userRatingsTotal,
+        });
 
         return attraction;
       });
@@ -544,11 +631,24 @@ export const GoogleMapsClientLive = Layer.effect(
           catch: (error) => new PlaceNotFoundError(error instanceof ZodError ? error.errors[0].message : query),
         });
 
-        const encodedQuery = encodeURIComponent(validatedQuery);
-        const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodedQuery}&key=${apiKey}`;
+        // Use Text Search API (New)
+        const url = `https://places.googleapis.com/v1/places:searchText`;
+
+        const requestBody = {
+          textQuery: validatedQuery,
+        };
 
         const response = yield* Effect.tryPromise({
-          try: () => fetch(url),
+          try: () =>
+            fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": apiKey,
+                "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location",
+              },
+              body: JSON.stringify(requestBody),
+            }),
           catch: (error) =>
             new PlacesAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
         });
@@ -566,30 +666,21 @@ export const GoogleMapsClientLive = Layer.effect(
             ),
         });
 
-        if (data.status === "ZERO_RESULTS") {
+        if (data.places.length === 0) {
           return yield* Effect.fail(new PlaceNotFoundError(query));
         }
 
-        if (data.status !== "OK") {
-          const errorMessage = data.error_message || `Text Search API error: ${data.status}`;
-          return yield* Effect.fail(new PlacesAPIError(errorMessage));
-        }
+        const result = data.places[0];
 
-        if (data.results.length === 0) {
-          return yield* Effect.fail(new PlaceNotFoundError(query));
-        }
-
-        const result = data.results[0];
-
-        if (!result.geometry?.location) {
+        if (!result.location) {
           return yield* Effect.fail(new PlaceNotFoundError(query));
         }
 
         const place: Place = {
-          id: PlaceId(result.place_id),
-          name: result.name,
-          lat: Latitude(result.geometry.location.lat),
-          lng: Longitude(result.geometry.location.lng),
+          id: PlaceId(result.id),
+          name: result.displayName?.text || "Unknown",
+          lat: Latitude(result.location.latitude),
+          lng: Longitude(result.location.longitude),
           plannedAttractions: [],
           plannedRestaurants: [],
         };
