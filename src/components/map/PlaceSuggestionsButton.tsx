@@ -202,7 +202,6 @@ export default function PlaceSuggestionsButton({
         types: suggestion.attractionData.types,
         vicinity: suggestion.attractionData.vicinity,
         priceLevel: suggestion.attractionData.priceLevel,
-        openNow: suggestion.attractionData.openNow,
         location: {
           lat: Latitude(suggestion.attractionData.location.lat),
           lng: Longitude(suggestion.attractionData.location.lng),

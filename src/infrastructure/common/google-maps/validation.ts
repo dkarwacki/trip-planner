@@ -62,12 +62,6 @@ const PlaceLocationSchema = z.object({
   longitude: z.number(),
 });
 
-const CurrentOpeningHoursSchema = z
-  .object({
-    openNow: z.boolean().optional(),
-  })
-  .optional();
-
 const PlacePhotoSchema = z.object({
   name: z.string(), // Format: places/{place_id}/photos/{photo_reference}
   widthPx: z.number(),
@@ -91,7 +85,6 @@ const PlaceSchema = z.object({
   rating: z.number().optional(),
   userRatingCount: z.number().int().optional(),
   priceLevel: z.string().optional(), // "PRICE_LEVEL_FREE", "PRICE_LEVEL_INEXPENSIVE", etc.
-  currentOpeningHours: CurrentOpeningHoursSchema,
   photos: z.array(PlacePhotoSchema).optional(),
 });
 

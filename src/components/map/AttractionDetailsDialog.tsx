@@ -138,11 +138,6 @@ export default function AttractionDetailsDialog({
                     <span>{getPriceLevelSymbol(attraction.priceLevel)}</span>
                   </div>
                 )}
-                {attraction.openNow !== undefined && (
-                  <Badge variant={attraction.openNow ? "default" : "secondary"} className="text-xs">
-                    {attraction.openNow ? "Open" : "Closed"}
-                  </Badge>
-                )}
               </div>
 
               {/* Address */}

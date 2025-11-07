@@ -8,7 +8,6 @@ export interface Attraction {
   types: string[];
   vicinity: string;
   priceLevel?: number;
-  openNow?: boolean;
   location: { lat: Latitude; lng: Longitude };
   photos?: PlacePhoto[];
 }

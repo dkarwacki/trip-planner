@@ -45,7 +45,6 @@ const PlaceSchema = z.object({
       types: z.array(z.string()),
       vicinity: z.string(),
       priceLevel: z.number().optional(),
-      openNow: z.boolean().optional(),
       location: z.object({
         lat: z.number(),
         lng: z.number(),
@@ -61,7 +60,6 @@ const PlaceSchema = z.object({
       types: z.array(z.string()),
       vicinity: z.string(),
       priceLevel: z.number().optional(),
-      openNow: z.boolean().optional(),
       location: z.object({
         lat: z.number(),
         lng: z.number(),

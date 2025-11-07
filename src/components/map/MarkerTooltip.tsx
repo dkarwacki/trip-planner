@@ -131,15 +131,6 @@ export function MarkerTooltip({ attraction, position, type }: MarkerTooltipProps
               {attraction.vicinity}
             </p>
           )}
-          
-          {attraction.openNow !== undefined && (
-            <div className="flex items-center gap-1 text-xs">
-              <div className={`w-1.5 h-1.5 rounded-full ${attraction.openNow ? "bg-green-400" : "bg-red-400"}`} />
-              <span className="text-white/90">
-                {attraction.openNow ? "Open now" : "Closed"}
-              </span>
-            </div>
-          )}
         </div>
       </div>
     </div>

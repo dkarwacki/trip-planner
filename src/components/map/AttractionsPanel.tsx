@@ -241,14 +241,6 @@ const ContentList = ({
                     </div>
                   )}
 
-                  {attraction.openNow !== undefined && (
-                    <div className="mb-3">
-                      <Badge variant={attraction.openNow ? "default" : "secondary"} className="text-xs">
-                        {attraction.openNow ? "Open" : "Closed"}
-                      </Badge>
-                    </div>
-                  )}
-
                   <div className="flex flex-wrap gap-1.5">
                     {topTypes.map((type) => (
                       <Badge key={type} variant="outline" className={`text-xs ${getCategoryColor(type)}`}>

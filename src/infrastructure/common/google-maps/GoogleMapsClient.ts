@@ -129,16 +129,15 @@ export const GoogleMapsClientLive = Layer.effect(
         types: place.types || [],
         vicinity: "", // Not available in new API response
         priceLevel,
-        openNow: place.currentOpeningHours?.openNow,
         location: {
           lat: Latitude(place.location.latitude),
           lng: Longitude(place.location.longitude),
         },
       };
 
-      // Add photos if available (max 1 photo for list view)
+      // Add photos if available (max 2 photos for dialog preview)
       if (place.photos && place.photos.length > 0) {
-        attraction.photos = place.photos.slice(0, 1).map(
+        attraction.photos = place.photos.slice(0, 2).map(
           (photo): PlacePhoto => ({
             // Extract photo reference from name: "places/{place_id}/photos/{photo_reference}"
             photoReference: photo.name.split("/").pop() || photo.name,
@@ -203,7 +202,7 @@ export const GoogleMapsClientLive = Layer.effect(
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": apiKey,
                 "X-Goog-FieldMask":
-                  "places.id,places.displayName,places.types,places.location,places.rating,places.userRatingCount,places.priceLevel,places.currentOpeningHours,places.photos",
+                  "places.id,places.displayName,places.types,places.location,places.rating,places.userRatingCount,places.priceLevel,places.photos",
               },
               body: JSON.stringify(requestBody),
             }),
@@ -474,7 +473,7 @@ export const GoogleMapsClientLive = Layer.effect(
         };
 
         let fieldMask =
-          "places.id,places.displayName,places.types,places.location,places.rating,places.userRatingCount,places.priceLevel,places.currentOpeningHours";
+          "places.id,places.displayName,places.types,places.location,places.rating,places.userRatingCount,places.priceLevel";
         if (includePhotos) {
           fieldMask += ",places.photos";
         }
@@ -585,7 +584,6 @@ export const GoogleMapsClientLive = Layer.effect(
           types: place.types || [],
           vicinity: "", // Not available in new API response
           priceLevel,
-          openNow: place.currentOpeningHours?.openNow,
           location: {
             lat: Latitude(place.location.latitude),
             lng: Longitude(place.location.longitude),
