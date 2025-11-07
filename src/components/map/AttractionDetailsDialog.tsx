@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { Star, MapPin, ExternalLink } from "lucide-react";
+import { Star, MapPin, ExternalLink, ChevronDown, ChevronUp, Image as ImageIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { Attraction } from "@/domain/map/models";
 import PhotoImage from "@/components/common/PhotoImage";
 import PhotoLightbox from "./PhotoLightbox";
+import { ScoreBadge } from "./ScoreBadge";
 
 interface AttractionDetailsDialogProps {
   attraction: Attraction | null;
@@ -13,6 +17,12 @@ interface AttractionDetailsDialogProps {
   onConfirm: () => void;
   onCancel: () => void;
   type: "attraction" | "restaurant";
+  score?: number;
+  breakdown?: {
+    qualityScore: number;
+    diversityScore: number;
+    confidenceScore: number;
+  };
 }
 
 const formatReviewCount = (count: number): string => {
@@ -22,21 +32,70 @@ const formatReviewCount = (count: number): string => {
   return count.toString();
 };
 
-const getPriceLevelSymbol = (priceLevel?: number): string => {
-  if (!priceLevel) return "N/A";
-  return "$".repeat(priceLevel);
+const getPriceLevelInfo = (priceLevel?: number): { symbol: string; label: string; description: string } => {
+  if (!priceLevel) {
+    return {
+      symbol: "N/A",
+      label: "Price not available",
+      description: "Price information is not available for this place",
+    };
+  }
+
+  const priceInfo: Record<number, { symbol: string; label: string; description: string }> = {
+    0: { symbol: "Free", label: "Free", description: "No cost to visit" },
+    1: { symbol: "$", label: "Inexpensive", description: "Budget-friendly, typically under $10" },
+    2: { symbol: "$$", label: "Moderate", description: "Moderate pricing, typically $10-$30" },
+    3: { symbol: "$$$", label: "Expensive", description: "Higher pricing, typically $30-$60" },
+    4: { symbol: "$$$$", label: "Very Expensive", description: "Premium pricing, typically over $60" },
+  };
+
+  return (
+    priceInfo[priceLevel] || { symbol: "$".repeat(priceLevel), label: "Price level " + priceLevel, description: "" }
+  );
 };
 
 const getCategoryColor = (type: string): string => {
   const colors: Record<string, string> = {
-    museum: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    restaurant: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-    cafe: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-    park: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    art_gallery: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
-    tourist_attraction: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    museum:
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-purple-200 dark:border-purple-800",
+    restaurant:
+      "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 border-orange-200 dark:border-orange-800",
+    cafe: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 border-amber-200 dark:border-amber-800",
+    park: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800",
+    art_gallery: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200 border-pink-200 dark:border-pink-800",
+    tourist_attraction:
+      "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-200 dark:border-blue-800",
+    church:
+      "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800",
+    place_of_worship:
+      "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800",
+    point_of_interest:
+      "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200 border-slate-200 dark:border-slate-800",
+    natural_feature:
+      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800",
+    campground:
+      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800",
+    hiking_area:
+      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800",
+    beach: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200 border-cyan-200 dark:border-cyan-800",
+    forest: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800",
+    mountain:
+      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800",
+    lake: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200 border-cyan-200 dark:border-cyan-800",
+    river: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200 border-cyan-200 dark:border-cyan-800",
+    waterfall: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200 border-cyan-200 dark:border-cyan-800",
+    zoo: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800",
+    aquarium: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200 border-cyan-200 dark:border-cyan-800",
+    botanical_garden:
+      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800",
+    nature_reserve:
+      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800",
+    national_park:
+      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800",
   };
-  return colors[type] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+  return (
+    colors[type] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 border-gray-200 dark:border-gray-800"
+  );
 };
 
 const formatTypeName = (type: string): string => {
@@ -51,9 +110,13 @@ export default function AttractionDetailsDialog({
   isOpen,
   onConfirm,
   onCancel,
+  type,
+  score,
+  breakdown,
 }: AttractionDetailsDialogProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [typesExpanded, setTypesExpanded] = useState(false);
 
   if (!attraction) return null;
 
@@ -62,41 +125,51 @@ export default function AttractionDetailsDialog({
     setLightboxOpen(true);
   };
 
-  const topTypes = attraction.types.slice(0, 3);
   const hasPhotos = attraction.photos && attraction.photos.length > 0;
+  const photoCount = attraction.photos?.length || 0;
+  const displayedTypes = attraction.types.slice(0, 3);
+  const hasMoreTypes = attraction.types.length > 3;
+  const priceInfo = getPriceLevelInfo(attraction.priceLevel);
+  const hasVicinity = attraction.vicinity && attraction.vicinity.trim().length > 0;
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
-          {/* Photos Section - Display first 2 photos, all available in lightbox */}
+          {/* Photos Section - Enhanced with overlay and count indicator */}
           {hasPhotos && attraction.photos && (
-            <div className="pt-6">
-              <div className={`grid ${attraction.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-0.5`}>
+            <div className="pt-6 px-6">
+              <div className={`grid ${attraction.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1.5`}>
                 {attraction.photos.slice(0, 2).map((photo, index) => (
                   <button
                     key={index}
                     type="button"
                     onClick={() => handlePhotoClick(index)}
-                    className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary rounded-lg"
                     aria-label={`View ${attraction.name} photo ${index + 1} in full size`}
                   >
                     <PhotoImage
                       photoReference={photo.photoReference}
                       alt={`${attraction.name} ${index + 1}`}
                       maxWidth={800}
-                      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                    {index === 0 && photoCount > 2 && (
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5 backdrop-blur-sm">
+                        <ImageIcon className="h-3 w-3" />
+                        <span>{photoCount}</span>
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="px-6 pb-6">
+          <div className="px-6 pb-6 pt-6">
             <DialogHeader>
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start justify-between gap-3">
                 <DialogTitle className="text-xl font-semibold leading-tight flex-1 pr-2">{attraction.name}</DialogTitle>
                 <a
                   href={`https://www.google.com/maps/place/?q=place_id:${attraction.id}`}
@@ -112,45 +185,111 @@ export default function AttractionDetailsDialog({
               </div>
             </DialogHeader>
 
-            <div className="space-y-3">
-              {/* Rating and Price */}
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium">{attraction.rating.toFixed(1)}</span>
-                  <span className="text-muted-foreground">({formatReviewCount(attraction.userRatingsTotal)})</span>
-                </div>
-                {attraction.priceLevel && (
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <span>{getPriceLevelSymbol(attraction.priceLevel)}</span>
+            <Separator className="my-4" />
+
+            {/* Rating and Price Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 text-sm">
+                {attraction.rating && (
+                  <div className="flex items-center gap-1.5">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-semibold">{attraction.rating.toFixed(1)}</span>
+                    <span className="text-muted-foreground">
+                      ({formatReviewCount(attraction.userRatingsTotal || 0)})
+                    </span>
                   </div>
+                )}
+                {score !== undefined && breakdown && (
+                  <ScoreBadge
+                    score={score}
+                    breakdown={breakdown}
+                    type={type === "attraction" ? "attractions" : "restaurants"}
+                  />
+                )}
+                {attraction.priceLevel !== undefined && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1.5 text-muted-foreground cursor-help">
+                        <span className="font-medium">{priceInfo.symbol}</span>
+                        <span className="text-xs">·</span>
+                        <span className="text-xs">{priceInfo.label}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{priceInfo.description}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
 
-              {/* Address */}
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <span>{attraction.vicinity}</span>
-              </div>
+              {/* Address - Only show if vicinity exists */}
+              {hasVicinity && (
+                <>
+                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <span className="leading-relaxed">{attraction.vicinity}</span>
+                  </div>
+                  <Separator />
+                </>
+              )}
 
-              {/* Type Badges */}
-              <div className="flex flex-wrap gap-1.5">
-                {topTypes.map((placeType) => (
-                  <Badge key={placeType} variant="outline" className={`text-xs ${getCategoryColor(placeType)}`}>
-                    {formatTypeName(placeType)}
-                  </Badge>
-                ))}
-                {attraction.types.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{attraction.types.length - 3} more
-                  </Badge>
+              {/* Type Badges - Enhanced with expandable functionality */}
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {displayedTypes.map((placeType) => (
+                    <Badge
+                      key={placeType}
+                      variant="outline"
+                      className={`text-xs border ${getCategoryColor(placeType)} transition-colors`}
+                    >
+                      {formatTypeName(placeType)}
+                    </Badge>
+                  ))}
+                </div>
+                {hasMoreTypes && (
+                  <Collapsible open={typesExpanded} onOpenChange={setTypesExpanded}>
+                    <CollapsibleContent className="mt-2">
+                      <div className="flex flex-wrap gap-1.5 animate-in slide-in-from-top-2 duration-200">
+                        {attraction.types.slice(3).map((placeType) => (
+                          <Badge
+                            key={placeType}
+                            variant="outline"
+                            className={`text-xs border ${getCategoryColor(placeType)} transition-colors`}
+                          >
+                            {formatTypeName(placeType)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-2"
+                        aria-label={typesExpanded ? "Show fewer categories" : "Show all categories"}
+                      >
+                        {typesExpanded ? (
+                          <>
+                            <ChevronUp className="h-3 w-3" />
+                            <span>Show fewer</span>
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="h-3 w-3" />
+                            <span>+{attraction.types.length - 3} more categories</span>
+                          </>
+                        )}
+                      </button>
+                    </CollapsibleTrigger>
+                  </Collapsible>
                 )}
               </div>
             </div>
           </div>
 
-          <DialogFooter className="pb-6">
-            <Button onClick={onConfirm} className="w-full">
+          <Separator />
+
+          <DialogFooter className="px-6 pb-6 pt-4">
+            <Button onClick={onConfirm} className="w-full" size="lg">
               Add to Plan
             </Button>
           </DialogFooter>

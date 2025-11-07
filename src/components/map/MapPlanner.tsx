@@ -155,6 +155,15 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingAttraction, setPendingAttraction] = useState<Attraction | null>(null);
   const [pendingType, setPendingType] = useState<"attraction" | "restaurant" | null>(null);
+  const [pendingScore, setPendingScore] = useState<number | undefined>(undefined);
+  const [pendingBreakdown, setPendingBreakdown] = useState<
+    | {
+        qualityScore: number;
+        diversityScore: number;
+        confidenceScore: number;
+      }
+    | undefined
+  >(undefined);
 
   // Search nearby button state
   const [initialSearchCenter, setInitialSearchCenter] = useState<{
@@ -627,6 +636,8 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       // Set data and open dialog - photos are already loaded from nearbySearch (5 photos)
       setPendingAttraction(attractionData.attraction);
       setPendingType(type);
+      setPendingScore(attractionData.score);
+      setPendingBreakdown(attractionData.breakdown);
       setDialogOpen(true);
     },
     [attractions, restaurants]
@@ -664,12 +675,16 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
     setDialogOpen(false);
     setPendingAttraction(null);
     setPendingType(null);
+    setPendingScore(undefined);
+    setPendingBreakdown(undefined);
   }, [pendingAttraction, pendingType, selectedPlaceId]);
 
   const handleCancelAdd = useCallback(() => {
     setDialogOpen(false);
     setPendingAttraction(null);
     setPendingType(null);
+    setPendingScore(undefined);
+    setPendingBreakdown(undefined);
   }, []);
 
   const handleRemoveFromPlan = useCallback(
@@ -1242,6 +1257,8 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
             onConfirm={handleConfirmAdd}
             onCancel={handleCancelAdd}
             type={pendingType || "attraction"}
+            score={pendingScore}
+            breakdown={pendingBreakdown}
           />
 
           {showSearchNearbyButton && selectedPlace && !(isMobile && mobileTab === "explore") && (
