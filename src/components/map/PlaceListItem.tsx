@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import PlannedItemsList from "@/components/plan/PlannedItemsList";
 import type { Place } from "@/domain/common/models";
 import type { Attraction } from "@/domain/map/models";
@@ -86,9 +86,8 @@ export default function PlaceListItem({
           <button
             type="button"
             className="flex items-start gap-3 flex-1 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer"
-            onClick={() => onSelect(place)}
-            onDoubleClick={(e) => {
-              e.preventDefault();
+            onClick={() => {
+              onSelect(place);
               if (hasPlannedItems) {
                 setIsOpen(true);
               }
@@ -97,6 +96,9 @@ export default function PlaceListItem({
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 onSelect(place);
+                if (hasPlannedItems) {
+                  setIsOpen(true);
+                }
               }
             }}
           >
@@ -117,16 +119,18 @@ export default function PlaceListItem({
           </button>
           <div className="flex items-start gap-1 flex-shrink-0">
             {hasPlannedItems && !isMobile && (
-              <CollapsibleTrigger asChild>
-                <button
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex-shrink-0 p-1 rounded-md hover:bg-accent text-muted-foreground transition-colors cursor-pointer"
-                  aria-label={isOpen ? "Collapse planned items" : "Expand planned items"}
-                  style={{ cursor: "pointer" }}
-                >
-                  {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </button>
-              </CollapsibleTrigger>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(place);
+                  setIsOpen(!isOpen);
+                }}
+                className="flex-shrink-0 p-1 rounded-md hover:bg-accent text-muted-foreground transition-colors cursor-pointer"
+                aria-label={isOpen ? "Collapse planned items" : "Expand planned items"}
+                style={{ cursor: "pointer" }}
+              >
+                {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
             )}
             <button
               onClick={(e) => {
