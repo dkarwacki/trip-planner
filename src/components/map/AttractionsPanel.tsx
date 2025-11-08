@@ -251,7 +251,7 @@ const ContentList = ({
                     <PhotoImage
                       photoReference={attraction.photos[0].photoReference}
                       alt={attraction.name}
-                      maxWidth={400}
+                      maxWidth={800}
                       className="w-24 h-24 object-cover rounded-lg"
                     />
                   </div>

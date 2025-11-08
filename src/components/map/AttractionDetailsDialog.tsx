@@ -93,33 +93,30 @@ export default function AttractionDetailsDialog({
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
-          {/* Photos Section - Enhanced with overlay and count indicator */}
+          {/* Photos Section - Single photo with count indicator */}
           {hasPhotos && attraction.photos && (
             <div className="pt-6 px-6">
-              <div className={`grid ${attraction.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1.5`}>
-                {attraction.photos.slice(0, 2).map((photo, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => handlePhotoClick(index)}
-                    className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary rounded-lg"
-                    aria-label={`View ${attraction.name} photo ${index + 1} in full size`}
-                  >
-                    <PhotoImage
-                      photoReference={photo.photoReference}
-                      alt={`${attraction.name} ${index + 1}`}
-                      maxWidth={800}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                    {index === 0 && photoCount > 2 && (
-                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5 backdrop-blur-sm">
-                        <ImageIcon className="h-3 w-3" />
-                        <span>{photoCount}</span>
-                      </div>
-                    )}
-                  </button>
-                ))}
+              <div className="grid grid-cols-1">
+                <button
+                  type="button"
+                  onClick={() => handlePhotoClick(0)}
+                  className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary rounded-lg"
+                  aria-label={`View ${attraction.name} photo in full size`}
+                >
+                  <PhotoImage
+                    photoReference={attraction.photos[0].photoReference}
+                    alt={`${attraction.name}`}
+                    maxWidth={800}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  {photoCount > 1 && (
+                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5 backdrop-blur-sm">
+                      <ImageIcon className="h-3 w-3" />
+                      <span>+{photoCount - 1}</span>
+                    </div>
+                  )}
+                </button>
               </div>
             </div>
           )}

@@ -131,7 +131,7 @@ export const GoogleMapsClientLive = Layer.effect(
         },
       };
 
-      // Add photos if available (max 5 photos - display 2 in dialog, 5 in lightbox)
+      // Add up to 5 photo references (metadata is cheap, actual images loaded lazily)
       if (place.photos && place.photos.length > 0) {
         attraction.photos = place.photos.slice(0, 5).map(
           (photo): PlacePhoto => ({

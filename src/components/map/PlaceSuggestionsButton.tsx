@@ -509,45 +509,36 @@ export default function PlaceSuggestionsButton({
                                         <>
                                           {suggestion.photos && suggestion.photos.length > 0 && (
                                             <div className="mb-2">
-                                              <div
-                                                className={`grid ${
-                                                  suggestion.photos.length === 1 ? "grid-cols-1" : "grid-cols-2"
-                                                } gap-0.5 rounded overflow-hidden`}
-                                              >
-                                                {suggestion.photos.slice(0, 2).map((photo, photoIndex) => (
-                                                  <button
-                                                    key={photoIndex}
-                                                    type="button"
-                                                    onClick={() => {
-                                                      setSelectedPhotos(suggestion.photos || []);
-                                                      setSelectedPhotoIndex(photoIndex);
-                                                      setSelectedPlaceName(
-                                                        suggestion.attractionData?.name ||
-                                                          suggestion.attractionName ||
-                                                          ""
-                                                      );
-                                                      setLightboxOpen(true);
-                                                    }}
-                                                    className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                                    aria-label={`View ${suggestion.attractionData?.name || suggestion.attractionName} photo ${photoIndex + 1} in full size`}
-                                                  >
-                                                    <PhotoImage
-                                                      photoReference={photo.photoReference}
-                                                      alt={`${suggestion.attractionData?.name || suggestion.attractionName} ${photoIndex + 1}`}
-                                                      maxWidth={800}
-                                                      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                                                    />
-                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
-                                                    {/* Show indicator on second photo if there are more photos */}
-                                                    {photoIndex === 1 && suggestion.photos.length > 2 && (
-                                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
-                                                        <span className="text-white font-semibold text-sm">
-                                                          +{suggestion.photos.length - 2} more
-                                                        </span>
-                                                      </div>
-                                                    )}
-                                                  </button>
-                                                ))}
+                                              <div className="grid grid-cols-1 rounded overflow-hidden">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setSelectedPhotos(suggestion.photos || []);
+                                                    setSelectedPhotoIndex(0);
+                                                    setSelectedPlaceName(
+                                                      suggestion.attractionData?.name ||
+                                                        suggestion.attractionName ||
+                                                        ""
+                                                    );
+                                                    setLightboxOpen(true);
+                                                  }}
+                                                  className="relative aspect-[4/3] overflow-hidden bg-gray-100 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                                  aria-label={`View ${suggestion.attractionData?.name || suggestion.attractionName} photo in full size`}
+                                                >
+                                                  <PhotoImage
+                                                    photoReference={suggestion.photos[0].photoReference}
+                                                    alt={`${suggestion.attractionData?.name || suggestion.attractionName}`}
+                                                    maxWidth={800}
+                                                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                                                  />
+                                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 pointer-events-none" />
+                                                  {/* Show indicator if there are more photos */}
+                                                  {suggestion.photos.length > 1 && (
+                                                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md backdrop-blur-sm">
+                                                      <span>+{suggestion.photos.length - 1}</span>
+                                                    </div>
+                                                  )}
+                                                </button>
                                               </div>
                                             </div>
                                           )}
