@@ -1,12 +1,11 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { History, MessageSquare, MapPin, Trash2, ChevronRight } from "lucide-react";
-import type { SavedConversation, ConversationId, SavedTrip } from "@/domain/plan/models";
+import { History, MessageSquare, MapPin, Trash2 } from "lucide-react";
+import type { SavedConversation, ConversationId } from "@/domain/plan/models";
 import { PERSONA_METADATA } from "@/domain/plan/models";
-import { getTripsForConversation, deleteTripFromHistory } from "@/lib/common/storage";
+import { getTripForConversation } from "@/lib/common/storage";
 
 interface ConversationHistoryPanelProps {
   conversations: SavedConversation[];
@@ -21,19 +20,11 @@ export default function ConversationHistoryPanel({
   onDeleteConversation,
   onOpenTrip,
 }: ConversationHistoryPanelProps) {
-  const [expandedConversation, setExpandedConversation] = useState<ConversationId | null>(null);
   const isEmpty = conversations.length === 0;
 
-  const toggleExpanded = (conversationId: ConversationId) => {
-    setExpandedConversation((prev) => (prev === conversationId ? null : conversationId));
-  };
-
   const handleDeleteConversation = (conversationId: ConversationId) => {
-    if (confirm("Delete this conversation? Associated trips will remain in history.")) {
+    if (confirm("Delete this conversation? Associated trip will remain in history.")) {
       onDeleteConversation(conversationId);
-      if (expandedConversation === conversationId) {
-        setExpandedConversation(null);
-      }
     }
   };
 
@@ -73,8 +64,7 @@ export default function ConversationHistoryPanel({
         ) : (
           <div className="space-y-2">
             {conversations.map((conversation) => {
-              const trips = getTripsForConversation(conversation.id);
-              const isExpanded = expandedConversation === conversation.id;
+              const trip = getTripForConversation(conversation.id);
 
               return (
                 <div
@@ -83,7 +73,10 @@ export default function ConversationHistoryPanel({
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex-1 min-w-0 overflow-hidden">
-                      <h4 className="text-sm font-medium text-gray-900 mb-1 break-words" style={{ overflowWrap: "anywhere" }}>
+                      <h4
+                        className="text-sm font-medium text-gray-900 mb-1 break-words"
+                        style={{ overflowWrap: "anywhere" }}
+                      >
                         {conversation.title}
                       </h4>
                       <div className="flex flex-wrap gap-1.5 mb-2">
@@ -106,6 +99,12 @@ export default function ConversationHistoryPanel({
                           <MessageSquare className="h-3 w-3 flex-shrink-0" />
                           {conversation.messageCount} {conversation.messageCount === 1 ? "message" : "messages"}
                         </span>
+                        {trip && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            {trip.placeCount} {trip.placeCount === 1 ? "place" : "places"} saved
+                          </span>
+                        )}
                         <span>{formatTimestamp(conversation.lastUpdated)}</span>
                       </div>
                     </div>
@@ -131,56 +130,18 @@ export default function ConversationHistoryPanel({
                       Continue Chat
                     </Button>
 
-                    {trips.length > 0 && (
+                    {trip && (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => toggleExpanded(conversation.id)}
+                        onClick={() => onOpenTrip(trip.id)}
                         className="w-full gap-1.5"
                       >
                         <MapPin className="h-3.5 w-3.5" />
-                        {trips.length} {trips.length === 1 ? "Trip" : "Trips"}
-                        <ChevronRight
-                          className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-90" : ""}`}
-                        />
+                        Show on Map
                       </Button>
                     )}
                   </div>
-
-                  {isExpanded && trips.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-gray-200 space-y-1.5">
-                      {trips.map((trip: SavedTrip) => (
-                        <div key={trip.id} className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => onOpenTrip(trip.id)}
-                            className="flex-1 justify-start text-xs h-8"
-                          >
-                            <MapPin className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                            <span className="truncate">{trip.title}</span>
-                            <span className="ml-auto text-muted-foreground">({trip.placeCount})</span>
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              if (confirm("Delete this trip?")) {
-                                deleteTripFromHistory(trip.id);
-                                // Force re-render by toggling expansion
-                                setExpandedConversation(null);
-                                setTimeout(() => setExpandedConversation(conversation.id), 0);
-                              }
-                            }}
-                            className="h-8 w-8 p-0"
-                            title="Delete trip"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               );
             })}

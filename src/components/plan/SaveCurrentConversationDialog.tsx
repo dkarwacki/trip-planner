@@ -8,26 +8,26 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-interface NewConversationDialogProps {
+interface SaveCurrentConversationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSaveAndStartNew: () => void;
-  onDiscardAndStartNew: () => void;
+  onSaveAndProceed: () => void;
+  onDiscardAndProceed: () => void;
 }
 
-export function NewConversationDialog({
+export function SaveCurrentConversationDialog({
   open,
   onOpenChange,
-  onSaveAndStartNew,
-  onDiscardAndStartNew,
-}: NewConversationDialogProps) {
+  onSaveAndProceed,
+  onDiscardAndProceed,
+}: SaveCurrentConversationDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Start New Conversation?</DialogTitle>
+          <DialogTitle>Save Current Conversation?</DialogTitle>
           <DialogDescription>
-            You have an active conversation. Would you like to save it before starting a new one?
+            You have an active conversation. Would you like to save it before proceeding?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -37,22 +37,23 @@ export function NewConversationDialog({
           <Button
             variant="destructive"
             onClick={() => {
-              onDiscardAndStartNew();
+              onDiscardAndProceed();
               onOpenChange(false);
             }}
           >
-            Discard & Start New
+            Discard
           </Button>
           <Button
             onClick={() => {
-              onSaveAndStartNew();
+              onSaveAndProceed();
               onOpenChange(false);
             }}
           >
-            Save & Start New
+            Save
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+

@@ -1,5 +1,6 @@
 import { Brand } from "effect";
 import type { ChatMessage } from "./ChatMessage";
+import type { TripId } from "./TripHistory";
 
 // Branded types
 export type ConversationId = string & Brand.Brand<"ConversationId">;
@@ -16,6 +17,7 @@ export interface SavedConversation {
   timestamp: ConversationTimestamp;
   lastUpdated: ConversationTimestamp;
   messageCount: number;
+  tripId?: TripId;
 }
 
 export const createSavedConversation = (

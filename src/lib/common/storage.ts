@@ -5,6 +5,7 @@ import {
   updateTripPlaces,
   createSavedConversation,
   updateConversationMessages,
+  TripId,
 } from "@/domain/plan/models";
 
 const STORAGE_KEYS = {
@@ -139,7 +140,8 @@ export const saveConversation = (
   messages: ChatMessage[],
   personas: string[],
   title?: string,
-  existingId?: ConversationId
+  existingId?: ConversationId,
+  places?: Place[]
 ): ConversationId => {
   try {
     const conversations = loadAllConversations();
@@ -150,6 +152,16 @@ export const saveConversation = (
       if (existingIndex !== -1) {
         const updated = updateConversationMessages(conversations[existingIndex], messages);
         conversations[existingIndex] = updated;
+
+        // Save/update trip if places provided
+        if (places && places.length > 0) {
+          const tripId = saveTripForConversation(existingId, places);
+          conversations[existingIndex] = {
+            ...conversations[existingIndex],
+            tripId: TripId(tripId),
+          };
+        }
+
         localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
         return existingId;
       }
@@ -157,6 +169,13 @@ export const saveConversation = (
 
     // Create new conversation
     const conversation = createSavedConversation(messages, personas, title);
+
+    // Save trip if places provided
+    if (places && places.length > 0) {
+      const tripId = saveTripToHistory(places, conversation.id);
+      conversation.tripId = TripId(tripId);
+    }
+
     conversations.unshift(conversation); // Most recent first
     localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
     return conversation.id;
@@ -203,5 +222,108 @@ export const getTripsForConversation = (conversationId: ConversationId): SavedTr
   } catch (error) {
     console.error("Failed to get trips for conversation:", error);
     return [];
+  }
+};
+
+// Migration: Convert one-to-many to one-to-one relationship
+export const migrateConversationTrips = (): void => {
+  try {
+    const conversations = loadAllConversations();
+    const trips = loadTripHistory();
+    let hasChanges = false;
+
+    for (const conversation of conversations) {
+      // Find all trips for this conversation
+      const conversationTrips = trips.filter((trip) => trip.conversationId === conversation.id);
+
+      if (conversationTrips.length > 1) {
+        // Keep first trip (oldest), delete others
+        const [firstTrip, ...tripsToDelete] = conversationTrips.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Update conversation to reference first trip
+        const conversationIndex = conversations.findIndex((c) => c.id === conversation.id);
+        if (conversationIndex !== -1) {
+          conversations[conversationIndex] = {
+            ...conversations[conversationIndex],
+            tripId: firstTrip.id,
+          };
+          hasChanges = true;
+        }
+
+        // Delete other trips
+        for (const tripToDelete of tripsToDelete) {
+          const tripIndex = trips.findIndex((t) => t.id === tripToDelete.id);
+          if (tripIndex !== -1) {
+            trips.splice(tripIndex, 1);
+            hasChanges = true;
+          }
+        }
+      } else if (conversationTrips.length === 1) {
+        // Link single trip to conversation if not already linked
+        if (!conversation.tripId) {
+          const conversationIndex = conversations.findIndex((c) => c.id === conversation.id);
+          if (conversationIndex !== -1) {
+            conversations[conversationIndex] = {
+              ...conversations[conversationIndex],
+              tripId: conversationTrips[0].id,
+            };
+            hasChanges = true;
+          }
+        }
+      }
+    }
+
+    if (hasChanges) {
+      localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
+      localStorage.setItem(STORAGE_KEYS.TRIP_HISTORY, JSON.stringify(trips));
+    }
+  } catch (error) {
+    console.error("Failed to migrate conversation trips:", error);
+  }
+};
+
+// Get single trip for conversation (one-to-one relationship)
+export const getTripForConversation = (conversationId: ConversationId): SavedTrip | null => {
+  try {
+    const conversation = loadConversation(conversationId);
+    if (!conversation || !conversation.tripId) {
+      return null;
+    }
+    return loadTripById(conversation.tripId);
+  } catch (error) {
+    console.error("Failed to get trip for conversation:", error);
+    return null;
+  }
+};
+
+// Save or update trip for a conversation
+export const saveTripForConversation = (conversationId: ConversationId, places: Place[]): string => {
+  try {
+    const conversation = loadConversation(conversationId);
+    if (!conversation) {
+      throw new Error(`Conversation ${conversationId} not found`);
+    }
+
+    if (conversation.tripId) {
+      // Update existing trip
+      updateTripInHistory(conversation.tripId, places);
+      return conversation.tripId;
+    } else {
+      // Create new trip and link to conversation
+      const tripId = saveTripToHistory(places, conversationId);
+      const conversations = loadAllConversations();
+      const conversationIndex = conversations.findIndex((c) => c.id === conversationId);
+      if (conversationIndex !== -1) {
+        conversations[conversationIndex] = {
+          ...conversations[conversationIndex],
+          tripId: TripId(tripId),
+        };
+        localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
+      }
+      return tripId;
+    }
+  } catch (error) {
+    console.error("Failed to save trip for conversation:", error);
+    throw error;
   }
 };

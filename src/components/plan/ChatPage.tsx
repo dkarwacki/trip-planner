@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import type { PersonaType, SavedTrip, ChatMessage, ConversationId, SavedConversation } from "@/domain/plan/models";
+import type { PersonaType, ChatMessage, ConversationId, SavedConversation } from "@/domain/plan/models";
 import type { Place } from "@/domain/common/models";
-import { PERSONA_TYPES } from "@/domain/plan/models";
+import { PERSONA_TYPES, PersonaType as PersonaTypeBrand } from "@/domain/plan/models";
 import PersonaSelector from "./PersonaSelector";
 import PersonaSelectorDrawer from "./PersonaSelectorDrawer";
 import ChatInterface from "./ChatInterface";
 import ItineraryPanel from "./ItineraryPanel";
 import ConversationHistoryPanel from "./ConversationHistoryPanel";
-import { NewConversationDialog } from "./NewConversationDialog";
+import { SaveCurrentConversationDialog } from "./SaveCurrentConversationDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { MobileNavigation, type PlanTab } from "@/components/common/MobileNavigation";
+import { MobileNavigation, type PlanTab, type MobileTab } from "@/components/common/MobileNavigation";
 import { Bot, MapPin, History } from "lucide-react";
 import {
   savePersonas,
@@ -19,24 +19,25 @@ import {
   loadCurrentItinerary,
   clearCurrentItinerary,
   saveTripToHistory,
-  loadTripHistory,
-  deleteTripFromHistory,
   saveConversation,
   loadConversation,
   loadAllConversations,
   deleteConversation,
+  migrateConversationTrips,
+  getTripForConversation,
+  saveTripForConversation,
 } from "@/lib/common/storage";
 
 export default function ChatPage() {
   const [personas, setPersonas] = useState<PersonaType[]>([PERSONA_TYPES.GENERAL_TOURIST]);
   const [itinerary, setItinerary] = useState<Place[]>([]);
-  const [tripHistory, setTripHistory] = useState<SavedTrip[]>([]);
   const [conversationHistory, setConversationHistory] = useState<SavedConversation[]>([]);
 
   // Conversation state
   const [currentConversationId, setCurrentConversationId] = useState<ConversationId | null>(null);
   const [conversationMessages, setConversationMessages] = useState<ChatMessage[]>([]);
-  const [showNewConversationDialog, setShowNewConversationDialog] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [pendingConversationId, setPendingConversationId] = useState<ConversationId | null>(null);
 
   // Mobile state
   const [isMobile, setIsMobile] = useState(false);
@@ -54,16 +55,13 @@ export default function ChatPage() {
 
   // Load initial state from localStorage
   useEffect(() => {
+    // Run migration once on app initialization
+    migrateConversationTrips();
+
     const loadedPersonas = loadPersonas();
     if (loadedPersonas.length > 0) {
       setPersonas(loadedPersonas);
     }
-
-    const loadedItinerary = loadCurrentItinerary();
-    setItinerary(loadedItinerary);
-
-    const loadedHistory = loadTripHistory();
-    setTripHistory(loadedHistory);
 
     const loadedConversations = loadAllConversations();
     setConversationHistory(loadedConversations);
@@ -76,8 +74,19 @@ export default function ChatPage() {
       if (conversation) {
         setCurrentConversationId(conversation.id);
         setConversationMessages(conversation.messages);
-        setPersonas(conversation.personas);
+        setPersonas(conversation.personas.map((p) => PersonaTypeBrand(p)) as PersonaType[]);
+        // Load trip places into itinerary
+        const trip = getTripForConversation(conversation.id);
+        if (trip) {
+          setItinerary(trip.places);
+        } else {
+          setItinerary([]);
+        }
       }
+    } else {
+      // Load current itinerary only if no conversation is loaded
+      const loadedItinerary = loadCurrentItinerary();
+      setItinerary(loadedItinerary);
     }
   }, []);
 
@@ -104,43 +113,86 @@ export default function ChatPage() {
   const handleNewConversation = () => {
     // If there are messages, show confirmation dialog
     if (conversationMessages.length > 0) {
-      setShowNewConversationDialog(true);
+      setPendingConversationId(null); // null means starting a new conversation
+      setShowSaveDialog(true);
     } else {
       // No messages, just start fresh
       startNewConversation();
     }
   };
 
-  const handleSaveAndStartNew = () => {
+  const handleSaveAndProceed = () => {
     if (conversationMessages.length > 0) {
-      saveConversation(conversationMessages, personas);
+      // Save conversation with current itinerary places
+      saveConversation(conversationMessages, personas, undefined, currentConversationId ?? undefined, itinerary);
+      setConversationHistory(loadAllConversations());
     }
-    startNewConversation();
+    // If there's a pending conversation to load, load it; otherwise start new
+    if (pendingConversationId) {
+      loadConversationById(pendingConversationId);
+    } else {
+      startNewConversation();
+    }
+    setPendingConversationId(null);
   };
 
-  const handleDiscardAndStartNew = () => {
-    startNewConversation();
+  const handleDiscardAndProceed = () => {
+    // If there's a pending conversation to load, load it; otherwise start new
+    if (pendingConversationId) {
+      loadConversationById(pendingConversationId);
+    } else {
+      startNewConversation();
+    }
+    setPendingConversationId(null);
   };
 
   const startNewConversation = () => {
     setConversationMessages([]);
     setCurrentConversationId(null);
+    setItinerary([]);
     // Clear URL params
     window.history.replaceState({}, "", "/plan");
   };
 
-  const handleLoadConversation = (conversationId: ConversationId) => {
+  const loadConversationById = (conversationId: ConversationId) => {
     const conversation = loadConversation(conversationId);
     if (conversation) {
       setCurrentConversationId(conversation.id);
       setConversationMessages(conversation.messages);
-      setPersonas(conversation.personas);
+      setPersonas(conversation.personas.map((p) => PersonaTypeBrand(p)) as PersonaType[]);
+      // Load trip places into itinerary
+      const trip = getTripForConversation(conversation.id);
+      if (trip) {
+        setItinerary(trip.places);
+      } else {
+        setItinerary([]);
+      }
       // Update URL with conversation ID
       window.history.pushState({}, "", `/plan?conversationId=${conversationId}`);
       // Switch to assistant tab on mobile
       if (isMobile) {
         setMobileTab("assistant");
       }
+    }
+  };
+
+  const handleLoadConversation = (conversationId: ConversationId) => {
+    // Check if trying to load the same conversation
+    if (currentConversationId === conversationId) {
+      // Already viewing this conversation, just switch to assistant tab
+      if (isMobile) {
+        setMobileTab("assistant");
+      }
+      return;
+    }
+
+    // If there are messages, show confirmation dialog
+    if (conversationMessages.length > 0) {
+      setPendingConversationId(conversationId);
+      setShowSaveDialog(true);
+    } else {
+      // No messages, just load the conversation
+      loadConversationById(conversationId);
     }
   };
 
@@ -175,39 +227,39 @@ export default function ChatPage() {
     // Save or create conversation if we have messages
     let conversationId = currentConversationId;
     if (conversationMessages.length > 0 && !currentConversationId) {
-      conversationId = saveConversation(conversationMessages, personas);
+      conversationId = saveConversation(conversationMessages, personas, undefined, undefined, itinerary);
       setCurrentConversationId(conversationId);
     } else if (conversationMessages.length > 0 && currentConversationId) {
       saveConversation(conversationMessages, personas, undefined, currentConversationId);
     }
 
-    // Save to history and get trip ID, linking with conversation
-    const tripId = saveTripToHistory(itinerary, conversationId ?? undefined);
-
-    // Clear current itinerary
-    clearCurrentItinerary();
-    setItinerary([]);
-
-    // Reload history to reflect new trip
-    setTripHistory(loadTripHistory());
-
-    // Navigate to map with trip ID
-    window.location.href = `/map?tripId=${tripId}`;
+    // Save or update trip for conversation
+    if (conversationId) {
+      const tripId = saveTripForConversation(conversationId, itinerary);
+      // Clear current itinerary
+      clearCurrentItinerary();
+      setItinerary([]);
+      // Navigate to map with trip ID
+      window.location.href = `/map?tripId=${tripId}`;
+    } else {
+      // No conversation, save trip without conversation link
+      const tripId = saveTripToHistory(itinerary);
+      // Clear current itinerary
+      clearCurrentItinerary();
+      setItinerary([]);
+      // Navigate to map with trip ID
+      window.location.href = `/map?tripId=${tripId}`;
+    }
   };
 
   const handleOpenTrip = (tripId: string) => {
     window.location.href = `/map?tripId=${tripId}`;
   };
 
-  const handleDeleteTrip = (tripId: string) => {
-    if (confirm("Are you sure you want to delete this trip?")) {
-      deleteTripFromHistory(tripId);
-      setTripHistory(loadTripHistory());
+  const handleMobileTabChange = (tab: MobileTab) => {
+    if (tab === "assistant" || tab === "itinerary" || tab === "history") {
+      setMobileTab(tab);
     }
-  };
-
-  const handleMobileTabChange = (tab: PlanTab) => {
-    setMobileTab(tab as PlanTab);
   };
 
   // Mobile tab configurations
@@ -353,12 +405,11 @@ export default function ChatPage() {
       {/* Mobile Persona Selector Button */}
       {isMobile && <PersonaSelectorDrawer selected={personas} onChange={handlePersonasChange} />}
 
-      {/* New Conversation Dialog */}
-      <NewConversationDialog
-        open={showNewConversationDialog}
-        onOpenChange={setShowNewConversationDialog}
-        onSaveAndStartNew={handleSaveAndStartNew}
-        onDiscardAndStartNew={handleDiscardAndStartNew}
+      <SaveCurrentConversationDialog
+        open={showSaveDialog}
+        onOpenChange={setShowSaveDialog}
+        onSaveAndProceed={handleSaveAndProceed}
+        onDiscardAndProceed={handleDiscardAndProceed}
       />
     </div>
   );

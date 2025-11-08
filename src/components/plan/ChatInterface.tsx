@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Send, Bot, User as UserIcon, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { Send, Bot, User as UserIcon, ChevronDown, ChevronRight, SquarePen } from "lucide-react";
 import type { ChatMessage, PersonaType, ConversationId } from "@/domain/plan/models";
 import type { Place } from "@/domain/common/models";
 import { createUserMessage, createAssistantMessage } from "@/domain/plan/models/ChatMessage";
@@ -217,7 +217,7 @@ export default function ChatInterface({
           </CardTitle>
           {onNewConversation && (
             <Button variant="outline" size="sm" onClick={onNewConversation} className="gap-1.5">
-              <Plus className="h-4 w-4" />
+              <SquarePen className="h-4 w-4" />
               New Chat
             </Button>
           )}

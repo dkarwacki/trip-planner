@@ -312,19 +312,6 @@ export default function PlaceSuggestionsButton({
     setRefinementMessage("");
   }, []);
 
-  const getSuggestionIcon = (type: string) => {
-    switch (type) {
-      case "add_attraction":
-        return "🎯";
-      case "add_restaurant":
-        return "🍽️";
-      case "general_tip":
-        return "💡";
-      default:
-        return "📝";
-    }
-  };
-
   const getSuggestionBadgeVariant = (type: string): "default" | "outline" => {
     switch (type) {
       case "add_attraction":
@@ -334,6 +321,19 @@ export default function PlaceSuggestionsButton({
         return "outline";
       default:
         return "outline";
+    }
+  };
+
+  const getSuggestionBadgeStyle = (type: string): string => {
+    switch (type) {
+      case "add_attraction":
+        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800/50";
+      case "add_restaurant":
+        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800/50";
+      case "general_tip":
+        return "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/30 dark:text-slate-300 dark:border-slate-800/50";
+      default:
+        return "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/30 dark:text-slate-300 dark:border-slate-800/50";
     }
   };
 
@@ -482,10 +482,12 @@ export default function PlaceSuggestionsButton({
                                   }`}
                                 >
                                   <div className="flex items-start gap-3">
-                                    <span className="text-2xl">{getSuggestionIcon(suggestion.type)}</span>
                                     <div className="flex-1 space-y-2">
                                       <div className="flex items-center gap-2 flex-wrap">
-                                        <Badge variant={getSuggestionBadgeVariant(suggestion.type)}>
+                                        <Badge
+                                          variant={getSuggestionBadgeVariant(suggestion.type)}
+                                          className={getSuggestionBadgeStyle(suggestion.type)}
+                                        >
                                           {suggestion.type.replace(/_/g, " ")}
                                         </Badge>
                                         {suggestion.priority &&
@@ -509,16 +511,14 @@ export default function PlaceSuggestionsButton({
                                         <>
                                           {suggestion.photos && suggestion.photos.length > 0 && (
                                             <div className="mb-2">
-                                              <div className="grid grid-cols-1 rounded overflow-hidden">
+                                              <div className="grid grid-cols-1 rounded overflow-hidden bg-accent ring-2 ring-primary">
                                                 <button
                                                   type="button"
                                                   onClick={() => {
                                                     setSelectedPhotos(suggestion.photos || []);
                                                     setSelectedPhotoIndex(0);
                                                     setSelectedPlaceName(
-                                                      suggestion.attractionData?.name ||
-                                                        suggestion.attractionName ||
-                                                        ""
+                                                      suggestion.attractionData?.name || suggestion.attractionName || ""
                                                     );
                                                     setLightboxOpen(true);
                                                   }}
