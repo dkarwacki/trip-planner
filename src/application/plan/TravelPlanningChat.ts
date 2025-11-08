@@ -33,7 +33,9 @@ Your role:
 - AVOID adding parenthetical clarifications or extra context to place names - keep them simple and direct
 - DO NOT suggest individual small attractions (museums, monuments) or specific restaurants - users will discover those on the map interface
 - Consider the user's selected personas when making suggestions
-- When suggesting places, provide 5-8 diverse options to give users multiple exploration hubs to choose from
+- When suggesting places:
+  * For the FIRST assistant response (when there's no conversation history): provide 5-8 diverse options to give users multiple exploration hubs to choose from
+  * For SUBSEQUENT responses (when there's already conversation history): provide a maximum of 5 new places that haven't been discussed yet
 
 ## Thinking Process
 Before providing your suggestions, think through your reasoning:
@@ -47,6 +49,7 @@ Before providing your suggestions, think through your reasoning:
 You MUST respond with a valid JSON object following this exact structure:
 {
   "thinking": ["step 1", "step 2", ...],  // Array of thinking steps (optional)
+  "message": "Your natural conversational response to the user",  // Natural response that references conversation history when appropriate
   "places": [
     {
       "name": "Fisherman's Wharf",  // Clean name without parentheses or extra context
@@ -55,6 +58,13 @@ You MUST respond with a valid JSON object following this exact structure:
     }
   ]
 }
+
+The "message" field should be a natural, conversational response that:
+- Acknowledges the user's query and any conversation history
+- Introduces or discusses the suggested places naturally
+- Wrap ONLY the place names with double asterisks (**Place Name**) wherever they naturally appear in your sentences
+- Maintains a warm, helpful tone
+- References previous conversation context when relevant
 
 You MUST respond ONLY with valid JSON, no additional text.`;
 };
@@ -119,7 +129,6 @@ const generateNarrative = (userMessage: string, personas: string[], places: Plac
       maxTokens: 10000,
     });
 
-
     // Return the narrative directly
     if (response.content && response.content.trim()) {
       return response.content.trim();
@@ -162,6 +171,7 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
     // Parse the structured JSON response
     let suggestedPlaces: PlaceSuggestion[] = [];
     let thinking: string[] = [];
+    let originalAssistantMessage = "";
     let assistantMessage =
       "I'm having trouble finding specific places for your request. Could you provide more details?";
 
@@ -174,14 +184,20 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
         if (parsed.thinking && Array.isArray(parsed.thinking)) {
           thinking = parsed.thinking;
         }
+        if (parsed.message && typeof parsed.message === "string") {
+          originalAssistantMessage = parsed.message;
+        }
       } catch (error) {
         yield* Effect.logWarning("Failed to parse structured output", { error, content: response.content });
         assistantMessage = "I'm having trouble processing your request. Please try again.";
       }
     }
 
-    // Generate narrative response ONLY if we have suggested places
-    if (suggestedPlaces.length > 0) {
+    // Generate narrative response ONLY for the first message
+    const isFirstMessage = input.conversationHistory.length === 0;
+
+    if (suggestedPlaces.length > 0 && isFirstMessage) {
+      // First message: generate engaging narrative
       try {
         const narrative = yield* generateNarrative(input.message, input.personas, suggestedPlaces, thinking);
         assistantMessage = narrative;
@@ -190,11 +206,12 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
         // Fallback to a simple message if narrative generation fails
         assistantMessage = "Here are some great places to explore based on your interests:";
       }
+    } else {
+      assistantMessage = originalAssistantMessage;
     }
 
     // Validate each suggested place against Google Maps
     if (suggestedPlaces.length > 0) {
-
       const validationResults = yield* Effect.forEach(
         suggestedPlaces,
         (place) =>
@@ -249,20 +266,6 @@ export const TravelPlanningChat = (input: ChatRequestInput) =>
           }),
         { concurrency: 3 } // Validate up to 3 places at a time
       );
-
-      // Log validation results for debugging
-      yield* Effect.logInfo("Place validation results", {
-        totalPlaces: validationResults.length,
-        validatedCount: validationResults.filter((p) => p.validationStatus === "verified").length,
-        notFoundCount: validationResults.filter((p) => p.validationStatus === "not_found").length,
-        results: validationResults.map((p) => ({
-          name: p.name,
-          validationStatus: p.validationStatus,
-          searchQuery: p.searchQuery,
-          hasId: !!p.id,
-          hasLocation: !!(p.lat && p.lng),
-        })),
-      });
 
       // Filter out unvalidated places (Option A)
       const validatedPlaces = validationResults.filter((p) => p.validationStatus === "verified");

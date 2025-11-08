@@ -234,61 +234,69 @@ export default function ChatInterface({
             </div>
           )}
 
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex gap-3 w-full max-w-full ${message.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              {message.role === "assistant" && (
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-blue-600" />
-                </div>
-              )}
+          {messages.map((message, messageIndex) => {
+            // Collect all places from messages up to and including this one
+            const allPlacesUpToThisMessage = messages
+              .slice(0, messageIndex + 1)
+              .flatMap((m) => m.suggestedPlaces || [])
+              .filter((place, index, self) => index === self.findIndex((p) => p.id === place.id));
 
-              <div className={`flex-1 min-w-0 max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}>
-                <div
-                  className={`inline-block rounded-lg px-4 py-2 break-words ${
-                    message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
-                  }`}
-                  style={{ overflowWrap: "anywhere", wordBreak: "break-word", maxWidth: "100%" }}
-                >
-                  {message.role === "assistant" && message.content.includes("**") ? (
-                    <NarrativeDisplay content={message.content} places={message.suggestedPlaces} />
-                  ) : (
-                    <p className="text-sm whitespace-pre-wrap break-words" style={{ overflowWrap: "anywhere" }}>
-                      {message.content}
-                    </p>
+            return (
+              <div
+                key={message.id}
+                className={`flex gap-3 w-full max-w-full ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                {message.role === "assistant" && (
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-blue-600" />
+                  </div>
+                )}
+
+                <div className={`flex-1 min-w-0 max-w-[85%] ${message.role === "user" ? "text-right" : ""}`}>
+                  <div
+                    className={`inline-block rounded-lg px-4 py-2 break-words ${
+                      message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
+                    }`}
+                    style={{ overflowWrap: "anywhere", wordBreak: "break-word", maxWidth: "100%" }}
+                  >
+                    {message.role === "assistant" && message.content.includes("**") ? (
+                      <NarrativeDisplay content={message.content} places={allPlacesUpToThisMessage} />
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap break-words" style={{ overflowWrap: "anywhere" }}>
+                        {message.content}
+                      </p>
+                    )}
+                  </div>
+
+                  {message.role === "assistant" && message.thinking && message.thinking.length > 0 && (
+                    <div className="mt-3 max-w-full">
+                      <ThinkingSection thinking={message.thinking} />
+                    </div>
+                  )}
+
+                  {message.suggestedPlaces && message.suggestedPlaces.length > 0 && (
+                    <div className="mt-3 space-y-2 w-full">
+                      {message.suggestedPlaces.map((suggestion) => (
+                        <PlaceSuggestionItem
+                          key={suggestion.id}
+                          suggestion={suggestion}
+                          isAdded={isSuggestionInItinerary(suggestion)}
+                          isValidating={validatingPlaces.has(suggestion.id)}
+                          onAdd={handleAddPlace}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
 
-                {message.role === "assistant" && message.thinking && message.thinking.length > 0 && (
-                  <div className="mt-3 max-w-full">
-                    <ThinkingSection thinking={message.thinking} />
-                  </div>
-                )}
-
-                {message.suggestedPlaces && message.suggestedPlaces.length > 0 && (
-                  <div className="mt-3 space-y-2 w-full">
-                    {message.suggestedPlaces.map((suggestion) => (
-                      <PlaceSuggestionItem
-                        key={suggestion.id}
-                        suggestion={suggestion}
-                        isAdded={isSuggestionInItinerary(suggestion)}
-                        isValidating={validatingPlaces.has(suggestion.id)}
-                        onAdd={handleAddPlace}
-                      />
-                    ))}
+                {message.role === "user" && (
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <UserIcon className="h-4 w-4 text-gray-600" />
                   </div>
                 )}
               </div>
-
-              {message.role === "user" && (
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <UserIcon className="h-4 w-4 text-gray-600" />
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
 
           {isLoading && (
             <div className="flex gap-3">
