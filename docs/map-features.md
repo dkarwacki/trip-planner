@@ -101,7 +101,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 **Technical details:**
 
 - Two-tab interface with lazy loading (restaurants load on first tab open)
-- **Photo integration:** 
+- **Photo integration:**
   - List view displays 96x96px thumbnail (400px source) fetched from Google Places Nearby Search API
   - Limited to 1 photo per item in list for performance
   - Details dialog fetches up to 2 high-quality photos (800px) on demand
@@ -111,7 +111,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
   - **Diversity Score (25% for attractions only):** Rewards places with unique/rare types
   - **Confidence Score (15% for attractions, 30% for restaurants):** Based on review volume reliability
     - High confidence: >100 reviews
-    - Medium confidence: 20-100 reviews  
+    - Medium confidence: 20-100 reviews
     - Low confidence: <20 reviews
   - Score badge displayed inline with rating information for better visual hierarchy
 - **High-score filter:** Toggle button to show only items with scores ≥8.5
@@ -231,7 +231,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 - **Places:** Array of Place objects with planned attractions/restaurants
 - **Selected Place:** Currently active place for viewing attractions
 - **Attractions/Restaurants:** Cached results per place with scores (sorted, deduplicated)
-- **UI State:** 
+- **UI State:**
   - Desktop: Active tab, loading states, hovered/highlighted items, sidebar collapse states
   - Mobile: Active mobile tab (places/map/explore/plan), drawer open states
 - **Search State:** Initial search center tracking for "Search this area" button

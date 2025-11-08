@@ -1,15 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { getAllPersonas, type PersonaType } from "@/domain/plan/models";
-import { 
-  MapPin, 
-  TreePine, 
-  Palette, 
-  Utensils, 
-  Mountain, 
-  Laptop, 
-  Landmark,
-  Camera 
-} from "lucide-react";
+import { MapPin, TreePine, Palette, Utensils, Mountain, Laptop, Landmark, Camera } from "lucide-react";
 
 interface PersonaSelectorProps {
   selected: PersonaType[];

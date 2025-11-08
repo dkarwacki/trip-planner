@@ -18,10 +18,11 @@ if (!apiKey) {
 // Optional: Get Map ID for AdvancedMarkerElement support
 const mapId = import.meta.env.GOOGLE_MAPS_MAP_ID;
 
-// Get tripId from URL params if present
+// Get tripId and conversationId from URL params if present
 const tripId = Astro.url.searchParams.get("tripId");
+const conversationId = Astro.url.searchParams.get("conversationId");
 ---
 
 <Layout title="Map Planner">
-  <MapPlanner client:load apiKey={apiKey} mapId={mapId} tripId={tripId} />
+  <MapPlanner client:load apiKey={apiKey} mapId={mapId} tripId={tripId} conversationId={conversationId} />
 </Layout>

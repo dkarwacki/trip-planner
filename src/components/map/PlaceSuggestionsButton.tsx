@@ -511,7 +511,7 @@ export default function PlaceSuggestionsButton({
                                         <>
                                           {suggestion.photos && suggestion.photos.length > 0 && (
                                             <div className="mb-2">
-                                              <div className="grid grid-cols-1 rounded overflow-hidden bg-accent ring-2 ring-primary">
+                                              <div className="grid grid-cols-1 rounded-lg overflow-hidden bg-accent ring-2 ring-primary">
                                                 <button
                                                   type="button"
                                                   onClick={() => {

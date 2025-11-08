@@ -38,7 +38,10 @@ export default function TripHistoryPanel({ trips, onOpenTrip, onDeleteTrip }: Tr
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0 overflow-hidden">
-                    <h4 className="text-sm font-medium text-gray-900 mb-1 break-words" style={{ overflowWrap: "anywhere" }}>
+                    <h4
+                      className="text-sm font-medium text-gray-900 mb-1 break-words"
+                      style={{ overflowWrap: "anywhere" }}
+                    >
                       {trip.title}
                     </h4>
                     <p className="text-xs text-gray-500 flex items-center gap-1">

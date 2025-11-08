@@ -27,9 +27,7 @@ export function MarkerTooltip({ attraction, position, type }: MarkerTooltipProps
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(
-          <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-        );
+        stars.push(<Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />);
       } else if (i === fullStars && hasHalfStar) {
         stars.push(
           <div key={i} className="relative h-3 w-3">
@@ -40,9 +38,7 @@ export function MarkerTooltip({ attraction, position, type }: MarkerTooltipProps
           </div>
         );
       } else {
-        stars.push(
-          <Star key={i} className="h-3 w-3 text-gray-300" />
-        );
+        stars.push(<Star key={i} className="h-3 w-3 text-gray-300" />);
       }
     }
 
@@ -88,7 +84,7 @@ export function MarkerTooltip({ attraction, position, type }: MarkerTooltipProps
         marginTop: transformY === "-100%" ? "-12px" : "0",
       }}
     >
-      <div 
+      <div
         className={`${bgColor} text-white rounded-lg shadow-lg px-3 py-2 max-w-xs relative transition-all duration-300 ease-out`}
         style={{
           animation: "tooltipFadeIn 0.3s ease-out forwards",
@@ -98,42 +94,29 @@ export function MarkerTooltip({ attraction, position, type }: MarkerTooltipProps
         <div
           className={`absolute left-1/2 -translate-x-1/2 ${transformY === "-100%" ? "-bottom-1" : "-top-1"} w-2 h-2 ${bgColor} rotate-45`}
         />
-        
+
         {/* Content */}
         <div className="relative z-10 space-y-1">
           <h4 className="font-semibold text-sm leading-tight">{attraction.name}</h4>
-          
+
           <div className="flex items-center gap-2 text-xs">
             {attraction.rating > 0 && (
               <div className="flex items-center gap-1">
-                <div className="flex items-center gap-0.5">
-                  {renderStars(attraction.rating)}
-                </div>
+                <div className="flex items-center gap-0.5">{renderStars(attraction.rating)}</div>
                 <span className="font-medium">{attraction.rating.toFixed(1)}</span>
               </div>
             )}
-            
+
             {attraction.userRatingsTotal > 0 && (
-              <span className="text-white/80">
-                ({attraction.userRatingsTotal.toLocaleString()})
-              </span>
+              <span className="text-white/80">({attraction.userRatingsTotal.toLocaleString()})</span>
             )}
-            
-            {attraction.priceLevel && (
-              <div className="ml-auto">
-                {renderPriceLevel(attraction.priceLevel)}
-              </div>
-            )}
+
+            {attraction.priceLevel && <div className="ml-auto">{renderPriceLevel(attraction.priceLevel)}</div>}
           </div>
-          
-          {attraction.vicinity && (
-            <p className="text-xs text-white/90 leading-tight">
-              {attraction.vicinity}
-            </p>
-          )}
+
+          {attraction.vicinity && <p className="text-xs text-white/90 leading-tight">{attraction.vicinity}</p>}
         </div>
       </div>
     </div>
   );
 }
-

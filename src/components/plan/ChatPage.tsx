@@ -25,6 +25,7 @@ import {
   migrateConversationTrips,
   getTripForConversation,
   saveTripForConversation,
+  loadTripById,
 } from "@/lib/common/storage";
 
 export default function ChatPage() {
@@ -238,8 +239,8 @@ export default function ChatPage() {
       // Clear current itinerary
       clearCurrentItinerary();
       setItinerary([]);
-      // Navigate to map with trip ID
-      window.location.href = `/map?tripId=${tripId}`;
+      // Navigate to map with trip ID and conversation ID
+      window.location.href = `/map?tripId=${tripId}&conversationId=${conversationId}`;
     } else {
       // No conversation, save trip without conversation link
       const tripId = saveTripToHistory(itinerary);
@@ -252,7 +253,13 @@ export default function ChatPage() {
   };
 
   const handleOpenTrip = (tripId: string) => {
-    window.location.href = `/map?tripId=${tripId}`;
+    // Load trip to check if it has a conversationId
+    const trip = loadTripById(tripId);
+    if (trip?.conversationId) {
+      window.location.href = `/map?tripId=${tripId}&conversationId=${trip.conversationId}`;
+    } else {
+      window.location.href = `/map?tripId=${tripId}`;
+    }
   };
 
   const handleMobileTabChange = (tab: MobileTab) => {

@@ -1,4 +1,3 @@
-import { Map, List, Compass, CheckSquare, Bot, MapPin, History } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type MapTab = "places" | "map" | "explore" | "plan";
@@ -20,7 +19,6 @@ interface MobileNavigationProps {
 }
 
 export function MobileNavigation({ activeTab, onTabChange, tabs }: MobileNavigationProps) {
-
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 sm:hidden safe-area-bottom">
       <div className="flex items-center justify-around h-16">

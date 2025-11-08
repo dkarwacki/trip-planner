@@ -18,7 +18,6 @@ Its implemented already. You can take a look on @features.md to check whats exac
 
 There is scoring already implemented based on quality, diversity and confidence.
 
-
 6. What measurable behaviors define completion of the “preferencje → chat → mapa” flow beyond simply reaching each step? Recommendation: Instrument events that capture depth of engagement (e.g., number of messages, places added, itinerary saved) to validate MVP success criteria.
 
 I want to use google analitics or something similar for that.
@@ -31,7 +30,7 @@ Its already implemented on top of Google Maps. You can look at @features.md with
 
 Lets ignore performance for now and focus on functional requirements.
 
-9. Do we envision itinerary collaboration or sharing in the near term, or is it explicitly a single-user experience for the MVP? 
+9. Do we envision itinerary collaboration or sharing in the near term, or is it explicitly a single-user experience for the MVP?
 
 It should be single-user experience.
 
@@ -79,16 +78,13 @@ Yes, it will require authentication
 
 persona selection → chat → itinerary refinements
 
-
 1. Will persona selections persist per user account or reset each session? Recommendation: Decide whether to store persona choices in the user profile so returning users keep tailored defaults without reselecting.
 
 it will reset each session
 
 2. How should the top-of-chat persona buttons behave visually (toggle chips, checkboxes) and how many can be active at once? Recommendation: Define the interaction pattern and selection limit so the UX and implementation stay aligned.
 
-
 It should be clear that selecting any persona (other than general tourist) automatically deselects the default general tourist option, to prevent ambiguous or diluted prompts. Only explicitly chosen personas should determine prompt context and feedback.
-
 
 3. When a user adds personas beyond the default “general tourist,” should that default remain selected or be replaced automatically? Recommendation: Specify the selection rules to avoid ambiguity in prompt generation and UI feedback.
 
@@ -106,13 +102,12 @@ add to itinerary and remove
 
 Create a persona-to-prompt mapping table to keep AI outputs consistent and explainable
 
-
 7. What minimal user information should we store after Google OAuth (name, email, avatar)? Recommendation: Document the data schema now to ensure compliance with Google policies and future privacy needs.
 
 name and email
 
-8. Do we need a contingency plan if Google OAuth fails (e.g., guest mode) or can the app remain inaccessible without login? 
-Recommendation: Decide acceptable fallback behavior to prevent blockers during outages or configuration issues.
+8. Do we need a contingency plan if Google OAuth fails (e.g., guest mode) or can the app remain inaccessible without login?
+   Recommendation: Decide acceptable fallback behavior to prevent blockers during outages or configuration issues.
 
 it should be inaccessible without login
 

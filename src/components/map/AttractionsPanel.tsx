@@ -55,7 +55,6 @@ const formatReviewCount = (count: number): string => {
   return count.toString();
 };
 
-
 const formatTypeName = (type: string): string => {
   return type
     .split("_")
@@ -177,7 +176,7 @@ const ContentList = ({
                   itemRefs.current.delete(attraction.id);
                 }
               }}
-              className={`space-y-3 cursor-pointer rounded-lg p-3 -mx-3 transition-colors hover:bg-accent ${
+              className={`space-y-3 cursor-pointer p-3 -mx-3 transition-colors hover:bg-accent ${
                 highlightedAttractionId === attraction.id ? "bg-accent ring-2 ring-primary" : ""
               } ${isPlanned ? "bg-muted/50" : ""}`}
               role="button"
@@ -247,12 +246,12 @@ const ContentList = ({
 
                 {/* Photo thumbnail */}
                 {attraction.photos && attraction.photos.length > 0 && (
-                  <div className="flex-shrink-0 w-24 h-24">
+                  <div className="flex-shrink-0 w-24 h-24 overflow-hidden rounded-lg ring-1 ring-primary">
                     <PhotoImage
                       photoReference={attraction.photos[0].photoReference}
                       alt={attraction.name}
                       maxWidth={800}
-                      className="w-24 h-24 object-cover rounded-lg"
+                      className="w-24 h-24 object-cover"
                     />
                   </div>
                 )}

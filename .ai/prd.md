@@ -5,10 +5,12 @@
 TripGenie is an AI-powered trip planning application that personalizes travel recommendations based on user preferences. The product addresses the complexity and time investment required in planning engaging trips by leveraging AI to suggest places and destinations where travelers can discover meaningful experiences.
 
 The application operates through two integrated stages:
+
 - Place Discovery: An AI chat interface that provides personalized place and destination recommendations based on selected traveler personas. These places are selected as starting points or exploration hubs chosen for their potential to have interesting nearby attractions - the place itself doesn't need to be a major attraction, but rather a good location from which to discover surrounding points of interest.
 - Attraction Planning: An interactive map interface where users explore attractions and restaurants near their selected starting point places, with quality scoring to aid decision-making.
 
 Key differentiators include:
+
 - Persona-based place recommendations supporting multiple traveler types (general tourists, nature lovers, art enthusiasts, foodie travelers, adventure seekers, digital nomads, history buffs, photography enthusiasts)
 - Two-stage workflow separating destination selection from attraction discovery
 - Quality/diversity/confidence scoring for attractions and restaurants on the map
@@ -19,13 +21,16 @@ Key differentiators include:
 ## 2. User Problem
 
 ### Primary Problem
+
 Planning engaging and personalized trips is difficult and time-consuming. Travelers struggle with:
+
 - Information overload from multiple sources
 - Difficulty finding places that match their specific interests
 - Time-consuming research to validate quality and relevance
 - Challenges in organizing discoveries into actionable itineraries
 
 ### User Pain Points
+
 - Generic travel recommendations that don't account for personal preferences
 - Lack of context about why specific places are recommended
 - Difficulty transitioning from inspiration to concrete planning
@@ -33,7 +38,9 @@ Planning engaging and personalized trips is difficult and time-consuming. Travel
 - Overwhelming amount of options without quality filtering
 
 ### Target Users
+
 The application serves eight primary personas:
+
 - General tourists seeking popular destinations
 - Nature lovers interested in outdoor activities
 - Art enthusiasts looking for cultural experiences
@@ -46,12 +53,14 @@ The application serves eight primary personas:
 ## 3. Functional Requirements
 
 ### 3.1 Authentication and User Management
+
 - Supabase Auth integration for user authentication (required for all access)
 - User profile storage including name and email
 - Persistent storage of persona selections per user account
 - Session management and secure access control
 
 ### 3.2 Persona Selection
+
 - Multi-select persona interface (horizontal row on desktop, dropdown on mobile)
 - Default "general tourist" persona when none selected
 - Even weighting applied when multiple personas are active
@@ -61,6 +70,7 @@ The application serves eight primary personas:
 - Attraction and restaurant discovery on the map is not persona-driven
 
 ### 3.3 AI Chat Interface
+
 - Natural language input for travel queries
 - AI suggests places and destinations only (cities, landmarks, beaches, trails, viewpoints, districts)
 - Suggested places are selected as starting points or exploration hubs based on their potential for nearby attraction discovery
@@ -77,6 +87,7 @@ The application serves eight primary personas:
 - Suggested place names are validated through Google Maps
 
 ### 3.4 Place Validation
+
 - Place names are validated through Google Maps when user adds them to itinerary
 - Validation ensures suggested places can be located and returns a valid Google Maps place ID and specific coordinates (latitude and longitude)
 - Place ID and coordinates are required to display the place on the map and discover nearby attractions
@@ -85,6 +96,7 @@ The application serves eight primary personas:
 - Persona-influenced recommendations apply to place and destination suggestions only
 
 ### 3.5 Itinerary Building
+
 - Ordered collection of selected places
 - Order suggests a route or visit sequence
 - Order is preserved when exporting to map
@@ -95,6 +107,7 @@ The application serves eight primary personas:
 - Automatic timestamp generation for exports
 
 ### 3.6 Map Interface
+
 - Interactive map visualization of selected places
 - Places from itinerary appear in order on the map
 - Discovery of local attractions and restaurants near the starting point places from chat
@@ -108,6 +121,7 @@ The application serves eight primary personas:
 - Support for imported itineraries
 
 ### 3.7 History and Export
+
 - Timestamped export titles (e.g., "Trip Plan - 2025-11-01 14:30")
 - History panel in planning interface
 - Automatic saving of all changes made on /map view
@@ -117,6 +131,7 @@ The application serves eight primary personas:
 - Quick access to saved itineraries with their final state
 
 ### 3.8 Logging and Analytics
+
 - Server-side logging for debugging
 - Minimal data capture for MVP
 - Future integration preparation for Google Analytics
@@ -125,6 +140,7 @@ The application serves eight primary personas:
 ## 4. Product Boundaries
 
 ### In Scope for MVP
+
 - Single-user planning flow
 - Eight predefined personas with even weighting
 - AI chat for place/destination suggestions (not attractions/restaurants) with expandable details
@@ -137,6 +153,7 @@ The application serves eight primary personas:
 - Server-side logging
 
 ### Out of Scope for MVP
+
 - Social features (sharing, comments, user profiles beyond basic auth)
 - Travel logistics (transportation, reservations, budget tracking)
 - Offline mode functionality
@@ -150,6 +167,7 @@ The application serves eight primary personas:
 - Full analytics implementation
 
 ### Technical Constraints
+
 - Requires internet connection
 - Supabase-authenticated account mandatory for access
 - Limited to predefined persona types
@@ -158,6 +176,7 @@ The application serves eight primary personas:
 ## 5. User Stories
 
 ### US-001
+
 - ID: US-001
 - Title: User Authentication via Supabase
 - Description: As a user, I want to sign in using Supabase authentication so that my preferences and trip plans are saved securely
@@ -169,6 +188,7 @@ The application serves eight primary personas:
   - Unauthenticated users cannot access any application features
 
 ### US-002
+
 - ID: US-002
 - Title: Select Travel Personas
 - Description: As a user, I want to select my travel personas so that place recommendations match my interests
@@ -183,6 +203,7 @@ The application serves eight primary personas:
   - Attraction and restaurant discovery on map is not persona-driven
 
 ### US-003
+
 - ID: US-003
 - Title: Default Persona Behavior
 - Description: As a user, I want the general tourist persona to be selected by default if I haven't chosen any specific personas
@@ -192,6 +213,7 @@ The application serves eight primary personas:
   - Default behavior is consistent across sessions
 
 ### US-004
+
 - ID: US-004
 - Title: Chat with AI for Place Recommendations
 - Description: As a user, I want to chat with an AI assistant to receive personalized place and destination recommendations that serve as starting points for discovering nearby attractions
@@ -206,6 +228,7 @@ The application serves eight primary personas:
   - Chat history is maintained during session
 
 ### US-005
+
 - ID: US-005
 - Title: Expand Place Details
 - Description: As a user, I want to expand individual place suggestions to see more details and understand why they're recommended as starting points for exploration
@@ -219,6 +242,7 @@ The application serves eight primary personas:
   - Multiple suggestions can be expanded simultaneously
 
 ### US-006
+
 - ID: US-006
 - Title: Add Place to Itinerary from Chat
 - Description: As a user, I want to add recommended places to my itinerary directly from the chat interface
@@ -233,6 +257,7 @@ The application serves eight primary personas:
   - Itinerary count updates in real-time
 
 ### US-007
+
 - ID: US-007
 - Title: Remove Place from Itinerary
 - Description: As a user, I want to remove places from my itinerary if I change my mind
@@ -244,6 +269,7 @@ The application serves eight primary personas:
   - Place can be re-added if desired
 
 ### US-008
+
 - ID: US-008
 - Title: View and Reorder Current Itinerary
 - Description: As a user, I want to see all places in my current itinerary as an ordered collection
@@ -259,6 +285,7 @@ The application serves eight primary personas:
   - Reordering changes affect the sequence on exported map
 
 ### US-009
+
 - ID: US-009
 - Title: Export Itinerary to Map
 - Description: As a user, I want to export my itinerary to an interactive map to discover attractions and restaurants near my selected starting point places
@@ -273,6 +300,7 @@ The application serves eight primary personas:
   - All subsequent changes on /map are automatically persisted to the same history entry
 
 ### US-010
+
 - ID: US-010
 - Title: View Trip History
 - Description: As a user, I want to access my previous trip plans from a history panel with all my modifications preserved
@@ -285,6 +313,7 @@ The application serves eight primary personas:
   - History reflects the final state of each trip, including all additions/removals made on /map
 
 ### US-011
+
 - ID: US-011
 - Title: Explore Map Interface
 - Description: As a user, I want to interact with an interactive map to visualize my selected places and discover nearby attractions and restaurants
@@ -298,6 +327,7 @@ The application serves eight primary personas:
   - All changes made on the map (adding/removing places) are automatically saved to trip history
 
 ### US-012
+
 - ID: US-012
 - Title: Auto-Save Map Changes to History
 - Description: As a user, I want all my changes on the /map view to be automatically saved so I don't lose my work
@@ -311,6 +341,7 @@ The application serves eight primary personas:
   - If user returns to the same trip later, all modifications are preserved
 
 ### US-013
+
 - ID: US-013
 - Title: Discover Local Attractions and Restaurants on Map
 - Description: As a user, I want to discover nearby attractions and restaurants while viewing the map
@@ -322,6 +353,7 @@ The application serves eight primary personas:
   - Filters available for attraction types
 
 ### US-014
+
 - ID: US-014
 - Title: View Attraction and Restaurant Scores on Map
 - Description: As a user, I want to see quality scores for attractions and restaurants on the map to make informed decisions
@@ -334,6 +366,7 @@ The application serves eight primary personas:
   - Visual indicators for score ranges
 
 ### US-015
+
 - ID: US-015
 - Title: Mobile Responsive Experience
 - Description: As a mobile user, I want to access all features with an optimized mobile interface
@@ -345,6 +378,7 @@ The application serves eight primary personas:
   - All buttons and controls are touch-accessible
 
 ### US-016
+
 - ID: US-016
 - Title: Logout Functionality
 - Description: As a user, I want to securely log out of my account
@@ -356,6 +390,7 @@ The application serves eight primary personas:
   - Requires re-authentication to access again
 
 ### US-017
+
 - ID: US-017
 - Title: Handle AI Chat Errors
 - Description: As a user, I want to see helpful error messages if the AI chat encounters issues
@@ -367,6 +402,7 @@ The application serves eight primary personas:
   - Previous chat history preserved
 
 ### US-018
+
 - ID: US-018
 - Title: Empty Itinerary State
 - Description: As a new user, I want clear guidance when my itinerary is empty
@@ -378,6 +414,7 @@ The application serves eight primary personas:
   - Visual indication of empty state
 
 ### US-019
+
 - ID: US-019
 - Title: Session Persistence
 - Description: As a user, I want my current planning session to persist if I accidentally refresh the page
@@ -389,6 +426,7 @@ The application serves eight primary personas:
   - Map view position saved
 
 ### US-020
+
 - ID: US-020
 - Title: Quick Persona Switch
 - Description: As a user, I want to quickly change my personas to see different recommendations
@@ -402,6 +440,7 @@ The application serves eight primary personas:
   - Clear indication of active personas
 
 ### US-021
+
 - ID: US-021
 - Title: Loading States
 - Description: As a user, I want to see loading indicators while waiting for responses
@@ -413,6 +452,7 @@ The application serves eight primary personas:
   - Smooth transitions between states
 
 ### US-022
+
 - ID: US-022
 - Title: Place Validation and Error Handling
 - Description: As a user, I want suggested places validated through Google Maps when I add them so I can trust they exist and have a valid place ID and coordinates for map display
@@ -426,6 +466,7 @@ The application serves eight primary personas:
   - User can choose different suggestion if validation fails
 
 ### US-023
+
 - ID: US-023
 - Title: Clear Guidance for Attraction/Restaurant Queries
 - Description: As a user, I want clear guidance when I ask about attractions or restaurants in chat so I understand where to find that information
@@ -438,12 +479,13 @@ The application serves eight primary personas:
 ## 6. Success Metrics
 
 ### Metrics
+
 - User Adoption: 25+ testers have used the application
 - Flow Completion: ≥50% of users complete the full flow (preferences → chat → map)
 - Engagement: Average of ≥3 saved places per trip plan
 
-
 ### Future Tracking (Post-MVP)
+
 - Detailed funnel analysis via Google Analytics
 - Feature usage heatmaps
 - Performance metrics monitoring

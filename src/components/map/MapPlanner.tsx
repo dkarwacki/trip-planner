@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useDebouncedCallback } from "@/components/hooks/useDebouncedCallback";
 import { APIProvider, Map, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { Effect } from "effect";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -19,7 +20,13 @@ import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import type { AttractionScore, Attraction } from "@/domain/map/models";
 import { scoreAttractions } from "@/domain/map/scoring/attractions";
 import { scoreRestaurants } from "@/domain/map/scoring/restaurants";
-import { loadTripById, loadPersonas } from "@/lib/common/storage";
+import {
+  loadTripById,
+  loadPersonas,
+  saveTripToHistory,
+  updateTripInHistory,
+  saveTripForConversation,
+} from "@/lib/common/storage";
 import type { PersonaType } from "@/domain/plan/models";
 import { HIGH_SCORE_THRESHOLD } from "@/domain/map/scoring";
 import AttractionsPanel from "@/components/map/AttractionsPanel";
@@ -28,7 +35,17 @@ import PlaceListItem from "@/components/map/PlaceListItem";
 import AttractionDetailsDialog from "@/components/map/AttractionDetailsDialog";
 import { MarkerTooltip } from "@/components/map/MarkerTooltip";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, List, Map as MapIcon, Compass, CheckSquare } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  List,
+  Map as MapIcon,
+  Compass,
+  CheckSquare,
+  Loader2,
+  AlertCircle,
+  MessageCircle,
+} from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { calculateDistance, SEARCH_NEARBY_DISTANCE_THRESHOLD } from "@/lib/map/map-utils";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -40,7 +57,10 @@ interface MapPlannerProps {
   apiKey: string;
   mapId?: string;
   tripId?: string | null;
+  conversationId?: string | null;
 }
+
+type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 // Marker size constants - larger on mobile for better touch targets
 const getMarkerSize = (isMobile: boolean) => ({
@@ -52,7 +72,15 @@ const getMarkerSize = (isMobile: boolean) => ({
   },
 });
 
-const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null }) => {
+const MapContent = ({
+  mapId,
+  tripId,
+  conversationId,
+}: {
+  mapId?: string;
+  tripId?: string | null;
+  conversationId?: string | null;
+}) => {
   const map = useMap();
   const markerLibrary = useMapsLibrary("marker");
 
@@ -69,6 +97,11 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const personas = useState<PersonaType[]>(() => loadPersonas())[0];
 
+  // Auto-save state
+  const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
+  const [currentConversationId] = useState<string | null>(conversationId || null);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+
   // Load places from trip history if tripId is provided
   useEffect(() => {
     if (tripId && typeof window !== "undefined") {
@@ -82,6 +115,61 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
       }
     }
   }, [tripId]);
+
+  // Auto-save function
+  const saveTrip = useCallback(
+    (placesToSave: Place[]) => {
+      if (placesToSave.length === 0) {
+        return;
+      }
+
+      try {
+        setSaveStatus("saving");
+
+        if (!currentTripId) {
+          // Create new trip on first place add
+          let newTripId: string;
+
+          if (currentConversationId) {
+            // Save trip linked to conversation
+            newTripId = saveTripForConversation(currentConversationId, placesToSave);
+          } else {
+            // Save trip without conversation link
+            newTripId = saveTripToHistory(placesToSave);
+          }
+
+          setCurrentTripId(newTripId);
+          console.log("[MapPlanner] Created new trip:", newTripId);
+        } else {
+          // Update existing trip
+          updateTripInHistory(currentTripId, placesToSave);
+          console.log("[MapPlanner] Updated trip:", currentTripId);
+        }
+
+        setSaveStatus("saved");
+
+        // Auto-hide "saved" status after 2 seconds
+        setTimeout(() => {
+          setSaveStatus("idle");
+        }, 2000);
+      } catch (error) {
+        console.error("[MapPlanner] Failed to save trip:", error);
+        setSaveStatus("error");
+      }
+    },
+    [currentTripId, currentConversationId]
+  );
+
+  // Debounced save function (750ms delay)
+  const [debouncedSave] = useDebouncedCallback(saveTrip, 750);
+
+  // Auto-save when places change
+  useEffect(() => {
+    if (places.length > 0) {
+      debouncedSave(places);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [places]);
 
   // Debug: Track places changes
   useEffect(() => {
@@ -1157,6 +1245,24 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
                   <div className="flex-1">
                     <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} map={map} />
                   </div>
+                  {currentConversationId && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => (window.location.href = `/plan?conversationId=${currentConversationId}`)}
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 flex-shrink-0"
+                          aria-label="Back to conversation"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Back to Conversation</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -1176,6 +1282,27 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
                 </div>
                 {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
                 {isLoading && <p className="text-sm text-muted-foreground mt-1">Loading place details...</p>}
+
+                {/* Save Status Indicator */}
+                {(saveStatus === "saving" || saveStatus === "error") && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    {saveStatus === "saving" && (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    )}
+                    {saveStatus === "error" && (
+                      <>
+                        <AlertCircle className="h-3 w-3 text-red-500" />
+                        <span className="text-red-500">Error saving</span>
+                        <button onClick={() => saveTrip(places)} className="ml-1 underline hover:no-underline">
+                          Retry
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               <Card className="flex-1 m-4 flex flex-col rounded-lg min-h-0">
@@ -1397,12 +1524,46 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
         <Drawer open={isMobile && mobileTab === "places"} onOpenChange={(open) => !open && setMobileTab("map")}>
           <DrawerContent className="max-h-[85vh] flex flex-col">
             <DrawerHeader className="pb-3 flex-shrink-0">
-              <DrawerTitle className="text-xl font-bold">Places ({places.length})</DrawerTitle>
+              <div className="flex items-center justify-between gap-2">
+                <DrawerTitle className="text-xl font-bold">Places ({places.length})</DrawerTitle>
+                {currentConversationId && (
+                  <Button
+                    onClick={() => (window.location.href = `/plan?conversationId=${currentConversationId}`)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1.5"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span>Back to Chat</span>
+                  </Button>
+                )}
+              </div>
             </DrawerHeader>
             <div className="px-4 pb-3 space-y-2 flex-shrink-0">
               <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} map={map} />
               {error && <p className="text-sm text-red-500">{error}</p>}
               {isLoading && <p className="text-sm text-muted-foreground">Loading place details...</p>}
+
+              {/* Save Status Indicator (Mobile) */}
+              {(saveStatus === "saving" || saveStatus === "error") && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  {saveStatus === "saving" && (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  )}
+                  {saveStatus === "error" && (
+                    <>
+                      <AlertCircle className="h-3 w-3 text-red-500" />
+                      <span className="text-red-500">Error saving</span>
+                      <button onClick={() => saveTrip(places)} className="ml-1 underline hover:no-underline">
+                        Retry
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
             <ScrollArea className="flex-1 min-h-0 px-4 pb-20">
               {places.length === 0 ? (
@@ -1563,10 +1724,10 @@ const MapContent = ({ mapId, tripId }: { mapId?: string; tripId?: string | null 
   );
 };
 
-export default function MapPlanner({ apiKey, mapId, tripId }: MapPlannerProps) {
+export default function MapPlanner({ apiKey, mapId, tripId, conversationId }: MapPlannerProps) {
   return (
     <APIProvider apiKey={apiKey} libraries={["geometry", "places"]}>
-      <MapContent mapId={mapId} tripId={tripId} />
+      <MapContent mapId={mapId} tripId={tripId} conversationId={conversationId} />
     </APIProvider>
   );
 }

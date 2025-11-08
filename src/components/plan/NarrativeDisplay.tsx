@@ -113,7 +113,10 @@ export default function NarrativeDisplay({ content, places = [] }: NarrativeDisp
   }
 
   return (
-    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words" style={{ overflowWrap: "anywhere" }}>
+    <p
+      className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words"
+      style={{ overflowWrap: "anywhere" }}
+    >
       {renderNarrative(content, places)}
     </p>
   );

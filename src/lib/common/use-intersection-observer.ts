@@ -29,16 +29,8 @@ export interface UseIntersectionObserverResult {
  * </div>
  * ```
  */
-export function useIntersectionObserver(
-  options: UseIntersectionObserverOptions = {}
-): UseIntersectionObserverResult {
-  const {
-    threshold = 0,
-    root = null,
-    rootMargin = "0px",
-    triggerOnce = false,
-    enabled = true,
-  } = options;
+export function useIntersectionObserver(options: UseIntersectionObserverOptions = {}): UseIntersectionObserverResult {
+  const { threshold = 0, root = null, rootMargin = "0px", triggerOnce = false, enabled = true } = options;
 
   const [entry, setEntry] = useState<IntersectionObserverEntry>();
   const [isIntersecting, setIsIntersecting] = useState(false);
