@@ -6,6 +6,7 @@ interface ApiCallStats {
   reverseGeocode: number;
   textSearch: number;
   searchPlace: number;
+  photo: number;
 }
 
 export function DevStats() {
@@ -29,7 +30,7 @@ export function DevStats() {
         } else {
           setError("Failed to fetch stats");
         }
-      } catch (err) {
+      } catch {
         setError("Error fetching stats");
       }
     };
@@ -77,6 +78,7 @@ export function DevStats() {
                 <StatRow label="reverseGeocode" count={stats.reverseGeocode} />
                 <StatRow label="textSearch" count={stats.textSearch} />
                 <StatRow label="searchPlace" count={stats.searchPlace} />
+                <StatRow label="photo" count={stats.photo} />
               </div>
             ) : (
               <div className="text-gray-400 py-1">Loading...</div>

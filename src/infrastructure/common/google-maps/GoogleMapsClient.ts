@@ -33,6 +33,7 @@ const apiCallStats = {
   reverseGeocode: 0,
   textSearch: 0,
   searchPlace: 0,
+  photo: 0,
 };
 
 export const getApiCallStats = () => ({ ...apiCallStats });
@@ -40,6 +41,9 @@ export const resetApiCallStats = () => {
   Object.keys(apiCallStats).forEach((key) => {
     apiCallStats[key as keyof typeof apiCallStats] = 0;
   });
+};
+export const incrementPhotoCallCount = () => {
+  apiCallStats.photo++;
 };
 
 export interface IGoogleMapsClient {

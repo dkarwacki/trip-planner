@@ -1,5 +1,6 @@
 import { Brand } from "effect";
 import type { Place } from "@/domain/common/models";
+import type { ConversationId } from "./ConversationHistory";
 
 // Branded types
 export type TripId = string & Brand.Brand<"TripId">;
@@ -14,9 +15,10 @@ export interface SavedTrip {
   places: Place[];
   timestamp: TripTimestamp;
   placeCount: number;
+  conversationId?: ConversationId;
 }
 
-export const createSavedTrip = (places: Place[]): SavedTrip => {
+export const createSavedTrip = (places: Place[], conversationId?: ConversationId): SavedTrip => {
   const timestamp = TripTimestamp(Date.now());
   const title = formatTripTitle(timestamp);
 
@@ -26,6 +28,7 @@ export const createSavedTrip = (places: Place[]): SavedTrip => {
     places,
     timestamp,
     placeCount: places.length,
+    conversationId,
   };
 };
 
@@ -45,5 +48,3 @@ export const updateTripPlaces = (trip: SavedTrip, places: Place[]): SavedTrip =>
   places,
   placeCount: places.length,
 });
-
-

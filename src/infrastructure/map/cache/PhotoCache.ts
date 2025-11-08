@@ -1,6 +1,7 @@
 import { Effect, Cache, Duration, Context, Layer } from "effect";
 import { MissingGoogleMapsAPIKeyError } from "@/domain/common/errors";
 import { ConfigService } from "@/infrastructure/common/config";
+import { incrementPhotoCallCount } from "@/infrastructure/common/google-maps/GoogleMapsClient";
 
 export interface PhotoCacheKey {
   photoReference: string;
@@ -34,6 +35,8 @@ export const PhotoCacheLayer = Layer.effect(
         lookup: (key: PhotoCacheKey) =>
           Effect.gen(function* () {
             const apiKey = yield* config.getGoogleMapsApiKey();
+
+            incrementPhotoCallCount();
 
             const url = `https://places.googleapis.com/v1/${key.photoReference}/media?maxWidthPx=${key.maxWidth}&key=${apiKey}`;
 

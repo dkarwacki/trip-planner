@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Send, Bot, User as UserIcon, ChevronDown, ChevronRight } from "lucide-react";
-import type { ChatMessage, PersonaType } from "@/domain/plan/models";
+import { Send, Bot, User as UserIcon, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import type { ChatMessage, PersonaType, ConversationId } from "@/domain/plan/models";
 import type { Place } from "@/domain/common/models";
 import { createUserMessage, createAssistantMessage } from "@/domain/plan/models/ChatMessage";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
@@ -18,14 +18,31 @@ interface ChatInterfaceProps {
   itinerary: Place[];
   onAddPlace: (place: Place) => void;
   onRemovePlace: (placeId: string) => void;
+  initialMessages?: ChatMessage[];
+  onMessagesChange?: (messages: ChatMessage[]) => void;
+  onNewConversation?: () => void;
+  currentConversationId?: ConversationId | null;
 }
 
-export default function ChatInterface({ personas, itinerary, onAddPlace }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+export default function ChatInterface({
+  personas,
+  itinerary,
+  onAddPlace,
+  initialMessages = [],
+  onMessagesChange,
+  onNewConversation,
+  currentConversationId,
+}: ChatInterfaceProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [validatingPlaces, setValidatingPlaces] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Load initial messages when they change
+  useEffect(() => {
+    setMessages(initialMessages);
+  }, [initialMessages]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -66,7 +83,8 @@ export default function ChatInterface({ personas, itinerary, onAddPlace }: ChatI
     if (!inputValue.trim() || isLoading) return;
 
     const userMessage = createUserMessage(inputValue);
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInputValue("");
     setIsLoading(true);
 
@@ -90,11 +108,16 @@ export default function ChatInterface({ personas, itinerary, onAddPlace }: ChatI
 
       const data = await response.json();
       const assistantMessage = createAssistantMessage(data.message, data.suggestedPlaces, data.thinking);
-      setMessages((prev) => [...prev, assistantMessage]);
+      const updatedMessages = [...newMessages, assistantMessage];
+      setMessages(updatedMessages);
+      // Notify parent about message changes
+      onMessagesChange?.(updatedMessages);
     } catch (error) {
       console.error("Error sending message:", error);
       const errorMessage = createAssistantMessage("I'm having trouble processing your request. Please try again.");
-      setMessages((prev) => [...prev, errorMessage]);
+      const updatedMessages = [...newMessages, errorMessage];
+      setMessages(updatedMessages);
+      onMessagesChange?.(updatedMessages);
     } finally {
       setIsLoading(false);
     }
@@ -184,10 +207,21 @@ export default function ChatInterface({ personas, itinerary, onAddPlace }: ChatI
   return (
     <Card className="h-full w-full flex flex-col min-h-0 overflow-hidden mb-16 sm:mb-0">
       <CardHeader className="border-b flex-shrink-0 px-4 py-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Bot className="h-5 w-5" />
-          Travel Assistant
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Bot className="h-5 w-5" />
+            Travel Assistant
+            {currentConversationId && (
+              <span className="text-xs text-muted-foreground font-normal ml-2">(Saved conversation)</span>
+            )}
+          </CardTitle>
+          {onNewConversation && (
+            <Button variant="outline" size="sm" onClick={onNewConversation} className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              New Chat
+            </Button>
+          )}
+        </div>
       </CardHeader>
 
       <ScrollArea className="flex-1 min-h-0 p-4 w-full" ref={scrollRef}>

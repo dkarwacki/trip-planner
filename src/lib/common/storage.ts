@@ -1,11 +1,17 @@
-import type { PersonaType, SavedTrip } from "@/domain/plan/models";
+import type { PersonaType, SavedTrip, SavedConversation, ConversationId, ChatMessage } from "@/domain/plan/models";
 import type { Place } from "@/domain/common/models";
-import { createSavedTrip, updateTripPlaces } from "@/domain/plan/models";
+import {
+  createSavedTrip,
+  updateTripPlaces,
+  createSavedConversation,
+  updateConversationMessages,
+} from "@/domain/plan/models";
 
 const STORAGE_KEYS = {
   PERSONAS: "trip-planner:personas",
   CURRENT_ITINERARY: "trip-planner:current-itinerary",
   TRIP_HISTORY: "trip-planner:trip-history",
+  CONVERSATIONS: "trip-planner:conversations",
 } as const;
 
 // Helper to safely parse JSON from localStorage
@@ -67,9 +73,9 @@ export const clearCurrentItinerary = (): void => {
 };
 
 // Trip history storage
-export const saveTripToHistory = (places: Place[]): string => {
+export const saveTripToHistory = (places: Place[], conversationId?: ConversationId): string => {
   try {
-    const trip = createSavedTrip(places);
+    const trip = createSavedTrip(places, conversationId);
     const history = loadTripHistory();
 
     // Add new trip to the beginning (most recent first)
@@ -125,5 +131,77 @@ export const deleteTripFromHistory = (tripId: string): void => {
     localStorage.setItem(STORAGE_KEYS.TRIP_HISTORY, JSON.stringify(filteredHistory));
   } catch (error) {
     console.error("Failed to delete trip from history:", error);
+  }
+};
+
+// Conversation storage
+export const saveConversation = (
+  messages: ChatMessage[],
+  personas: string[],
+  title?: string,
+  existingId?: ConversationId
+): ConversationId => {
+  try {
+    const conversations = loadAllConversations();
+
+    if (existingId) {
+      // Update existing conversation
+      const existingIndex = conversations.findIndex((c) => c.id === existingId);
+      if (existingIndex !== -1) {
+        const updated = updateConversationMessages(conversations[existingIndex], messages);
+        conversations[existingIndex] = updated;
+        localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
+        return existingId;
+      }
+    }
+
+    // Create new conversation
+    const conversation = createSavedConversation(messages, personas, title);
+    conversations.unshift(conversation); // Most recent first
+    localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
+    return conversation.id;
+  } catch (error) {
+    console.error("Failed to save conversation:", error);
+    throw error;
+  }
+};
+
+export const loadConversation = (id: ConversationId): SavedConversation | null => {
+  try {
+    const conversations = loadAllConversations();
+    return conversations.find((conv) => conv.id === id) ?? null;
+  } catch (error) {
+    console.error("Failed to load conversation:", error);
+    return null;
+  }
+};
+
+export const loadAllConversations = (): SavedConversation[] => {
+  try {
+    const json = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS);
+    return safeJsonParse(json, []);
+  } catch (error) {
+    console.error("Failed to load conversations:", error);
+    return [];
+  }
+};
+
+export const deleteConversation = (conversationId: ConversationId): void => {
+  try {
+    const conversations = loadAllConversations();
+    const filtered = conversations.filter((conv) => conv.id !== conversationId);
+    localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(filtered));
+  } catch (error) {
+    console.error("Failed to delete conversation:", error);
+  }
+};
+
+export const getTripsForConversation = (conversationId: ConversationId): SavedTrip[] => {
+  try {
+    const trips = loadTripHistory();
+    return trips.filter((trip) => trip.conversationId === conversationId);
+  } catch (error) {
+    console.error("Failed to get trips for conversation:", error);
+    return [];
   }
 };
