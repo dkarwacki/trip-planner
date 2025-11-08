@@ -4,14 +4,33 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Send, Bot, User as UserIcon, ChevronDown, ChevronRight, SquarePen } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Send,
+  Bot,
+  User as UserIcon,
+  ChevronDown,
+  ChevronRight,
+  SquarePen,
+  MapPin,
+  TreePine,
+  Palette,
+  Utensils,
+  Mountain,
+  Laptop,
+  Landmark,
+  Camera,
+} from "lucide-react";
 import type { ChatMessage, PersonaType, ConversationId } from "@/domain/plan/models";
+import { getPersonaMetadata } from "@/domain/plan/models";
 import type { Place } from "@/domain/common/models";
 import { createUserMessage, createAssistantMessage } from "@/domain/plan/models/ChatMessage";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import PlaceSuggestionItem from "@/components/map/PlaceSuggestionItem";
 import NarrativeDisplay from "./NarrativeDisplay";
+import PersonaSelector from "./PersonaSelector";
 
 interface ChatInterfaceProps {
   personas: PersonaType[];
@@ -22,6 +41,7 @@ interface ChatInterfaceProps {
   onMessagesChange?: (messages: ChatMessage[]) => void;
   onNewConversation?: () => void;
   currentConversationId?: ConversationId | null;
+  onPersonasChange?: (personas: PersonaType[]) => void;
 }
 
 export default function ChatInterface({
@@ -32,12 +52,15 @@ export default function ChatInterface({
   onMessagesChange,
   onNewConversation,
   currentConversationId,
+  onPersonasChange,
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [validatingPlaces, setValidatingPlaces] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
+  const personaContainerRef = useRef<HTMLDivElement>(null);
+  const [visiblePersonaCount, setVisiblePersonaCount] = useState(2);
 
   // Load initial messages when they change
   useEffect(() => {
@@ -50,6 +73,88 @@ export default function ChatInterface({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Calculate how many persona badges can fit in the container
+  useEffect(() => {
+    if (!onPersonasChange || !personaContainerRef.current || personas.length === 0) {
+      setVisiblePersonaCount(0);
+      return;
+    }
+
+    const calculateVisibleCount = () => {
+      const container = personaContainerRef.current;
+      if (!container) return;
+
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        const containerWidth = container.offsetWidth;
+        const gap = 8; // gap-2 = 8px
+        const moreTextWidth = 75; // Approximate width for "+X more" text with buffer
+        const availableWidth = containerWidth - gap;
+
+        // First, try to fit all badges without "+X more"
+        let allFitWidth = 0;
+        for (const personaType of personas) {
+          const personaMetadata = getPersonaMetadata(personaType);
+          if (!personaMetadata) continue;
+
+          const textWidth = personaMetadata.label.length * 6;
+          const estimatedBadgeWidth = 12 + textWidth + 12 + gap;
+          allFitWidth += estimatedBadgeWidth;
+        }
+
+        // If all badges fit, show them all
+        if (allFitWidth <= availableWidth) {
+          setVisiblePersonaCount(personas.length);
+          return;
+        }
+
+        // Otherwise, fit as many as possible while reserving space for "+X more"
+        const reservedForMore = moreTextWidth + gap;
+        let count = 0;
+        let usedWidth = 0;
+
+        for (let i = 0; i < personas.length; i++) {
+          const personaMetadata = getPersonaMetadata(personas[i]);
+          if (!personaMetadata) continue;
+
+          const textWidth = personaMetadata.label.length * 6;
+          const estimatedBadgeWidth = 12 + textWidth + 12 + gap;
+
+          // Check if we can fit this badge plus "+X more" if it's not the last one
+          const neededWidth = usedWidth + estimatedBadgeWidth + (i < personas.length - 1 ? reservedForMore : 0);
+
+          if (neededWidth <= availableWidth) {
+            usedWidth += estimatedBadgeWidth;
+            count++;
+          } else {
+            break;
+          }
+        }
+
+        setVisiblePersonaCount(count);
+      });
+    };
+
+    // Initial calculation with a small delay to ensure container is rendered
+    const timeoutId = setTimeout(calculateVisibleCount, 0);
+
+    // Recalculate on resize
+    const resizeObserver = new ResizeObserver(() => {
+      calculateVisibleCount();
+    });
+
+    if (personaContainerRef.current) {
+      resizeObserver.observe(personaContainerRef.current);
+    }
+
+    window.addEventListener("resize", calculateVisibleCount);
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", calculateVisibleCount);
+    };
+  }, [personas, onPersonasChange]);
 
   const isSuggestionInItinerary = (suggestion: { id: string; name: string; lat?: number; lng?: number }): boolean => {
     return itinerary.some((place) => {
@@ -204,9 +309,36 @@ export default function ChatInterface({
     }
   };
 
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case "map-pin":
+        return MapPin;
+      case "tree-pine":
+        return TreePine;
+      case "palette":
+        return Palette;
+      case "utensils":
+        return Utensils;
+      case "mountain":
+        return Mountain;
+      case "laptop":
+        return Laptop;
+      case "landmark":
+        return Landmark;
+      case "camera":
+        return Camera;
+      default:
+        return MapPin;
+    }
+  };
+
+  // Calculate visible personas based on available space
+  const visiblePersonas = personas.slice(0, visiblePersonaCount);
+  const remainingCount = Math.max(0, personas.length - visiblePersonaCount);
+
   return (
     <Card className="h-full w-full flex flex-col min-h-0 overflow-hidden mb-16 sm:mb-0">
-      <CardHeader className="border-b flex-shrink-0 px-4 py-3">
+      <CardHeader className="border-b flex-shrink-0 px-4 space-y-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <Bot className="h-5 w-5" />
@@ -222,6 +354,40 @@ export default function ChatInterface({
             </Button>
           )}
         </div>
+        {onPersonasChange && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <div
+                ref={personaContainerRef}
+                className="flex items-center gap-2 flex-nowrap overflow-hidden w-full cursor-pointer sm:hidden"
+              >
+                {visiblePersonas.map((personaType) => {
+                  const personaMetadata = getPersonaMetadata(personaType);
+                  if (!personaMetadata) return null;
+                  const Icon = getIconComponent(personaMetadata.icon);
+                  return (
+                    <Badge
+                      key={personaType}
+                      variant="secondary"
+                      className="px-1.5 py-0.5 text-xs flex-shrink-0 whitespace-nowrap"
+                    >
+                      <Icon className="h-3 w-3" />
+                      {personaMetadata.label}
+                    </Badge>
+                  );
+                })}
+                {remainingCount > 0 && (
+                  <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
+                    +{remainingCount} more
+                  </span>
+                )}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80">
+              <PersonaSelector selected={personas} onChange={onPersonasChange} />
+            </PopoverContent>
+          </Popover>
+        )}
       </CardHeader>
 
       <ScrollArea className="flex-1 min-h-0 p-4 w-full" ref={scrollRef}>

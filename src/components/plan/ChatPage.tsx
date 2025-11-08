@@ -3,7 +3,6 @@ import type { PersonaType, ChatMessage, ConversationId, SavedConversation } from
 import type { Place } from "@/domain/common/models";
 import { PERSONA_TYPES, PersonaType as PersonaTypeBrand } from "@/domain/plan/models";
 import PersonaSelector from "./PersonaSelector";
-import PersonaSelectorDrawer from "./PersonaSelectorDrawer";
 import ChatInterface from "./ChatInterface";
 import ItineraryPanel from "./ItineraryPanel";
 import ConversationHistoryPanel from "./ConversationHistoryPanel";
@@ -358,6 +357,7 @@ export default function ChatPage() {
                   onMessagesChange={handleMessagesChange}
                   onNewConversation={handleNewConversation}
                   currentConversationId={currentConversationId}
+                  onPersonasChange={handlePersonasChange}
                 />
               )}
             </div>
@@ -401,9 +401,6 @@ export default function ChatPage() {
 
       {/* Mobile Navigation */}
       {isMobile && <MobileNavigation activeTab={mobileTab} onTabChange={handleMobileTabChange} tabs={mobileTabs} />}
-
-      {/* Mobile Persona Selector Button */}
-      {isMobile && <PersonaSelectorDrawer selected={personas} onChange={handlePersonasChange} />}
 
       <SaveCurrentConversationDialog
         open={showSaveDialog}

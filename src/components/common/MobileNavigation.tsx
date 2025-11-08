@@ -38,8 +38,8 @@ export function MobileNavigation({ activeTab, onTabChange, tabs }: MobileNavigat
                 isDisabled
                   ? "text-gray-300 cursor-not-allowed"
                   : isActive
-                    ? "text-blue-600 active:scale-95"
-                    : "text-gray-500 hover:text-gray-700 active:text-gray-900 active:scale-95"
+                    ? "text-gray-700 active:scale-95"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700 active:text-gray-900 active:scale-95"
               }`}
               aria-label={tab.label}
               aria-current={isActive ? "page" : undefined}
@@ -47,19 +47,19 @@ export function MobileNavigation({ activeTab, onTabChange, tabs }: MobileNavigat
             >
               {/* Active indicator */}
               {isActive && !isDisabled && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-b-full" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gray-700 rounded-b-full" />
               )}
 
-              <div className="relative mt-1">
-                <Icon className="h-7 w-7" strokeWidth={isActive && !isDisabled ? 2.5 : 2} />
+              <div className="relative mt-0.5">
+                <Icon className="h-6 w-6" strokeWidth={isActive && !isDisabled ? 2.5 : 2} />
                 {tab.badge !== undefined && !isDisabled && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white text-xs font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1.5 shadow-sm">
+                  <span className="absolute -top-1.5 -right-1.5 bg-gray-700 text-white text-xs font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1.5 shadow-sm">
                     {tab.badge > 99 ? "99+" : tab.badge}
                   </span>
                 )}
               </div>
               <span
-                className={`text-[11px] mt-0.5 leading-tight ${
+                className={`text-[11px] mt-0 leading-tight ${
                   isDisabled ? "font-medium" : isActive ? "font-semibold" : "font-medium"
                 }`}
               >
