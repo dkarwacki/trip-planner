@@ -9,7 +9,7 @@ The application operates through two integrated stages:
 - Attraction Planning: An interactive map interface where users explore attractions and restaurants near their selected starting point places, with quality scoring to aid decision-making.
 
 Key differentiators include:
-- Persona-based place recommendations supporting multiple traveler types (general tourists, nature lovers, first-time visitors, art enthusiasts)
+- Persona-based place recommendations supporting multiple traveler types (general tourists, nature lovers, art enthusiasts, foodie travelers, adventure seekers, digital nomads, history buffs, photography enthusiasts)
 - Two-stage workflow separating destination selection from attraction discovery
 - Quality/diversity/confidence scoring for attractions and restaurants on the map
 - Place validation through Google Maps to ensure searchability
@@ -33,16 +33,20 @@ Planning engaging and personalized trips is difficult and time-consuming. Travel
 - Overwhelming amount of options without quality filtering
 
 ### Target Users
-The application serves four primary personas:
+The application serves eight primary personas:
 - General tourists seeking popular destinations
 - Nature lovers interested in outdoor activities
-- First-time visitors needing comprehensive guidance
 - Art enthusiasts looking for cultural experiences
+- Foodie travelers focused on culinary experiences
+- Adventure seekers pursuing adrenaline activities
+- Digital nomads needing work-friendly environments
+- History buffs interested in heritage and monuments
+- Photography enthusiasts looking for scenic viewpoints
 
 ## 3. Functional Requirements
 
 ### 3.1 Authentication and User Management
-- Google OAuth integration for user authentication (required for all access)
+- Supabase Auth integration for user authentication (required for all access)
 - User profile storage including name and email
 - Persistent storage of persona selections per user account
 - Session management and secure access control
@@ -122,13 +126,13 @@ The application serves four primary personas:
 
 ### In Scope for MVP
 - Single-user planning flow
-- Four predefined personas with even weighting
+- Eight predefined personas with even weighting
 - AI chat for place/destination suggestions (not attractions/restaurants) with expandable details
 - Place validation through Google Maps
 - Basic itinerary management (add/remove) with ordered sequence
 - Scoring system for attractions and restaurants on map interface only
 - Map export and history
-- Google OAuth authentication
+- Supabase authentication
 - Desktop and mobile responsive design
 - Server-side logging
 
@@ -137,7 +141,7 @@ The application serves four primary personas:
 - Travel logistics (transportation, reservations, budget tracking)
 - Offline mode functionality
 - Advanced personalization and learning algorithms
-- Third-party integrations beyond Google OAuth
+- Third-party authentication providers beyond Supabase
 - Custom persona creation
 - Research workspaces
 - Collaboration features
@@ -147,7 +151,7 @@ The application serves four primary personas:
 
 ### Technical Constraints
 - Requires internet connection
-- Google account mandatory for access
+- Supabase-authenticated account mandatory for access
 - Limited to predefined persona types
 - Prompt adjustments managed via separate mapping file
 
@@ -155,11 +159,11 @@ The application serves four primary personas:
 
 ### US-001
 - ID: US-001
-- Title: User Authentication via Google OAuth
-- Description: As a user, I want to sign in with my Google account so that my preferences and trip plans are saved securely
+- Title: User Authentication via Supabase
+- Description: As a user, I want to sign in using Supabase authentication so that my preferences and trip plans are saved securely
 - Acceptance Criteria:
-  - User can click "Sign in with Google" button
-  - Google OAuth flow completes successfully
+  - User can initiate sign-in through Supabase
+  - Supabase authentication flow completes successfully
   - User name and email are stored in the system
   - User is redirected to the main planning interface after authentication
   - Unauthenticated users cannot access any application features
@@ -169,7 +173,7 @@ The application serves four primary personas:
 - Title: Select Travel Personas
 - Description: As a user, I want to select my travel personas so that place recommendations match my interests
 - Acceptance Criteria:
-  - Four persona options are displayed (general tourist, nature lover, first-time visitor, art enthusiast)
+  - Eight persona options are displayed (general tourist, nature lover, art enthusiast, foodie traveler, adventure seeker, digital nomad, history buff, photography enthusiast)
   - User can select multiple personas simultaneously
   - Desktop shows personas in horizontal row layout
   - Mobile shows personas in dropdown format
@@ -184,7 +188,6 @@ The application serves four primary personas:
 - Description: As a user, I want the general tourist persona to be selected by default if I haven't chosen any specific personas
 - Acceptance Criteria:
   - General tourist is pre-selected on first visit
-  - Selecting any other persona deselects general tourist
   - Deselecting all personas reverts to general tourist
   - Default behavior is consistent across sessions
 
