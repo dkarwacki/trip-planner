@@ -9,3 +9,11 @@ export class MissingOpenRouterAPIKeyError {
 export class MissingOpenRouterModelError {
   readonly _tag = "MissingOpenRouterModelError";
 }
+
+export class MissingSupabaseUrlError {
+  readonly _tag = "MissingSupabaseUrlError";
+}
+
+export class MissingSupabaseKeyError {
+  readonly _tag = "MissingSupabaseKeyError";
+}

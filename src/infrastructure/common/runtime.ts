@@ -8,6 +8,7 @@ import {
   TextSearchCacheLayer,
 } from "@/infrastructure/map/cache";
 import { OpenAIClientLive } from "./openai";
+import { SupabaseClientLive } from "./database";
 
 // Combined application layer with proper dependency injection
 // ConfigService is at the bottom (no dependencies)
@@ -17,6 +18,8 @@ import { OpenAIClientLive } from "./openai";
 const GoogleMapsWithConfig = GoogleMapsClientLive.pipe(Layer.provide(ConfigServiceLive));
 
 const OpenAIWithConfig = OpenAIClientLive.pipe(Layer.provide(ConfigServiceLive));
+
+const SupabaseWithConfig = SupabaseClientLive.pipe(Layer.provide(ConfigServiceLive));
 
 const AttractionsWithDeps = AttractionsCacheLayer.pipe(Layer.provide(GoogleMapsWithConfig));
 
@@ -30,6 +33,7 @@ export const AppLayer = Layer.mergeAll(
   ConfigServiceLive,
   GoogleMapsWithConfig,
   OpenAIWithConfig,
+  SupabaseWithConfig,
   AttractionsWithDeps,
   RestaurantsWithDeps,
   PhotoCacheWithConfig,
