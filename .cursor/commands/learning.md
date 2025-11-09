@@ -1,6 +1,8 @@
 # Learning new things
+Description of who i am: 
+@/.ai/who_am_i.md
 
-I am experienced Scala Engineer. I would like to understand a new topic with your help.
+I would like to understand a new topic with your help.
 
 My knowledge level is Advanced in Scala technology.
 I have 6 years of experience with Cats and Cats Effect.
