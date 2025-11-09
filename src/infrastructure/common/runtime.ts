@@ -9,12 +9,20 @@ import {
 } from "@/infrastructure/map/cache";
 import { OpenAIClientLive } from "./openai";
 import { SupabaseClientLive } from "./database";
+import {
+  ConversationRepositoryLive,
+  TripRepositoryLive,
+  UserPersonasRepositoryLive,
+} from "@/infrastructure/plan/database";
+import { PlaceRepositoryLive, AttractionRepositoryLive } from "@/infrastructure/map/database";
 
 // Combined application layer with proper dependency injection
 // ConfigService is at the bottom (no dependencies)
 // GoogleMapsClient depends on ConfigService
 // OpenAIClient depends on ConfigService
+// SupabaseClient depends on ConfigService
 // Caches depend on GoogleMapsClient or ConfigService
+// Repositories depend on SupabaseClient
 const GoogleMapsWithConfig = GoogleMapsClientLive.pipe(Layer.provide(ConfigServiceLive));
 
 const OpenAIWithConfig = OpenAIClientLive.pipe(Layer.provide(ConfigServiceLive));
@@ -29,6 +37,18 @@ const PhotoCacheWithConfig = PhotoCacheLayer.pipe(Layer.provide(ConfigServiceLiv
 
 const TextSearchWithDeps = TextSearchCacheLayer.pipe(Layer.provide(GoogleMapsWithConfig));
 
+// Plan repositories
+const ConversationRepoWithDeps = ConversationRepositoryLive.pipe(Layer.provide(SupabaseWithConfig));
+
+const TripRepoWithDeps = TripRepositoryLive.pipe(Layer.provide(SupabaseWithConfig));
+
+const UserPersonasRepoWithDeps = UserPersonasRepositoryLive.pipe(Layer.provide(SupabaseWithConfig));
+
+// Map repositories
+const PlaceRepoWithDeps = PlaceRepositoryLive.pipe(Layer.provide(SupabaseWithConfig));
+
+const AttractionRepoWithDeps = AttractionRepositoryLive.pipe(Layer.provide(SupabaseWithConfig));
+
 export const AppLayer = Layer.mergeAll(
   ConfigServiceLive,
   GoogleMapsWithConfig,
@@ -37,7 +57,12 @@ export const AppLayer = Layer.mergeAll(
   AttractionsWithDeps,
   RestaurantsWithDeps,
   PhotoCacheWithConfig,
-  TextSearchWithDeps
+  TextSearchWithDeps,
+  ConversationRepoWithDeps,
+  TripRepoWithDeps,
+  UserPersonasRepoWithDeps,
+  PlaceRepoWithDeps,
+  AttractionRepoWithDeps
 );
 
 // Create runtime once at module load
