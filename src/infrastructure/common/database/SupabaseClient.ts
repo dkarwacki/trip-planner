@@ -21,4 +21,3 @@ export const SupabaseClientLive = Layer.effect(
     return { client };
   })
 );
-

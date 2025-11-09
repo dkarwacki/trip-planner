@@ -112,7 +112,7 @@ Normalized cache table for Google Maps place data (cities, landmarks, districts,
 **Purpose:**
 - Cache Google Maps API responses to minimize API calls
 - Enable data reuse when same place appears in multiple trips
-- Track validation status and data freshness (30-day refresh policy)
+- Track validation status and data freshness (7-day refresh policy)
 
 **Example:**
 ```json
@@ -300,7 +300,7 @@ CREATE UNIQUE INDEX idx_attractions_google_place_id
 
 ### 3.3 Staleness Tracking Indexes
 
-**Purpose:** Support background jobs to refresh old cached data (30-day policy).
+**Purpose:** Support background jobs to refresh old cached data (7-day policy).
 
 ```sql
 -- Find stale places that need refreshing
@@ -455,7 +455,7 @@ SET
 WHERE id = $2;
 ```
 
-#### 30-Day Cache Freshness Policy
+#### 7-Day Cache Freshness Policy
 
 **Rationale:**
 - Balance between API cost and data freshness
@@ -491,7 +491,7 @@ WHERE id = $2;
 
 **Cache-first strategy:**
 1. Check database cache (`places`, `attractions`)
-2. If missing or stale (> 30 days), fetch from API
+2. If missing or stale (> 7 days), fetch from API
 3. UPSERT to cache
 4. Reuse cached data across trips and users
 
@@ -570,7 +570,7 @@ const STORAGE_KEYS = {
 
 ✅ **API Efficiency** - Check DB cache before calling expensive Google Maps API
 ✅ **Cost Savings** - Reuse cached place/attraction data across trips and users
-✅ **Data Freshness** - 30-day refresh policy ensures reasonably current information
+✅ **Data Freshness** - 7-day refresh policy ensures reasonably current information
 ✅ **Simple Updates** - Atomic JSONB replacement (no complex join updates)
 ✅ **Offline Capability** - Fallback to cached data if API unavailable
 ✅ **Migration Simplicity** - JSONB structure mirrors localStorage
@@ -604,7 +604,7 @@ SELECT id, last_updated_at
 FROM places
 WHERE google_place_id = 'ChIJD7fiBh9u5kcRYJSMaMOCCwQ';
 
--- If missing or stale (> 30 days), fetch from API and UPSERT
+-- If missing or stale (> 7 days), fetch from API and UPSERT
 INSERT INTO places (
   google_place_id, name, latitude, longitude, photos, validation_status, last_updated_at
 )
@@ -697,17 +697,17 @@ LIMIT 50;
 ### 6.5 Find Stale Cache Entries
 
 ```sql
--- Find places needing refresh (> 30 days old)
+-- Find places needing refresh (> 7 days old)
 SELECT id, google_place_id, name, last_updated_at
 FROM places
-WHERE last_updated_at < NOW() - INTERVAL '30 days'
+WHERE last_updated_at < NOW() - INTERVAL '7 days'
 ORDER BY last_updated_at ASC
 LIMIT 100;
 
--- Find attractions needing refresh (> 30 days old)
+-- Find attractions needing refresh (> 7 days old)
 SELECT id, google_place_id, name, type, last_updated_at
 FROM attractions
-WHERE last_updated_at < NOW() - INTERVAL '30 days'
+WHERE last_updated_at < NOW() - INTERVAL '7 days'
 ORDER BY last_updated_at ASC
 LIMIT 100;
 ```
@@ -832,8 +832,8 @@ COMMENT ON TABLE places IS 'Normalized cache for Google Maps place data (cities,
 COMMENT ON TABLE attractions IS 'Normalized cache for Google Maps attractions and restaurants';
 COMMENT ON TABLE trips IS 'Stores user trip plans with JSONB references to places and attractions';
 
-COMMENT ON COLUMN places.last_updated_at IS 'Last API data refresh timestamp (30-day refresh policy)';
-COMMENT ON COLUMN attractions.last_updated_at IS 'Last API data refresh timestamp (30-day refresh policy)';
+COMMENT ON COLUMN places.last_updated_at IS 'Last API data refresh timestamp (7-day refresh policy)';
+COMMENT ON COLUMN attractions.last_updated_at IS 'Last API data refresh timestamp (7-day refresh policy)';
 COMMENT ON COLUMN trips.places_data IS 'JSONB array: [{"placeId": "uuid", "displayOrder": 0, "attractionIds": [...], "restaurantIds": [...]}]';
 COMMENT ON COLUMN conversations.messages IS 'JSONB array: [{"id": "uuid", "role": "user|assistant", "content": "...", "timestamp": "...", "suggestedPlaces": [...]}]';
 ```
@@ -844,7 +844,7 @@ COMMENT ON COLUMN conversations.messages IS 'JSONB array: [{"id": "uuid", "role"
 
 This schema is production-ready for MVP implementation with:
 - ✅ Clear separation between cacheable data (normalized) and user data (JSONB)
-- ✅ Efficient API caching strategy (30-day refresh policy)
+- ✅ Efficient API caching strategy (7-day refresh policy)
 - ✅ Simple atomic updates for auto-save
 - ✅ Strategic indexing for common queries
 - ✅ Data validation via CHECK constraints
