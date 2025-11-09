@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import PhotoImage from "@/components/common/PhotoImage";
@@ -42,6 +42,9 @@ export default function PhotoLightbox({ photos, initialIndex, isOpen, onClose, p
         className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-black/95 border-0"
         onKeyDown={handleKeyDown}
       >
+        <DialogTitle className="sr-only">
+          {placeName} - Photo {currentIndex + 1} of {photos.length}
+        </DialogTitle>
         <div className="relative w-full h-full flex items-center justify-center">
           {/* Close button */}
           <Button
