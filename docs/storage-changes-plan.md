@@ -225,149 +225,117 @@ Add repository layers to `src/infrastructure/common/runtime.ts`:
 
 ## Migration Strategy
 
-### Phase 1: Infrastructure Setup ✅
-- Create DAO types
-- Create repositories
-- Wire up in runtime
-- **No behavior changes yet**
+### Phase 1: Infrastructure Setup ✅ COMPLETED
+- ✅ Created DAO types (`src/infrastructure/plan/database/types.ts`)
+- ✅ Created DAO types (`src/infrastructure/map/database/types.ts`)
+- ✅ Created repositories (`src/infrastructure/plan/database/repositories.ts`)
+- ✅ Created repositories (`src/infrastructure/map/database/repositories.ts`)
+- ✅ Wired up in runtime (`src/infrastructure/common/runtime.ts`)
+- ✅ **No behavior changes yet - all existing code still uses localStorage**
+- ✅ **Decision: Use repositories directly, no service layer wrappers needed for simple CRUD**
 
-### Phase 2: Parallel Operation
-- Keep existing localStorage code working
-- Add new database operations alongside
-- Test repositories independently
-- Validate data mapping
+### Phase 2: Direct Replacement (NEXT)
+- **Decision: Skip parallel operation phase - replace localStorage directly**
+- Use repositories directly where persistence is needed:
+  - API routes can use repositories with Effect
+  - Complex use cases can compose multiple repositories
+  - Browser components call API routes
+- Replace localStorage usage for:
+  - Personas → `UserPersonasRepository`
+  - Trip History → `TripRepository`
+  - Conversations → `ConversationRepository`
+- Keep localStorage for transient state:
+  - Current itinerary (session scratchpad)
 
-### Phase 3: Gradual Replacement
-- Replace storage.ts functions one-by-one
-- Start with read operations (safer)
-- Then write operations
-- Keep localStorage as backup temporarily
-
-### Phase 4: Data Migration
-- Create migration utility to move existing localStorage → PostgreSQL
-- Run on first authenticated session
-- Preserve existing data
-
-### Phase 5: Cleanup
-- Remove deprecated localStorage code
+### Phase 3: Cleanup
+- Remove deprecated localStorage code for persisted data
 - Update tests
-- Remove migration code
+- Keep localStorage for current itinerary
+- **Note:** No data migration needed - start fresh with database
 
 ## User ID Handling (Development Phase)
 
-**For now:** Hardcode test user ID
-- Simple constant: `const DEV_USER_ID = "test-user-uuid"`
-- Used in all repository calls
-- **TODO:** Replace with real auth later
+**Current implementation:** Hardcoded test user ID
+- Constant defined in each repository file: `const DEV_USER_ID = "00000000-0000-0000-0000-000000000000"`
+- Used in all repository calls (scopes queries to this user)
+- **TODO:** Replace with real auth later (see cleanup phase)
 
 **Future:** Replace with proper authentication
 - Supabase Auth integration
-- Extract user ID from session
-- Proper user management
+- Extract user ID from session/context
+- Pass userId as parameter to repository calls
+- Proper user management and RLS enforcement
 
 ## API Surface Changes
 
 ### Storage.ts Functions (After Migration)
 
-**Will Change (use repositories internally):**
-- `savePersonas()` → calls `UserPersonasRepository.save()`
-- `loadPersonas()` → calls `UserPersonasRepository.find()`
-- `saveTripToHistory()` → calls `TripRepository.create()`
-- `loadTripHistory()` → calls `TripRepository.findAll()`
-- `loadTripById()` → calls `TripRepository.findById()`
-- `updateTripInHistory()` → calls `TripRepository.updatePlaces()`
-- `deleteTripFromHistory()` → calls `TripRepository.delete()`
-- `saveConversation()` → calls `ConversationRepository.create/updateMessages()`
-- `loadConversation()` → calls `ConversationRepository.findById()`
-- `loadAllConversations()` → calls `ConversationRepository.findAll()`
-- `deleteConversation()` → calls `ConversationRepository.delete()`
+**Will be REPLACED (use repositories directly):**
+- `savePersonas()` → Use `UserPersonasRepository.save()` directly
+- `loadPersonas()` → Use `UserPersonasRepository.find()` directly
+- `saveTripToHistory()` → Use `TripRepository.create()` directly
+- `loadTripHistory()` → Use `TripRepository.findAll()` directly
+- `loadTripById()` → Use `TripRepository.findById()` directly
+- `updateTripInHistory()` → Use `TripRepository.updatePlaces()` directly
+- `deleteTripFromHistory()` → Use `TripRepository.delete()` directly
+- `saveConversation()` → Use `ConversationRepository.create/updateMessages()` directly
+- `loadConversation()` → Use `ConversationRepository.findById()` directly
+- `loadAllConversations()` → Use `ConversationRepository.findAll()` directly
+- `deleteConversation()` → Use `ConversationRepository.delete()` directly
 
-**Stay Same (localStorage):**
+**Stay Same (localStorage for transient state):**
 - `saveCurrentItinerary()`
 - `loadCurrentItinerary()`
 - `clearCurrentItinerary()`
 
-**Note:** External API remains mostly compatible, but functions become async/return Effects
-
-## Testing Strategy
-
-1. **Unit tests** for converters (DAO ↔ Domain)
-2. **Integration tests** for repositories (against local Supabase)
-3. **Manual testing** with hardcoded user ID
-4. **Data integrity** checks during migration
+**Note:** Repositories work with DAOs. Use converter functions from `types.ts` files to convert DAO ↔ Domain models where needed.
 
 ## Rollout Plan
 
-### Step 1: Create Infrastructure (This PR)
-- [ ] Create `src/infrastructure/plan/database/` (types, repositories, index)
-  - ConversationRepository
-  - TripRepository
-  - UserPersonasRepository
-- [ ] Create `src/infrastructure/map/database/` (types, repositories, index)
-  - PlaceRepository
-  - AttractionRepository
-- [ ] Update `src/infrastructure/common/runtime.ts`
-- [ ] Test all repositories independently
+### Step 1: Create Infrastructure ✅ COMPLETED
+- ✅ Created `src/infrastructure/plan/database/` (types, repositories, index)
+  - ConversationRepository - CRUD for chat history
+  - TripRepository - CRUD for saved trips
+  - UserPersonasRepository - find/save for user preferences
+- ✅ Created `src/infrastructure/map/database/` (types, repositories, index)
+  - PlaceRepository - Cache layer with batch operations
+  - AttractionRepository - Cache layer with type discrimination
+- ✅ Updated `src/infrastructure/common/runtime.ts`
+- ✅ All repositories wired up with dependency injection
+- ✅ Type-safe DAOs with proper converters
+- ✅ Repositories return DAOs, converters in types.ts handle DAO ↔ Domain mapping
 
-### Step 2: Replace Personas (Simple)
-- [ ] Update `savePersonas()` to use repository
-- [ ] Update `loadPersonas()` to use repository
-- [ ] Test in plan page
+### Step 2: Replace Personas (NEXT - Simple)
+- [ ] Use `UserPersonasRepository` directly where personas are loaded/saved
+- [ ] Update plan page to use repository
+- [ ] Remove localStorage persona functions
 
 ### Step 3: Replace Trips (Medium)
-- [ ] Update trip CRUD operations
-- [ ] Update conversation-trip linking
-- [ ] Test in plan and map pages
+- [ ] Use `TripRepository` directly for trip CRUD operations
+- [ ] Handle conversation-trip linking (one-to-one relationship)
+- [ ] Update map and plan pages
+- [ ] Remove localStorage trip functions
 
 ### Step 4: Replace Conversations (Complex)
-- [ ] Update conversation CRUD operations
+- [ ] Use `ConversationRepository` directly for conversation CRUD
 - [ ] Handle message updates carefully
 - [ ] Test chat functionality thoroughly
+- [ ] Remove localStorage conversation functions
 
-### Step 5: Data Migration Utility
-- [ ] Create one-time migration script
-- [ ] Move existing localStorage data to DB
-- [ ] Verify data integrity
-
-### Step 6: Cleanup
-- [ ] Remove old localStorage code
+### Step 5: Cleanup
+- [ ] Remove old localStorage code (except current itinerary)
 - [ ] Update documentation
-- [ ] Remove hardcoded user ID placeholders
-
-## Benefits After Migration
-
-1. **Data Persistence**: Survives cache clears, browser changes
-2. **Future-Ready**: Enables multi-device, sharing, collaboration
-3. **Scalability**: No browser storage limits
-4. **Backup**: Automatic database backups
-5. **Analytics**: Can analyze usage patterns (anonymized)
-6. **Search**: Enable server-side search in future
-
-## Risks & Mitigations
-
-**Risk:** Data loss during migration
-- **Mitigation:** Keep localStorage as backup during transition
-
-**Risk:** Performance degradation (network latency)
-- **Mitigation:** Keep current itinerary in localStorage for fast updates
-
-**Risk:** Breaking existing functionality
-- **Mitigation:** Gradual rollout, maintain API compatibility where possible
-
-**Risk:** Database connection failures
-- **Mitigation:** Graceful error handling, fallback to localStorage temporarily
 
 ## Open Questions
 
-1. How to handle offline mode? (Future consideration)
-2. When to implement real authentication? (After migration proves stable)
-3. Should we cache DB data in memory? (Optimize later if needed)
-4. How to handle concurrent updates? (Not an issue with single user for now)
+1. How to handle offline mode? Ignore that for now
+2. When to implement real authentication? Yes, but ignore that for now
+3. Should we cache DB data in memory? Thats something we can do later
+4. How to handle concurrent updates? Not an issue with single user for now
 
 ## Success Criteria
 
 - ✅ All user data persists across browser sessions
-- ✅ No data loss during migration
 - ✅ No perceived performance degradation
 - ✅ All existing features work as before
 - ✅ Code follows existing Effect patterns
@@ -375,4 +343,5 @@ Add repository layers to `src/infrastructure/common/runtime.ts`:
 - ✅ Place and attraction data cached in database (7-day policy)
 - ✅ Reduced Google Maps API calls through persistent caching
 - ✅ Batch loading optimized for trip reconstruction
+- ✅ Users can start fresh with database persistence
 
