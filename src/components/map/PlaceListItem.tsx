@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { X, ChevronDown, ChevronUp } from "lucide-react";
+import { X, MapPin, Utensils } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import PlannedItemsList from "@/components/plan/PlannedItemsList";
 import type { Place } from "@/domain/common/models";
 import type { Attraction } from "@/domain/map/models";
@@ -104,7 +106,7 @@ export default function PlaceListItem({
           >
             <div
               {...listeners}
-              className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold cursor-grab active:cursor-grabbing"
+              className="flex-shrink-0 w-6 h-6 rounded-md border-2 border-primary text-primary bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-sm font-semibold cursor-grab active:cursor-grabbing hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors"
             >
               {index + 1}
             </div>
@@ -112,26 +114,31 @@ export default function PlaceListItem({
               <h3 className="font-medium break-words hyphens-auto" lang="el">
                 {place.name}
               </h3>
-              <p className="text-sm text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
-                {place.lat.toFixed(4)}, {place.lng.toFixed(4)}
-              </p>
+              {!isOpen && hasPlannedItems && (
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {plannedAttractions.length > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3 w-3 text-blue-600" />
+                      <span className="text-xs font-medium text-blue-600">Attractions</span>
+                      <Badge variant="outline" className="h-4 px-1.5 text-[10px] text-blue-600 border-blue-600/30">
+                        {plannedAttractions.length}
+                      </Badge>
+                    </div>
+                  )}
+                  {plannedRestaurants.length > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <Utensils className="h-3 w-3 text-red-600" />
+                      <span className="text-xs font-medium text-red-600">Restaurants</span>
+                      <Badge variant="outline" className="h-4 px-1.5 text-[10px] text-red-600 border-red-600/30">
+                        {plannedRestaurants.length}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </button>
           <div className="flex items-start gap-1 flex-shrink-0">
-            {hasPlannedItems && !isMobile && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelect(place);
-                  setIsOpen(!isOpen);
-                }}
-                className="flex-shrink-0 p-1 rounded-md hover:bg-accent text-muted-foreground transition-colors cursor-pointer"
-                aria-label={isOpen ? "Collapse planned items" : "Expand planned items"}
-                style={{ cursor: "pointer" }}
-              >
-                {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </button>
-            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -150,7 +157,13 @@ export default function PlaceListItem({
           <CollapsibleContent className="mt-3 space-y-3">
             {plannedAttractions.length > 0 && (
               <div className="space-y-1.5">
-                <h4 className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Planned Attractions</h4>
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-3 w-3 text-blue-600" />
+                  <h4 className="text-xs font-medium text-blue-600">Attractions</h4>
+                  <Badge variant="outline" className="h-4 px-1.5 text-[10px] text-blue-600 border-blue-600/30">
+                    {plannedAttractions.length}
+                  </Badge>
+                </div>
                 <PlannedItemsList
                   items={plannedAttractions}
                   type="attractions"
@@ -161,9 +174,17 @@ export default function PlaceListItem({
               </div>
             )}
 
+            {plannedAttractions.length > 0 && plannedRestaurants.length > 0 && <Separator className="my-2" />}
+
             {plannedRestaurants.length > 0 && (
               <div className="space-y-1.5">
-                <h4 className="text-xs font-semibold text-red-600 uppercase tracking-wide">Planned Restaurants</h4>
+                <div className="flex items-center gap-1.5">
+                  <Utensils className="h-3 w-3 text-red-600" />
+                  <h4 className="text-xs font-medium text-red-600">Restaurants</h4>
+                  <Badge variant="outline" className="h-4 px-1.5 text-[10px] text-red-600 border-red-600/30">
+                    {plannedRestaurants.length}
+                  </Badge>
+                </div>
                 <PlannedItemsList
                   items={plannedRestaurants}
                   type="restaurants"

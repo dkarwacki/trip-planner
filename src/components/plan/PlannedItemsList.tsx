@@ -45,37 +45,41 @@ function PlannedItem({ attraction, index, type, onRemove, onItemClick }: Planned
   };
 
   const accentColor = type === "attractions" ? "text-blue-600" : "text-red-600";
-  const bgColor = type === "attractions" ? "bg-blue-50 dark:bg-blue-950" : "bg-red-50 dark:bg-red-950";
+  const bgColor = type === "attractions" ? "bg-blue-50/50 dark:bg-blue-950/50" : "bg-red-50/50 dark:bg-red-950/50";
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className={`flex items-start gap-2 p-2 rounded-md ${bgColor} group`}
+      className={`flex items-center gap-2 px-2 py-1.5 rounded-md ${bgColor} group`}
     >
       <div
         {...listeners}
-        className={`flex-shrink-0 w-5 h-5 rounded-full ${
-          type === "attractions" ? "bg-blue-600" : "bg-red-600"
-        } text-white flex items-center justify-center text-xs font-semibold cursor-grab active:cursor-grabbing mt-0.5`}
+        className={`flex-shrink-0 w-5 h-5 rounded-md border-2 ${
+          type === "attractions"
+            ? "border-blue-600 text-blue-600 bg-blue-50/50 dark:bg-blue-950/50"
+            : "border-red-600 text-red-600 bg-red-50/50 dark:bg-red-950/50"
+        } flex items-center justify-center text-xs font-semibold cursor-grab active:cursor-grabbing hover:bg-opacity-100 transition-colors`}
       >
         {index + 1}
       </div>
-      <div className="flex-1 min-w-0">
-        <button
-          type="button"
-          onClick={() => onItemClick?.(attraction)}
-          className="text-left w-full hover:opacity-80 transition-opacity"
-        >
-          <h4 className={`font-medium text-sm line-clamp-2 ${accentColor}`}>{attraction.name}</h4>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+      <button
+        type="button"
+        onClick={() => onItemClick?.(attraction)}
+        className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+      >
+        <div className="flex items-center gap-1.5 min-w-0">
+          <h4 className={`font-medium text-sm line-clamp-1 flex-1 min-w-0 ${accentColor}`} title={attraction.name}>
+            {attraction.name}
+          </h4>
+          <div className="flex items-center gap-0.5 text-xs text-muted-foreground flex-shrink-0">
             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
             <span className="font-medium">{attraction.rating.toFixed(1)}</span>
-            <span>({formatReviewCount(attraction.userRatingsTotal)})</span>
+            <span className="text-muted-foreground/70">({formatReviewCount(attraction.userRatingsTotal)})</span>
           </div>
-        </button>
-      </div>
+        </div>
+      </button>
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -122,7 +126,7 @@ export default function PlannedItemsList({ items, type, onReorder, onRemove, onI
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {items.map((item, index) => (
             <PlannedItem
               key={item.id}
