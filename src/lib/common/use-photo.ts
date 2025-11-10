@@ -7,7 +7,7 @@ import { fetchPhoto } from "./photo-utils";
  * @param maxWidth - Maximum width of the photo (default: 800)
  * @returns Object with photo URL and loading state
  */
-export const usePhoto = (photoReference: string | undefined, maxWidth: number = 800) => {
+export const usePhoto = (photoReference: string | undefined, maxWidth = 800) => {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);

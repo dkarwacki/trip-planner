@@ -60,22 +60,36 @@ The project follows **Clean Architecture** principles with clear separation of c
   - `./src/application/map/` - Map use cases
     - `{usecase}/` - Use case per subdirectory
     - `{usecase}/index.ts` - Public API exports
-    - `{usecase}/inputs.ts` - Zod schemas for input validation
-    - `{usecase}/outputs.ts` - Zod schemas for output validation with transforms
   - `./src/application/plan/` - Plan use cases
     - `index.ts` - Public API exports
-    - `inputs.ts` - Zod schemas for input validation
 
-- `./src/infrastructure` - **Infrastructure layer** (external services, I/O)
+- `./src/infrastructure` - **Infrastructure layer** (external services, I/O, validation)
   - `./src/infrastructure/common/` - Shared infrastructure
+    - `api/` - Shared validation schemas and types
+      - `schemas.ts` - Common Zod schemas (UUID, coordinates, photos)
+      - `types.ts` - Type definitions using z.infer
+      - `index.ts` - Barrel exports
     - `config/` - Configuration management
     - `google-maps/` - Google Maps API client (used by both features)
+      - `schemas.ts` - API response validation schemas
+      - `types.ts` - Type definitions for external API
     - `openai/` - OpenAI client (used by both features)
     - `http/` - HTTP utilities (validation, response mappers)
     - `runtime.ts` - Effect runtime configuration with all dependencies
   - `./src/infrastructure/map/` - Map-specific infrastructure
+    - `api/` - Map API contracts (DTOs and validation)
+      - `schemas.ts` - Zod schemas with branded type transforms
+      - `types.ts` - DTOs derived with z.infer (all have DTO suffix)
+      - `index.ts` - Barrel exports
+    - `database/` - Database layer (DAOs, repositories)
     - `cache/` - Caching services
     - `clients/` - Browser API clients
+  - `./src/infrastructure/plan/` - Plan-specific infrastructure
+    - `api/` - Plan API contracts (DTOs and validation)
+      - `schemas.ts` - Zod schemas with branded type transforms
+      - `types.ts` - DTOs derived with z.infer (all have DTO suffix)
+      - `index.ts` - Barrel exports
+    - `database/` - Database layer (DAOs, repositories)
 
 - `./src/components` - Components (Astro for static, React for interactive)
   - `./src/components/common/` - Shared components
@@ -116,15 +130,17 @@ The project follows **Clean Architecture** principles with clear separation of c
 
 ### Zod Validation & Schemas
 
-- **Input schemas** (`inputs.ts`): Validate incoming data without transforms
-- **Output schemas** (`outputs.ts`): Validate external data + use `.transform()` to convert to branded types
+- **Schemas** (`infrastructure/*/api/schemas.ts`): Define Zod schemas with `.transform()` to branded types (from domain)
+- **DTOs** (`infrastructure/*/api/types.ts`): Derive types using `z.infer<typeof Schema>` - all API types have DTO suffix
+- **Barrel exports** (`infrastructure/*/api/index.ts`): Re-export all schemas and types for convenient imports
+- Validate using `safeParse()`, wrap in Effect with tagged errors for error handling
 
 ### Astro Guidelines
 
 - Use `export const prerender = false` for API routes
 - Use POST, GET (uppercase) for endpoint handlers
 - API routes are **thin adapters**: validate input → call application use case → map response
-- Use Zod for validation (schemas in `application/*/inputs.ts` and `application/*/outputs.ts`), wrap in Effect with tagged errors
+- Use Zod for validation (import schemas from `infrastructure/*/api`), wrap in Effect with tagged errors
 - Use `Astro.cookies` for server-side cookie management
 - Use `import.meta.env` for environment variables
 - Leverage View Transitions API for smooth page transitions

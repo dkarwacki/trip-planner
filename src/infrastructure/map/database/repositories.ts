@@ -14,7 +14,7 @@
 import { Effect, Context, Layer } from "effect";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { SupabaseClient } from "@/infrastructure/common/database";
-import type { PlaceDAO, AttractionDAO, PlaceInsertData, AttractionInsertData } from "./types";
+import type { PlaceDAO, AttractionDAO, PlaceInsertDAO, AttractionInsertDAO } from "./types";
 import { rowToPlaceDAO, rowToAttractionDAO, toPlaceInsert, toAttractionInsert } from "./types";
 
 // ============================================================================
@@ -49,7 +49,7 @@ export class DatabaseError {
 
 export interface IPlaceRepository {
   findByGooglePlaceId: (googlePlaceId: string) => Effect.Effect<PlaceDAO, PlaceNotFoundError | DatabaseError>;
-  upsert: (placeData: PlaceInsertData) => Effect.Effect<PlaceDAO, DatabaseError>;
+  upsert: (placeData: PlaceInsertDAO) => Effect.Effect<PlaceDAO, DatabaseError>;
   findByIds: (ids: string[]) => Effect.Effect<PlaceDAO[], DatabaseError>;
   findStale: (days: number) => Effect.Effect<PlaceDAO[], DatabaseError>;
 }
@@ -78,7 +78,7 @@ export const PlaceRepositoryLive = Layer.effect(
         return rowToPlaceDAO(data);
       });
 
-    const upsert = (placeData: PlaceInsertData): Effect.Effect<PlaceDAO, DatabaseError> =>
+    const upsert = (placeData: PlaceInsertDAO): Effect.Effect<PlaceDAO, DatabaseError> =>
       Effect.gen(function* () {
         const insert = toPlaceInsert(placeData);
 
@@ -148,7 +148,7 @@ export interface IAttractionRepository {
     googlePlaceId: string,
     type?: "attraction" | "restaurant"
   ) => Effect.Effect<AttractionDAO, AttractionNotFoundError | DatabaseError>;
-  upsert: (attractionData: AttractionInsertData) => Effect.Effect<AttractionDAO, DatabaseError>;
+  upsert: (attractionData: AttractionInsertDAO) => Effect.Effect<AttractionDAO, DatabaseError>;
   findByIds: (ids: string[]) => Effect.Effect<AttractionDAO[], DatabaseError>;
   findStale: (days: number, type?: "attraction" | "restaurant") => Effect.Effect<AttractionDAO[], DatabaseError>;
 }
@@ -187,7 +187,7 @@ export const AttractionRepositoryLive = Layer.effect(
         return rowToAttractionDAO(data);
       });
 
-    const upsert = (attractionData: AttractionInsertData): Effect.Effect<AttractionDAO, DatabaseError> =>
+    const upsert = (attractionData: AttractionInsertDAO): Effect.Effect<AttractionDAO, DatabaseError> =>
       Effect.gen(function* () {
         const insert = toAttractionInsert(attractionData);
 

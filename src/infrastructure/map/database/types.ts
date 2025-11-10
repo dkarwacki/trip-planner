@@ -74,7 +74,7 @@ export interface AttractionDAO {
 // Converters: Domain/API → Database Insert
 // ============================================================================
 
-export interface PlaceInsertData {
+export interface PlaceInsertDAO {
   googlePlaceId: string;
   name: string;
   latitude: number;
@@ -83,7 +83,7 @@ export interface PlaceInsertData {
   validationStatus?: "verified" | "not_found" | "partial";
 }
 
-export interface AttractionInsertData {
+export interface AttractionInsertDAO {
   googlePlaceId: string;
   type: "attraction" | "restaurant";
   name: string;
@@ -100,7 +100,7 @@ export interface AttractionInsertData {
   confidenceScore?: number;
 }
 
-export const toPlaceInsert = (data: PlaceInsertData): TablesInsert<"places"> => ({
+export const toPlaceInsert = (data: PlaceInsertDAO): TablesInsert<"places"> => ({
   google_place_id: data.googlePlaceId,
   name: data.name,
   latitude: data.latitude,
@@ -110,7 +110,7 @@ export const toPlaceInsert = (data: PlaceInsertData): TablesInsert<"places"> => 
   last_updated_at: new Date().toISOString(),
 });
 
-export const toAttractionInsert = (data: AttractionInsertData): TablesInsert<"attractions"> => ({
+export const toAttractionInsert = (data: AttractionInsertDAO): TablesInsert<"attractions"> => ({
   google_place_id: data.googlePlaceId,
   type: data.type,
   name: data.name,

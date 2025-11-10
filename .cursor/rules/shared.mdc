@@ -54,21 +54,35 @@ The project follows **Clean Architecture** principles with clear separation of c
 
 - `./src/application` - Application layer (use cases with Effect)
   - `./src/application/map/` - Map use cases
-    - `{usecase}/inputs.ts` - Zod input schemas
-    - `{usecase}/outputs.ts` - Zod output schemas
   - `./src/application/plan/` - Plan use cases
-    - `inputs.ts` - Zod input schemas
-  
+
 - `./src/infrastructure` - Infrastructure layer (external services, I/O)
   - `./src/infrastructure/common/` - Shared infrastructure
+    - `api/` - Shared validation schemas and types
+      - `schemas.ts` - Common Zod schemas (UUID, coordinates, photos)
+      - `types.ts` - Type definitions using z.infer
+      - `index.ts` - Barrel exports
     - `config/` - Configuration service
     - `google-maps/` - Google Maps API client
+      - `schemas.ts` - API response validation schemas
+      - `types.ts` - Type definitions for external API
     - `openai/` - OpenAI client
-    - `http/` - Validation, response mappers, base HTTP utilities
+    - `http/` - HTTP utilities (validation, response mappers)
     - `runtime.ts` - Effect runtime with all dependencies
   - `./src/infrastructure/map/` - Map-specific infrastructure
+    - `api/` - Map API contracts (DTOs and validation)
+      - `schemas.ts` - Zod schemas with branded type transforms
+      - `types.ts` - DTOs derived with z.infer (all have DTO suffix)
+      - `index.ts` - Barrel exports
+    - `database/` - Database layer (DAOs, repositories)
     - `cache/` - Effect cache services
     - `clients/` - Browser API clients
+  - `./src/infrastructure/plan/` - Plan-specific infrastructure
+    - `api/` - Plan API contracts (DTOs and validation)
+      - `schemas.ts` - Zod schemas with branded type transforms
+      - `types.ts` - DTOs derived with z.infer (all have DTO suffix)
+      - `index.ts` - Barrel exports
+    - `database/` - Database layer (DAOs, repositories)
 
 - `./src/components` - Client-side components
   - `./src/components/common/` - Shared components
@@ -102,9 +116,11 @@ When modifying the directory structure, always update this section.
 
 ### Validation and Data Transfer Objects (DTOs)
 
-- Use Zod for validation: define schemas, use `z.infer<>`, `safeParse()`, wrap in Effect with tagged errors
-- **Input schemas** (`inputs.ts`): Validate incoming data without transforms
-- **Output schemas** (`outputs.ts`): Validate external data + use `.transform()` to convert to branded types
+- Use Zod for validation: define schemas in `infrastructure/*/api/schemas.ts`, use `z.infer<>` in `types.ts`
+- **Schemas** (`api/schemas.ts`): Define Zod schemas with `.transform()` to branded types (from domain)
+- **DTOs** (`api/types.ts`): Derive types using `z.infer<typeof Schema>` - all API types have DTO suffix
+- **Barrel exports** (`api/index.ts`): Re-export all schemas and types for convenient imports
+- Validate using `safeParse()`, wrap in Effect with tagged errors for error handling
 
 ### Effect Guidelines
 

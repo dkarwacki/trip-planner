@@ -77,7 +77,7 @@ const PlacePhotoSchema = z.object({
     .optional(),
 });
 
-const PlaceSchema = z.object({
+export const PlaceSchema = z.object({
   id: z.string(),
   displayName: DisplayNameSchema.optional(),
   types: z.array(z.string()).optional(),
@@ -105,11 +105,8 @@ export const PlaceDetailsResponseSchema = z.object({
   photos: z.array(PlacePhotoSchema).optional(),
 });
 
-export type GeocodeResponse = z.infer<typeof GeocodeResponseSchema>;
-export type TextSearchResponse = z.infer<typeof TextSearchResponseSchema>;
-export type Place = z.infer<typeof PlaceSchema>;
-export type NearbySearchResponse = z.infer<typeof NearbySearchResponseSchema>;
-export type PlaceDetailsResponse = z.infer<typeof PlaceDetailsResponseSchema>;
+// Note: Type definitions have been moved to types.ts
+// Types are derived there using z.infer<typeof Schema>
 
 export const validateSearchRadius = (radius: number): SearchRadius => {
   const validated = SearchRadiusSchema.parse(radius);

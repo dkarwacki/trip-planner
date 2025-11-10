@@ -21,8 +21,8 @@ import {
   validateSearchRadius,
   validateNonEmptyString,
   validateCoordinates,
-  type Place as PlaceResponse,
-} from "./validation";
+} from "./schemas";
+import type { Place as PlaceResponse } from "./types";
 import { isRestaurantSearch, MIN_RATING_COUNT } from "./helpers";
 import { BLOCKED_PLACE_TYPES } from "./constants";
 
