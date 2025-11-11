@@ -29,6 +29,8 @@ const safeJsonParse = <T>(json: string | null, fallback: T): T => {
 
 // Persona storage
 export const savePersonas = (personas: PersonaType[]): void => {
+  if (typeof window === "undefined") return;
+
   try {
     localStorage.setItem(STORAGE_KEYS.PERSONAS, JSON.stringify(personas));
   } catch (error) {
@@ -37,6 +39,8 @@ export const savePersonas = (personas: PersonaType[]): void => {
 };
 
 export const loadPersonas = (): PersonaType[] => {
+  if (typeof window === "undefined") return [];
+
   try {
     const json = localStorage.getItem(STORAGE_KEYS.PERSONAS);
     return safeJsonParse(json, []);
@@ -48,6 +52,8 @@ export const loadPersonas = (): PersonaType[] => {
 
 // Current itinerary storage
 export const saveCurrentItinerary = (places: Place[]): void => {
+  if (typeof window === "undefined") return;
+
   try {
     localStorage.setItem(STORAGE_KEYS.CURRENT_ITINERARY, JSON.stringify(places));
   } catch (error) {
@@ -56,6 +62,8 @@ export const saveCurrentItinerary = (places: Place[]): void => {
 };
 
 export const loadCurrentItinerary = (): Place[] => {
+  if (typeof window === "undefined") return [];
+
   try {
     const json = localStorage.getItem(STORAGE_KEYS.CURRENT_ITINERARY);
     return safeJsonParse(json, []);
@@ -66,6 +74,8 @@ export const loadCurrentItinerary = (): Place[] => {
 };
 
 export const clearCurrentItinerary = (): void => {
+  if (typeof window === "undefined") return;
+
   try {
     localStorage.removeItem(STORAGE_KEYS.CURRENT_ITINERARY);
   } catch (error) {
@@ -75,6 +85,8 @@ export const clearCurrentItinerary = (): void => {
 
 // Trip history storage
 export const saveTripToHistory = (places: Place[], conversationId?: ConversationId): string => {
+  if (typeof window === "undefined") return "";
+
   try {
     const trip = createSavedTrip(places, conversationId);
     const history = loadTripHistory();
@@ -91,6 +103,8 @@ export const saveTripToHistory = (places: Place[], conversationId?: Conversation
 };
 
 export const loadTripHistory = (): SavedTrip[] => {
+  if (typeof window === "undefined") return [];
+
   try {
     const json = localStorage.getItem(STORAGE_KEYS.TRIP_HISTORY);
     return safeJsonParse(json, []);
@@ -101,6 +115,8 @@ export const loadTripHistory = (): SavedTrip[] => {
 };
 
 export const loadTripById = (id: string): SavedTrip | null => {
+  if (typeof window === "undefined") return null;
+
   try {
     const history = loadTripHistory();
     return history.find((trip) => trip.id === id) ?? null;
@@ -111,6 +127,8 @@ export const loadTripById = (id: string): SavedTrip | null => {
 };
 
 export const updateTripInHistory = (tripId: string, places: Place[]): void => {
+  if (typeof window === "undefined") return;
+
   try {
     const history = loadTripHistory();
     const tripIndex = history.findIndex((trip) => trip.id === tripId);
@@ -126,6 +144,8 @@ export const updateTripInHistory = (tripId: string, places: Place[]): void => {
 };
 
 export const deleteTripFromHistory = (tripId: string): void => {
+  if (typeof window === "undefined") return;
+
   try {
     const history = loadTripHistory();
     const filteredHistory = history.filter((trip) => trip.id !== tripId);
@@ -143,6 +163,8 @@ export const saveConversation = (
   existingId?: ConversationId,
   places?: Place[]
 ): ConversationId => {
+  if (typeof window === "undefined") throw new Error("Cannot save conversation on server");
+
   try {
     const conversations = loadAllConversations();
 
@@ -186,6 +208,8 @@ export const saveConversation = (
 };
 
 export const loadConversation = (id: ConversationId): SavedConversation | null => {
+  if (typeof window === "undefined") return null;
+
   try {
     const conversations = loadAllConversations();
     return conversations.find((conv) => conv.id === id) ?? null;
@@ -196,6 +220,8 @@ export const loadConversation = (id: ConversationId): SavedConversation | null =
 };
 
 export const loadAllConversations = (): SavedConversation[] => {
+  if (typeof window === "undefined") return [];
+
   try {
     const json = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS);
     return safeJsonParse(json, []);
@@ -206,6 +232,8 @@ export const loadAllConversations = (): SavedConversation[] => {
 };
 
 export const deleteConversation = (conversationId: ConversationId): void => {
+  if (typeof window === "undefined") return;
+
   try {
     const conversations = loadAllConversations();
     const filtered = conversations.filter((conv) => conv.id !== conversationId);
@@ -216,6 +244,8 @@ export const deleteConversation = (conversationId: ConversationId): void => {
 };
 
 export const getTripsForConversation = (conversationId: ConversationId): SavedTrip[] => {
+  if (typeof window === "undefined") return [];
+
   try {
     const trips = loadTripHistory();
     return trips.filter((trip) => trip.conversationId === conversationId);
@@ -227,6 +257,8 @@ export const getTripsForConversation = (conversationId: ConversationId): SavedTr
 
 // Migration: Convert one-to-many to one-to-one relationship
 export const migrateConversationTrips = (): void => {
+  if (typeof window === "undefined") return;
+
   try {
     const conversations = loadAllConversations();
     const trips = loadTripHistory();
@@ -284,6 +316,8 @@ export const migrateConversationTrips = (): void => {
 
 // Get single trip for conversation (one-to-one relationship)
 export const getTripForConversation = (conversationId: ConversationId): SavedTrip | null => {
+  if (typeof window === "undefined") return null;
+
   try {
     const conversation = loadConversation(conversationId);
     if (!conversation || !conversation.tripId) {
@@ -298,6 +332,8 @@ export const getTripForConversation = (conversationId: ConversationId): SavedTri
 
 // Save or update trip for a conversation
 export const saveTripForConversation = (conversationId: ConversationId, places: Place[]): string => {
+  if (typeof window === "undefined") throw new Error("Cannot save trip on server");
+
   try {
     const conversation = loadConversation(conversationId);
     if (!conversation) {
