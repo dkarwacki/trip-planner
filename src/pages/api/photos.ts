@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
 import { GetPhoto } from "@/application/map/photos";
-import { GetPhotoCommandSchema } from "@/infrastructure/map/api";
+import { GetPhotoCommandSchema, toDomain } from "@/infrastructure/map/api";
 import { ValidationError } from "@/infrastructure/common/http/validation";
 import { AppRuntime } from "@/infrastructure/common/runtime";
 
@@ -26,8 +26,9 @@ const validateRequest = (params: URLSearchParams) =>
 
 export const GET: APIRoute = async ({ url }) => {
   const program = Effect.gen(function* () {
-    const input = yield* validateRequest(url.searchParams);
-    const photoData = yield* GetPhoto(input);
+    const dto = yield* validateRequest(url.searchParams);
+    const query = toDomain.getPhoto(dto);
+    const photoData = yield* GetPhoto(query);
     return photoData;
   });
 

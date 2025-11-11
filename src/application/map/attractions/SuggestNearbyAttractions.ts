@@ -7,7 +7,9 @@ import {
 } from "@/infrastructure/common/openai";
 import { getTopAttractions, getTopRestaurants } from "@/application/map/attractions";
 import { TextSearchCache } from "@/infrastructure/map/cache";
-import type { SuggestNearbyAttractionsCommandDTO, AgentResponseDTO } from "@/infrastructure/map/api";
+import type { SuggestNearbyAttractionsCommand } from "@/domain/map/models";
+import { Latitude, Longitude } from "@/domain/common/models";
+import type { AgentResponseDTO } from "@/infrastructure/map/api";
 import { AgentResponseSchema } from "@/infrastructure/map/api";
 import { InvalidToolCallError, ModelResponseError } from "@/domain/common/errors";
 import type { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/chat/completions";
@@ -155,12 +157,12 @@ After your analysis, provide your response as valid JSON in exactly this structu
 /**
  * Main agent use case - suggests nearby attractions and restaurants based on user preferences
  */
-export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsCommandDTO) =>
+export const suggestNearbyAttractions = (cmd: SuggestNearbyAttractionsCommand) =>
   Effect.gen(function* () {
     const openai = yield* OpenAIClient;
 
-    const planContext = buildPlanContext(input);
-    const messages = buildInitialMessages(input, planContext);
+    const planContext = buildPlanContext(cmd);
+    const messages = buildInitialMessages(cmd, planContext);
 
     // First call: use tools to gather data (no JSON mode yet - let model choose to call tools)
     let response = yield* openai.chatCompletion({
@@ -176,7 +178,7 @@ export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsCommandD
     // Process tool calls until model is ready to provide final answer
     while (response.toolCalls && response.toolCalls.length > 0 && iterations < maxToolCallIterations) {
       iterations++;
-      response = yield* handleToolCallIteration(messages, response, openai, input.mapCoordinates);
+      response = yield* handleToolCallIteration(messages, response, openai, cmd.mapCoordinates);
     }
 
     if (!response.content) {
@@ -195,19 +197,19 @@ export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsCommandD
 /**
  * Builds a JSON string representation of the plan context
  */
-const buildPlanContext = (input: SuggestNearbyAttractionsCommandDTO): string => {
+const buildPlanContext = (cmd: SuggestNearbyAttractionsCommand): string => {
   return JSON.stringify(
     {
       place: {
-        id: input.place.id,
-        name: input.place.name,
-        plannedAttractions: input.place.plannedAttractions.map((a) => ({
+        id: cmd.place.id,
+        name: cmd.place.name,
+        plannedAttractions: cmd.place.plannedAttractions.map((a) => ({
           name: a.name,
           rating: a.rating,
           userRatingsTotal: a.userRatingsTotal,
           types: a.types,
         })),
-        plannedRestaurants: input.place.plannedRestaurants.map((r) => ({
+        plannedRestaurants: cmd.place.plannedRestaurants.map((r) => ({
           name: r.name,
           rating: r.rating,
           userRatingsTotal: r.userRatingsTotal,
@@ -225,14 +227,14 @@ const buildPlanContext = (input: SuggestNearbyAttractionsCommandDTO): string => 
  * Constructs the initial messages array with system prompt, conversation history, and user request
  */
 const buildInitialMessages = (
-  input: SuggestNearbyAttractionsCommandDTO,
+  cmd: SuggestNearbyAttractionsCommand,
   planContext: string
 ): ChatCompletionMessageParam[] => {
-  const userMessage = input.userMessage || "Suggest new attractions and restaurants for this place.";
+  const userMessage = cmd.userMessage || "Suggest new attractions and restaurants for this place.";
 
   return [
     { role: "system", content: SYSTEM_PROMPT },
-    ...input.conversationHistory.map(
+    ...cmd.conversationHistory.map(
       (msg) =>
         ({
           role: msg.role,
@@ -253,7 +255,7 @@ const handleToolCallIteration = (
   messages: ChatCompletionMessageParam[],
   response: ChatCompletionResponse,
   openai: IOpenAIClient,
-  mapCoordinates: { lat: number; lng: number }
+  mapCoordinates: { lat: Latitude; lng: Longitude }
 ) =>
   Effect.gen(function* () {
     if (!response.toolCalls || response.toolCalls.length === 0) {
@@ -340,7 +342,7 @@ const enrichSuggestionsWithAttractionData = (
     return Array.getSomes(suggestionOptions);
   });
 
-const executeToolCall = (toolCall: ToolCall, mapCoordinates: { lat: number; lng: number }) =>
+const executeToolCall = (toolCall: ToolCall, mapCoordinates: { lat: Latitude; lng: Longitude }) =>
   Effect.gen(function* () {
     try {
       const args = JSON.parse(toolCall.arguments);

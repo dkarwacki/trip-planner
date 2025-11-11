@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { OpenAIClient } from "@/infrastructure/common/openai";
 import { TextSearchCache } from "@/infrastructure/map/cache";
-import type { ChatRequestCommandDTO } from "@/infrastructure/plan/api";
+import type { ChatRequestCommand } from "@/domain/plan/models";
 import type { PlaceSuggestion } from "@/domain/plan/models";
 import { PERSONA_METADATA } from "@/domain/plan/models";
 
@@ -138,19 +138,19 @@ const generateNarrative = (userMessage: string, personas: string[], places: Plac
     return "Here are some great places to explore based on your interests:";
   });
 
-export const TravelPlanningChat = (input: ChatRequestCommandDTO) =>
+export const TravelPlanningChat = (cmd: ChatRequestCommand) =>
   Effect.gen(function* () {
     const openai = yield* OpenAIClient;
     const textSearchCache = yield* TextSearchCache;
 
     // Build system prompt based on personas
-    const systemPrompt = buildSystemPrompt(input.personas);
+    const systemPrompt = buildSystemPrompt(cmd.personas);
 
     // Prepare messages
     const messages = [
       { role: "system" as const, content: systemPrompt },
-      ...input.conversationHistory,
-      { role: "user" as const, content: input.message },
+      ...cmd.conversationHistory,
+      { role: "user" as const, content: cmd.message },
     ];
 
     const response = yield* openai.chatCompletion({
@@ -194,12 +194,12 @@ export const TravelPlanningChat = (input: ChatRequestCommandDTO) =>
     }
 
     // Generate narrative response ONLY for the first message
-    const isFirstMessage = input.conversationHistory.length === 0;
+    const isFirstMessage = cmd.conversationHistory.length === 0;
 
     if (suggestedPlaces.length > 0 && isFirstMessage) {
       // First message: generate engaging narrative
       try {
-        const narrative = yield* generateNarrative(input.message, input.personas, suggestedPlaces, thinking);
+        const narrative = yield* generateNarrative(cmd.message, cmd.personas, suggestedPlaces, thinking);
         assistantMessage = narrative;
       } catch (error) {
         yield* Effect.logWarning("Failed to generate narrative, using fallback message", { error });

@@ -53,7 +53,6 @@ The project follows **Clean Architecture** principles with clear separation of c
     - `errors/` - Plan errors
 
 - `./src/application` - Application layer (use cases with Effect)
-  - **Schema-free layer**: Receives validated DTOs from infrastructure
   - **No validation logic**: Purely business logic orchestration
   - Use cases implement domain logic with Effect
   - `./src/application/map/` - Map use cases (one subdirectory per use case)
@@ -126,15 +125,22 @@ When modifying the directory structure, always update this section.
 - Validate using `safeParse()`, wrap in Effect with tagged errors for error handling
 
 **DTO Naming Conventions:**
-- Command inputs to use cases: `*CommandDTO` (e.g., `CreateTripCommandDTO`, `ChatRequestCommandDTO`)
+- Command inputs: `*CommandDTO` (e.g., `CreateTripCommandDTO`, `ChatRequestCommandDTO`) - live in `infrastructure/*/api/types.ts`
 - Query results from repositories: `*DTO` (e.g., `TripDTO`, `AttractionDTO`, `PlaceDTO`)
-- All DTOs live in `infrastructure/*/api/types.ts`
-- **Application layer uses these types, never creates its own input/output types**
+- Domain command/query types: `*Command` or `*Query` (e.g., `ChatRequestCommand`, `GetAttractionsQuery`) - live in `domain/*/models/types.ts`
+- **Infrastructure layer owns DTOs, domain layer owns command/query types**
+- **Application layer uses ONLY domain types, never infrastructure types**
 
-**Validation Flow:**
+**Data Flow:**
 1. API route receives raw request → validates with infrastructure schema → gets CommandDTO
-2. Use case receives CommandDTO → implements business logic → returns domain result
-3. No validation in application layer - data is pre-validated at infrastructure boundary
+2. API route maps DTO to domain type using `toDomain` mappers → gets domain command/query
+3. Use case receives domain command → implements business logic → returns domain result
+4. No validation or DTO handling in application layer - it works with pure domain types
+
+**Mappers:**
+- `infrastructure/*/api/mappers.ts` - Convert DTOs to domain types
+- Export `toDomain` object with mapping functions (e.g., `toDomain.chatRequest(dto)`)
+- Infrastructure layer owns the mapping responsibility
 
 ### Effect Guidelines
 

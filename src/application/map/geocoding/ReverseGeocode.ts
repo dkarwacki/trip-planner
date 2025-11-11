@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 import { GoogleMapsClient } from "@/infrastructure/common/google-maps";
-import type { ReverseGeocodeCommandDTO } from "@/infrastructure/map/api";
+import type { ReverseGeocodeCommand } from "@/domain/map/models";
 
-export const ReverseGeocode = (input: ReverseGeocodeCommandDTO) =>
+export const ReverseGeocode = (cmd: ReverseGeocodeCommand) =>
   Effect.gen(function* () {
     const googleMaps = yield* GoogleMapsClient;
-    const place = yield* googleMaps.reverseGeocode(input.lat, input.lng);
+    const place = yield* googleMaps.reverseGeocode(cmd.lat, cmd.lng);
     return place;
   });

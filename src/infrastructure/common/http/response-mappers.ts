@@ -14,7 +14,7 @@ import type {
   AgentError,
   InvalidToolCallError,
   ModelResponseError,
-} from "@/domain/errors";
+} from "@/domain/common/errors";
 
 type AppError =
   | ValidationError

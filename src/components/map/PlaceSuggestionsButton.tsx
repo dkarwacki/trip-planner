@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import type { Place } from "@/domain/common/models";
 import type { Attraction } from "@/domain/map/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
-import type { AgentResponse } from "@/application/map/attractions";
+import type { AgentResponseDTO } from "@/infrastructure/map/api";
 import PhotoImage from "@/components/common/PhotoImage";
 import PhotoLightbox from "./PhotoLightbox";
 
@@ -20,7 +20,7 @@ interface ConversationMessage {
 
 interface SuggestionGroup {
   userMessage: string | null; // null for initial suggestions
-  suggestions: AgentResponse["suggestions"];
+  suggestions: AgentResponseDTO["suggestions"];
 }
 
 interface PlaceSuggestionsButtonProps {

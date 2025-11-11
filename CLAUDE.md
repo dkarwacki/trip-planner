@@ -135,16 +135,46 @@ The project follows **Clean Architecture** principles with clear separation of c
 - **Barrel exports** (`infrastructure/*/api/index.ts`): Re-export all schemas and types for convenient imports
 - Validate using `safeParse()`, wrap in Effect with tagged errors for error handling
 
+### Data Flow Pattern
+
+The architecture enforces clear data flow with strict layer separation:
+
+**1. API Route (infrastructure adapter):**
+- Receives raw HTTP request
+- Validates using `infrastructure/*/api/schemas.ts` → gets typed DTO
+- **Maps DTO to domain type** using `toDomain` mappers from `infrastructure/*/api/mappers`
+- Calls use case with domain command/query
+- Maps Effect result to HTTP response
+
+**2. Use Case:**
+- Receives **domain type** as input
+- NO infrastructure dependencies - only domain types
+- No validation needed - data is pre-validated and mapped
+- Implements business logic using Effect
+- Returns domain models or results
+
+**3. Response Mapping:**
+- Map domain results to response DTOs if needed
+- Use infrastructure response schemas for transforms
+- Return HTTP response
+
+**Key Principles:**
+- Validation happens ONCE at the infrastructure boundary
+- DTO→Domain mapping happens in infrastructure layer (`toDomain` mappers)
+- Application layer depends ONLY on domain types
+
 ### Astro Guidelines
 
 - Use `export const prerender = false` for API routes
 - Use POST, GET (uppercase) for endpoint handlers
 - API routes are **thin adapters** with clear responsibilities:
   1. Validate input using infrastructure schemas
-  2. Call application use case with validated DTO
-  3. Map Effect result to HTTP response
+  2. Map DTO to domain type using `toDomain` mappers
+  3. Call application use case with domain command/query
+  4. Map Effect result to HTTP response
 - Use Zod for validation (import schemas from `infrastructure/*/api`), wrap in Effect with tagged errors
-- Use cases receive **infrastructure DTOs** (not raw input or schemas)
+- Use `toDomain` mappers (from `infrastructure/*/api/mappers`) to convert DTOs to domain types
+- Use cases receive **domain types only** (from `domain/*/models/types.ts`)
 - Use `Astro.cookies` for server-side cookie management
 - Use `import.meta.env` for environment variables
 - Leverage View Transitions API for smooth page transitions

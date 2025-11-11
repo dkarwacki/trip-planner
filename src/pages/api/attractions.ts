@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
 import { getTopAttractions } from "@/application/map/attractions";
-import { AttractionsQueryParamsSchema } from "@/infrastructure/map/api";
+import { AttractionsQueryParamsSchema, toDomain } from "@/infrastructure/map/api";
 import { ValidationError } from "@/infrastructure/common/http/validation";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
@@ -33,9 +33,9 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const program = Effect.gen(function* () {
-    const input = yield* validateRequest(body);
-
-    const attractions = yield* getTopAttractions(input);
+    const dto = yield* validateRequest(body);
+    const query = toDomain.getAttractions(dto);
+    const attractions = yield* getTopAttractions(query);
 
     return { attractions };
   });

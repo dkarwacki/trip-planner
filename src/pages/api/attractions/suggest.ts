@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
 import { suggestNearbyAttractions } from "@/application/map/attractions";
-import { SuggestNearbyAttractionsCommandSchema } from "@/infrastructure/map/api";
+import { SuggestNearbyAttractionsCommandSchema, toDomain } from "@/infrastructure/map/api";
 import { ValidationError } from "@/infrastructure/common/http/validation";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
@@ -24,8 +24,9 @@ export const POST: APIRoute = async ({ request }) => {
   const body = await request.json();
 
   const program = Effect.gen(function* () {
-    const input = yield* validateRequest(body);
-    const suggestions = yield* suggestNearbyAttractions(input);
+    const dto = yield* validateRequest(body);
+    const command = toDomain.suggestNearbyAttractions(dto);
+    const suggestions = yield* suggestNearbyAttractions(command);
     return { suggestions };
   });
 

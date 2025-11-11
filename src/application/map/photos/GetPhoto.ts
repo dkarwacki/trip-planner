@@ -1,14 +1,14 @@
 import { Effect } from "effect";
 import { PhotoCache } from "@/infrastructure/map/cache";
-import type { GetPhotoCommandDTO } from "@/infrastructure/map/api";
+import type { GetPhotoQuery } from "@/domain/map/models";
 
-export const GetPhoto = (input: GetPhotoCommandDTO) =>
+export const GetPhoto = (query: GetPhotoQuery) =>
   Effect.gen(function* () {
     const photoCache = yield* PhotoCache;
 
     const photoData = yield* photoCache.get({
-      photoReference: input.photoReference,
-      maxWidth: input.maxWidth,
+      photoReference: query.photoReference,
+      maxWidth: query.maxWidth,
     });
 
     return photoData;

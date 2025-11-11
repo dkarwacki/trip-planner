@@ -1,14 +1,14 @@
 import { Effect, Data } from "effect";
 import { scoreAttractions } from "@/domain/map/scoring";
 import { AttractionsCache } from "@/infrastructure/map/cache";
-import type { AttractionsQueryParamsDTO } from "@/infrastructure/map/api";
+import type { GetAttractionsQuery } from "@/domain/map/models";
 
-export const getTopAttractions = (input: AttractionsQueryParamsDTO) =>
+export const getTopAttractions = (query: GetAttractionsQuery) =>
   Effect.gen(function* () {
     const cache = yield* AttractionsCache;
-    const cacheKey = Data.struct({ lat: input.lat, lng: input.lng, radius: input.radius });
+    const cacheKey = Data.struct({ lat: query.lat, lng: query.lng, radius: query.radius });
     const attractions = yield* cache.get(cacheKey);
 
     const scored = scoreAttractions(attractions);
-    return scored.slice(0, input.limit);
+    return scored.slice(0, query.limit);
   });
