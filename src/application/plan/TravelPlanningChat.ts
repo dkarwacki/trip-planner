@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { OpenAIClient } from "@/infrastructure/common/openai";
 import { TextSearchCache } from "@/infrastructure/map/cache";
-import type { ChatRequestInput } from "./inputs";
+import type { ChatRequestCommandDTO } from "@/infrastructure/plan/api";
 import type { PlaceSuggestion } from "@/domain/plan/models";
 import { PERSONA_METADATA } from "@/domain/plan/models";
 
@@ -138,7 +138,7 @@ const generateNarrative = (userMessage: string, personas: string[], places: Plac
     return "Here are some great places to explore based on your interests:";
   });
 
-export const TravelPlanningChat = (input: ChatRequestInput) =>
+export const TravelPlanningChat = (input: ChatRequestCommandDTO) =>
   Effect.gen(function* () {
     const openai = yield* OpenAIClient;
     const textSearchCache = yield* TextSearchCache;

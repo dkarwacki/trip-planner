@@ -27,6 +27,7 @@ import {
   UpdatePersonasCommandSchema,
   GetUserPersonasResponseSchema,
   // Conversation schemas
+  ConversationMessageInputSchema,
   PlaceSuggestionSchema,
   ChatMessageSchema,
   ConversationListItemSchema,
@@ -39,6 +40,7 @@ import {
   UpdateConversationCommandSchema,
   UpdateConversationResponseSchema,
   DeleteConversationResponseSchema,
+  ChatRequestCommandSchema,
   // Trip schemas
   PlaceSchema,
   AttractionOnlySchema,
@@ -89,6 +91,13 @@ export type UpdatePersonasCommandDTO = z.infer<typeof UpdatePersonasCommandSchem
  * Derived from: PhotoSchema (from common api)
  */
 export type { Photo as PhotoDTO } from "@/infrastructure/common/api";
+
+/**
+ * Conversation message input DTO for chat history
+ * Used in chat requests (no ID or timestamp)
+ * Derived from: ConversationMessageInputSchema
+ */
+export type ConversationMessageInputDTO = z.infer<typeof ConversationMessageInputSchema>;
 
 /**
  * Place suggestion DTO for AI-recommended places in chat
@@ -172,6 +181,13 @@ export type UpdateConversationResponseDTO = z.infer<typeof UpdateConversationRes
  * Note: Includes ConversationId branded type
  */
 export type DeleteConversationResponseDTO = z.infer<typeof DeleteConversationResponseSchema>;
+
+/**
+ * Command model for POST /api/plan
+ * Input: Send message to AI travel planning assistant
+ * Derived from: ChatRequestCommandSchema
+ */
+export type ChatRequestCommandDTO = z.infer<typeof ChatRequestCommandSchema>;
 
 // ============================================================================
 // Trip DTOs

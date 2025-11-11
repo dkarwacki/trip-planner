@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
-import { GetPhoto, GetPhotoInputSchema } from "@/application/map/photos";
+import { GetPhoto } from "@/application/map/photos";
+import { GetPhotoCommandSchema } from "@/infrastructure/map/api";
 import { ValidationError } from "@/infrastructure/common/http/validation";
 import { AppRuntime } from "@/infrastructure/common/runtime";
 
@@ -11,7 +12,7 @@ const validateRequest = (params: URLSearchParams) =>
     const photoReference = params.get("ref");
     const maxWidth = params.get("width");
 
-    const result = GetPhotoInputSchema.safeParse({
+    const result = GetPhotoCommandSchema.safeParse({
       photoReference,
       maxWidth: maxWidth ? parseInt(maxWidth, 10) : 800,
     });

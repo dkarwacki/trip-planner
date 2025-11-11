@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
-import { TravelPlanningChat, ChatRequestInputSchema } from "@/application/plan";
+import { TravelPlanningChat } from "@/application/plan";
+import { ChatRequestCommandSchema } from "@/infrastructure/plan/api";
 import { ValidationError } from "@/infrastructure/common/http/validation";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
@@ -10,7 +11,7 @@ export const prerender = false;
 
 const validateRequest = (body: unknown) =>
   Effect.gen(function* () {
-    const result = ChatRequestInputSchema.safeParse(body);
+    const result = ChatRequestCommandSchema.safeParse(body);
 
     if (!result.success) {
       return yield* Effect.fail(new ValidationError(result.error));

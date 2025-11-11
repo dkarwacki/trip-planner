@@ -36,6 +36,16 @@ import {
   RestaurantSchema,
   RestaurantsQueryParamsSchema,
   RestaurantsResponseSchema,
+  // Geocoding schemas
+  ReverseGeocodeCommandSchema,
+  // Search schemas
+  SearchPlaceCommandSchema,
+  // Photo schemas
+  GetPhotoCommandSchema,
+  PhotoResponseSchema,
+  // AI Suggestion schemas
+  SuggestNearbyAttractionsCommandSchema,
+  AgentResponseSchema,
 } from "./schemas";
 
 // ============================================================================
@@ -134,3 +144,62 @@ export type RestaurantsQueryParamsDTO = z.infer<typeof RestaurantsQueryParamsSch
  * Derived from: RestaurantsResponseSchema
  */
 export type RestaurantsResponseDTO = z.infer<typeof RestaurantsResponseSchema>;
+
+// ============================================================================
+// Geocoding DTOs
+// ============================================================================
+
+/**
+ * Command model for POST /api/geocoding/reverse
+ * Input: Reverse geocode coordinates to get place information
+ * Derived from: ReverseGeocodeCommandSchema
+ */
+export type ReverseGeocodeCommandDTO = z.infer<typeof ReverseGeocodeCommandSchema>;
+
+// ============================================================================
+// Place Search DTOs
+// ============================================================================
+
+/**
+ * Command model for GET /api/places/search
+ * Input: Search for places by query string
+ * Derived from: SearchPlaceCommandSchema
+ */
+export type SearchPlaceCommandDTO = z.infer<typeof SearchPlaceCommandSchema>;
+
+// ============================================================================
+// Photo DTOs
+// ============================================================================
+
+/**
+ * Command model for GET /api/photos
+ * Input: Fetch Google Maps place photo
+ * Derived from: GetPhotoCommandSchema
+ */
+export type GetPhotoCommandDTO = z.infer<typeof GetPhotoCommandSchema>;
+
+/**
+ * Response DTO for Google Maps photo API responses
+ * Used internally by GetPhoto use case to validate external API responses
+ * Derived from: PhotoResponseSchema
+ */
+export type PhotoResponseDTO = z.infer<typeof PhotoResponseSchema>;
+
+// ============================================================================
+// AI Suggestion DTOs
+// ============================================================================
+
+/**
+ * Command model for POST /api/attractions/suggest
+ * Input: Get AI suggestions for nearby attractions
+ * Derived from: SuggestNearbyAttractionsCommandSchema
+ */
+export type SuggestNearbyAttractionsCommandDTO = z.infer<typeof SuggestNearbyAttractionsCommandSchema>;
+
+/**
+ * Response DTO for OpenAI agent responses
+ * Used internally by SuggestNearbyAttractions use case to validate external API responses
+ * Derived from: AgentResponseSchema
+ * Note: Includes PlaceId and branded coordinate types from schema transform
+ */
+export type AgentResponseDTO = z.infer<typeof AgentResponseSchema>;

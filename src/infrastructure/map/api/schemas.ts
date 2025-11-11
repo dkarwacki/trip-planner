@@ -235,5 +235,183 @@ export const RestaurantsResponseSchema = z.object({
   radius: z.number(),
 });
 
+// ============================================================================
+// Geocoding Schemas
+// ============================================================================
+
+/**
+ * Command schema for POST /api/geocoding/reverse
+ * Input: Reverse geocode coordinates to get place information
+ * No transforms (command input)
+ */
+export const ReverseGeocodeCommandSchema = z.object({
+  lat: LatitudeSchema,
+  lng: LongitudeSchema,
+});
+
+// ============================================================================
+// Place Search Schemas
+// ============================================================================
+
+/**
+ * Command schema for GET /api/places/search
+ * Input: Search for places by query string
+ * No transforms (command input)
+ */
+export const SearchPlaceCommandSchema = z.object({
+  query: z.string({ required_error: "query is required" }).min(1, "query cannot be empty"),
+});
+
+// ============================================================================
+// Photo Schemas
+// ============================================================================
+
+/**
+ * Command schema for GET /api/photos
+ * Input: Fetch Google Maps place photo
+ * No transforms (command input)
+ */
+export const GetPhotoCommandSchema = z.object({
+  photoReference: z.string().min(1, "Photo reference is required"),
+  maxWidth: z.number().int().positive().max(1600).default(800),
+});
+
+/**
+ * Response schema for Google Maps photo API responses
+ * Used internally by GetPhoto use case to validate external API responses
+ */
+export const PhotoResponseSchema = z.object({
+  data: z.instanceof(Buffer),
+  contentType: z.string(),
+});
+
+// ============================================================================
+// AI Suggestion Schemas (for SuggestNearbyAttractions endpoint)
+// ============================================================================
+
+/**
+ * Conversation message schema for chat history
+ * Used in SuggestNearbyAttractionsCommandSchema
+ */
+const ConversationMessageSchema = z.object({
+  role: z.enum(["user", "assistant", "system"]),
+  content: z.string(),
+});
+
+/**
+ * Planned attraction schema for places in the trip
+ */
+const PlannedAttractionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  rating: z.number(),
+  userRatingsTotal: z.number(),
+  types: z.array(z.string()),
+  vicinity: z.string(),
+  priceLevel: z.number().optional(),
+  location: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }),
+});
+
+/**
+ * Planned restaurant schema for places in the trip
+ */
+const PlannedRestaurantSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  rating: z.number(),
+  userRatingsTotal: z.number(),
+  types: z.array(z.string()),
+  vicinity: z.string(),
+  priceLevel: z.number().optional(),
+  location: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }),
+});
+
+/**
+ * Place schema for the current place being planned
+ */
+const CurrentPlaceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  plannedAttractions: z.array(PlannedAttractionSchema),
+  plannedRestaurants: z.array(PlannedRestaurantSchema),
+});
+
+/**
+ * Command schema for POST /api/attractions/suggest
+ * Input: Get AI suggestions for nearby attractions
+ * No transforms (command input)
+ */
+export const SuggestNearbyAttractionsCommandSchema = z.object({
+  place: CurrentPlaceSchema,
+  mapCoordinates: z.object({
+    lat: LatitudeSchema,
+    lng: LongitudeSchema,
+  }),
+  conversationHistory: z.array(ConversationMessageSchema).default([]),
+  userMessage: z.string().optional(),
+});
+
+/**
+ * Suggestion schema for AI-recommended attractions/restaurants
+ * Transforms to domain types (PlaceId, Latitude, Longitude)
+ */
+const SuggestionSchema = z
+  .object({
+    type: z.enum(["add_attraction", "add_restaurant", "general_tip"]),
+    reasoning: z.string(),
+    attractionName: z.string().optional(),
+    priority: z.enum(["hidden gem", "highly recommended", "must-see"]).optional(),
+    attractionData: z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        rating: z.number(),
+        userRatingsTotal: z.number(),
+        types: z.array(z.string()),
+        vicinity: z.string(),
+        priceLevel: z.number().optional(),
+        location: z.object({
+          lat: z.number(),
+          lng: z.number(),
+        }),
+        photos: z.array(PhotoSchema).optional(),
+      })
+      .optional(),
+    photos: z.array(PhotoSchema).optional(),
+  })
+  .transform((data) => {
+    if (data.attractionData) {
+      return {
+        ...data,
+        attractionData: {
+          ...data.attractionData,
+          id: PlaceId(data.attractionData.id),
+          location: {
+            lat: Latitude(data.attractionData.location.lat),
+            lng: Longitude(data.attractionData.location.lng),
+          },
+        },
+      };
+    }
+    return data;
+  });
+
+/**
+ * Response schema for OpenAI agent responses
+ * Used internally by SuggestNearbyAttractions use case to validate external API responses
+ * Validates AI-generated suggestions and transforms them to domain types
+ */
+export const AgentResponseSchema = z.object({
+  _thinking: z.array(z.string()).describe("Step-by-step reasoning before making suggestions"),
+  suggestions: z.array(SuggestionSchema),
+  summary: z.string(),
+});
+
 // Note: Type definitions have been moved to types.ts
 // Types are derived there using z.infer<typeof Schema> and include branded types from transforms

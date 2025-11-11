@@ -1,9 +1,9 @@
 import { Effect, Data } from "effect";
 import { scoreRestaurants } from "@/domain/map/scoring";
 import { RestaurantsCache } from "@/infrastructure/map/cache";
-import type { GetTopRestaurantsInput } from "./inputs";
+import type { RestaurantsQueryParamsDTO } from "@/infrastructure/map/api";
 
-export const getTopRestaurants = (input: GetTopRestaurantsInput) =>
+export const getTopRestaurants = (input: RestaurantsQueryParamsDTO) =>
   Effect.gen(function* () {
     const cache = yield* RestaurantsCache;
     const cacheKey = Data.struct({ lat: input.lat, lng: input.lng, radius: input.radius });

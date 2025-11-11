@@ -53,8 +53,11 @@ The project follows **Clean Architecture** principles with clear separation of c
     - `errors/` - Plan errors
 
 - `./src/application` - Application layer (use cases with Effect)
-  - `./src/application/map/` - Map use cases
-  - `./src/application/plan/` - Plan use cases
+  - **Schema-free layer**: Receives validated DTOs from infrastructure
+  - **No validation logic**: Purely business logic orchestration
+  - Use cases implement domain logic with Effect
+  - `./src/application/map/` - Map use cases (one subdirectory per use case)
+  - `./src/application/plan/` - Plan use cases (one subdirectory per use case)
 
 - `./src/infrastructure` - Infrastructure layer (external services, I/O)
   - `./src/infrastructure/common/` - Shared infrastructure
@@ -121,6 +124,17 @@ When modifying the directory structure, always update this section.
 - **DTOs** (`api/types.ts`): Derive types using `z.infer<typeof Schema>` - all API types have DTO suffix
 - **Barrel exports** (`api/index.ts`): Re-export all schemas and types for convenient imports
 - Validate using `safeParse()`, wrap in Effect with tagged errors for error handling
+
+**DTO Naming Conventions:**
+- Command inputs to use cases: `*CommandDTO` (e.g., `CreateTripCommandDTO`, `ChatRequestCommandDTO`)
+- Query results from repositories: `*DTO` (e.g., `TripDTO`, `AttractionDTO`, `PlaceDTO`)
+- All DTOs live in `infrastructure/*/api/types.ts`
+- **Application layer uses these types, never creates its own input/output types**
+
+**Validation Flow:**
+1. API route receives raw request → validates with infrastructure schema → gets CommandDTO
+2. Use case receives CommandDTO → implements business logic → returns domain result
+3. No validation in application layer - data is pre-validated at infrastructure boundary
 
 ### Effect Guidelines
 

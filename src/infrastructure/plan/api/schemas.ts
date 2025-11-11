@@ -71,6 +71,15 @@ export const GetUserPersonasResponseSchema = z.object({
 // ============================================================================
 
 /**
+ * Simple conversation message schema for chat history input
+ * Used in ChatRequestCommandSchema (no ID or timestamp, just role and content)
+ */
+export const ConversationMessageInputSchema = z.object({
+  role: z.enum(["user", "assistant", "system"]),
+  content: z.string(),
+});
+
+/**
  * Place suggestion schema for AI-recommended places in chat
  * Used within ChatMessageSchema
  */
@@ -233,6 +242,17 @@ export const DeleteConversationResponseSchema = z
     ...data,
     id: ConversationId(data.id), // Transform to branded type
   }));
+
+/**
+ * Command schema for POST /api/plan (Travel Planning Chat)
+ * Input: Send message to AI travel planning assistant
+ * No transforms (command input)
+ */
+export const ChatRequestCommandSchema = z.object({
+  message: z.string({ required_error: "message is required" }).min(1, "message cannot be empty"),
+  personas: z.array(PersonaTypeSchema).min(1, "At least one persona is required"),
+  conversationHistory: z.array(ConversationMessageInputSchema).optional().default([]),
+});
 
 // ============================================================================
 // Trip Schemas - Nested Structures

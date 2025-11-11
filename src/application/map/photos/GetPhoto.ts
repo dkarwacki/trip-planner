@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import { PhotoCache } from "@/infrastructure/map/cache";
-import type { GetPhotoInput } from "./inputs";
+import type { GetPhotoCommandDTO } from "@/infrastructure/map/api";
 
-export const GetPhoto = (input: GetPhotoInput) =>
+export const GetPhoto = (input: GetPhotoCommandDTO) =>
   Effect.gen(function* () {
     const photoCache = yield* PhotoCache;
 

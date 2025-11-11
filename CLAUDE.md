@@ -139,8 +139,12 @@ The project follows **Clean Architecture** principles with clear separation of c
 
 - Use `export const prerender = false` for API routes
 - Use POST, GET (uppercase) for endpoint handlers
-- API routes are **thin adapters**: validate input → call application use case → map response
+- API routes are **thin adapters** with clear responsibilities:
+  1. Validate input using infrastructure schemas
+  2. Call application use case with validated DTO
+  3. Map Effect result to HTTP response
 - Use Zod for validation (import schemas from `infrastructure/*/api`), wrap in Effect with tagged errors
+- Use cases receive **infrastructure DTOs** (not raw input or schemas)
 - Use `Astro.cookies` for server-side cookie management
 - Use `import.meta.env` for environment variables
 - Leverage View Transitions API for smooth page transitions

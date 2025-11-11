@@ -6,10 +6,9 @@ import {
   type IOpenAIClient,
 } from "@/infrastructure/common/openai";
 import { getTopAttractions, getTopRestaurants } from "@/application/map/attractions";
-import { getPlaceDetails } from "@/application/map/places";
 import { TextSearchCache } from "@/infrastructure/map/cache";
-import type { SuggestNearbyAttractionsInput } from "./inputs";
-import { AgentResponseSchema, type AgentResponse, type Suggestion } from "./outputs";
+import type { SuggestNearbyAttractionsCommandDTO, AgentResponseDTO } from "@/infrastructure/map/api";
+import { AgentResponseSchema } from "@/infrastructure/map/api";
 import { InvalidToolCallError, ModelResponseError } from "@/domain/common/errors";
 import type { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/chat/completions";
 import { parseAndValidateJson } from "@/infrastructure/common/http/json-parsing";
@@ -80,25 +79,6 @@ const tools: ChatCompletionTool[] = [
           },
         },
         required: ["lat", "lng"],
-        additionalProperties: false,
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "getPlaceDetails",
-      description:
-        "Get detailed information about a specific place using its Google Place ID. Returns comprehensive place data including name, address, location, ratings, and types.",
-      parameters: {
-        type: "object",
-        properties: {
-          placeId: {
-            type: "string",
-            description: "Google Place ID of the location",
-          },
-        },
-        required: ["placeId"],
         additionalProperties: false,
       },
     },
@@ -175,7 +155,7 @@ After your analysis, provide your response as valid JSON in exactly this structu
 /**
  * Main agent use case - suggests nearby attractions and restaurants based on user preferences
  */
-export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsInput) =>
+export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsCommandDTO) =>
   Effect.gen(function* () {
     const openai = yield* OpenAIClient;
 
@@ -215,7 +195,7 @@ export const suggestNearbyAttractions = (input: SuggestNearbyAttractionsInput) =
 /**
  * Builds a JSON string representation of the plan context
  */
-const buildPlanContext = (input: SuggestNearbyAttractionsInput): string => {
+const buildPlanContext = (input: SuggestNearbyAttractionsCommandDTO): string => {
   return JSON.stringify(
     {
       place: {
@@ -245,7 +225,7 @@ const buildPlanContext = (input: SuggestNearbyAttractionsInput): string => {
  * Constructs the initial messages array with system prompt, conversation history, and user request
  */
 const buildInitialMessages = (
-  input: SuggestNearbyAttractionsInput,
+  input: SuggestNearbyAttractionsCommandDTO,
   planContext: string
 ): ChatCompletionMessageParam[] => {
   const userMessage = input.userMessage || "Suggest new attractions and restaurants for this place.";
@@ -319,8 +299,8 @@ const handleToolCallIteration = (
   });
 
 const enrichSuggestionsWithAttractionData = (
-  validated: AgentResponse
-): Effect.Effect<Suggestion[], never, TextSearchCache> =>
+  validated: AgentResponseDTO
+): Effect.Effect<AgentResponseDTO["suggestions"], never, TextSearchCache> =>
   Effect.gen(function* () {
     const textSearchCache = yield* TextSearchCache;
 
@@ -388,11 +368,6 @@ const executeToolCall = (toolCall: ToolCall, mapCoordinates: { lat: number; lng:
             limit: args.limit ?? 10,
           });
           return JSON.stringify({ restaurants: result });
-        }
-
-        case "getPlaceDetails": {
-          const result = yield* getPlaceDetails({ placeId: args.placeId });
-          return JSON.stringify({ place: result });
         }
 
         default:
