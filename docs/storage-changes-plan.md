@@ -107,13 +107,233 @@ attractions
   - created_at, updated_at, last_updated_at
 ```
 
+## Architecture Overview: Layers and Data Flow
+
+### Layered Architecture
+
+The application follows Clean Architecture with clear separation of concerns:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ HTTP Layer (Astro API Routes)                               │
+│ - Receive HTTP requests                                     │
+│ - Return HTTP responses                                     │
+└────────────────┬────────────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────────────┐
+│ Infrastructure Layer (DTOs, Validation, Repositories)       │
+│ - API sublayer: Schemas, DTOs, Mappers                     │
+│ - Database sublayer: DAOs, Repositories                    │
+│ - External services: Google Maps, OpenAI                   │
+└────────────────┬────────────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────────────┐
+│ Domain Layer (Pure Business Types)                          │
+│ - Commands: Write operations (ChatRequestCommand)          │
+│ - Queries: Read operations (SearchPlaceQuery)              │
+│ - Models: Core entities (Place, Attraction, Persona)       │
+│ - Errors: Tagged error types                               │
+└────────────────┬────────────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────────────┐
+│ Application Layer (Use Cases with Effect)                   │
+│ - TravelPlanningChat                                        │
+│ - GetTopAttractions                                         │
+│ - SearchPlace                                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Naming Conventions
+
+**Infrastructure Types (DTOs):**
+- Command inputs: `*CommandDTO` (e.g., `ChatRequestCommandDTO`, `CreateTripCommandDTO`)
+- Query parameters: `*QueryParamsDTO` (e.g., `AttractionsQueryParamsDTO`)
+- Response data: `*DTO` or `*ResponseDTO` (e.g., `PlaceDTO`, `ConversationDetailDTO`)
+- All defined in `infrastructure/*/api/types.ts`
+- Derived from Zod schemas using `z.infer<typeof Schema>`
+- Include branded types from schema transforms
+
+**Domain Types (Commands/Queries):**
+- Command types: `*Command` (e.g., `ChatRequestCommand`, `ReverseGeocodeCommand`)
+- Query types: `*Query` (e.g., `SearchPlaceQuery`, `GetPhotoQuery`)
+- All defined in `domain/*/models/types.ts`
+- Pure TypeScript interfaces (no Zod, no infrastructure dependencies)
+- Use branded types from domain models
+
+**Database Types (DAOs):**
+- Data access objects: `*DAO` (e.g., `ConversationDAO`, `TripDAO`, `PlaceDAO`)
+- All defined in `infrastructure/*/database/types.ts`
+- camelCase interfaces matching database rows
+- Converters handle snake_case ↔ camelCase
+
+### Complete Data Flow
+
+**Inbound (Request → Response):**
+
+```
+1. HTTP Request
+   ↓
+2. API Route validates with Schema
+   → Result: DTO (infrastructure type)
+   ↓
+3. API Route maps with toDomain.mapper()
+   → Result: Command/Query (domain type)
+   ↓
+4. Use Case executes business logic
+   → Receives: Domain Command/Query
+   → May use: Repositories (returns DAOs)
+   → Converts: DAO → Domain models if needed
+   → Returns: Domain result
+   ↓
+5. API Route maps result to DTO if needed
+   ↓
+6. HTTP Response
+```
+
+**Key Principles:**
+- **Infrastructure owns validation**: Zod schemas validate at the boundary
+- **Infrastructure owns DTOs**: API layer types with `DTO` suffix
+- **Infrastructure owns DAOs**: Database layer types for persistence
+- **Domain owns Commands/Queries**: Pure business types
+- **Application uses only domain types**: No DTOs, no DAOs in use cases
+- **Mappers bridge layers**: `toDomain` for DTO → Domain, converters for DAO → Domain
+
+### Type Safety Flow
+
+**Branded types flow through all layers:**
+
+```
+Schema transform → DTO → Domain mapper → Domain type
+    ↓               ↓          ↓              ↓
+PlaceSchema    PlaceDTO   toDomain    Place (domain)
+  .transform   (includes    .toPlace   (PlaceId,
+  (PlaceId)    PlaceId)               Lat, Lng)
+```
+
+**Example: Place ID flows from HTTP to domain:**
+1. `PlaceSchema` has `.transform((data) => ({ ...data, id: PlaceId(data.id) }))`
+2. `PlaceDTO = z.infer<typeof PlaceSchema>` includes `PlaceId` branded type
+3. Mapper preserves the branded type: `toDomain.toPlace(dto)` → `Place` with `PlaceId`
+4. Use case receives: `Place` with `PlaceId` branded type
+
 ## New Infrastructure Components
 
 **Organization by Domain:**
 - `src/infrastructure/plan/database/` - User-facing data (conversations, trips, personas)
 - `src/infrastructure/map/database/` - Map/cache data (places, attractions)
+- `src/infrastructure/plan/api/` - Plan feature API contracts (validation, DTOs, mappers)
+- `src/infrastructure/map/api/` - Map feature API contracts (validation, DTOs, mappers)
+- `src/domain/plan/models/types.ts` - Plan domain commands/queries
+- `src/domain/map/models/types.ts` - Map domain commands/queries
 
-### 1. DAO Types
+### 1. API Layer (Request/Response Contracts)
+
+The infrastructure layer includes an API sublayer that handles HTTP request/response validation and transformation. This layer sits between API routes and the application layer.
+
+#### Plan API Layer (`src/infrastructure/plan/api/`)
+
+**Purpose:** Validate and transform HTTP requests/responses for plan feature
+
+**Files:**
+- `schemas.ts` - Zod validation schemas
+  - Command schemas (inputs): No transforms, used for request validation
+  - Response schemas (outputs): Include `.transform()` to branded domain types
+  - Examples: `ChatRequestCommandSchema`, `CreateConversationCommandSchema`
+- `types.ts` - DTO type definitions derived from schemas
+  - All types use `z.infer<typeof Schema>` 
+  - All API types have `DTO` suffix (e.g., `ChatRequestCommandDTO`, `ConversationDetailDTO`)
+  - Include branded types from schema transforms
+- `mappers.ts` - DTO to Domain converters
+  - Export `toDomain` object with mapping functions
+  - Transform infrastructure DTOs to domain command/query types
+  - Example: `toDomain.chatRequest(dto)` → `ChatRequestCommand`
+- `index.ts` - Barrel exports for convenient imports
+
+**Data Flow Example:**
+```
+HTTP Request
+  ↓ validate with ChatRequestCommandSchema
+ChatRequestCommandDTO (infrastructure type)
+  ↓ toDomain.chatRequest(dto)
+ChatRequestCommand (domain type)
+  ↓ passed to use case
+TravelPlanningChat use case
+```
+
+#### Map API Layer (`src/infrastructure/map/api/`)
+
+**Purpose:** Validate and transform HTTP requests/responses for map feature
+
+**Files:**
+- `schemas.ts` - Zod validation schemas
+  - Command schemas: `ReverseGeocodeCommandSchema`, `SearchPlaceCommandSchema`, `GetPhotoCommandSchema`
+  - Query params: `AttractionsQueryParamsSchema`, `RestaurantsQueryParamsSchema`
+  - Response schemas with transforms: `AttractionSchema`, `RestaurantSchema`, `PlaceSchema`
+- `types.ts` - DTO type definitions
+  - Command DTOs: `ReverseGeocodeCommandDTO`, `SearchPlaceCommandDTO`, `GetPhotoCommandDTO`
+  - Query DTOs: `AttractionsQueryParamsDTO`, `RestaurantsQueryParamsDTO`
+  - Data DTOs: `AttractionDTO`, `RestaurantDTO`, `PlaceDTO` (include branded types)
+- `mappers.ts` - DTO to Domain converters
+  - `toDomain.reverseGeocode(dto)` → `ReverseGeocodeCommand`
+  - `toDomain.getAttractions(dto)` → `GetAttractionsQuery`
+  - `toDomain.searchPlace(dto)` → `SearchPlaceQuery`
+  - `toDomain.getPhoto(dto)` → `GetPhotoQuery`
+- `index.ts` - Barrel exports
+
+**Key Patterns:**
+- Command schemas have NO transforms (validation only)
+- Response schemas use `.transform()` to convert to branded domain types
+- DTOs are infrastructure types, never used in application layer
+- Mappers bridge the gap: DTO (infrastructure) → Command/Query (domain)
+
+### 2. Domain Command/Query Types
+
+Domain types define the contracts for application layer use cases. These are pure business types with NO infrastructure dependencies.
+
+#### Plan Domain Types (`src/domain/plan/models/types.ts`)
+
+**Purpose:** Define input contracts for plan feature use cases
+
+**Types:**
+- `ChatRequestCommand` - Send message to AI assistant
+  - Fields: `message`, `personas`, `conversationHistory`
+  - Used by: `TravelPlanningChat` use case
+- `ConversationMessage` - Message in conversation history
+  - Fields: `role`, `content`
+  - Shared type for chat context
+
+**Pattern:**
+- Commands: Write operations (mutations)
+- Queries: Read operations (lookups, searches)
+- Application layer uses ONLY these types, never DTOs
+- Infrastructure layer maps DTOs to these types via `toDomain` mappers
+
+#### Map Domain Types (`src/domain/map/models/types.ts`)
+
+**Purpose:** Define input contracts for map feature use cases
+
+**Types:**
+- Commands (write operations):
+  - `ReverseGeocodeCommand` - Convert coordinates to place info
+  - `SuggestNearbyAttractionsCommand` - Get AI suggestions for attractions
+- Queries (read operations):
+  - `SearchPlaceQuery` - Search for place by name
+  - `GetPhotoQuery` - Fetch photo by reference
+  - `GetAttractionsQuery` - Get attractions near location
+  - `GetRestaurantsQuery` - Get restaurants near location
+
+**Supporting Types:**
+- `ConversationMessage` - For AI context
+- `PlannedAttraction`, `PlannedRestaurant` - For trip context
+- `CurrentPlace` - Place with planned items
+
+**Key Principles:**
+- Domain types use branded types (e.g., `Latitude`, `Longitude`, `PlaceId`)
+- No infrastructure dependencies (no Zod, no HTTP concepts)
+- Application layer signature: `UseCase(domainCommand/Query): Effect<Result, Error>`
+- Clean separation: Infrastructure validates & maps, Domain defines contracts, Application orchestrates
+
+### 3. DAO Types
 
 #### Plan DAOs (`src/infrastructure/plan/database/types.ts`)
 
@@ -140,7 +360,7 @@ attractions
 - Converter functions: `rowToPlaceDAO`, `rowToAttractionDAO`
 - Converter functions for domain models (places, attractions)
 
-### 2. Repositories
+### 4. Repositories
 
 #### Plan Repositories (`src/infrastructure/plan/database/repositories.ts`)
 
@@ -205,7 +425,7 @@ attractions
 - Staleness tracking via `last_updated_at` timestamp
 - Batch operations optimized for trip loading
 
-### 3. Cache Layer Integration
+### 5. Cache Layer Integration
 
 The existing in-memory cache (`src/infrastructure/map/cache/`) provides 30-minute TTL for active sessions. The new database repositories add persistent 7-day caching:
 
@@ -217,7 +437,7 @@ The existing in-memory cache (`src/infrastructure/map/cache/`) provides 30-minut
 **Future Enhancement:**
 `AttractionsCache` and `RestaurantsCache` can be updated to check database repositories before calling Google Maps API, creating a two-tier cache system that minimizes API costs while maintaining fast response times.
 
-### 4. Runtime Updates
+### 6. Runtime Updates
 
 Add repository layers to `src/infrastructure/common/runtime.ts`:
 - Wire up repositories with SupabaseClient dependency
@@ -268,42 +488,124 @@ Add repository layers to `src/infrastructure/common/runtime.ts`:
 
 ## API Surface Changes
 
+### Data Flow Architecture
+
+The application now follows a layered architecture with clear boundaries:
+
+**HTTP Request → API Layer → Domain Layer → Application Layer**
+
+#### Complete Data Flow Example (Chat Request):
+
+```
+1. HTTP POST /api/plan
+   Body: { message: "...", personas: [...], conversationHistory: [...] }
+
+2. API Route (src/pages/api/plan.ts)
+   - Validates with: ChatRequestCommandSchema.safeParse(body)
+   - Gets: ChatRequestCommandDTO (infrastructure type with validation)
+   - Maps with: toDomain.chatRequest(dto) from infrastructure/plan/api/mappers.ts
+   - Gets: ChatRequestCommand (domain type)
+
+3. Application Layer (src/application/plan/TravelPlanningChat.ts)
+   - Receives: ChatRequestCommand (pure domain type)
+   - Executes: Business logic with Effect
+   - Returns: Domain result (AgentResponse)
+
+4. API Route
+   - Maps domain result to DTO if needed
+   - Returns: HTTP response
+```
+
+**Key Pattern:**
+- **API routes** handle HTTP concerns (validation, error mapping, response formatting)
+- **Infrastructure mappers** bridge DTO ↔ Domain types
+- **Application layer** works with pure domain types only
+- **Domain types** have no infrastructure dependencies
+
 ### Storage.ts Functions (After Migration)
 
-**Will be REPLACED (use repositories directly):**
-- `savePersonas()` → Use `UserPersonasRepository.save()` directly
-- `loadPersonas()` → Use `UserPersonasRepository.find()` directly
-- `saveTripToHistory()` → Use `TripRepository.create()` directly
-- `loadTripHistory()` → Use `TripRepository.findAll()` directly
-- `loadTripById()` → Use `TripRepository.findById()` directly
-- `updateTripInHistory()` → Use `TripRepository.updatePlaces()` directly
-- `deleteTripFromHistory()` → Use `TripRepository.delete()` directly
-- `saveConversation()` → Use `ConversationRepository.create/updateMessages()` directly
-- `loadConversation()` → Use `ConversationRepository.findById()` directly
-- `loadAllConversations()` → Use `ConversationRepository.findAll()` directly
-- `deleteConversation()` → Use `ConversationRepository.delete()` directly
+**Will be REPLACED with API routes + repositories:**
+
+**Personas:**
+- `savePersonas()` → API route using `UserPersonasRepository.save()`
+- `loadPersonas()` → API route using `UserPersonasRepository.find()`
+
+**Trips:**
+- `saveTripToHistory()` → API route using `TripRepository.create()`
+- `loadTripHistory()` → API route using `TripRepository.findAll()`
+- `loadTripById()` → API route using `TripRepository.findById()`
+- `updateTripInHistory()` → API route using `TripRepository.updatePlaces()`
+- `deleteTripFromHistory()` → API route using `TripRepository.delete()`
+
+**Conversations:**
+- `saveConversation()` → API route using `ConversationRepository.create/updateMessages()`
+- `loadConversation()` → API route using `ConversationRepository.findById()`
+- `loadAllConversations()` → API route using `ConversationRepository.findAll()`
+- `deleteConversation()` → API route using `ConversationRepository.delete()`
 
 **Stay Same (localStorage for transient state):**
 - `saveCurrentItinerary()`
 - `loadCurrentItinerary()`
 - `clearCurrentItinerary()`
 
-**Note:** Repositories work with DAOs. Use converter functions from `types.ts` files to convert DAO ↔ Domain models where needed.
+**Architecture Notes:**
+- API routes validate requests using schemas from `infrastructure/*/api/schemas.ts`
+- Mappers convert DTOs to domain types using `toDomain` from `infrastructure/*/api/mappers.ts`
+- Repositories work with DAOs (use converters from `infrastructure/*/database/types.ts`)
+- Browser components call API routes, never use repositories directly
+- Application use cases receive domain Commands/Queries, never DTOs
 
 ## Rollout Plan
 
 ### Step 1: Create Infrastructure ✅ COMPLETED
+
+**API Layer (Validation, DTOs, Mappers):**
+- ✅ Created `src/infrastructure/plan/api/` (schemas, types, mappers, index)
+  - Zod schemas for all plan endpoints (conversations, trips, personas, chat)
+  - DTOs derived from schemas with branded types
+  - `toDomain` mappers: DTO → Domain Commands/Queries
+- ✅ Created `src/infrastructure/map/api/` (schemas, types, mappers, index)
+  - Zod schemas for all map endpoints (places, attractions, restaurants, photos, geocoding)
+  - DTOs derived from schemas with branded types
+  - `toDomain` mappers for all map operations
+- ✅ Created `src/infrastructure/common/api/` (schemas, types, index)
+  - Shared schemas: `CoordinatesSchema`, `PhotoSchema`, `UUIDSchema`
+  - Common DTOs used across features
+- ✅ Created `src/domain/plan/models/types.ts` - Domain commands/queries for plan feature
+- ✅ Created `src/domain/map/models/types.ts` - Domain commands/queries for map feature
+
+**Database Layer (Repositories, DAOs):**
 - ✅ Created `src/infrastructure/plan/database/` (types, repositories, index)
   - ConversationRepository - CRUD for chat history
   - TripRepository - CRUD for saved trips
   - UserPersonasRepository - find/save for user preferences
+  - DAOs with camelCase interfaces, converters for snake_case ↔ camelCase
 - ✅ Created `src/infrastructure/map/database/` (types, repositories, index)
   - PlaceRepository - Cache layer with batch operations
   - AttractionRepository - Cache layer with type discrimination
+  - DAOs with converters to/from domain models
+- ✅ Created `src/infrastructure/common/database/` (SupabaseClient, types, index)
+  - Type-safe Supabase client with database schema
+  - Effect Context.Tag + Layer for dependency injection
+
+**Integration:**
 - ✅ Updated `src/infrastructure/common/runtime.ts`
-- ✅ All repositories wired up with dependency injection
-- ✅ Type-safe DAOs with proper converters
-- ✅ Repositories return DAOs, converters in types.ts handle DAO ↔ Domain mapping
+  - Wired up all repositories with SupabaseClient dependency
+  - Included in AppLayer for dependency injection
+- ✅ Updated all API routes to use new pattern:
+  - Validate with schemas → Get DTO → Map with toDomain → Pass to use case
+  - Examples: `/api/plan`, `/api/attractions`, `/api/places/search`, etc.
+- ✅ Updated all use cases to use domain Commands/Queries:
+  - Removed old `*Input` types from application layer
+  - Use cases now receive pure domain types
+
+**Architecture:**
+- ✅ Type-safe DAOs with proper converters (database layer)
+- ✅ Type-safe DTOs with Zod validation (API layer)
+- ✅ Type-safe Commands/Queries (domain layer)
+- ✅ Clean separation: Infrastructure validates & maps, Domain defines contracts, Application orchestrates
+- ✅ Branded types flow through all layers via schema transforms
+- ✅ **No behavior changes to end users - all existing code works as before**
 
 ### Step 2: Replace Personas (NEXT - Simple)
 - [ ] Use `UserPersonasRepository` directly where personas are loaded/saved
