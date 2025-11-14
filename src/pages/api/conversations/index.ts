@@ -1,12 +1,8 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
 import { ConversationRepository } from "@/infrastructure/plan/database/repositories";
-import { toSavedConversation, toConversationInsert } from "@/infrastructure/plan/database/types";
-import {
-  ConversationListResponseSchema,
-  CreateConversationCommandSchema,
-  ConversationDetailSchema,
-} from "@/infrastructure/plan/api/schemas";
+import { toSavedConversation } from "@/infrastructure/plan/database/types";
+import { CreateConversationCommandSchema } from "@/infrastructure/plan/api/schemas";
 import { AppRuntime } from "@/infrastructure/common/runtime";
 import { DEV_USER_ID } from "@/utils/consts";
 
@@ -21,24 +17,13 @@ export const GET: APIRoute = async () => {
     // Get the repository service instance
     const conversationRepo = yield* ConversationRepository;
 
-    // Get all conversations for user
     const conversations = yield* conversationRepo.findAll(DEV_USER_ID);
 
-    // Convert to API response format
-    const responseConversations = conversations.map((conv) => ({
-      id: conv.id,
-      user_id: conv.userId,
-      title: conv.title,
-      personas: conv.personas,
-      message_count: conv.messages.length,
-      created_at: new Date(conv.createdAt).toISOString(),
-      updated_at: new Date(conv.updatedAt).toISOString(),
-      has_trip: false, // TODO: Check if trip exists for conversation
-    }));
+    const domainConversations = conversations.map((conv) => toSavedConversation(conv));
 
-    return ConversationListResponseSchema.parse({
-      conversations: responseConversations,
-    });
+    return {
+      conversations: domainConversations,
+    };
   }).pipe(
     Effect.catchAll((error) => {
       console.error("[API /conversations GET] Error:", error);
@@ -88,14 +73,13 @@ export const POST: APIRoute = async ({ request }) => {
   const { title, personas, initial_message } = validation.data;
 
   const program = Effect.gen(function* () {
-    // Generate new conversation ID
     const conversationId = crypto.randomUUID();
     const now = new Date().toISOString();
+    const nowTimestamp = Date.now();
 
-    // Create conversation with initial messages (user + assistant)
-    // For now, just create user message. AI response will be added via /messages endpoint
     const conversationData = {
       id: conversationId,
+      userId: DEV_USER_ID,
       title,
       personas,
       messages: [
@@ -103,39 +87,20 @@ export const POST: APIRoute = async ({ request }) => {
           id: crypto.randomUUID(),
           role: "user" as const,
           content: initial_message,
-          timestamp: now,
+          timestamp: nowTimestamp,
         },
       ],
       createdAt: now,
       updatedAt: now,
     };
 
-    // Get the repository service instance
     const conversationRepo = yield* ConversationRepository;
-
-    // Create the conversation
     yield* conversationRepo.create(DEV_USER_ID, conversationData);
 
-    // Fetch the created conversation
     const conversation = yield* conversationRepo.findById(DEV_USER_ID, conversationId);
-
-    // Convert to API response format
     const domainConversation = toSavedConversation(conversation);
 
-    return ConversationDetailSchema.parse({
-      id: domainConversation.id,
-      user_id: conversation.userId,
-      title: domainConversation.title,
-      personas: domainConversation.personas,
-      messages: domainConversation.messages.map((msg) => ({
-        id: msg.id,
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(msg.timestamp).toISOString(),
-      })),
-      created_at: new Date(conversation.createdAt).toISOString(),
-      updated_at: new Date(conversation.updatedAt).toISOString(),
-    });
+    return domainConversation;
   }).pipe(
     Effect.catchAll((error) => {
       console.error("[API /conversations POST] Error:", error);

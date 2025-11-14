@@ -19,7 +19,7 @@ export interface ChatMessage {
 export interface PlaceSuggestion {
   id?: string; // Optional since unvalidated places won't have this
   name: string;
-  description: string;
+  description?: string; // Optional - will default to name if not provided
   reasoning: string;
   lat?: number;
   lng?: number;

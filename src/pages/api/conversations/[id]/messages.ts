@@ -2,10 +2,7 @@ import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
 import { ConversationRepository } from "@/infrastructure/plan/database/repositories";
 import { AppRuntime } from "@/infrastructure/common/runtime";
-import {
-  UpdateConversationMessagesCommandSchema,
-  UpdateConversationMessagesResponseSchema,
-} from "@/infrastructure/plan/api/schemas";
+import { UpdateConversationMessagesCommandSchema } from "@/infrastructure/plan/api/schemas";
 import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
@@ -46,32 +43,33 @@ export const PUT: APIRoute = async ({ params, request }) => {
   const program = Effect.gen(function* () {
     const conversationRepo = yield* ConversationRepository;
 
-    // Convert messages to DAO format
+    // Convert domain messages to DAO format
     const messagesDAO = messages.map((msg) => ({
       id: msg.id,
       role: msg.role,
       content: msg.content,
-      timestamp: new Date(msg.timestamp).getTime(), // Convert ISO string to Unix timestamp
+      timestamp: msg.timestamp, // Already Unix timestamp from domain model
       suggestedPlaces: msg.suggestedPlaces?.map((place) => ({
-        id: place.place_id,
+        id: place.id,
         name: place.name,
-        description: place.name, // Use name as description if not provided
-        reasoning: place.reason,
+        description: place.description || place.name, // Use description or fallback to name
+        reasoning: place.reasoning,
         lat: place.lat,
         lng: place.lng,
         photos: place.photos,
-        validationStatus: place.validation_status,
+        validationStatus: place.validationStatus,
+        searchQuery: place.searchQuery,
       })),
-      thinking: msg.thinkingProcess,
+      thinking: msg.thinking,
     }));
 
     // Update messages in database
     yield* conversationRepo.updateMessages(DEV_USER_ID, id, messagesDAO);
 
-    return UpdateConversationMessagesResponseSchema.parse({
+    return {
       id,
       updated_at: new Date().toISOString(),
-    });
+    };
   }).pipe(
     Effect.catchAll((error) => {
       console.error(`[API /conversations/${id}/messages PUT] Error:`, error);

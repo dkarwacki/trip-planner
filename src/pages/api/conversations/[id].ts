@@ -3,7 +3,6 @@ import { Effect, Runtime } from "effect";
 import { ConversationRepository } from "@/infrastructure/plan/database/repositories";
 import { toSavedConversation } from "@/infrastructure/plan/database/types";
 import {
-  ConversationDetailSchema,
   UpdateConversationCommandSchema,
   UpdateConversationResponseSchema,
   DeleteConversationResponseSchema,
@@ -30,24 +29,9 @@ export const GET: APIRoute = async ({ params }) => {
   const program = Effect.gen(function* () {
     const conversationRepo = yield* ConversationRepository;
     const conversation = yield* conversationRepo.findById(DEV_USER_ID, id);
-
-    // Convert to API response format
     const domainConversation = toSavedConversation(conversation);
 
-    return ConversationDetailSchema.parse({
-      id: domainConversation.id,
-      user_id: conversation.userId,
-      title: domainConversation.title,
-      personas: domainConversation.personas,
-      messages: domainConversation.messages.map((msg) => ({
-        id: msg.id,
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(msg.timestamp).toISOString(),
-      })),
-      created_at: new Date(conversation.createdAt).toISOString(),
-      updated_at: new Date(conversation.updatedAt).toISOString(),
-    });
+    return domainConversation;
   }).pipe(
     Effect.catchAll((error) => {
       console.error(`[API /conversations/${id} GET] Error:`, error);

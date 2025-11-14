@@ -79,24 +79,18 @@ export const ConversationMessageInputSchema = z.object({
   content: z.string(),
 });
 
-/**
- * Place suggestion schema for AI-recommended places in chat
- * Used within ChatMessageSchema
- */
 export const PlaceSuggestionSchema = z.object({
-  place_id: z.string().optional(), // Google Place ID (optional if not yet validated)
+  id: z.string().optional(),
   name: z.string(),
-  reason: z.string(), // Why this place was suggested
+  description: z.string().optional(),
+  reasoning: z.string(),
   lat: z.number().optional(),
   lng: z.number().optional(),
   photos: z.array(PhotoSchema).optional(),
-  validation_status: z.enum(["verified", "not_found", "partial"]).optional(),
+  validationStatus: z.enum(["verified", "not_found", "partial"]).optional(),
+  searchQuery: z.string().optional(),
 });
 
-/**
- * Chat message schema with branded type transform
- * Transforms: id → MessageId
- */
 export const ChatMessageSchema = z
   .object({
     id: UUIDSchema,
@@ -104,70 +98,54 @@ export const ChatMessageSchema = z
     content: z.string(),
     timestamp: ISODateTimeSchema,
     suggestedPlaces: z.array(PlaceSuggestionSchema).optional(),
-    thinkingProcess: z.array(z.string()).optional(),
+    thinking: z.array(z.string()).optional(),
   })
   .transform((data) => ({
     ...data,
-    id: MessageId(data.id), // Transform to branded type
+    id: MessageId(data.id),
   }));
 
 // ============================================================================
 // Conversation Schemas - Top Level
 // ============================================================================
 
-/**
- * Conversation list item schema with branded type transforms
- * Used for: GET /api/conversations (summary view)
- * Transforms: id → ConversationId
- */
 export const ConversationListItemSchema = z
   .object({
     id: UUIDSchema,
-    user_id: UUIDSchema,
     title: z.string(),
     personas: z.array(PersonaTypeSchema),
-    message_count: z.number().int().min(0),
-    created_at: ISODateTimeSchema,
-    updated_at: ISODateTimeSchema,
-    has_trip: z.boolean(),
+    messageCount: z.number().int().min(0),
+    timestamp: z.number(),
+    lastUpdated: z.number(),
+    tripId: UUIDSchema.optional(),
   })
   .transform((data) => ({
     ...data,
-    id: ConversationId(data.id), // Transform to branded type
+    id: ConversationId(data.id),
+    tripId: data.tripId ? TripId(data.tripId) : undefined,
   }));
 
-/**
- * Conversation list response wrapper
- */
 export const ConversationListResponseSchema = z.object({
   conversations: z.array(ConversationListItemSchema),
 });
 
-/**
- * Conversation detail schema with branded type transforms
- * Used for: GET /api/conversations/:id (full conversation with messages)
- * Transforms: id → ConversationId
- */
 export const ConversationDetailSchema = z
   .object({
     id: UUIDSchema,
-    user_id: UUIDSchema,
     title: z.string(),
     personas: z.array(PersonaTypeSchema),
     messages: z.array(ChatMessageSchema),
-    created_at: ISODateTimeSchema,
-    updated_at: ISODateTimeSchema,
+    timestamp: z.number(),
+    lastUpdated: z.number(),
+    messageCount: z.number().int().min(0),
+    tripId: UUIDSchema.optional(),
   })
   .transform((data) => ({
     ...data,
-    id: ConversationId(data.id), // Transform to branded type
+    id: ConversationId(data.id),
+    tripId: data.tripId ? TripId(data.tripId) : undefined,
   }));
 
-/**
- * Command schema for POST /api/conversations
- * Input: Create new conversation with initial message
- * No transforms (command input)
- */
 export const CreateConversationCommandSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title must be 200 characters or less"),
   personas: z.array(PersonaTypeSchema).min(1, "At least one persona is required").max(8, "Maximum 8 personas allowed"),
@@ -245,8 +223,6 @@ export const DeleteConversationResponseSchema = z
 
 /**
  * Command schema for PUT /api/conversations/:id/messages
- * Input: Update conversation messages (bulk update for auto-save)
- * No transforms (command input)
  */
 export const UpdateConversationMessagesCommandSchema = z.object({
   messages: z.array(
@@ -254,9 +230,9 @@ export const UpdateConversationMessagesCommandSchema = z.object({
       id: z.string(),
       role: z.enum(["user", "assistant", "system"]),
       content: z.string(),
-      timestamp: z.string(),
+      timestamp: z.number(), // Unix timestamp from domain model
       suggestedPlaces: z.array(PlaceSuggestionSchema).optional(),
-      thinkingProcess: z.array(z.string()).optional(),
+      thinking: z.array(z.string()).optional(), // Match domain model field name
     })
   ),
 });
@@ -291,7 +267,6 @@ export const ChatRequestCommandSchema = z.object({
 
 /**
  * Place schema for validated places in trips
- * Transforms: id → PlaceId, coordinates → branded types
  */
 export const PlaceSchema = z
   .object({
@@ -312,7 +287,6 @@ export const PlaceSchema = z
 
 /**
  * Attraction schema (type = 'attraction')
- * Transforms: id → PlaceId, coordinates → branded types
  */
 export const AttractionOnlySchema = z
   .object({
@@ -383,8 +357,6 @@ export const TripPlaceSchema = z.object({
 
 /**
  * Trip list item schema with branded type transforms
- * Used for: GET /api/trips (summary view)
- * Transforms: id → TripId, conversation_id → ConversationId
  */
 export const TripListItemSchema = z
   .object({

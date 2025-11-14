@@ -1,36 +1,10 @@
 import type { SavedConversation, ConversationId, ChatMessage, PersonaType } from "@/domain/plan/models";
-import { ConversationId as ConversationIdBrand, MessageId, ConversationTimestamp } from "@/domain/plan/models";
 
-// API response types (matching server responses)
 interface ConversationListResponse {
-  conversations: {
-    id: string;
-    user_id: string;
-    title: string;
-    personas: string[];
-    message_count: number;
-    created_at: string;
-    updated_at: string;
-    has_trip: boolean;
-  }[];
+  conversations: SavedConversation[];
 }
 
-interface ConversationDetailResponse {
-  id: string;
-  user_id: string;
-  title: string;
-  personas: string[];
-  messages: {
-    id: string;
-    role: "user" | "assistant" | "system";
-    content: string;
-    timestamp: string;
-    suggestedPlaces?: any[];
-    thinkingProcess?: string[];
-  }[];
-  created_at: string;
-  updated_at: string;
-}
+type ConversationDetailResponse = SavedConversation;
 
 interface UpdateMessagesResponse {
   id: string;
@@ -46,42 +20,6 @@ interface ErrorResponse {
   error: string;
 }
 
-/**
- * Convert ConversationDetailResponse to domain SavedConversation
- */
-function conversationDetailToSaved(detail: ConversationDetailResponse): SavedConversation {
-  const messages: ChatMessage[] = detail.messages.map((msg) => ({
-    id: MessageId(msg.id),
-    role: msg.role,
-    content: msg.content,
-    timestamp: new Date(msg.timestamp).getTime(),
-    suggestedPlaces: msg.suggestedPlaces?.map((place) => ({
-      id: place.place_id,
-      name: place.name,
-      description: place.reason || "",
-      reasoning: place.reason || "",
-      lat: place.lat,
-      lng: place.lng,
-      photos: place.photos,
-      validationStatus: place.validation_status,
-    })),
-    thinking: msg.thinkingProcess,
-  }));
-
-  return {
-    id: ConversationIdBrand(detail.id),
-    title: detail.title,
-    messages,
-    personas: detail.personas,
-    timestamp: ConversationTimestamp(new Date(detail.created_at).getTime()),
-    lastUpdated: ConversationTimestamp(new Date(detail.updated_at).getTime()),
-    messageCount: messages.length,
-  };
-}
-
-/**
- * Get all user conversations (newest first)
- */
 export const getAllConversations = async (): Promise<SavedConversation[]> => {
   const response = await fetch("/api/conversations");
 
@@ -95,21 +33,9 @@ export const getAllConversations = async (): Promise<SavedConversation[]> => {
     throw new Error(data.error);
   }
 
-  // Convert to SavedConversation format (simplified without full message data)
-  return data.conversations.map((conv) => ({
-    id: ConversationIdBrand(conv.id),
-    title: conv.title,
-    messages: [], // List view doesn't include full messages
-    personas: conv.personas,
-    timestamp: ConversationTimestamp(new Date(conv.created_at).getTime()),
-    lastUpdated: ConversationTimestamp(new Date(conv.updated_at).getTime()),
-    messageCount: conv.message_count,
-  }));
+  return data.conversations;
 };
 
-/**
- * Get single conversation with full message history
- */
 export const getConversation = async (id: ConversationId): Promise<SavedConversation> => {
   const response = await fetch(`/api/conversations/${id}`);
 
@@ -123,13 +49,9 @@ export const getConversation = async (id: ConversationId): Promise<SavedConversa
     throw new Error(data.error);
   }
 
-  return conversationDetailToSaved(data);
+  return data;
 };
 
-/**
- * Create new conversation with initial messages
- * Returns the created conversation ID
- */
 export const createConversation = async (
   messages: ChatMessage[],
   personas: PersonaType[],
@@ -167,12 +89,14 @@ export const createConversation = async (
     throw new Error(data.error);
   }
 
-  return ConversationIdBrand(data.id);
+  // If there are more messages than just the first one, update with all messages
+  if (messages.length > 1) {
+    await updateConversationMessages(data.id, messages);
+  }
+
+  return data.id;
 };
 
-/**
- * Update conversation messages (bulk update for auto-save)
- */
 export const updateConversationMessages = async (id: ConversationId, messages: ChatMessage[]): Promise<void> => {
   const response = await fetch(`/api/conversations/${id}/messages`, {
     method: "PUT",
@@ -180,22 +104,7 @@ export const updateConversationMessages = async (id: ConversationId, messages: C
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      messages: messages.map((msg) => ({
-        id: msg.id,
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(msg.timestamp).toISOString(),
-        suggestedPlaces: msg.suggestedPlaces?.map((place) => ({
-          place_id: place.id,
-          name: place.name,
-          reason: place.reasoning,
-          lat: place.lat,
-          lng: place.lng,
-          photos: place.photos,
-          validation_status: place.validationStatus,
-        })),
-        thinkingProcess: msg.thinking,
-      })),
+      messages,
     }),
   });
 
@@ -210,9 +119,6 @@ export const updateConversationMessages = async (id: ConversationId, messages: C
   }
 };
 
-/**
- * Delete conversation
- */
 export const deleteConversation = async (id: ConversationId): Promise<void> => {
   const response = await fetch(`/api/conversations/${id}`, {
     method: "DELETE",
