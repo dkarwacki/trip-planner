@@ -44,24 +44,21 @@ The project follows **Clean Architecture** principles with clear separation of c
 
 ### Clean Architecture Layers (Feature-based)
 
+The structure below uses `{feature}` as a generic pattern applicable to any feature.
+
 - `./src/domain` - **Domain layer** (pure business logic, no external dependencies)
   - `./src/domain/common/` - Shared domain logic
     - `models/` - Core entities
     - `errors/` - Shared errors
-  - `./src/domain/map/` - Map feature domain
-    - `models/` - Map entities
-    - `errors/` - Map errors
-    - `scoring/` - Business rules and scoring algorithms
-  - `./src/domain/plan/` - Plan feature domain
-    - `models/` - Plan entities
-    - `errors/` - Plan errors
+  - `./src/domain/{feature}/` - Feature domain
+    - `models/` - Feature entities
+    - `errors/` - Feature errors
+    - `{business_rule}/` - Business rules (eg. scoring)
 
 - `./src/application` - **Application layer** (use cases, orchestration)
-  - `./src/application/map/` - Map use cases
+  - `./src/application/{feature}/` - Feature use cases
     - `{usecase}/` - Use case per subdirectory
     - `{usecase}/index.ts` - Public API exports
-  - `./src/application/plan/` - Plan use cases
-    - `index.ts` - Public API exports
 
 - `./src/infrastructure` - **Infrastructure layer** (external services, I/O, validation)
   - `./src/infrastructure/common/` - Shared infrastructure
@@ -70,36 +67,34 @@ The project follows **Clean Architecture** principles with clear separation of c
       - `types.ts` - Type definitions using z.infer
       - `index.ts` - Barrel exports
     - `config/` - Configuration management
+    - `database/` - Supabase database infrastructure
+      - `types.ts` - Supabase generated Database types
+      - `SupabaseClient.ts` - Effect service wrapper
+      - `index.ts` - Barrel exports
     - `google-maps/` - Google Maps API client (used by both features)
       - `schemas.ts` - API response validation schemas
       - `types.ts` - Type definitions for external API
     - `openai/` - OpenAI client (used by both features)
     - `http/` - HTTP utilities (validation, response mappers)
     - `runtime.ts` - Effect runtime configuration with all dependencies
-  - `./src/infrastructure/map/` - Map-specific infrastructure
-    - `api/` - Map API contracts (DTOs and validation)
+  - `./src/infrastructure/{feature}/` - Feature-specific infrastructure
+    - `api/` - API contracts (DTOs and validation)
       - `schemas.ts` - Zod schemas with branded type transforms
       - `types.ts` - DTOs derived with z.infer (all have DTO suffix)
+      - `mappers.ts` - Convert DTOs to domain types (toDomain functions)
       - `index.ts` - Barrel exports
     - `database/` - Database layer (DAOs, repositories)
-    - `cache/` - Caching services
+    - `cache/` - Effect cache services (if applicable)
     - `clients/` - Browser API clients
-  - `./src/infrastructure/plan/` - Plan-specific infrastructure
-    - `api/` - Plan API contracts (DTOs and validation)
-      - `schemas.ts` - Zod schemas with branded type transforms
-      - `types.ts` - DTOs derived with z.infer (all have DTO suffix)
-      - `index.ts` - Barrel exports
-    - `database/` - Database layer (DAOs, repositories)
 
 - `./src/components` - Components (Astro for static, React for interactive)
   - `./src/components/common/` - Shared components
-  - `./src/components/map/` - Map components
-  - `./src/components/plan/` - Plan components
+  - `./src/components/{feature}/` - Feature components
   - `./src/components/ui/` - Shadcn/ui components
 
 - `./src/lib` - Shared utilities
   - `./src/lib/common/` - Shared utilities
-  - `./src/lib/map/` - Map utilities
+  - `./src/lib/{feature}/` - Feature utilities
 
 - `./src/assets` - Static internal assets
 - `./public` - Public assets
@@ -107,8 +102,7 @@ The project follows **Clean Architecture** principles with clear separation of c
 ### Feature Organization Rationale
 
 - **`common/`** - Code used by multiple features or core to the application
-- **`map/`** - Everything related to the interactive map and place exploration
-- **`plan/`** - Everything related to AI-powered trip planning and chat interface
+- **`{feature}/`** - Everything related to a specific feature
 - API routes and pages remain flat for simplicity
 
 ## Important Configuration
