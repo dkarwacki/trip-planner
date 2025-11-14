@@ -104,7 +104,6 @@ const MapContent = ({
         const loadedPersonas = await getUserPersonas();
         setPersonas(loadedPersonas);
       } catch (error) {
-        console.error("Failed to load personas for scoring:", error);
         // Continue with empty personas array
       }
     };
@@ -122,7 +121,7 @@ const MapContent = ({
             setPlaces(trip.places);
           }
         } catch (error) {
-          console.error("Failed to load trip from database:", error);
+          // Failed to load trip
         }
       };
 
@@ -145,11 +144,9 @@ const MapContent = ({
           const newTripId = await createTrip(placesToSave, currentConversationId || undefined);
 
           setCurrentTripId(newTripId);
-          console.log("[MapPlanner] Created new trip:", newTripId);
         } else {
           // Update existing trip
           await updateTrip(currentTripId, placesToSave);
-          console.log("[MapPlanner] Updated trip:", currentTripId);
         }
 
         setSaveStatus("saved");
@@ -159,7 +156,6 @@ const MapContent = ({
           setSaveStatus("idle");
         }, 2000);
       } catch (error) {
-        console.error("[MapPlanner] Failed to save trip:", error);
         setSaveStatus("error");
       }
     },
@@ -175,15 +171,6 @@ const MapContent = ({
       debouncedSave(places);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [places]);
-
-  // Debug: Track places changes
-  useEffect(() => {
-    console.log("[DEBUG MapPlanner] places state changed", {
-      count: places.length,
-      placeIds: places.map((p) => p.id),
-      placeNames: places.map((p) => p.name),
-    });
   }, [places]);
 
   // Helper function to merge API results with planned attractions (persona-aware)
@@ -374,16 +361,7 @@ const MapContent = ({
 
   const handlePlaceSelect = useCallback(
     async (place: google.maps.places.PlaceResult) => {
-      console.log("[DEBUG MapPlanner] handlePlaceSelect called", {
-        place_id: place.place_id,
-        name: place.name,
-        hasGeometry: !!place.geometry,
-        hasLocation: !!place.geometry?.location,
-        currentPlacesCount: places.length,
-      });
-
       if (!place.place_id || !place.geometry?.location) {
-        console.log("[DEBUG MapPlanner] Place rejected - missing place_id or geometry/location");
         return;
       }
 
@@ -401,43 +379,26 @@ const MapContent = ({
           plannedRestaurants: [],
         };
 
-        console.log("[DEBUG MapPlanner] Created placeDetails", placeDetails);
-
         // Check for duplicates first (before state update to show error)
         // Note: This uses the closure's `places`, but in practice this is fine since
         // JavaScript is single-threaded and React batches state updates
         const isDuplicate = places.some((p) => p.id === placeDetails.id);
-        console.log("[DEBUG MapPlanner] Duplicate check", {
-          isDuplicate,
-          existingIds: places.map((p) => p.id),
-          newPlaceId: placeDetails.id,
-        });
 
         if (isDuplicate) {
-          console.log("[DEBUG MapPlanner] Place is duplicate, showing error");
           setError("This place has already been added");
           setIsLoading(false);
           return;
         }
 
         // Add place atomically
-        console.log("[DEBUG MapPlanner] Before setPlaces - current count:", places.length);
         setPlaces((prev) => {
           const newPlaces = [...prev, placeDetails];
-          console.log("[DEBUG MapPlanner] Inside setPlaces callback", {
-            prevCount: prev.length,
-            newCount: newPlaces.length,
-            newPlaceId: placeDetails.id,
-          });
           return newPlaces;
         });
-        console.log("[DEBUG MapPlanner] After setPlaces call");
 
         // Automatically select and highlight the newly added place
         await handlePanToPlace(placeDetails);
-        console.log("[DEBUG MapPlanner] After handlePanToPlace");
       } catch (err) {
-        console.error("[DEBUG MapPlanner] Error in handlePlaceSelect", err);
         setError(typeof err === "string" ? err : "An error occurred");
       } finally {
         setIsLoading(false);
@@ -723,7 +684,6 @@ const MapContent = ({
       const attractionData = allAttractions.find((a) => a.attraction.id === attractionId);
 
       if (!attractionData) {
-        console.error("Attraction not found:", attractionId);
         return;
       }
 

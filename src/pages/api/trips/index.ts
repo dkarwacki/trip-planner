@@ -20,14 +20,15 @@ function placesToPlaceDAOs(places: Place[]) {
   return places.map((place, index) => ({
     id: place.id,
     name: place.name,
-    lat: place.latitude,
-    lng: place.longitude,
+    lat: place.lat,
+    lng: place.lng,
     plannedAttractions: [],
     plannedRestaurants: [],
     photos: place.photos?.map((photo) => ({
-      reference: photo.reference,
+      photoReference: photo.photoReference,
       width: photo.width,
       height: photo.height,
+      attributions: photo.attributions || [],
     })),
   }));
 }

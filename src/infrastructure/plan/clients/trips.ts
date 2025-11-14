@@ -5,7 +5,7 @@ import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 
 // API response types (matching server responses)
 interface TripListResponse {
-  trips: Array<{
+  trips: {
     id: string;
     user_id: string;
     conversation_id: string | null;
@@ -13,7 +13,7 @@ interface TripListResponse {
     place_count: number;
     created_at: string;
     updated_at: string;
-  }>;
+  }[];
 }
 
 interface TripDetailResponse {
@@ -21,24 +21,66 @@ interface TripDetailResponse {
   user_id: string;
   conversation_id: string | null;
   title: string;
-  places: Array<{
+  places: {
     place: {
       id: string;
       google_place_id: string;
       name: string;
       latitude: number;
       longitude: number;
-      photos: Array<{
-        reference: string;
+      photos: {
+        photoReference: string;
         width: number;
         height: number;
-      }>;
+        attributions: string[];
+      }[];
       validation_status: "verified" | "not_found" | "partial";
     };
     display_order: number;
-    attractions: any[];
-    restaurants: any[];
-  }>;
+    attractions: {
+      id: string;
+      google_place_id: string;
+      type: "attraction";
+      name: string;
+      rating: number | null;
+      user_ratings_total: number | null;
+      types: string[];
+      vicinity: string;
+      latitude: number;
+      longitude: number;
+      photos?: {
+        photoReference: string;
+        width: number;
+        height: number;
+        attributions: string[];
+      }[];
+      quality_score: number | null;
+      diversity_score: number | null;
+      confidence_score: number | null;
+    }[];
+    restaurants: {
+      id: string;
+      google_place_id: string;
+      type: "restaurant";
+      name: string;
+      rating: number | null;
+      user_ratings_total: number | null;
+      types: string[];
+      vicinity: string;
+      price_level: number | null;
+      latitude: number;
+      longitude: number;
+      photos?: {
+        photoReference: string;
+        width: number;
+        height: number;
+        attributions: string[];
+      }[];
+      quality_score: number | null;
+      diversity_score: number | null;
+      confidence_score: number | null;
+    }[];
+  }[];
   created_at: string;
   updated_at: string;
 }
@@ -53,12 +95,38 @@ interface ErrorResponse {
 function tripDetailToSavedTrip(detail: TripDetailResponse): SavedTrip {
   const places: Place[] = detail.places.map((tripPlace) => ({
     id: PlaceId(tripPlace.place.id),
-    google_place_id: tripPlace.place.google_place_id,
     name: tripPlace.place.name,
-    latitude: Latitude(tripPlace.place.latitude),
-    longitude: Longitude(tripPlace.place.longitude),
+    lat: Latitude(tripPlace.place.latitude),
+    lng: Longitude(tripPlace.place.longitude),
+    plannedAttractions: tripPlace.attractions.map((attr) => ({
+      id: PlaceId(attr.id),
+      name: attr.name,
+      rating: attr.rating ?? undefined,
+      userRatingsTotal: attr.user_ratings_total ?? undefined,
+      types: attr.types,
+      vicinity: attr.vicinity,
+      priceLevel: undefined, // Attractions don't have price level
+      location: {
+        lat: Latitude(attr.latitude),
+        lng: Longitude(attr.longitude),
+      },
+      photos: attr.photos,
+    })),
+    plannedRestaurants: tripPlace.restaurants.map((rest) => ({
+      id: PlaceId(rest.id),
+      name: rest.name,
+      rating: rest.rating ?? undefined,
+      userRatingsTotal: rest.user_ratings_total ?? undefined,
+      types: rest.types,
+      vicinity: rest.vicinity,
+      priceLevel: rest.price_level ?? undefined,
+      location: {
+        lat: Latitude(rest.latitude),
+        lng: Longitude(rest.longitude),
+      },
+      photos: rest.photos,
+    })),
     photos: tripPlace.place.photos,
-    validation_status: tripPlace.place.validation_status,
   }));
 
   return {

@@ -16,17 +16,44 @@ export const prerender = false;
  * Convert domain Place[] to PlaceDAO[] for storage
  */
 function placesToPlaceDAOs(places: Place[]) {
-  return places.map((place, index) => ({
+  return places.map((place) => ({
     id: place.id,
     name: place.name,
-    lat: place.latitude,
-    lng: place.longitude,
-    plannedAttractions: [],
-    plannedRestaurants: [],
+    lat: place.lat,
+    lng: place.lng,
+    plannedAttractions: (place.plannedAttractions ?? []).map((attr) => ({
+      id: attr.id,
+      name: attr.name,
+      rating: attr.rating,
+      userRatingsTotal: attr.userRatingsTotal,
+      types: attr.types,
+      vicinity: attr.vicinity,
+      priceLevel: attr.priceLevel,
+      location: {
+        lat: attr.location.lat,
+        lng: attr.location.lng,
+      },
+      photos: attr.photos,
+    })),
+    plannedRestaurants: (place.plannedRestaurants ?? []).map((rest) => ({
+      id: rest.id,
+      name: rest.name,
+      rating: rest.rating,
+      userRatingsTotal: rest.userRatingsTotal,
+      types: rest.types,
+      vicinity: rest.vicinity,
+      priceLevel: rest.priceLevel,
+      location: {
+        lat: rest.location.lat,
+        lng: rest.location.lng,
+      },
+      photos: rest.photos,
+    })),
     photos: place.photos?.map((photo) => ({
-      reference: photo.reference,
+      photoReference: photo.photoReference,
       width: photo.width,
       height: photo.height,
+      attributions: photo.attributions,
     })),
   }));
 }
@@ -34,42 +61,42 @@ function placesToPlaceDAOs(places: Place[]) {
 /**
  * Convert TripDAO to TripDetailDTO for response
  */
-function tripDAOToDetailDTO(dao: TripDAO): TripDetailDTO {
+function tripDAOToDetailDTO(dao: TripDAO) {
   return {
-    id: TripId(dao.id),
+    id: dao.id,
     user_id: dao.userId,
-    conversation_id: dao.conversationId ? ConversationId(dao.conversationId) : null,
+    conversation_id: dao.conversationId,
     title: dao.title,
     places: dao.placesData.map((placeDAO, index) => ({
       place: {
-        id: PlaceId(placeDAO.id),
+        id: placeDAO.id,
         google_place_id: placeDAO.id,
         name: placeDAO.name,
-        latitude: Latitude(placeDAO.lat),
-        longitude: Longitude(placeDAO.lng),
+        latitude: placeDAO.lat,
+        longitude: placeDAO.lng,
         photos: placeDAO.photos || [],
         validation_status: "verified" as const,
       },
       display_order: index,
       attractions: placeDAO.plannedAttractions.map((a) => ({
-        id: PlaceId(a.id),
-        google_place_id: a.googlePlaceId || "",
+        id: a.id,
+        google_place_id: a.id,
         type: "attraction" as const,
         name: a.name,
         rating: a.rating ?? null,
         user_ratings_total: a.userRatingsTotal ?? null,
         types: a.types || [],
         vicinity: a.vicinity || "",
-        latitude: Latitude(a.location.lat),
-        longitude: Longitude(a.location.lng),
+        latitude: a.location.lat,
+        longitude: a.location.lng,
         photos: a.photos,
-        quality_score: a.qualityScore ?? null,
-        diversity_score: a.diversityScore ?? null,
-        confidence_score: a.confidenceScore ?? null,
+        quality_score: null,
+        diversity_score: null,
+        confidence_score: null,
       })),
       restaurants: placeDAO.plannedRestaurants.map((r) => ({
-        id: PlaceId(r.id),
-        google_place_id: r.googlePlaceId || "",
+        id: r.id,
+        google_place_id: r.id,
         type: "restaurant" as const,
         name: r.name,
         rating: r.rating ?? null,
@@ -77,12 +104,12 @@ function tripDAOToDetailDTO(dao: TripDAO): TripDetailDTO {
         types: r.types || [],
         vicinity: r.vicinity || "",
         price_level: r.priceLevel ?? null,
-        latitude: Latitude(r.location.lat),
-        longitude: Longitude(r.location.lng),
+        latitude: r.location.lat,
+        longitude: r.location.lng,
         photos: r.photos,
-        quality_score: r.qualityScore ?? null,
-        diversity_score: r.diversityScore ?? null,
-        confidence_score: r.confidenceScore ?? null,
+        quality_score: null,
+        diversity_score: null,
+        confidence_score: null,
       })),
     })),
     created_at: new Date(dao.createdAt).toISOString(),
