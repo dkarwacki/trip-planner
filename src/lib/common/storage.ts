@@ -9,7 +9,6 @@ import {
 } from "@/domain/plan/models";
 
 const STORAGE_KEYS = {
-  PERSONAS: "trip-planner:personas",
   CURRENT_ITINERARY: "trip-planner:current-itinerary",
   TRIP_HISTORY: "trip-planner:trip-history",
   CONVERSATIONS: "trip-planner:conversations",
@@ -27,28 +26,8 @@ const safeJsonParse = <T>(json: string | null, fallback: T): T => {
   }
 };
 
-// Persona storage
-export const savePersonas = (personas: PersonaType[]): void => {
-  if (typeof window === "undefined") return;
-
-  try {
-    localStorage.setItem(STORAGE_KEYS.PERSONAS, JSON.stringify(personas));
-  } catch (error) {
-    console.error("Failed to save personas:", error);
-  }
-};
-
-export const loadPersonas = (): PersonaType[] => {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const json = localStorage.getItem(STORAGE_KEYS.PERSONAS);
-    return safeJsonParse(json, []);
-  } catch (error) {
-    console.error("Failed to load personas:", error);
-    return [];
-  }
-};
+// Personas moved to PostgreSQL - see src/infrastructure/plan/clients/personas.ts
+// API: GET/PUT /api/personas
 
 // Current itinerary storage
 export const saveCurrentItinerary = (places: Place[]): void => {

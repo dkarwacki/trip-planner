@@ -12,8 +12,6 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { MobileNavigation, type PlanTab, type MobileTab } from "@/components/common/MobileNavigation";
 import { Bot, MapPin, History } from "lucide-react";
 import {
-  savePersonas,
-  loadPersonas,
   saveCurrentItinerary,
   loadCurrentItinerary,
   clearCurrentItinerary,
@@ -27,6 +25,7 @@ import {
   saveTripForConversation,
   loadTripById,
 } from "@/lib/common/storage";
+import { getUserPersonas, updatePersonas } from "@/infrastructure/plan/clients";
 
 export default function ChatPage() {
   const [personas, setPersonas] = useState<PersonaType[]>([PERSONA_TYPES.GENERAL_TOURIST]);
@@ -53,47 +52,62 @@ export default function ChatPage() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Load initial state from localStorage
+  // Load initial state from database and localStorage
   useEffect(() => {
-    // Run migration once on app initialization
-    migrateConversationTrips();
+    const loadInitialData = async () => {
+      // Run migration once on app initialization
+      migrateConversationTrips();
 
-    const loadedPersonas = loadPersonas();
-    if (loadedPersonas.length > 0) {
-      setPersonas(loadedPersonas);
-    }
-
-    const loadedConversations = loadAllConversations();
-    setConversationHistory(loadedConversations);
-
-    // Load conversation from URL params
-    const params = new URLSearchParams(window.location.search);
-    const conversationId = params.get("conversationId");
-    if (conversationId) {
-      const conversation = loadConversation(conversationId as ConversationId);
-      if (conversation) {
-        setCurrentConversationId(conversation.id);
-        setConversationMessages(conversation.messages);
-        setPersonas(conversation.personas.map((p) => PersonaTypeBrand(p)) as PersonaType[]);
-        // Load trip places into itinerary
-        const trip = getTripForConversation(conversation.id);
-        if (trip) {
-          setItinerary(trip.places);
-        } else {
-          setItinerary([]);
+      // Load personas from database
+      try {
+        const loadedPersonas = await getUserPersonas();
+        if (loadedPersonas.length > 0) {
+          setPersonas(loadedPersonas as PersonaType[]);
         }
+      } catch (error) {
+        console.error("Failed to load personas:", error);
+        // Keep default persona if loading fails
       }
-    } else {
-      // Load current itinerary only if no conversation is loaded
-      const loadedItinerary = loadCurrentItinerary();
-      setItinerary(loadedItinerary);
-    }
+
+      const loadedConversations = loadAllConversations();
+      setConversationHistory(loadedConversations);
+
+      // Load conversation from URL params
+      const params = new URLSearchParams(window.location.search);
+      const conversationId = params.get("conversationId");
+      if (conversationId) {
+        const conversation = loadConversation(conversationId as ConversationId);
+        if (conversation) {
+          setCurrentConversationId(conversation.id);
+          setConversationMessages(conversation.messages);
+          setPersonas(conversation.personas.map((p) => PersonaTypeBrand(p)) as PersonaType[]);
+          // Load trip places into itinerary
+          const trip = getTripForConversation(conversation.id);
+          if (trip) {
+            setItinerary(trip.places);
+          } else {
+            setItinerary([]);
+          }
+        }
+      } else {
+        // Load current itinerary only if no conversation is loaded
+        const loadedItinerary = loadCurrentItinerary();
+        setItinerary(loadedItinerary);
+      }
+    };
+
+    loadInitialData();
   }, []);
 
   // Save personas when changed
-  const handlePersonasChange = (newPersonas: PersonaType[]) => {
+  const handlePersonasChange = async (newPersonas: PersonaType[]) => {
     setPersonas(newPersonas);
-    savePersonas(newPersonas);
+    try {
+      await updatePersonas(newPersonas);
+    } catch (error) {
+      console.error("Failed to save personas:", error);
+      // TODO: Show error toast to user
+    }
   };
 
   // Save itinerary when changed

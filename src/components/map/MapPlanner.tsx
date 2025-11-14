@@ -22,12 +22,12 @@ import { scoreAttractions } from "@/domain/map/scoring/attractions";
 import { scoreRestaurants } from "@/domain/map/scoring/restaurants";
 import {
   loadTripById,
-  loadPersonas,
   saveTripToHistory,
   updateTripInHistory,
   saveTripForConversation,
 } from "@/lib/common/storage";
 import type { PersonaType } from "@/domain/plan/models";
+import { getUserPersonas } from "@/infrastructure/plan/clients";
 import { HIGH_SCORE_THRESHOLD } from "@/domain/map/scoring";
 import AttractionsPanel from "@/components/map/AttractionsPanel";
 import PlaceAutocomplete from "@/components/map/PlaceAutocomplete";
@@ -95,12 +95,27 @@ const MapContent = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
-  const personas = useState<PersonaType[]>(() => loadPersonas())[0];
+  const [personas, setPersonas] = useState<PersonaType[]>([]);
 
   // Auto-save state
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [currentConversationId] = useState<string | null>(conversationId || null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+
+  // Load personas from database
+  useEffect(() => {
+    const loadPersonasData = async () => {
+      try {
+        const loadedPersonas = await getUserPersonas();
+        setPersonas(loadedPersonas as PersonaType[]);
+      } catch (error) {
+        console.error("Failed to load personas for scoring:", error);
+        // Continue with empty personas array
+      }
+    };
+
+    loadPersonasData();
+  }, []);
 
   // Load places from trip history if tripId is provided
   useEffect(() => {
