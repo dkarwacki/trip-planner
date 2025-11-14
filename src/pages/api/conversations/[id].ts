@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { Effect } from "effect";
+import { Effect, Runtime } from "effect";
 import { ConversationRepository } from "@/infrastructure/plan/database/repositories";
 import { toSavedConversation } from "@/infrastructure/plan/database/types";
 import {
@@ -8,6 +8,7 @@ import {
   UpdateConversationResponseSchema,
   DeleteConversationResponseSchema,
 } from "@/infrastructure/plan/api/schemas";
+import { AppRuntime } from "@/infrastructure/common/runtime";
 
 // Hardcoded development user ID
 // TODO: Replace with real authentication when auth is implemented
@@ -30,7 +31,8 @@ export const GET: APIRoute = async ({ params }) => {
   }
 
   const program = Effect.gen(function* () {
-    const conversation = yield* ConversationRepository.findById(DEV_USER_ID, id);
+    const conversationRepo = yield* ConversationRepository;
+    const conversation = yield* conversationRepo.findById(DEV_USER_ID, id);
 
     // Convert to API response format
     const domainConversation = toSavedConversation(conversation);
@@ -61,7 +63,7 @@ export const GET: APIRoute = async ({ params }) => {
     })
   );
 
-  const result = await Effect.runPromise(program);
+  const result = await Runtime.runPromise(AppRuntime)(program);
 
   if ("error" in result) {
     const status = "notFound" in result ? 404 : 500;
@@ -111,8 +113,10 @@ export const PUT: APIRoute = async ({ params, request }) => {
   const { title } = validation.data;
 
   const program = Effect.gen(function* () {
+    const conversationRepo = yield* ConversationRepository;
+    
     // Get current conversation
-    const conversation = yield* ConversationRepository.findById(DEV_USER_ID, id);
+    const conversation = yield* conversationRepo.findById(DEV_USER_ID, id);
 
     // Update with new title
     const updatedConversation = {
@@ -123,7 +127,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
     // Note: We need to update the full conversation since repository doesn't have updateTitle
     // We'll use updateMessages to trigger an update (keeping same messages)
-    yield* ConversationRepository.updateMessages(DEV_USER_ID, id, updatedConversation.messages);
+    yield* conversationRepo.updateMessages(DEV_USER_ID, id, updatedConversation.messages);
 
     return UpdateConversationResponseSchema.parse({
       id: updatedConversation.id,
@@ -142,7 +146,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
     })
   );
 
-  const result = await Effect.runPromise(program);
+  const result = await Runtime.runPromise(AppRuntime)(program);
 
   if ("error" in result) {
     const status = "notFound" in result ? 404 : 500;
@@ -173,7 +177,8 @@ export const DELETE: APIRoute = async ({ params }) => {
   }
 
   const program = Effect.gen(function* () {
-    yield* ConversationRepository.delete(DEV_USER_ID, id);
+    const conversationRepo = yield* ConversationRepository;
+    yield* conversationRepo.delete(DEV_USER_ID, id);
 
     return DeleteConversationResponseSchema.parse({
       id,
@@ -188,7 +193,7 @@ export const DELETE: APIRoute = async ({ params }) => {
     })
   );
 
-  const result = await Effect.runPromise(program);
+  const result = await Runtime.runPromise(AppRuntime)(program);
 
   if ("error" in result) {
     return new Response(JSON.stringify(result), {

@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { Effect } from "effect";
+import { Effect, Runtime } from "effect";
 import { ConversationRepository } from "@/infrastructure/plan/database/repositories";
 import { toSavedConversation, toConversationInsert } from "@/infrastructure/plan/database/types";
 import {
@@ -7,6 +7,7 @@ import {
   CreateConversationCommandSchema,
   ConversationDetailSchema,
 } from "@/infrastructure/plan/api/schemas";
+import { AppRuntime } from "@/infrastructure/common/runtime";
 
 // Hardcoded development user ID
 // TODO: Replace with real authentication when auth is implemented
@@ -20,8 +21,11 @@ export const prerender = false;
  */
 export const GET: APIRoute = async () => {
   const program = Effect.gen(function* () {
+    // Get the repository service instance
+    const conversationRepo = yield* ConversationRepository;
+    
     // Get all conversations for user
-    const conversations = yield* ConversationRepository.findAll(DEV_USER_ID);
+    const conversations = yield* conversationRepo.findAll(DEV_USER_ID);
 
     // Convert to API response format
     const responseConversations = conversations.map((conv) => ({
@@ -47,7 +51,7 @@ export const GET: APIRoute = async () => {
     })
   );
 
-  const result = await Effect.runPromise(program);
+  const result = await Runtime.runPromise(AppRuntime)(program);
 
   if ("error" in result) {
     return new Response(JSON.stringify(result), {
@@ -109,11 +113,14 @@ export const POST: APIRoute = async ({ request }) => {
       updatedAt: now,
     };
 
+    // Get the repository service instance
+    const conversationRepo = yield* ConversationRepository;
+    
     // Create the conversation
-    yield* ConversationRepository.create(DEV_USER_ID, conversationData);
+    yield* conversationRepo.create(DEV_USER_ID, conversationData);
 
     // Fetch the created conversation
-    const conversation = yield* ConversationRepository.findById(DEV_USER_ID, conversationId);
+    const conversation = yield* conversationRepo.findById(DEV_USER_ID, conversationId);
 
     // Convert to API response format
     const domainConversation = toSavedConversation(conversation);
@@ -141,7 +148,7 @@ export const POST: APIRoute = async ({ request }) => {
     })
   );
 
-  const result = await Effect.runPromise(program);
+  const result = await Runtime.runPromise(AppRuntime)(program);
 
   if ("error" in result) {
     return new Response(JSON.stringify(result), {

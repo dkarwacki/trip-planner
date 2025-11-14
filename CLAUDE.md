@@ -217,6 +217,7 @@ The architecture enforces clear data flow with strict layer separation:
 - **Use Effect for server-side logic only** (API routes, use cases, infrastructure services)
 - **Use plain async/await in browser components** (React hooks, event handlers call browser API clients from `infrastructure/http/clients`)
 - **Always use `Effect.gen`** (generator-style) for effect composition instead of pipe
+- **Always yield the service tag first to get the instance**, then call methods on that instance
 - **Use tagged errors** (objects with `_tag` field) for better error discrimination
 - **Never throw exceptions** - use `Effect.fail` for expected errors and track them in the type system
 - **Use Context.Tag + Layer** for dependency injection (see `infrastructure/runtime.ts`)

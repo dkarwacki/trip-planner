@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
-import { Effect } from "effect";
+import { Effect, Runtime } from "effect";
 import { ConversationRepository } from "@/infrastructure/plan/database/repositories";
+import { AppRuntime } from "@/infrastructure/common/runtime";
 import {
   UpdateConversationMessagesCommandSchema,
   UpdateConversationMessagesResponseSchema,
@@ -46,18 +47,29 @@ export const PUT: APIRoute = async ({ params, request }) => {
   const { messages } = validation.data;
 
   const program = Effect.gen(function* () {
-    // Convert messages to DAO format (snake_case to camelCase already handled by validation)
+    const conversationRepo = yield* ConversationRepository;
+
+    // Convert messages to DAO format
     const messagesDAO = messages.map((msg) => ({
       id: msg.id,
       role: msg.role,
       content: msg.content,
-      timestamp: msg.timestamp,
-      suggestedPlaces: msg.suggestedPlaces,
-      thinkingProcess: msg.thinkingProcess,
+      timestamp: new Date(msg.timestamp).getTime(), // Convert ISO string to Unix timestamp
+      suggestedPlaces: msg.suggestedPlaces?.map((place) => ({
+        id: place.place_id,
+        name: place.name,
+        description: place.name, // Use name as description if not provided
+        reasoning: place.reason,
+        lat: place.lat,
+        lng: place.lng,
+        photos: place.photos,
+        validationStatus: place.validation_status,
+      })),
+      thinking: msg.thinkingProcess,
     }));
 
     // Update messages in database
-    yield* ConversationRepository.updateMessages(DEV_USER_ID, id, messagesDAO);
+    yield* conversationRepo.updateMessages(DEV_USER_ID, id, messagesDAO);
 
     return UpdateConversationMessagesResponseSchema.parse({
       id,
@@ -75,7 +87,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
     })
   );
 
-  const result = await Effect.runPromise(program);
+  const result = await Runtime.runPromise(AppRuntime)(program);
 
   if ("error" in result) {
     const status = "notFound" in result ? 404 : 500;
