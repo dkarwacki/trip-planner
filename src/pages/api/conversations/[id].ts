@@ -45,8 +45,8 @@ export const GET: APIRoute = async ({ params }) => {
         content: msg.content,
         timestamp: new Date(msg.timestamp).toISOString(),
       })),
-      created_at: conversation.createdAt,
-      updated_at: conversation.updatedAt,
+      created_at: new Date(conversation.createdAt).toISOString(),
+      updated_at: new Date(conversation.updatedAt).toISOString(),
     });
   }).pipe(
     Effect.catchAll((error) => {

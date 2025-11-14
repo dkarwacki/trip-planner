@@ -51,8 +51,8 @@ export const GET: APIRoute = async () => {
     const response: GetUserPersonasResponseDTO = {
       user_id: data.userId,
       persona_types: data.personaTypes.map((p) => PersonaTypeSchema.parse(p)),
-      created_at: data.createdAt,
-      updated_at: data.updatedAt,
+      created_at: new Date(data.createdAt).toISOString(),
+      updated_at: new Date(data.updatedAt).toISOString(),
     };
 
     return response;

@@ -85,8 +85,8 @@ function tripDAOToDetailDTO(dao: TripDAO): TripDetailDTO {
         confidence_score: r.confidenceScore ?? null,
       })),
     })),
-    created_at: dao.createdAt,
-    updated_at: dao.updatedAt,
+    created_at: new Date(dao.createdAt).toISOString(),
+    updated_at: new Date(dao.updatedAt).toISOString(),
   };
 }
 

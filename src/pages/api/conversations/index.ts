@@ -31,8 +31,8 @@ export const GET: APIRoute = async () => {
       title: conv.title,
       personas: conv.personas,
       message_count: conv.messages.length,
-      created_at: conv.createdAt,
-      updated_at: conv.updatedAt,
+      created_at: new Date(conv.createdAt).toISOString(),
+      updated_at: new Date(conv.updatedAt).toISOString(),
       has_trip: false, // TODO: Check if trip exists for conversation
     }));
 
@@ -133,8 +133,8 @@ export const POST: APIRoute = async ({ request }) => {
         content: msg.content,
         timestamp: new Date(msg.timestamp).toISOString(),
       })),
-      created_at: conversation.createdAt,
-      updated_at: conversation.updatedAt,
+      created_at: new Date(conversation.createdAt).toISOString(),
+      updated_at: new Date(conversation.updatedAt).toISOString(),
     });
   }).pipe(
     Effect.catchAll((error) => {

@@ -86,8 +86,8 @@ function tripDAOToDetailDTO(dao: TripDAO): TripDetailDTO {
         confidence_score: r.confidenceScore ?? null,
       })),
     })),
-    created_at: dao.createdAt,
-    updated_at: dao.updatedAt,
+    created_at: new Date(dao.createdAt).toISOString(),
+    updated_at: new Date(dao.updatedAt).toISOString(),
   };
 }
 
@@ -107,8 +107,8 @@ export const GET: APIRoute = async () => {
         conversation_id: trip.conversationId ? ConversationId(trip.conversationId) : null,
         title: trip.title,
         place_count: trip.placesData.length,
-        created_at: trip.createdAt,
-        updated_at: trip.updatedAt,
+        created_at: new Date(trip.createdAt).toISOString(),
+        updated_at: new Date(trip.updatedAt).toISOString(),
       })),
     };
 
