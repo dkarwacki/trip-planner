@@ -153,9 +153,7 @@ import { SupabaseClient } from "@/infrastructure/common/database";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   // Get Supabase client from Effect runtime
-  const supabaseService = await Effect.runPromise(
-    Effect.provide(SupabaseClient, AppRuntime)
-  );
+  const supabaseService = await Effect.runPromise(Effect.provide(SupabaseClient, AppRuntime));
 
   context.locals.supabase = supabaseService.client;
 
@@ -194,9 +192,7 @@ Access Supabase via `context.locals.supabase`:
 import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async ({ locals }) => {
-  const { data, error } = await locals.supabase
-    .from("trips")
-    .select("*");
+  const { data, error } = await locals.supabase.from("trips").select("*");
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {

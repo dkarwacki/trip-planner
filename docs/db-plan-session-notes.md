@@ -48,11 +48,13 @@ This document contains the complete database planning decisions and schema desig
 ### Architecture Overview
 
 The database schema uses a **hybrid architecture** combining:
+
 - **Normalized tables** for cacheable reference data (places, attractions)
 - **JSONB columns** for flexible, embedded structures (messages, trip places)
 - **Supabase Auth** for user management
 
 This design optimizes for:
+
 - API call efficiency (persistent cache)
 - Data reuse across trips
 - Simple atomic updates
@@ -67,6 +69,7 @@ This design optimizes for:
 Stores persona preferences per user (user context, not conversation-specific).
 
 **Columns:**
+
 - `user_id`: UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
 - `persona_types`: JSONB NOT NULL DEFAULT '["general_tourist"]'
 - `created_at`: TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -75,6 +78,7 @@ Stores persona preferences per user (user context, not conversation-specific).
 **Purpose:** Store user's selected persona preferences that persist across sessions. Conversations snapshot these at creation time.
 
 **Example data:**
+
 ```json
 {
   "user_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -91,6 +95,7 @@ Stores persona preferences per user (user context, not conversation-specific).
 Stores chat conversations with messages embedded as JSONB.
 
 **Columns:**
+
 - `id`: UUID PRIMARY KEY DEFAULT gen_random_uuid()
 - `user_id`: UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
 - `title`: TEXT NOT NULL
@@ -100,6 +105,7 @@ Stores chat conversations with messages embedded as JSONB.
 - `updated_at`: TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
 **Message structure in JSONB:**
+
 ```json
 [
   {
@@ -114,7 +120,9 @@ Stores chat conversations with messages embedded as JSONB.
         "reason": "Iconic landmark..."
       }
     ],
-    "thinkingProcess": [/* array of thinking steps */]
+    "thinkingProcess": [
+      /* array of thinking steps */
+    ]
   }
 ]
 ```
@@ -128,6 +136,7 @@ Stores chat conversations with messages embedded as JSONB.
 Normalized cache table for Google Maps place data.
 
 **Columns:**
+
 - `id`: UUID PRIMARY KEY DEFAULT gen_random_uuid()
 - `google_place_id`: TEXT UNIQUE NOT NULL
 - `name`: TEXT NOT NULL
@@ -140,15 +149,18 @@ Normalized cache table for Google Maps place data.
 - `last_updated_at`: TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
 **Indexes:**
+
 - `CREATE UNIQUE INDEX idx_places_google_place_id ON places(google_place_id);`
 - `CREATE INDEX idx_places_last_updated ON places(last_updated_at);`
 
 **Purpose:**
+
 - Cache Google Maps API responses to minimize API calls
 - Enable data reuse when same place appears in multiple trips
 - Track validation status and data freshness
 
 **Example data:**
+
 ```json
 {
   "id": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
@@ -156,7 +168,7 @@ Normalized cache table for Google Maps place data.
   "name": "Paris, France",
   "latitude": 48.856614,
   "longitude": 2.3522219,
-  "photos": [{"photoReference": "AeJxP..."}],
+  "photos": [{ "photoReference": "AeJxP..." }],
   "validation_status": "verified",
   "last_updated_at": "2025-11-09T14:30:00Z"
 }
@@ -169,6 +181,7 @@ Normalized cache table for Google Maps place data.
 Normalized cache table for attractions AND restaurants from Google Maps API.
 
 **Columns:**
+
 - `id`: UUID PRIMARY KEY DEFAULT gen_random_uuid()
 - `google_place_id`: TEXT UNIQUE NOT NULL
 - `type`: TEXT NOT NULL CHECK (type IN ('attraction', 'restaurant'))
@@ -189,15 +202,18 @@ Normalized cache table for attractions AND restaurants from Google Maps API.
 - `last_updated_at`: TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
 **Indexes:**
+
 - `CREATE UNIQUE INDEX idx_attractions_google_place_id ON attractions(google_place_id);`
 - `CREATE INDEX idx_attractions_last_updated ON attractions(last_updated_at);`
 
 **Purpose:**
+
 - Cache expensive Google Maps API responses for attractions and restaurants
 - Enable reuse of popular attractions across multiple users/trips
 - Track scoring metrics (quality, diversity, confidence)
 
 **Example data:**
+
 ```json
 {
   "id": "b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e",
@@ -209,9 +225,9 @@ Normalized cache table for attractions AND restaurants from Google Maps API.
   "types": ["tourist_attraction", "point_of_interest"],
   "vicinity": "Champ de Mars, 5 Avenue Anatole France",
   "price_level": 2,
-  "latitude": 48.858370,
+  "latitude": 48.85837,
   "longitude": 2.294481,
-  "photos": [{"photoReference": "AeJxP...", "width": 1600, "height": 1200}],
+  "photos": [{ "photoReference": "AeJxP...", "width": 1600, "height": 1200 }],
   "quality_score": 0.95,
   "diversity_score": 0.87,
   "confidence_score": 0.92,
@@ -226,6 +242,7 @@ Normalized cache table for attractions AND restaurants from Google Maps API.
 Stores user trip plans with embedded JSONB references to places/attractions.
 
 **Columns:**
+
 - `id`: UUID PRIMARY KEY DEFAULT gen_random_uuid()
 - `user_id`: UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
 - `conversation_id`: UUID UNIQUE REFERENCES conversations(id) ON DELETE SET NULL
@@ -235,22 +252,19 @@ Stores user trip plans with embedded JSONB references to places/attractions.
 - `updated_at`: TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
 **Indexes:**
+
 - `CREATE INDEX idx_trips_user_id ON trips(user_id, created_at DESC);`
 - `CREATE UNIQUE INDEX idx_trips_conversation_id ON trips(conversation_id) WHERE conversation_id IS NOT NULL;`
 
 **places_data structure:**
+
 ```json
 [
   {
     "placeId": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
     "displayOrder": 0,
-    "attractionIds": [
-      "b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e",
-      "c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f"
-    ],
-    "restaurantIds": [
-      "d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a"
-    ]
+    "attractionIds": ["b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e", "c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f"],
+    "restaurantIds": ["d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a"]
   }
 ]
 ```
@@ -289,6 +303,7 @@ attractions (normalized cache)
 ```
 
 **Key relationship rules:**
+
 - **User to Personas**: 1:1 (one record per user with JSONB array)
 - **User to Conversations**: 1:N (user owns many conversations)
 - **User to Trips**: 1:N (user owns many trips)
@@ -304,28 +319,24 @@ attractions (normalized cache)
 
 ```typescript
 // 1. Check cache (DB first)
-let place = await db
-  .from('places')
-  .select('id, last_updated_at')
-  .eq('google_place_id', googlePlaceId)
-  .single();
+let place = await db.from("places").select("id, last_updated_at").eq("google_place_id", googlePlaceId).single();
 
 // 2. If missing or stale (> 30 days), fetch from API
 if (!place || isStale(place.last_updated_at, 30)) {
   const apiData = await googleMapsAPI.getPlaceDetails(googlePlaceId);
 
   place = await db
-    .from('places')
+    .from("places")
     .upsert({
       google_place_id: googlePlaceId,
       name: apiData.name,
       latitude: apiData.geometry.location.lat,
       longitude: apiData.geometry.location.lng,
       photos: apiData.photos,
-      validation_status: 'verified',
-      last_updated_at: new Date()
+      validation_status: "verified",
+      last_updated_at: new Date(),
     })
-    .select('id')
+    .select("id")
     .single();
 }
 
@@ -336,14 +347,11 @@ const updatedPlacesData = [
     placeId: place.id,
     displayOrder: nextOrder,
     attractionIds: [],
-    restaurantIds: []
-  }
+    restaurantIds: [],
+  },
 ];
 
-await db
-  .from('trips')
-  .update({ places_data: updatedPlacesData })
-  .eq('id', tripId);
+await db.from("trips").update({ places_data: updatedPlacesData }).eq("id", tripId);
 ```
 
 ### Adding an Attraction to a Trip Place
@@ -351,9 +359,9 @@ await db
 ```typescript
 // 1. Check cache
 let attraction = await db
-  .from('attractions')
-  .select('id, last_updated_at')
-  .eq('google_place_id', googlePlaceId)
+  .from("attractions")
+  .select("id, last_updated_at")
+  .eq("google_place_id", googlePlaceId)
   .single();
 
 // 2. Fetch if missing/stale
@@ -361,10 +369,10 @@ if (!attraction || isStale(attraction.last_updated_at, 30)) {
   const apiData = await googleMapsAPI.getPlaceDetails(googlePlaceId);
 
   attraction = await db
-    .from('attractions')
+    .from("attractions")
     .upsert({
       google_place_id: googlePlaceId,
-      type: 'attraction', // or 'restaurant'
+      type: "attraction", // or 'restaurant'
       name: apiData.name,
       rating: apiData.rating,
       user_ratings_total: apiData.user_ratings_total,
@@ -377,50 +385,39 @@ if (!attraction || isStale(attraction.last_updated_at, 30)) {
       quality_score: calculateQualityScore(apiData),
       diversity_score: calculateDiversityScore(apiData),
       confidence_score: calculateConfidenceScore(apiData),
-      last_updated_at: new Date()
+      last_updated_at: new Date(),
     })
-    .select('id')
+    .select("id")
     .single();
 }
 
 // 3. Update trip JSONB (append to attractionIds)
-const updatedPlacesData = trip.places_data.map(p =>
-  p.placeId === targetPlaceId
-    ? { ...p, attractionIds: [...p.attractionIds, attraction.id] }
-    : p
+const updatedPlacesData = trip.places_data.map((p) =>
+  p.placeId === targetPlaceId ? { ...p, attractionIds: [...p.attractionIds, attraction.id] } : p
 );
 
-await db
-  .from('trips')
-  .update({ places_data: updatedPlacesData })
-  .eq('id', tripId);
+await db.from("trips").update({ places_data: updatedPlacesData }).eq("id", tripId);
 ```
 
 ### Loading a Trip for Display
 
 ```typescript
 // 1. Load trip
-const trip = await db
-  .from('trips')
-  .select('*')
-  .eq('id', tripId)
-  .single();
+const trip = await db.from("trips").select("*").eq("id", tripId).single();
 
 // 2. Extract all place/attraction IDs from JSONB
-const placeIds = trip.places_data.map(p => p.placeId);
-const attractionIds = trip.places_data.flatMap(p =>
-  [...p.attractionIds, ...p.restaurantIds]
-);
+const placeIds = trip.places_data.map((p) => p.placeId);
+const attractionIds = trip.places_data.flatMap((p) => [...p.attractionIds, ...p.restaurantIds]);
 
 // 3. Batch load places and attractions
 const [places, attractions] = await Promise.all([
-  db.from('places').select('*').in('id', placeIds),
-  db.from('attractions').select('*').in('id', attractionIds)
+  db.from("places").select("*").in("id", placeIds),
+  db.from("attractions").select("*").in("id", attractionIds),
 ]);
 
 // 4. Map back to full trip structure
-const placesMap = new Map(places.data.map(p => [p.id, p]));
-const attractionsMap = new Map(attractions.data.map(a => [a.id, a]));
+const placesMap = new Map(places.data.map((p) => [p.id, p]));
+const attractionsMap = new Map(attractions.data.map((a) => [a.id, a]));
 
 const fullTrip = {
   id: trip.id,
@@ -428,11 +425,11 @@ const fullTrip = {
   conversationId: trip.conversation_id,
   places: trip.places_data
     .sort((a, b) => a.displayOrder - b.displayOrder)
-    .map(pd => ({
+    .map((pd) => ({
       ...placesMap.get(pd.placeId),
-      plannedAttractions: pd.attractionIds.map(id => attractionsMap.get(id)),
-      plannedRestaurants: pd.restaurantIds.map(id => attractionsMap.get(id))
-    }))
+      plannedAttractions: pd.attractionIds.map((id) => attractionsMap.get(id)),
+      plannedRestaurants: pd.restaurantIds.map((id) => attractionsMap.get(id)),
+    })),
 };
 ```
 
@@ -541,6 +538,7 @@ WHERE google_place_id = $5;
 ```
 
 **Benefits:**
+
 - Simpler schema (no triggers to maintain)
 - More explicit (UPDATE statements clearly show timestamp updates)
 - Easier to understand and debug
@@ -553,17 +551,17 @@ WHERE google_place_id = $5;
 ### Client-Side (Debounced)
 
 ```typescript
-import { debounce } from 'lodash';
+import { debounce } from "lodash";
 
 const saveTrip = debounce(async (trip: SavedTrip) => {
   try {
-    await fetch('/api/trips', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(trip)
+    await fetch("/api/trips", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(trip),
     });
   } catch (error) {
-    console.error('Auto-save failed:', error);
+    console.error("Auto-save failed:", error);
     // Show error toast to user
   }
 }, 500); // 500ms debounce
@@ -591,25 +589,25 @@ export async function POST({ request, locals }) {
 
   // UPSERT trip (insert or update)
   const { data, error } = await locals.supabase
-    .from('trips')
+    .from("trips")
     .upsert({
       id: validatedTrip.id,
       user_id: userId,
       title: validatedTrip.title,
       places_data: validatedTrip.places_data,
-      conversation_id: validatedTrip.conversation_id
+      conversation_id: validatedTrip.conversation_id,
     })
-    .select('id, updated_at')
+    .select("id, updated_at")
     .single();
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500
+      status: 500,
     });
   }
 
   return new Response(JSON.stringify({ success: true, data }), {
-    status: 200
+    status: 200,
   });
 }
 ```
@@ -639,6 +637,7 @@ export async function POST({ request, locals }) {
 ### When to Refactor
 
 Consider refactoring to fully normalized schema if:
+
 - Average conversation length exceeds 100 messages (implement message pagination)
 - Need to search messages across conversations (add full-text search)
 - Need cross-trip analytics ("which trips include this place?")
@@ -655,10 +654,7 @@ Consider refactoring to fully normalized schema if:
 
 ```typescript
 // All queries filtered by user_id
-const trips = await supabase
-  .from('trips')
-  .select('*')
-  .eq('user_id', userId); // Always filter by authenticated user
+const trips = await supabase.from("trips").select("*").eq("user_id", userId); // Always filter by authenticated user
 ```
 
 **Future Enhancement:** Add RLS policies when multi-user features are introduced:
@@ -677,6 +673,7 @@ CREATE POLICY "Users can manage their own trips"
 ### Data Validation
 
 **CHECK Constraints:**
+
 - Latitude: `>= -90 AND <= 90`
 - Longitude: `>= -180 AND <= 180`
 - `validation_status`: `IN ('verified', 'not_found', 'partial')`
@@ -684,10 +681,12 @@ CREATE POLICY "Users can manage their own trips"
 - `price_level`: `>= 0 AND <= 4`
 
 **UNIQUE Constraints:**
+
 - `google_place_id` in `places` and `attractions` tables (prevents duplicates)
 - `conversation_id` in `trips` table (enforces one-to-one relationship)
 
 **Foreign Key Constraints:**
+
 - All `user_id` columns reference `auth.users(id)` with `ON DELETE CASCADE`
 - `trips.conversation_id` references `conversations(id)` with `ON DELETE SET NULL`
 
@@ -703,18 +702,18 @@ const STORAGE_KEYS = {
   PERSONAS: "trip-planner:personas",
   CURRENT_ITINERARY: "trip-planner:current-itinerary",
   TRIP_HISTORY: "trip-planner:trip-history",
-  CONVERSATIONS: "trip-planner:conversations"
+  CONVERSATIONS: "trip-planner:conversations",
 };
 ```
 
 ### Migration Mapping
 
-| localStorage Key | Database Table | Notes |
-|------------------|----------------|-------|
-| `personas` | `user_personas.persona_types` | Move from browser to user account |
-| `conversations` | `conversations` table | Messages nested in JSONB |
-| `trip-history` | `trips` table | Places normalized, JSONB references |
-| `current-itinerary` | Temporary UI state | Not persisted in DB |
+| localStorage Key    | Database Table                | Notes                               |
+| ------------------- | ----------------------------- | ----------------------------------- |
+| `personas`          | `user_personas.persona_types` | Move from browser to user account   |
+| `conversations`     | `conversations` table         | Messages nested in JSONB            |
+| `trip-history`      | `trips` table                 | Places normalized, JSONB references |
+| `current-itinerary` | Temporary UI state            | Not persisted in DB                 |
 
 ### Migration Strategy
 
@@ -738,22 +737,22 @@ async function migrateUserData() {
   const userId = await getCurrentUserId();
 
   // 1. Export localStorage
-  const personas = JSON.parse(localStorage.getItem('trip-planner:personas'));
-  const conversations = JSON.parse(localStorage.getItem('trip-planner:conversations'));
-  const trips = JSON.parse(localStorage.getItem('trip-planner:trip-history'));
+  const personas = JSON.parse(localStorage.getItem("trip-planner:personas"));
+  const conversations = JSON.parse(localStorage.getItem("trip-planner:conversations"));
+  const trips = JSON.parse(localStorage.getItem("trip-planner:trip-history"));
 
   // 2. Upload to migration endpoint
-  const response = await fetch('/api/migrate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ personas, conversations, trips })
+  const response = await fetch("/api/migrate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ personas, conversations, trips }),
   });
 
   if (response.ok) {
     // 3. Clear localStorage after successful migration
-    localStorage.removeItem('trip-planner:personas');
-    localStorage.removeItem('trip-planner:conversations');
-    localStorage.removeItem('trip-planner:trip-history');
+    localStorage.removeItem("trip-planner:personas");
+    localStorage.removeItem("trip-planner:conversations");
+    localStorage.removeItem("trip-planner:trip-history");
 
     // 4. Reload from database
     window.location.reload();
@@ -768,6 +767,7 @@ async function migrateUserData() {
 **None** - All major architectural decisions have been finalized for MVP implementation.
 
 The schema is ready for implementation with clear specifications for:
+
 - Table structures and constraints
 - Indexing strategy
 - Data flow and caching logic

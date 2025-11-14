@@ -10,11 +10,9 @@ import { ValidationError } from "@/infrastructure/common/http/validation";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
 import { UnexpectedError } from "@/domain/common/errors";
+import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
-
-// Hardcoded user ID for development (TODO: Replace with real auth)
-const DEV_USER_ID = "0bbf70aa-4389-428d-b127-6cf505535dd7";
 
 const validateRequest = (body: unknown) =>
   Effect.gen(function* () {

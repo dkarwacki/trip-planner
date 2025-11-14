@@ -1,5 +1,6 @@
 # Learning new things
-Description of who i am: 
+
+Description of who i am:
 @/.ai/who_am_i.md
 
 I would like to understand a new topic with your help.

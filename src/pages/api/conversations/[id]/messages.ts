@@ -6,10 +6,7 @@ import {
   UpdateConversationMessagesCommandSchema,
   UpdateConversationMessagesResponseSchema,
 } from "@/infrastructure/plan/api/schemas";
-
-// Hardcoded development user ID
-// TODO: Replace with real authentication when auth is implemented
-const DEV_USER_ID = "00000000-0000-0000-0000-000000000000";
+import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 

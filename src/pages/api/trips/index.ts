@@ -1,9 +1,6 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
-import {
-  type TripListResponseDTO,
-  type TripDetailDTO,
-} from "@/infrastructure/plan/api";
+import { type TripListResponseDTO, type TripDetailDTO } from "@/infrastructure/plan/api";
 import { TripRepository, type TripDAO } from "@/infrastructure/plan/database";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
@@ -11,11 +8,9 @@ import { UnexpectedError } from "@/domain/common/errors";
 import type { Place } from "@/domain/common/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import { TripId, ConversationId } from "@/domain/plan/models";
+import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
-
-// Hardcoded user ID for development (TODO: Replace with real auth)
-const DEV_USER_ID = "0bbf70aa-4389-428d-b127-6cf505535dd7";
 
 /**
  * Convert domain Place[] to PlaceDAO[] for storage
@@ -29,7 +24,7 @@ function placesToPlaceDAOs(places: Place[]) {
     lng: place.longitude,
     plannedAttractions: [],
     plannedRestaurants: [],
-    photos: place.photos?.map(photo => ({
+    photos: place.photos?.map((photo) => ({
       reference: photo.reference,
       width: photo.width,
       height: photo.height,

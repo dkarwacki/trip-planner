@@ -9,10 +9,7 @@ import {
   DeleteConversationResponseSchema,
 } from "@/infrastructure/plan/api/schemas";
 import { AppRuntime } from "@/infrastructure/common/runtime";
-
-// Hardcoded development user ID
-// TODO: Replace with real authentication when auth is implemented
-const DEV_USER_ID = "00000000-0000-0000-0000-000000000000";
+import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -114,7 +111,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
   const program = Effect.gen(function* () {
     const conversationRepo = yield* ConversationRepository;
-    
+
     // Get current conversation
     const conversation = yield* conversationRepo.findById(DEV_USER_ID, id);
 

@@ -134,6 +134,7 @@ The structure below uses `{feature}` as a generic pattern applicable to any feat
 The architecture enforces clear data flow with strict layer separation:
 
 **1. API Route (infrastructure adapter):**
+
 - Receives raw HTTP request
 - Validates using `infrastructure/*/api/schemas.ts` → gets typed DTO
 - **Maps DTO to domain type** using `toDomain` mappers from `infrastructure/*/api/mappers`
@@ -141,6 +142,7 @@ The architecture enforces clear data flow with strict layer separation:
 - Maps Effect result to HTTP response
 
 **2. Use Case:**
+
 - Receives **domain type** as input
 - NO infrastructure dependencies - only domain types
 - No validation needed - data is pre-validated and mapped
@@ -148,11 +150,13 @@ The architecture enforces clear data flow with strict layer separation:
 - Returns domain models or results
 
 **3. Response Mapping:**
+
 - Map domain results to response DTOs if needed
 - Use infrastructure response schemas for transforms
 - Return HTTP response
 
 **Key Principles:**
+
 - Validation happens ONCE at the infrastructure boundary
 - DTO→Domain mapping happens in infrastructure layer (`toDomain` mappers)
 - Application layer depends ONLY on domain types

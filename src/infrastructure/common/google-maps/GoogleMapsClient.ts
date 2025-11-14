@@ -161,13 +161,19 @@ export const GoogleMapsClientLive = Layer.effect(
           try: () => validateSearchRadius(radius),
           catch: (error) =>
             new AttractionsAPIError(error instanceof ZodError ? error.errors[0].message : "Invalid radius"),
-        });
+        }).pipe(
+          Effect.tapError((error) => Effect.logError("nearbySearch: Invalid radius", { radius, error: error.message }))
+        );
 
         yield* Effect.try({
           try: () => validateCoordinates(lat, lng),
           catch: (error) =>
             new AttractionsAPIError(error instanceof ZodError ? error.errors[0].message : "Invalid coordinates"),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("nearbySearch: Invalid coordinates", { lat, lng, error: error.message })
+          )
+        );
 
         const isRestaurants = isRestaurantSearch(types);
         const allResults: Attraction[] = [];
@@ -204,12 +210,26 @@ export const GoogleMapsClientLive = Layer.effect(
             }),
           catch: (error) =>
             new AttractionsAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("nearbySearch: Network error", { lat, lng, radius, types, error: error.message })
+          )
+        );
 
         const json = yield* Effect.tryPromise({
           try: () => response.json(),
           catch: () => new AttractionsAPIError("Failed to parse API response"),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("nearbySearch: Failed to parse API response", {
+              lat,
+              lng,
+              radius,
+              types,
+              error: error.message,
+            })
+          )
+        );
 
         const data = yield* Effect.try({
           try: () => NearbySearchResponseSchema.parse(json),
@@ -217,7 +237,11 @@ export const GoogleMapsClientLive = Layer.effect(
             new AttractionsAPIError(
               error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
             ),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("nearbySearch: Schema validation failed", { lat, lng, radius, types, error: error.message })
+          )
+        );
 
         // Process results from Places API
         for (const place of data.places) {
@@ -226,6 +250,7 @@ export const GoogleMapsClientLive = Layer.effect(
 
         if (allResults.length === 0) {
           const searchType = isRestaurants ? "restaurants" : "attractions";
+          yield* Effect.logWarning("nearbySearch: No results found", { lat, lng, radius, types, searchType });
           return yield* Effect.fail(new NoAttractionsFoundError({ lat, lng }, searchType));
         }
 
@@ -242,7 +267,7 @@ export const GoogleMapsClientLive = Layer.effect(
         const validatedQuery = yield* Effect.try({
           try: () => validateNonEmptyString(query),
           catch: (error) => new PlaceNotFoundError(error instanceof ZodError ? error.errors[0].message : query),
-        });
+        }).pipe(Effect.tapError(() => Effect.logError("geocode: Invalid query", { query })));
 
         const encodedQuery = encodeURIComponent(validatedQuery);
         const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedQuery}&key=${apiKey}`;
@@ -251,12 +276,20 @@ export const GoogleMapsClientLive = Layer.effect(
           try: () => fetch(url),
           catch: (error) =>
             new PlacesAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("geocode: Network error", { query: validatedQuery, error: error.message })
+          )
+        );
 
         const json = yield* Effect.tryPromise({
           try: () => response.json(),
           catch: () => new PlacesAPIError("Failed to parse API response"),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("geocode: Failed to parse API response", { query: validatedQuery, error: error.message })
+          )
+        );
 
         const data = yield* Effect.try({
           try: () => GeocodeResponseSchema.parse(json),
@@ -264,18 +297,29 @@ export const GoogleMapsClientLive = Layer.effect(
             new PlacesAPIError(
               error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
             ),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("geocode: Schema validation failed", { query: validatedQuery, error: error.message })
+          )
+        );
 
         if (data.status === "ZERO_RESULTS") {
+          yield* Effect.logWarning("geocode: Zero results", { query: validatedQuery });
           return yield* Effect.fail(new PlaceNotFoundError(query));
         }
 
         if (data.status !== "OK") {
           const errorMessage = data.error_message || `Geocoding API error: ${data.status}`;
+          yield* Effect.logError("geocode: API error", {
+            query: validatedQuery,
+            status: data.status,
+            error: errorMessage,
+          });
           return yield* Effect.fail(new PlacesAPIError(errorMessage));
         }
 
         if (data.results.length === 0) {
+          yield* Effect.logWarning("geocode: Empty results", { query: validatedQuery });
           return yield* Effect.fail(new PlaceNotFoundError(query));
         }
 
@@ -305,7 +349,11 @@ export const GoogleMapsClientLive = Layer.effect(
           try: () => validateCoordinates(lat, lng),
           catch: (error) =>
             new GeocodingError(error instanceof ZodError ? error.errors[0].message : "Invalid coordinates"),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("reverseGeocode: Invalid coordinates", { lat, lng, error: error.message })
+          )
+        );
 
         // Use reverse geocoding
         const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
@@ -314,12 +362,20 @@ export const GoogleMapsClientLive = Layer.effect(
           try: () => fetch(url),
           catch: (error) =>
             new GeocodingError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("reverseGeocode: Network error", { lat, lng, error: error.message })
+          )
+        );
 
         const json = yield* Effect.tryPromise({
           try: () => response.json(),
           catch: () => new GeocodingError("Failed to parse API response"),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("reverseGeocode: Failed to parse API response", { lat, lng, error: error.message })
+          )
+        );
 
         const data = yield* Effect.try({
           try: () => GeocodeResponseSchema.parse(json),
@@ -327,18 +383,25 @@ export const GoogleMapsClientLive = Layer.effect(
             new GeocodingError(
               error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
             ),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("reverseGeocode: Schema validation failed", { lat, lng, error: error.message })
+          )
+        );
 
         if (data.status === "ZERO_RESULTS") {
+          yield* Effect.logWarning("reverseGeocode: Zero results", { lat, lng });
           return yield* Effect.fail(new NoResultsError(lat, lng));
         }
 
         if (data.status !== "OK") {
           const errorMessage = data.error_message || `Geocoding API error: ${data.status}`;
+          yield* Effect.logError("reverseGeocode: API error", { lat, lng, status: data.status, error: errorMessage });
           return yield* Effect.fail(new GeocodingError(errorMessage));
         }
 
         if (data.results.length === 0) {
+          yield* Effect.logWarning("reverseGeocode: Empty results", { lat, lng });
           return yield* Effect.fail(new NoResultsError(lat, lng));
         }
 
@@ -369,7 +432,9 @@ export const GoogleMapsClientLive = Layer.effect(
           try: () => validateNonEmptyString(query),
           catch: (error) =>
             new AttractionsAPIError(error instanceof ZodError ? error.errors[0].message : "Invalid query"),
-        });
+        }).pipe(
+          Effect.tapError((error) => Effect.logError("textSearch: Invalid query", { query, error: error.message }))
+        );
 
         // Use Text Search API (New)
         const url = `https://places.googleapis.com/v1/places:searchText`;
@@ -397,12 +462,30 @@ export const GoogleMapsClientLive = Layer.effect(
             }),
           catch: (error) =>
             new AttractionsAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("textSearch: Network error", {
+              query: validatedQuery,
+              includePhotos,
+              requireRatings,
+              error: error.message,
+            })
+          )
+        );
 
         const json = yield* Effect.tryPromise({
           try: () => response.json(),
           catch: () => new AttractionsAPIError("Failed to parse API response"),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("textSearch: Failed to parse API response", {
+              query: validatedQuery,
+              includePhotos,
+              requireRatings,
+              error: error.message,
+            })
+          )
+        );
 
         const data = yield* Effect.try({
           try: () => TextSearchResponseSchema.parse(json),
@@ -410,11 +493,22 @@ export const GoogleMapsClientLive = Layer.effect(
             new AttractionsAPIError(
               error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
             ),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("textSearch: Schema validation failed", {
+              query: validatedQuery,
+              includePhotos,
+              requireRatings,
+              error: error.message,
+            })
+          )
+        );
 
         if (data.places.length === 0) {
-          yield* Effect.logWarning("Text Search returned no results", {
-            query,
+          yield* Effect.logWarning("textSearch: No results found", {
+            query: validatedQuery,
+            includePhotos,
+            requireRatings,
           });
           return yield* Effect.fail(new AttractionNotFoundError(query));
         }
@@ -423,22 +517,25 @@ export const GoogleMapsClientLive = Layer.effect(
 
         // Validate location is present
         if (!place.location) {
-          yield* Effect.logWarning("Text Search result missing location", {
-            query,
+          yield* Effect.logWarning("textSearch: Result missing location", {
+            query: validatedQuery,
             placeId: place.id,
             placeName: place.displayName?.text,
+            includePhotos,
+            requireRatings,
           });
           return yield* Effect.fail(new AttractionNotFoundError(query));
         }
 
         // Validate ratings if required (for attractions/restaurants) but not for geographic locations (towns/cities)
         if (requireRatings && (!place.rating || !place.userRatingCount)) {
-          yield* Effect.logWarning("Text Search result missing required ratings", {
-            query,
+          yield* Effect.logWarning("textSearch: Result missing required ratings", {
+            query: validatedQuery,
             placeId: place.id,
             placeName: place.displayName?.text,
             hasRating: !!place.rating,
             hasUserRatingCount: !!place.userRatingCount,
+            includePhotos,
             requireRatings,
           });
           return yield* Effect.fail(new AttractionNotFoundError(query));
@@ -496,7 +593,7 @@ export const GoogleMapsClientLive = Layer.effect(
         const validatedQuery = yield* Effect.try({
           try: () => validateNonEmptyString(query),
           catch: (error) => new PlaceNotFoundError(error instanceof ZodError ? error.errors[0].message : query),
-        });
+        }).pipe(Effect.tapError(() => Effect.logError("searchPlace: Invalid query", { query })));
 
         // Use Text Search API (New)
         const url = `https://places.googleapis.com/v1/places:searchText`;
@@ -518,12 +615,23 @@ export const GoogleMapsClientLive = Layer.effect(
             }),
           catch: (error) =>
             new PlacesAPIError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("searchPlace: Network error", { query: validatedQuery, error: error.message })
+          )
+        );
 
         const json = yield* Effect.tryPromise({
           try: () => response.json(),
           catch: () => new PlacesAPIError("Failed to parse API response"),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("searchPlace: Failed to parse API response", {
+              query: validatedQuery,
+              error: error.message,
+            })
+          )
+        );
 
         const data = yield* Effect.try({
           try: () => TextSearchResponseSchema.parse(json),
@@ -531,15 +639,24 @@ export const GoogleMapsClientLive = Layer.effect(
             new PlacesAPIError(
               error instanceof ZodError ? `Invalid API response: ${error.errors[0].message}` : "Invalid API response"
             ),
-        });
+        }).pipe(
+          Effect.tapError((error) =>
+            Effect.logError("searchPlace: Schema validation failed", { query: validatedQuery, error: error.message })
+          )
+        );
 
         if (data.places.length === 0) {
+          yield* Effect.logWarning("searchPlace: No results found", { query: validatedQuery });
           return yield* Effect.fail(new PlaceNotFoundError(query));
         }
 
         const result = data.places[0];
 
         if (!result.location) {
+          yield* Effect.logWarning("searchPlace: Result missing location", {
+            query: validatedQuery,
+            placeId: result.id,
+          });
           return yield* Effect.fail(new PlaceNotFoundError(query));
         }
 

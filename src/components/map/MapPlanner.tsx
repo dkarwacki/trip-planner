@@ -142,10 +142,7 @@ const MapContent = ({
 
         if (!currentTripId) {
           // Create new trip on first place add
-          const newTripId = await createTrip(
-            placesToSave,
-            currentConversationId || undefined
-          );
+          const newTripId = await createTrip(placesToSave, currentConversationId || undefined);
 
           setCurrentTripId(newTripId);
           console.log("[MapPlanner] Created new trip:", newTripId);

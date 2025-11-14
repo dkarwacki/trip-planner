@@ -7,11 +7,9 @@ import { AppRuntime } from "@/infrastructure/common/runtime";
 import { UnexpectedError } from "@/domain/common/errors";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import { TripId, ConversationId } from "@/domain/plan/models";
+import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
-
-// Hardcoded user ID for development (TODO: Replace with real auth)
-const DEV_USER_ID = "0bbf70aa-4389-428d-b127-6cf505535dd7";
 
 /**
  * Convert TripDAO to TripDetailDTO for response

@@ -44,7 +44,7 @@ export const getUserPersonas = async (): Promise<PersonaType[]> => {
   }
 
   // Convert plain strings from API to branded domain types
-  return data.persona_types.map(p => PersonaTypeBrand(p));
+  return data.persona_types.map((p) => PersonaTypeBrand(p));
 };
 
 /**

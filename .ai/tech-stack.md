@@ -19,11 +19,13 @@
 ## Backend Architecture
 
 ### Clean Architecture (Feature-based)
+
 - **Domain Layer** - Pure business logic (models, errors, scoring algorithms)
 - **Application Layer** - Use cases and orchestration
 - **Infrastructure Layer** - External services, I/O operations
 
 ### Effect Ecosystem
+
 - **Effect 3.18** - Functional effect system for type-safe error handling
 - **Server-side only** - Client uses plain async/await
 

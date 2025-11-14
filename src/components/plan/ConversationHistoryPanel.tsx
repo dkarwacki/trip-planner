@@ -24,7 +24,9 @@ export default function ConversationHistoryPanel({
   const isEmpty = conversations.length === 0;
 
   // Store trips for each conversation
-  const [conversationTrips, setConversationTrips] = useState<Map<ConversationId, { id: string; placeCount: number } | null>>(new Map());
+  const [conversationTrips, setConversationTrips] = useState<
+    Map<ConversationId, { id: string; placeCount: number } | null>
+  >(new Map());
 
   // Load trips for all conversations
   useEffect(() => {

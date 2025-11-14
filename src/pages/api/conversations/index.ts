@@ -8,10 +8,7 @@ import {
   ConversationDetailSchema,
 } from "@/infrastructure/plan/api/schemas";
 import { AppRuntime } from "@/infrastructure/common/runtime";
-
-// Hardcoded development user ID
-// TODO: Replace with real authentication when auth is implemented
-const DEV_USER_ID = "00000000-0000-0000-0000-000000000000";
+import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -23,7 +20,7 @@ export const GET: APIRoute = async () => {
   const program = Effect.gen(function* () {
     // Get the repository service instance
     const conversationRepo = yield* ConversationRepository;
-    
+
     // Get all conversations for user
     const conversations = yield* conversationRepo.findAll(DEV_USER_ID);
 
@@ -115,7 +112,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Get the repository service instance
     const conversationRepo = yield* ConversationRepository;
-    
+
     // Create the conversation
     yield* conversationRepo.create(DEV_USER_ID, conversationData);
 

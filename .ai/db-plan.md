@@ -3,11 +3,13 @@
 ## Overview
 
 This schema implements a hybrid architecture combining:
+
 - **Normalized tables** for cacheable reference data (places, attractions)
 - **JSONB columns** for flexible, embedded structures (messages, trip places)
 - **Supabase Auth** for user management
 
 This design optimizes for:
+
 - API call efficiency through persistent caching
 - Data reuse across trips and users
 - Simple atomic updates for auto-save
@@ -21,16 +23,17 @@ This design optimizes for:
 
 Stores persona preferences per user (user context, not conversation-specific).
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| user_id | UUID | PRIMARY KEY, REFERENCES auth.users(id) ON DELETE CASCADE | User identifier from Supabase Auth |
-| persona_types | JSONB | NOT NULL, DEFAULT '["general_tourist"]' | Array of selected persona types |
-| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Record creation timestamp |
-| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last modification timestamp |
+| Column        | Type        | Constraints                                              | Description                        |
+| ------------- | ----------- | -------------------------------------------------------- | ---------------------------------- |
+| user_id       | UUID        | PRIMARY KEY, REFERENCES auth.users(id) ON DELETE CASCADE | User identifier from Supabase Auth |
+| persona_types | JSONB       | NOT NULL, DEFAULT '["general_tourist"]'                  | Array of selected persona types    |
+| created_at    | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                                  | Record creation timestamp          |
+| updated_at    | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                                  | Last modification timestamp        |
 
 **Purpose:** Store user's selected persona preferences that persist across sessions. Conversations snapshot these at creation time.
 
 **Valid persona types:**
+
 - `general_tourist`
 - `nature_lover`
 - `art_enthusiast`
@@ -41,6 +44,7 @@ Stores persona preferences per user (user context, not conversation-specific).
 - `photography_enthusiast`
 
 **Example:**
+
 ```json
 {
   "user_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -56,19 +60,20 @@ Stores persona preferences per user (user context, not conversation-specific).
 
 Stores chat conversations with messages embedded as JSONB.
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique conversation identifier |
-| user_id | UUID | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | Owner of the conversation |
-| title | TEXT | NOT NULL | Conversation title |
-| personas | JSONB | NOT NULL, DEFAULT '["general_tourist"]' | Persona snapshot at creation time |
-| messages | JSONB | NOT NULL, DEFAULT '[]' | Array of message objects |
-| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Record creation timestamp |
-| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last modification timestamp |
+| Column     | Type        | Constraints                                           | Description                       |
+| ---------- | ----------- | ----------------------------------------------------- | --------------------------------- |
+| id         | UUID        | PRIMARY KEY, DEFAULT gen_random_uuid()                | Unique conversation identifier    |
+| user_id    | UUID        | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | Owner of the conversation         |
+| title      | TEXT        | NOT NULL                                              | Conversation title                |
+| personas   | JSONB       | NOT NULL, DEFAULT '["general_tourist"]'               | Persona snapshot at creation time |
+| messages   | JSONB       | NOT NULL, DEFAULT '[]'                                | Array of message objects          |
+| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                               | Record creation timestamp         |
+| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                               | Last modification timestamp       |
 
 **Purpose:** Store complete conversation history with AI chat. Messages are embedded for atomic updates and simple loading.
 
 **Message structure (JSONB):**
+
 ```json
 [
   {
@@ -96,25 +101,27 @@ Stores chat conversations with messages embedded as JSONB.
 
 Normalized cache table for Google Maps place data (cities, landmarks, districts, etc.).
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Internal place identifier |
-| google_place_id | TEXT | UNIQUE NOT NULL | Google Maps Place ID |
-| name | TEXT | NOT NULL | Place name |
-| latitude | FLOAT | NOT NULL, CHECK (latitude >= -90 AND latitude <= 90) | Latitude coordinate |
-| longitude | FLOAT | NOT NULL, CHECK (longitude >= -180 AND longitude <= 180) | Longitude coordinate |
-| photos | JSONB | | Array of photo references from Google Maps |
-| validation_status | TEXT | CHECK (validation_status IN ('verified', 'not_found', 'partial')) | Validation status from Google Maps |
-| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Record creation timestamp |
-| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last modification timestamp |
-| last_updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last API data refresh timestamp |
+| Column            | Type        | Constraints                                                       | Description                                |
+| ----------------- | ----------- | ----------------------------------------------------------------- | ------------------------------------------ |
+| id                | UUID        | PRIMARY KEY, DEFAULT gen_random_uuid()                            | Internal place identifier                  |
+| google_place_id   | TEXT        | UNIQUE NOT NULL                                                   | Google Maps Place ID                       |
+| name              | TEXT        | NOT NULL                                                          | Place name                                 |
+| latitude          | FLOAT       | NOT NULL, CHECK (latitude >= -90 AND latitude <= 90)              | Latitude coordinate                        |
+| longitude         | FLOAT       | NOT NULL, CHECK (longitude >= -180 AND longitude <= 180)          | Longitude coordinate                       |
+| photos            | JSONB       |                                                                   | Array of photo references from Google Maps |
+| validation_status | TEXT        | CHECK (validation_status IN ('verified', 'not_found', 'partial')) | Validation status from Google Maps         |
+| created_at        | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                                           | Record creation timestamp                  |
+| updated_at        | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                                           | Last modification timestamp                |
+| last_updated_at   | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                                           | Last API data refresh timestamp            |
 
 **Purpose:**
+
 - Cache Google Maps API responses to minimize API calls
 - Enable data reuse when same place appears in multiple trips
 - Track validation status and data freshness (7-day refresh policy)
 
 **Example:**
+
 ```json
 {
   "id": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
@@ -122,7 +129,7 @@ Normalized cache table for Google Maps place data (cities, landmarks, districts,
   "name": "Paris, France",
   "latitude": 48.856614,
   "longitude": 2.3522219,
-  "photos": [{"photoReference": "AeJxP123...", "width": 1600, "height": 1200}],
+  "photos": [{ "photoReference": "AeJxP123...", "width": 1600, "height": 1200 }],
   "validation_status": "verified",
   "last_updated_at": "2025-11-09T14:30:00Z"
 }
@@ -134,33 +141,35 @@ Normalized cache table for Google Maps place data (cities, landmarks, districts,
 
 Normalized cache table for attractions AND restaurants from Google Maps API.
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Internal attraction identifier |
-| google_place_id | TEXT | UNIQUE NOT NULL | Google Maps Place ID |
-| type | TEXT | NOT NULL, CHECK (type IN ('attraction', 'restaurant')) | Attraction or restaurant |
-| name | TEXT | NOT NULL | Attraction/restaurant name |
-| rating | FLOAT | | Google Maps rating (0-5) |
-| user_ratings_total | INTEGER | | Number of user ratings |
-| types | JSONB | | Array of Google Maps place types |
-| vicinity | TEXT | | Address or vicinity description |
-| price_level | INTEGER | CHECK (price_level >= 0 AND price_level <= 4) | Price level (0-4) |
-| latitude | FLOAT | NOT NULL, CHECK (latitude >= -90 AND latitude <= 90) | Latitude coordinate |
-| longitude | FLOAT | NOT NULL, CHECK (longitude >= -180 AND longitude <= 180) | Longitude coordinate |
-| photos | JSONB | | Array of photo objects from Google Maps |
-| quality_score | FLOAT | | Calculated quality score |
-| diversity_score | FLOAT | | Calculated diversity score |
-| confidence_score | FLOAT | | Calculated confidence score |
-| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Record creation timestamp |
-| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last modification timestamp |
-| last_updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last API data refresh timestamp |
+| Column             | Type        | Constraints                                              | Description                             |
+| ------------------ | ----------- | -------------------------------------------------------- | --------------------------------------- |
+| id                 | UUID        | PRIMARY KEY, DEFAULT gen_random_uuid()                   | Internal attraction identifier          |
+| google_place_id    | TEXT        | UNIQUE NOT NULL                                          | Google Maps Place ID                    |
+| type               | TEXT        | NOT NULL, CHECK (type IN ('attraction', 'restaurant'))   | Attraction or restaurant                |
+| name               | TEXT        | NOT NULL                                                 | Attraction/restaurant name              |
+| rating             | FLOAT       |                                                          | Google Maps rating (0-5)                |
+| user_ratings_total | INTEGER     |                                                          | Number of user ratings                  |
+| types              | JSONB       |                                                          | Array of Google Maps place types        |
+| vicinity           | TEXT        |                                                          | Address or vicinity description         |
+| price_level        | INTEGER     | CHECK (price_level >= 0 AND price_level <= 4)            | Price level (0-4)                       |
+| latitude           | FLOAT       | NOT NULL, CHECK (latitude >= -90 AND latitude <= 90)     | Latitude coordinate                     |
+| longitude          | FLOAT       | NOT NULL, CHECK (longitude >= -180 AND longitude <= 180) | Longitude coordinate                    |
+| photos             | JSONB       |                                                          | Array of photo objects from Google Maps |
+| quality_score      | FLOAT       |                                                          | Calculated quality score                |
+| diversity_score    | FLOAT       |                                                          | Calculated diversity score              |
+| confidence_score   | FLOAT       |                                                          | Calculated confidence score             |
+| created_at         | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                                  | Record creation timestamp               |
+| updated_at         | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                                  | Last modification timestamp             |
+| last_updated_at    | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                                  | Last API data refresh timestamp         |
 
 **Purpose:**
+
 - Cache expensive Google Maps API responses for attractions and restaurants
 - Enable reuse of popular attractions across multiple users/trips
 - Store calculated scoring metrics (quality, diversity, confidence)
 
 **Example:**
+
 ```json
 {
   "id": "b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e",
@@ -172,9 +181,9 @@ Normalized cache table for attractions AND restaurants from Google Maps API.
   "types": ["tourist_attraction", "point_of_interest"],
   "vicinity": "Champ de Mars, 5 Avenue Anatole France",
   "price_level": 2,
-  "latitude": 48.858370,
+  "latitude": 48.85837,
   "longitude": 2.294481,
-  "photos": [{"photoReference": "AeJxP...", "width": 1600, "height": 1200}],
+  "photos": [{ "photoReference": "AeJxP...", "width": 1600, "height": 1200 }],
   "quality_score": 0.95,
   "diversity_score": 0.87,
   "confidence_score": 0.92,
@@ -188,34 +197,31 @@ Normalized cache table for attractions AND restaurants from Google Maps API.
 
 Stores user trip plans with embedded JSONB references to places and attractions.
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique trip identifier |
-| user_id | UUID | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE | Owner of the trip |
-| conversation_id | UUID | UNIQUE, REFERENCES conversations(id) ON DELETE SET NULL | Optional link to source conversation |
-| title | TEXT | NOT NULL | Trip title (format: "Trip Plan - YYYY-MM-DD HH:MM") |
-| places_data | JSONB | NOT NULL, DEFAULT '[]' | Array of place references with planned items |
-| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Record creation timestamp |
-| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Last modification timestamp |
+| Column          | Type        | Constraints                                             | Description                                         |
+| --------------- | ----------- | ------------------------------------------------------- | --------------------------------------------------- |
+| id              | UUID        | PRIMARY KEY, DEFAULT gen_random_uuid()                  | Unique trip identifier                              |
+| user_id         | UUID        | NOT NULL, REFERENCES auth.users(id) ON DELETE CASCADE   | Owner of the trip                                   |
+| conversation_id | UUID        | UNIQUE, REFERENCES conversations(id) ON DELETE SET NULL | Optional link to source conversation                |
+| title           | TEXT        | NOT NULL                                                | Trip title (format: "Trip Plan - YYYY-MM-DD HH:MM") |
+| places_data     | JSONB       | NOT NULL, DEFAULT '[]'                                  | Array of place references with planned items        |
+| created_at      | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                                 | Record creation timestamp                           |
+| updated_at      | TIMESTAMPTZ | NOT NULL, DEFAULT NOW()                                 | Last modification timestamp                         |
 
 **Purpose:**
+
 - Store user's trip plans with ordered places
 - Embed references to places and planned attractions/restaurants
 - Enable atomic updates for auto-save functionality
 
 **places_data structure (JSONB):**
+
 ```json
 [
   {
     "placeId": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
     "displayOrder": 0,
-    "attractionIds": [
-      "b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e",
-      "c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f"
-    ],
-    "restaurantIds": [
-      "d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a"
-    ]
+    "attractionIds": ["b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e", "c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f"],
+    "restaurantIds": ["d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a"]
   }
 ]
 ```
@@ -379,6 +385,7 @@ CREATE POLICY "Attractions are globally readable"
 #### Hybrid Normalized + JSONB Architecture
 
 **Rationale:**
+
 - **Normalized tables** (`places`, `attractions`) for cacheable reference data enable efficient API caching and data reuse across trips and users
 - **JSONB columns** (`messages`, `places_data`) for flexible, embedded structures enable atomic updates and mirror localStorage structure for easy migration
 - **Best of both worlds:** Normalized data for caching, JSONB for relationships
@@ -386,6 +393,7 @@ CREATE POLICY "Attractions are globally readable"
 #### Single `attractions` Table for Attractions + Restaurants
 
 **Rationale:**
+
 - Both share identical schema (name, rating, location, photos, scores)
 - Discriminated by `type` column ('attraction' or 'restaurant')
 - Simplifies queries and reduces table count
@@ -394,6 +402,7 @@ CREATE POLICY "Attractions are globally readable"
 #### JSONB Message Storage in Conversations
 
 **Rationale:**
+
 - Atomic updates (entire message array replaced)
 - No pagination needed for MVP (conversations stay reasonably short)
 - Simpler queries (no joins required to load conversation)
@@ -402,6 +411,7 @@ CREATE POLICY "Attractions are globally readable"
 #### JSONB Places Storage in Trips
 
 **Rationale:**
+
 - Simple atomic updates for auto-save (entire array replaced)
 - Maintains display order without complex sorting queries
 - Embeds planned attractions/restaurants within place context
@@ -414,6 +424,7 @@ CREATE POLICY "Attractions are globally readable"
 #### FLOAT for Coordinates (not DECIMAL)
 
 **Rationale:**
+
 - Sufficient precision for mapping applications (±0.00001° ≈ 1.1 meters)
 - Smaller storage footprint than DECIMAL(10,8)
 - Faster arithmetic operations
@@ -422,6 +433,7 @@ CREATE POLICY "Attractions are globally readable"
 #### TEXT for Content (not VARCHAR)
 
 **Rationale:**
+
 - No length limit (important for AI responses and conversations)
 - PostgreSQL internally handles TEXT and VARCHAR identically
 - Simpler schema (no arbitrary length decisions)
@@ -429,6 +441,7 @@ CREATE POLICY "Attractions are globally readable"
 #### JSONB for Arrays and Objects
 
 **Rationale:**
+
 - Efficient binary storage (faster than JSON)
 - Supports indexing and querying (if needed later)
 - Schema flexibility (personas, photos, messages)
@@ -441,12 +454,14 @@ CREATE POLICY "Attractions are globally readable"
 #### Application Layer Updates (No Triggers)
 
 **Rationale:**
+
 - Explicit `updated_at = NOW()` in UPDATE queries
 - No hidden side effects from database triggers
 - Easier to understand and debug
 - Simpler schema maintenance
 
 **Example:**
+
 ```sql
 UPDATE trips
 SET
@@ -458,6 +473,7 @@ WHERE id = $2;
 #### 7-Day Cache Freshness Policy
 
 **Rationale:**
+
 - Balance between API cost and data freshness
 - `last_updated_at` timestamp tracks last API refresh
 - Background job can identify and refresh stale data
@@ -470,6 +486,7 @@ WHERE id = $2;
 #### No RLS for MVP
 
 **Rationale:**
+
 - Simpler initial implementation
 - Application layer filtering by `user_id` sufficient for single-user flows
 - Can add RLS policies later when needed (collaboration features, sharing)
@@ -478,6 +495,7 @@ WHERE id = $2;
 #### CHECK Constraints for Data Validation
 
 **Rationale:**
+
 - Database-level enforcement of valid data ranges
 - Prevents invalid coordinates, price levels, validation statuses
 - Complements application-layer Zod validation
@@ -490,12 +508,14 @@ WHERE id = $2;
 #### API Call Minimization
 
 **Cache-first strategy:**
+
 1. Check database cache (`places`, `attractions`)
 2. If missing or stale (> 7 days), fetch from API
 3. UPSERT to cache
 4. Reuse cached data across trips and users
 
 **Benefits:**
+
 - Reduced API costs (Google Maps API is expensive)
 - Faster response times (database faster than API)
 - Offline capability (fallback to cached data)
@@ -503,22 +523,27 @@ WHERE id = $2;
 #### Strategic Indexing
 
 **User-scoped indexes** optimize common user flows:
+
 - `(user_id, created_at DESC)` for conversation/trip history
 
 **Cache lookup indexes** enable efficient existence checks:
+
 - Unique index on `google_place_id` for O(1) cache lookups
 
 **Staleness tracking** supports background refresh jobs:
+
 - Index on `last_updated_at` for identifying old cache entries
 
 #### Auto-Save Optimization
 
 **Client-side debouncing:**
+
 - 500ms debounce batches rapid changes
 - Reduces database write operations
 - Optimistic UI updates for instant feedback
 
 **Atomic JSONB updates:**
+
 - Entire `places_data` array replaced (no partial updates)
 - Simpler than managing JOIN table updates
 - Acceptable for typical trip sizes (< 50 places)
@@ -534,18 +559,18 @@ const STORAGE_KEYS = {
   PERSONAS: "trip-planner:personas",
   CURRENT_ITINERARY: "trip-planner:current-itinerary",
   TRIP_HISTORY: "trip-planner:trip-history",
-  CONVERSATIONS: "trip-planner:conversations"
+  CONVERSATIONS: "trip-planner:conversations",
 };
 ```
 
 #### Migration Mapping
 
-| localStorage Key | Database Table | Mapping Strategy |
-|------------------|----------------|------------------|
-| `personas` | `user_personas.persona_types` | Direct copy to JSONB array |
-| `conversations` | `conversations.messages` | Nest messages in JSONB |
-| `trip-history` | `trips` + `places` + `attractions` | Normalize places/attractions, build JSONB references |
-| `current-itinerary` | Temporary UI state | Not persisted (session-only) |
+| localStorage Key    | Database Table                     | Mapping Strategy                                     |
+| ------------------- | ---------------------------------- | ---------------------------------------------------- |
+| `personas`          | `user_personas.persona_types`      | Direct copy to JSONB array                           |
+| `conversations`     | `conversations.messages`           | Nest messages in JSONB                               |
+| `trip-history`      | `trips` + `places` + `attractions` | Normalize places/attractions, build JSONB references |
+| `current-itinerary` | Temporary UI state                 | Not persisted (session-only)                         |
 
 #### Migration Process
 
@@ -586,6 +611,7 @@ const STORAGE_KEYS = {
 #### When to Refactor
 
 Consider refactoring to fully normalized schema if:
+
 - Average conversation length exceeds 100 messages → implement message pagination
 - Need to search messages across conversations → add full-text search
 - Need cross-trip analytics ("which trips include this place?") → normalize trip_places junction table
@@ -843,6 +869,7 @@ COMMENT ON COLUMN conversations.messages IS 'JSONB array: [{"id": "uuid", "role"
 ## Summary
 
 This schema is production-ready for MVP implementation with:
+
 - ✅ Clear separation between cacheable data (normalized) and user data (JSONB)
 - ✅ Efficient API caching strategy (7-day refresh policy)
 - ✅ Simple atomic updates for auto-save
