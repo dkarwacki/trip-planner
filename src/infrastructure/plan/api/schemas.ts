@@ -244,6 +244,37 @@ export const DeleteConversationResponseSchema = z
   }));
 
 /**
+ * Command schema for PUT /api/conversations/:id/messages
+ * Input: Update conversation messages (bulk update for auto-save)
+ * No transforms (command input)
+ */
+export const UpdateConversationMessagesCommandSchema = z.object({
+  messages: z.array(
+    z.object({
+      id: z.string(),
+      role: z.enum(["user", "assistant", "system"]),
+      content: z.string(),
+      timestamp: z.string(),
+      suggestedPlaces: z.array(PlaceSuggestionSchema).optional(),
+      thinkingProcess: z.array(z.string()).optional(),
+    })
+  ),
+});
+
+/**
+ * Response schema for PUT /api/conversations/:id/messages
+ */
+export const UpdateConversationMessagesResponseSchema = z
+  .object({
+    id: UUIDSchema,
+    updated_at: ISODateTimeSchema,
+  })
+  .transform((data) => ({
+    ...data,
+    id: ConversationId(data.id), // Transform to branded type
+  }));
+
+/**
  * Command schema for POST /api/plan (Travel Planning Chat)
  * Input: Send message to AI travel planning assistant
  * No transforms (command input)

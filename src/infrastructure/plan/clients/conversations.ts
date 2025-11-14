@@ -1,10 +1,9 @@
-import type { SavedConversation, ConversationId, ChatMessage } from "@/domain/plan/models";
-import { ConversationId as ConversationIdBrand, MessageId } from "@/domain/plan/models";
-import { PersonaType as PersonaTypeBrand } from "@/domain/plan/models";
+import type { SavedConversation, ConversationId, ChatMessage, PersonaType } from "@/domain/plan/models";
+import { ConversationId as ConversationIdBrand, MessageId, ConversationTimestamp } from "@/domain/plan/models";
 
 // API response types (matching server responses)
 interface ConversationListResponse {
-  conversations: Array<{
+  conversations: {
     id: string;
     user_id: string;
     title: string;
@@ -13,7 +12,7 @@ interface ConversationListResponse {
     created_at: string;
     updated_at: string;
     has_trip: boolean;
-  }>;
+  }[];
 }
 
 interface ConversationDetailResponse {
@@ -21,14 +20,26 @@ interface ConversationDetailResponse {
   user_id: string;
   title: string;
   personas: string[];
-  messages: Array<{
+  messages: {
     id: string;
     role: "user" | "assistant" | "system";
     content: string;
     timestamp: string;
-  }>;
+    suggestedPlaces?: any[];
+    thinkingProcess?: string[];
+  }[];
   created_at: string;
   updated_at: string;
+}
+
+interface UpdateMessagesResponse {
+  id: string;
+  updated_at: string;
+}
+
+interface DeleteResponse {
+  id: string;
+  deleted: boolean;
 }
 
 interface ErrorResponse {
@@ -44,15 +55,27 @@ function conversationDetailToSaved(detail: ConversationDetailResponse): SavedCon
     role: msg.role,
     content: msg.content,
     timestamp: new Date(msg.timestamp).getTime(),
+    suggestedPlaces: msg.suggestedPlaces?.map((place) => ({
+      id: place.place_id,
+      name: place.name,
+      description: place.reason || "",
+      reasoning: place.reason || "",
+      lat: place.lat,
+      lng: place.lng,
+      photos: place.photos,
+      validationStatus: place.validation_status,
+    })),
+    thinking: msg.thinkingProcess,
   }));
 
   return {
     id: ConversationIdBrand(detail.id),
     title: detail.title,
-    personas: detail.personas.map((p) => PersonaTypeBrand(p)),
     messages,
+    personas: detail.personas,
+    timestamp: ConversationTimestamp(new Date(detail.created_at).getTime()),
+    lastUpdated: ConversationTimestamp(new Date(detail.updated_at).getTime()),
     messageCount: messages.length,
-    lastUpdated: new Date(detail.updated_at).getTime(),
   };
 }
 
@@ -72,22 +95,23 @@ export const getAllConversations = async (): Promise<SavedConversation[]> => {
     throw new Error(data.error);
   }
 
-  // Convert to SavedConversation format (simplified without full messages)
+  // Convert to SavedConversation format (simplified without full message data)
   return data.conversations.map((conv) => ({
     id: ConversationIdBrand(conv.id),
     title: conv.title,
-    personas: conv.personas.map((p) => PersonaTypeBrand(p)),
     messages: [], // List view doesn't include full messages
+    personas: conv.personas,
+    timestamp: ConversationTimestamp(new Date(conv.created_at).getTime()),
+    lastUpdated: ConversationTimestamp(new Date(conv.updated_at).getTime()),
     messageCount: conv.message_count,
-    lastUpdated: new Date(conv.updated_at).getTime(),
   }));
 };
 
 /**
  * Get single conversation with full message history
  */
-export const getConversation = async (conversationId: ConversationId): Promise<SavedConversation> => {
-  const response = await fetch(`/api/conversations/${conversationId}`);
+export const getConversation = async (id: ConversationId): Promise<SavedConversation> => {
+  const response = await fetch(`/api/conversations/${id}`);
 
   if (!response.ok) {
     throw new Error(`Failed to load conversation: ${response.statusText}`);
@@ -103,23 +127,33 @@ export const getConversation = async (conversationId: ConversationId): Promise<S
 };
 
 /**
- * Create new conversation with initial message
- * Returns the created conversation with AI response
+ * Create new conversation with initial messages
+ * Returns the created conversation ID
  */
 export const createConversation = async (
-  title: string,
-  personas: string[],
-  initialMessage: string
-): Promise<SavedConversation> => {
+  messages: ChatMessage[],
+  personas: PersonaType[],
+  title?: string
+): Promise<ConversationId> => {
+  // Generate title if not provided
+  const conversationTitle =
+    title || (messages.length > 0 ? `Chat about ${messages[0].content.substring(0, 30)}...` : "New Conversation");
+
+  // Get the first user message as initial message
+  const firstMessage = messages.find((m) => m.role === "user");
+  if (!firstMessage) {
+    throw new Error("At least one user message is required to create a conversation");
+  }
+
   const response = await fetch("/api/conversations", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      title,
+      title: conversationTitle,
       personas,
-      initial_message: initialMessage,
+      initial_message: firstMessage.content,
     }),
   });
 
@@ -133,61 +167,43 @@ export const createConversation = async (
     throw new Error(data.error);
   }
 
-  return conversationDetailToSaved(data);
+  return ConversationIdBrand(data.id);
 };
 
 /**
- * Add message to existing conversation
- * Returns the new messages (user + AI response)
+ * Update conversation messages (bulk update for auto-save)
  */
-export const addMessage = async (
-  conversationId: ConversationId,
-  message: string
-): Promise<ChatMessage[]> => {
-  const response = await fetch(`/api/conversations/${conversationId}/messages`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ message }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to add message: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-
-  if ("error" in data) {
-    throw new Error(data.error);
-  }
-
-  // Convert new messages to domain format
-  return data.new_messages.map((msg: any) => ({
-    id: MessageId(msg.id),
-    role: msg.role,
-    content: msg.content,
-    timestamp: new Date(msg.timestamp).getTime(),
-  }));
-};
-
-/**
- * Update conversation metadata (title)
- */
-export const updateConversation = async (conversationId: ConversationId, title: string): Promise<void> => {
-  const response = await fetch(`/api/conversations/${conversationId}`, {
+export const updateConversationMessages = async (id: ConversationId, messages: ChatMessage[]): Promise<void> => {
+  const response = await fetch(`/api/conversations/${id}/messages`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({
+      messages: messages.map((msg) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.timestamp).toISOString(),
+        suggestedPlaces: msg.suggestedPlaces?.map((place) => ({
+          place_id: place.id,
+          name: place.name,
+          reason: place.reasoning,
+          lat: place.lat,
+          lng: place.lng,
+          photos: place.photos,
+          validation_status: place.validationStatus,
+        })),
+        thinkingProcess: msg.thinking,
+      })),
+    }),
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to update conversation: ${response.statusText}`);
+    throw new Error(`Failed to update conversation messages: ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data: UpdateMessagesResponse | ErrorResponse = await response.json();
 
   if ("error" in data) {
     throw new Error(data.error);
@@ -197,8 +213,8 @@ export const updateConversation = async (conversationId: ConversationId, title: 
 /**
  * Delete conversation
  */
-export const deleteConversation = async (conversationId: ConversationId): Promise<void> => {
-  const response = await fetch(`/api/conversations/${conversationId}`, {
+export const deleteConversation = async (id: ConversationId): Promise<void> => {
+  const response = await fetch(`/api/conversations/${id}`, {
     method: "DELETE",
   });
 
@@ -206,7 +222,7 @@ export const deleteConversation = async (conversationId: ConversationId): Promis
     throw new Error(`Failed to delete conversation: ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data: DeleteResponse | ErrorResponse = await response.json();
 
   if ("error" in data) {
     throw new Error(data.error);

@@ -39,6 +39,8 @@ import {
   AddMessageResponseSchema,
   UpdateConversationCommandSchema,
   UpdateConversationResponseSchema,
+  UpdateConversationMessagesCommandSchema,
+  UpdateConversationMessagesResponseSchema,
   DeleteConversationResponseSchema,
   ChatRequestCommandSchema,
   // Trip schemas
@@ -174,6 +176,20 @@ export type UpdateConversationCommandDTO = z.infer<typeof UpdateConversationComm
  * Note: Includes ConversationId branded type
  */
 export type UpdateConversationResponseDTO = z.infer<typeof UpdateConversationResponseSchema>;
+
+/**
+ * Command model for PUT /api/conversations/:id/messages
+ * Input: Update conversation messages (bulk update for auto-save)
+ * Derived from: UpdateConversationMessagesCommandSchema
+ */
+export type UpdateConversationMessagesCommandDTO = z.infer<typeof UpdateConversationMessagesCommandSchema>;
+
+/**
+ * Response DTO for PUT /api/conversations/:id/messages
+ * Derived from: UpdateConversationMessagesResponseSchema
+ * Note: Includes ConversationId branded type
+ */
+export type UpdateConversationMessagesResponseDTO = z.infer<typeof UpdateConversationMessagesResponseSchema>;
 
 /**
  * Response DTO for DELETE /api/conversations/:id

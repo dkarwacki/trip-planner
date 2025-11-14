@@ -11,17 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { MobileNavigation, type PlanTab, type MobileTab } from "@/components/common/MobileNavigation";
 import { Bot, MapPin, History } from "lucide-react";
-import {
-  saveCurrentItinerary,
-  loadCurrentItinerary,
-  clearCurrentItinerary,
-  saveConversation,
-  loadConversation,
-  loadAllConversations,
-  deleteConversation,
-} from "@/lib/common/storage";
+import { saveCurrentItinerary, loadCurrentItinerary, clearCurrentItinerary } from "@/lib/common/storage";
 import { getUserPersonas, updatePersonas } from "@/infrastructure/plan/clients";
 import { getTrip, createTrip, getTripForConversation } from "@/infrastructure/plan/clients/trips";
+import {
+  getAllConversations,
+  getConversation,
+  createConversation,
+  updateConversationMessages,
+  deleteConversation,
+} from "@/infrastructure/plan/clients/conversations";
 
 export default function ChatPage() {
   const [personas, setPersonas] = useState<PersonaType[]>([PERSONA_TYPES.GENERAL_TOURIST]);
@@ -62,15 +61,21 @@ export default function ChatPage() {
         // Keep default persona if loading fails
       }
 
-      const loadedConversations = loadAllConversations();
-      setConversationHistory(loadedConversations);
+      // Load conversations from database
+      try {
+        const loadedConversations = await getAllConversations();
+        setConversationHistory(loadedConversations);
+      } catch (error) {
+        console.error("Failed to load conversations:", error);
+        // Keep empty array if loading fails
+      }
 
       // Load conversation from URL params
       const params = new URLSearchParams(window.location.search);
       const conversationId = params.get("conversationId");
       if (conversationId) {
-        const conversation = loadConversation(conversationId as ConversationId);
-        if (conversation) {
+        try {
+          const conversation = await getConversation(conversationId as ConversationId);
           setCurrentConversationId(conversation.id);
           setConversationMessages(conversation.messages);
           setPersonas(conversation.personas.map((p) => PersonaTypeBrand(p)) as PersonaType[]);
@@ -86,6 +91,9 @@ export default function ChatPage() {
             console.error("Failed to load trip for conversation:", error);
             setItinerary([]);
           }
+        } catch (error) {
+          console.error("Failed to load conversation:", error);
+          // If conversation doesn't exist, start fresh
         }
       } else {
         // Load current itinerary only if no conversation is loaded
@@ -114,11 +122,16 @@ export default function ChatPage() {
   }, [itinerary]);
 
   // Conversation handlers
-  const handleMessagesChange = (messages: ChatMessage[]) => {
+  const handleMessagesChange = async (messages: ChatMessage[]) => {
     setConversationMessages(messages);
     // Auto-save conversation if it exists
     if (currentConversationId && messages.length > 0) {
-      saveConversation(messages, personas, undefined, currentConversationId);
+      try {
+        await updateConversationMessages(currentConversationId, messages);
+      } catch (error) {
+        console.error("Failed to auto-save conversation:", error);
+        // TODO: Show error toast to user
+      }
     }
   };
 
@@ -133,11 +146,24 @@ export default function ChatPage() {
     }
   };
 
-  const handleSaveAndProceed = () => {
+  const handleSaveAndProceed = async () => {
     if (conversationMessages.length > 0) {
-      // Save conversation (trips are now stored separately in database)
-      saveConversation(conversationMessages, personas, undefined, currentConversationId ?? undefined);
-      setConversationHistory(loadAllConversations());
+      try {
+        if (currentConversationId) {
+          // Update existing conversation
+          await updateConversationMessages(currentConversationId, conversationMessages);
+        } else {
+          // Create new conversation
+          const newId = await createConversation(conversationMessages, personas);
+          setCurrentConversationId(newId);
+        }
+        // Reload conversation list
+        const updated = await getAllConversations();
+        setConversationHistory(updated);
+      } catch (error) {
+        console.error("Failed to save conversation:", error);
+        // TODO: Show error toast to user
+      }
     }
     // If there's a pending conversation to load, load it; otherwise start new
     if (pendingConversationId) {
@@ -167,8 +193,8 @@ export default function ChatPage() {
   };
 
   const loadConversationById = async (conversationId: ConversationId) => {
-    const conversation = loadConversation(conversationId);
-    if (conversation) {
+    try {
+      const conversation = await getConversation(conversationId);
       setCurrentConversationId(conversation.id);
       setConversationMessages(conversation.messages);
       setPersonas(conversation.personas.map((p) => PersonaTypeBrand(p)) as PersonaType[]);
@@ -190,6 +216,9 @@ export default function ChatPage() {
       if (isMobile) {
         setMobileTab("assistant");
       }
+    } catch (error) {
+      console.error("Failed to load conversation:", error);
+      // TODO: Show error toast to user
     }
   };
 
@@ -213,12 +242,19 @@ export default function ChatPage() {
     }
   };
 
-  const handleDeleteConversation = (conversationId: ConversationId) => {
-    deleteConversation(conversationId);
-    setConversationHistory(loadAllConversations());
-    // If we're deleting the current conversation, start a new one
-    if (currentConversationId === conversationId) {
-      startNewConversation();
+  const handleDeleteConversation = async (conversationId: ConversationId) => {
+    try {
+      await deleteConversation(conversationId);
+      // Reload conversation list
+      const updated = await getAllConversations();
+      setConversationHistory(updated);
+      // If we're deleting the current conversation, start a new one
+      if (currentConversationId === conversationId) {
+        startNewConversation();
+      }
+    } catch (error) {
+      console.error("Failed to delete conversation:", error);
+      // TODO: Show error toast to user
     }
   };
 
@@ -242,13 +278,18 @@ export default function ChatPage() {
     if (itinerary.length === 0) return;
 
     try {
-      // Save or create conversation if we have messages (trips are stored separately in database)
+      // Save or create conversation if we have messages
       let conversationId = currentConversationId;
-      if (conversationMessages.length > 0 && !currentConversationId) {
-        conversationId = saveConversation(conversationMessages, personas);
-        setCurrentConversationId(conversationId);
-      } else if (conversationMessages.length > 0 && currentConversationId) {
-        saveConversation(conversationMessages, personas, undefined, currentConversationId);
+      if (conversationMessages.length > 0) {
+        if (!currentConversationId) {
+          // Create new conversation
+          conversationId = await createConversation(conversationMessages, personas);
+          setCurrentConversationId(conversationId);
+        } else {
+          // Update existing conversation
+          await updateConversationMessages(currentConversationId, conversationMessages);
+          conversationId = currentConversationId;
+        }
       }
 
       // Create trip in database (with or without conversation link)
