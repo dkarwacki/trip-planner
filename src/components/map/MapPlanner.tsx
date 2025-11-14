@@ -1209,7 +1209,7 @@ const MapContent = ({
               <div className="p-4 border-b space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex-1">
-                    <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} map={map} />
+                    <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} />
                   </div>
                   {currentConversationId && (
                     <Tooltip>
@@ -1506,7 +1506,7 @@ const MapContent = ({
               </div>
             </DrawerHeader>
             <div className="px-4 pb-3 space-y-2 flex-shrink-0">
-              <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} map={map} />
+              <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} disabled={isLoading} />
               {error && <p className="text-sm text-red-500">{error}</p>}
               {isLoading && <p className="text-sm text-muted-foreground">Loading place details...</p>}
 
