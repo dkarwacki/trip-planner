@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
 import {
   UpdatePersonasCommandSchema,
+  PersonaTypeSchema,
   type GetUserPersonasResponseDTO,
 } from "@/infrastructure/plan/api";
 import { UserPersonasRepository } from "@/infrastructure/plan/database";
@@ -48,9 +49,10 @@ export const GET: APIRoute = async () => {
     }
 
     // Map DAO to response DTO
+    // Validate each persona type from database to ensure type safety
     const response: GetUserPersonasResponseDTO = {
       user_id: data.userId,
-      persona_types: data.personaTypes,
+      persona_types: data.personaTypes.map((p) => PersonaTypeSchema.parse(p)),
       created_at: data.createdAt,
       updated_at: data.updatedAt,
     };

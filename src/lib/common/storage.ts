@@ -1,16 +1,9 @@
-import type { PersonaType, SavedTrip, SavedConversation, ConversationId, ChatMessage } from "@/domain/plan/models";
+import type { SavedConversation, ConversationId, ChatMessage } from "@/domain/plan/models";
 import type { Place } from "@/domain/common/models";
-import {
-  createSavedTrip,
-  updateTripPlaces,
-  createSavedConversation,
-  updateConversationMessages,
-  TripId,
-} from "@/domain/plan/models";
+import { createSavedConversation, updateConversationMessages } from "@/domain/plan/models";
 
 const STORAGE_KEYS = {
   CURRENT_ITINERARY: "trip-planner:current-itinerary",
-  TRIP_HISTORY: "trip-planner:trip-history",
   CONVERSATIONS: "trip-planner:conversations",
 } as const;
 
@@ -62,85 +55,17 @@ export const clearCurrentItinerary = (): void => {
   }
 };
 
-// Trip history storage
-export const saveTripToHistory = (places: Place[], conversationId?: ConversationId): string => {
-  if (typeof window === "undefined") return "";
-
-  try {
-    const trip = createSavedTrip(places, conversationId);
-    const history = loadTripHistory();
-
-    // Add new trip to the beginning (most recent first)
-    history.unshift(trip);
-
-    localStorage.setItem(STORAGE_KEYS.TRIP_HISTORY, JSON.stringify(history));
-    return trip.id;
-  } catch (error) {
-    console.error("Failed to save trip to history:", error);
-    return "";
-  }
-};
-
-export const loadTripHistory = (): SavedTrip[] => {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const json = localStorage.getItem(STORAGE_KEYS.TRIP_HISTORY);
-    return safeJsonParse(json, []);
-  } catch (error) {
-    console.error("Failed to load trip history:", error);
-    return [];
-  }
-};
-
-export const loadTripById = (id: string): SavedTrip | null => {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const history = loadTripHistory();
-    return history.find((trip) => trip.id === id) ?? null;
-  } catch (error) {
-    console.error("Failed to load trip by ID:", error);
-    return null;
-  }
-};
-
-export const updateTripInHistory = (tripId: string, places: Place[]): void => {
-  if (typeof window === "undefined") return;
-
-  try {
-    const history = loadTripHistory();
-    const tripIndex = history.findIndex((trip) => trip.id === tripId);
-
-    if (tripIndex !== -1) {
-      const updatedTrip = updateTripPlaces(history[tripIndex], places);
-      history[tripIndex] = updatedTrip;
-      localStorage.setItem(STORAGE_KEYS.TRIP_HISTORY, JSON.stringify(history));
-    }
-  } catch (error) {
-    console.error("Failed to update trip in history:", error);
-  }
-};
-
-export const deleteTripFromHistory = (tripId: string): void => {
-  if (typeof window === "undefined") return;
-
-  try {
-    const history = loadTripHistory();
-    const filteredHistory = history.filter((trip) => trip.id !== tripId);
-    localStorage.setItem(STORAGE_KEYS.TRIP_HISTORY, JSON.stringify(filteredHistory));
-  } catch (error) {
-    console.error("Failed to delete trip from history:", error);
-  }
-};
+// Trips moved to PostgreSQL - see src/infrastructure/plan/clients/trips.ts
+// API: GET/POST/PUT/DELETE /api/trips
 
 // Conversation storage
+// NOTE: Trips are now stored separately in PostgreSQL via /api/trips
+// Conversations in localStorage will be migrated to database in Phase 4
 export const saveConversation = (
   messages: ChatMessage[],
   personas: string[],
   title?: string,
-  existingId?: ConversationId,
-  places?: Place[]
+  existingId?: ConversationId
 ): ConversationId => {
   if (typeof window === "undefined") throw new Error("Cannot save conversation on server");
 
@@ -154,15 +79,6 @@ export const saveConversation = (
         const updated = updateConversationMessages(conversations[existingIndex], messages);
         conversations[existingIndex] = updated;
 
-        // Save/update trip if places provided
-        if (places && places.length > 0) {
-          const tripId = saveTripForConversation(existingId, places);
-          conversations[existingIndex] = {
-            ...conversations[existingIndex],
-            tripId: TripId(tripId),
-          };
-        }
-
         localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
         return existingId;
       }
@@ -170,12 +86,6 @@ export const saveConversation = (
 
     // Create new conversation
     const conversation = createSavedConversation(messages, personas, title);
-
-    // Save trip if places provided
-    if (places && places.length > 0) {
-      const tripId = saveTripToHistory(places, conversation.id);
-      conversation.tripId = TripId(tripId);
-    }
 
     conversations.unshift(conversation); // Most recent first
     localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
@@ -222,123 +132,6 @@ export const deleteConversation = (conversationId: ConversationId): void => {
   }
 };
 
-export const getTripsForConversation = (conversationId: ConversationId): SavedTrip[] => {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const trips = loadTripHistory();
-    return trips.filter((trip) => trip.conversationId === conversationId);
-  } catch (error) {
-    console.error("Failed to get trips for conversation:", error);
-    return [];
-  }
-};
-
-// Migration: Convert one-to-many to one-to-one relationship
-export const migrateConversationTrips = (): void => {
-  if (typeof window === "undefined") return;
-
-  try {
-    const conversations = loadAllConversations();
-    const trips = loadTripHistory();
-    let hasChanges = false;
-
-    for (const conversation of conversations) {
-      // Find all trips for this conversation
-      const conversationTrips = trips.filter((trip) => trip.conversationId === conversation.id);
-
-      if (conversationTrips.length > 1) {
-        // Keep first trip (oldest), delete others
-        const [firstTrip, ...tripsToDelete] = conversationTrips.sort((a, b) => a.timestamp - b.timestamp);
-
-        // Update conversation to reference first trip
-        const conversationIndex = conversations.findIndex((c) => c.id === conversation.id);
-        if (conversationIndex !== -1) {
-          conversations[conversationIndex] = {
-            ...conversations[conversationIndex],
-            tripId: firstTrip.id,
-          };
-          hasChanges = true;
-        }
-
-        // Delete other trips
-        for (const tripToDelete of tripsToDelete) {
-          const tripIndex = trips.findIndex((t) => t.id === tripToDelete.id);
-          if (tripIndex !== -1) {
-            trips.splice(tripIndex, 1);
-            hasChanges = true;
-          }
-        }
-      } else if (conversationTrips.length === 1) {
-        // Link single trip to conversation if not already linked
-        if (!conversation.tripId) {
-          const conversationIndex = conversations.findIndex((c) => c.id === conversation.id);
-          if (conversationIndex !== -1) {
-            conversations[conversationIndex] = {
-              ...conversations[conversationIndex],
-              tripId: conversationTrips[0].id,
-            };
-            hasChanges = true;
-          }
-        }
-      }
-    }
-
-    if (hasChanges) {
-      localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
-      localStorage.setItem(STORAGE_KEYS.TRIP_HISTORY, JSON.stringify(trips));
-    }
-  } catch (error) {
-    console.error("Failed to migrate conversation trips:", error);
-  }
-};
-
-// Get single trip for conversation (one-to-one relationship)
-export const getTripForConversation = (conversationId: ConversationId): SavedTrip | null => {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const conversation = loadConversation(conversationId);
-    if (!conversation || !conversation.tripId) {
-      return null;
-    }
-    return loadTripById(conversation.tripId);
-  } catch (error) {
-    console.error("Failed to get trip for conversation:", error);
-    return null;
-  }
-};
-
-// Save or update trip for a conversation
-export const saveTripForConversation = (conversationId: ConversationId, places: Place[]): string => {
-  if (typeof window === "undefined") throw new Error("Cannot save trip on server");
-
-  try {
-    const conversation = loadConversation(conversationId);
-    if (!conversation) {
-      throw new Error(`Conversation ${conversationId} not found`);
-    }
-
-    if (conversation.tripId) {
-      // Update existing trip
-      updateTripInHistory(conversation.tripId, places);
-      return conversation.tripId;
-    } else {
-      // Create new trip and link to conversation
-      const tripId = saveTripToHistory(places, conversationId);
-      const conversations = loadAllConversations();
-      const conversationIndex = conversations.findIndex((c) => c.id === conversationId);
-      if (conversationIndex !== -1) {
-        conversations[conversationIndex] = {
-          ...conversations[conversationIndex],
-          tripId: TripId(tripId),
-        };
-        localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(conversations));
-      }
-      return tripId;
-    }
-  } catch (error) {
-    console.error("Failed to save trip for conversation:", error);
-    throw error;
-  }
-};
+// Legacy trip functions removed - trips are now stored in PostgreSQL
+// Use getTripForConversation from src/infrastructure/plan/clients/trips.ts
+// Migration function (migrateConversationTrips) is no longer needed as trips are in database

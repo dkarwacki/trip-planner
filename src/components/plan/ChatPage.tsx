@@ -15,17 +15,13 @@ import {
   saveCurrentItinerary,
   loadCurrentItinerary,
   clearCurrentItinerary,
-  saveTripToHistory,
   saveConversation,
   loadConversation,
   loadAllConversations,
   deleteConversation,
-  migrateConversationTrips,
-  getTripForConversation,
-  saveTripForConversation,
-  loadTripById,
 } from "@/lib/common/storage";
 import { getUserPersonas, updatePersonas } from "@/infrastructure/plan/clients";
+import { getTrip, createTrip, getTripForConversation } from "@/infrastructure/plan/clients/trips";
 
 export default function ChatPage() {
   const [personas, setPersonas] = useState<PersonaType[]>([PERSONA_TYPES.GENERAL_TOURIST]);
@@ -55,14 +51,11 @@ export default function ChatPage() {
   // Load initial state from database and localStorage
   useEffect(() => {
     const loadInitialData = async () => {
-      // Run migration once on app initialization
-      migrateConversationTrips();
-
       // Load personas from database
       try {
         const loadedPersonas = await getUserPersonas();
         if (loadedPersonas.length > 0) {
-          setPersonas(loadedPersonas as PersonaType[]);
+          setPersonas(loadedPersonas);
         }
       } catch (error) {
         console.error("Failed to load personas:", error);
@@ -81,11 +74,16 @@ export default function ChatPage() {
           setCurrentConversationId(conversation.id);
           setConversationMessages(conversation.messages);
           setPersonas(conversation.personas.map((p) => PersonaTypeBrand(p)) as PersonaType[]);
-          // Load trip places into itinerary
-          const trip = getTripForConversation(conversation.id);
-          if (trip) {
-            setItinerary(trip.places);
-          } else {
+          // Load trip places into itinerary from database
+          try {
+            const trip = await getTripForConversation(conversation.id);
+            if (trip) {
+              setItinerary(trip.places);
+            } else {
+              setItinerary([]);
+            }
+          } catch (error) {
+            console.error("Failed to load trip for conversation:", error);
             setItinerary([]);
           }
         }
@@ -137,8 +135,8 @@ export default function ChatPage() {
 
   const handleSaveAndProceed = () => {
     if (conversationMessages.length > 0) {
-      // Save conversation with current itinerary places
-      saveConversation(conversationMessages, personas, undefined, currentConversationId ?? undefined, itinerary);
+      // Save conversation (trips are now stored separately in database)
+      saveConversation(conversationMessages, personas, undefined, currentConversationId ?? undefined);
       setConversationHistory(loadAllConversations());
     }
     // If there's a pending conversation to load, load it; otherwise start new
@@ -168,17 +166,22 @@ export default function ChatPage() {
     window.history.replaceState({}, "", "/plan");
   };
 
-  const loadConversationById = (conversationId: ConversationId) => {
+  const loadConversationById = async (conversationId: ConversationId) => {
     const conversation = loadConversation(conversationId);
     if (conversation) {
       setCurrentConversationId(conversation.id);
       setConversationMessages(conversation.messages);
       setPersonas(conversation.personas.map((p) => PersonaTypeBrand(p)) as PersonaType[]);
-      // Load trip places into itinerary
-      const trip = getTripForConversation(conversation.id);
-      if (trip) {
-        setItinerary(trip.places);
-      } else {
+      // Load trip places into itinerary from database
+      try {
+        const trip = await getTripForConversation(conversation.id);
+        if (trip) {
+          setItinerary(trip.places);
+        } else {
+          setItinerary([]);
+        }
+      } catch (error) {
+        console.error("Failed to load trip for conversation:", error);
         setItinerary([]);
       }
       // Update URL with conversation ID
@@ -235,43 +238,50 @@ export default function ChatPage() {
     setItinerary(newOrder);
   };
 
-  const handleExportToMap = () => {
+  const handleExportToMap = async () => {
     if (itinerary.length === 0) return;
 
-    // Save or create conversation if we have messages
-    let conversationId = currentConversationId;
-    if (conversationMessages.length > 0 && !currentConversationId) {
-      conversationId = saveConversation(conversationMessages, personas, undefined, undefined, itinerary);
-      setCurrentConversationId(conversationId);
-    } else if (conversationMessages.length > 0 && currentConversationId) {
-      saveConversation(conversationMessages, personas, undefined, currentConversationId);
-    }
+    try {
+      // Save or create conversation if we have messages (trips are stored separately in database)
+      let conversationId = currentConversationId;
+      if (conversationMessages.length > 0 && !currentConversationId) {
+        conversationId = saveConversation(conversationMessages, personas);
+        setCurrentConversationId(conversationId);
+      } else if (conversationMessages.length > 0 && currentConversationId) {
+        saveConversation(conversationMessages, personas, undefined, currentConversationId);
+      }
 
-    // Save or update trip for conversation
-    if (conversationId) {
-      const tripId = saveTripForConversation(conversationId, itinerary);
+      // Create trip in database (with or without conversation link)
+      const tripId = await createTrip(itinerary, conversationId || undefined);
+
       // Clear current itinerary
       clearCurrentItinerary();
       setItinerary([]);
-      // Navigate to map with trip ID and conversation ID
-      window.location.href = `/map?tripId=${tripId}&conversationId=${conversationId}`;
-    } else {
-      // No conversation, save trip without conversation link
-      const tripId = saveTripToHistory(itinerary);
-      // Clear current itinerary
-      clearCurrentItinerary();
-      setItinerary([]);
-      // Navigate to map with trip ID
-      window.location.href = `/map?tripId=${tripId}`;
+
+      // Navigate to map with trip ID (and conversation ID if available)
+      if (conversationId) {
+        window.location.href = `/map?tripId=${tripId}&conversationId=${conversationId}`;
+      } else {
+        window.location.href = `/map?tripId=${tripId}`;
+      }
+    } catch (error) {
+      console.error("Failed to export to map:", error);
+      // TODO: Show error toast to user
     }
   };
 
-  const handleOpenTrip = (tripId: string) => {
-    // Load trip to check if it has a conversationId
-    const trip = loadTripById(tripId);
-    if (trip?.conversationId) {
-      window.location.href = `/map?tripId=${tripId}&conversationId=${trip.conversationId}`;
-    } else {
+  const handleOpenTrip = async (tripId: string) => {
+    try {
+      // Load trip from database to check if it has a conversationId
+      const trip = await getTrip(tripId);
+      if (trip?.conversationId) {
+        window.location.href = `/map?tripId=${tripId}&conversationId=${trip.conversationId}`;
+      } else {
+        window.location.href = `/map?tripId=${tripId}`;
+      }
+    } catch (error) {
+      console.error("Failed to open trip:", error);
+      // Fallback: navigate without checking conversationId
       window.location.href = `/map?tripId=${tripId}`;
     }
   };

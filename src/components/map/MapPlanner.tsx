@@ -20,14 +20,9 @@ import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import type { AttractionScore, Attraction } from "@/domain/map/models";
 import { scoreAttractions } from "@/domain/map/scoring/attractions";
 import { scoreRestaurants } from "@/domain/map/scoring/restaurants";
-import {
-  loadTripById,
-  saveTripToHistory,
-  updateTripInHistory,
-  saveTripForConversation,
-} from "@/lib/common/storage";
 import type { PersonaType } from "@/domain/plan/models";
 import { getUserPersonas } from "@/infrastructure/plan/clients";
+import { getTrip, createTrip, updateTrip } from "@/infrastructure/plan/clients/trips";
 import { HIGH_SCORE_THRESHOLD } from "@/domain/map/scoring";
 import AttractionsPanel from "@/components/map/AttractionsPanel";
 import PlaceAutocomplete from "@/components/map/PlaceAutocomplete";
@@ -107,7 +102,7 @@ const MapContent = ({
     const loadPersonasData = async () => {
       try {
         const loadedPersonas = await getUserPersonas();
-        setPersonas(loadedPersonas as PersonaType[]);
+        setPersonas(loadedPersonas);
       } catch (error) {
         console.error("Failed to load personas for scoring:", error);
         // Continue with empty personas array
@@ -120,20 +115,24 @@ const MapContent = ({
   // Load places from trip history if tripId is provided
   useEffect(() => {
     if (tripId && typeof window !== "undefined") {
-      try {
-        const trip = loadTripById(tripId);
-        if (trip && trip.places) {
-          setPlaces(trip.places);
+      const loadTrip = async () => {
+        try {
+          const trip = await getTrip(tripId);
+          if (trip && trip.places) {
+            setPlaces(trip.places);
+          }
+        } catch (error) {
+          console.error("Failed to load trip from database:", error);
         }
-      } catch (error) {
-        console.error("Failed to load trip from history:", error);
-      }
+      };
+
+      loadTrip();
     }
   }, [tripId]);
 
   // Auto-save function
   const saveTrip = useCallback(
-    (placesToSave: Place[]) => {
+    async (placesToSave: Place[]) => {
       if (placesToSave.length === 0) {
         return;
       }
@@ -143,21 +142,16 @@ const MapContent = ({
 
         if (!currentTripId) {
           // Create new trip on first place add
-          let newTripId: string;
-
-          if (currentConversationId) {
-            // Save trip linked to conversation
-            newTripId = saveTripForConversation(currentConversationId, placesToSave);
-          } else {
-            // Save trip without conversation link
-            newTripId = saveTripToHistory(placesToSave);
-          }
+          const newTripId = await createTrip(
+            placesToSave,
+            currentConversationId || undefined
+          );
 
           setCurrentTripId(newTripId);
           console.log("[MapPlanner] Created new trip:", newTripId);
         } else {
           // Update existing trip
-          updateTripInHistory(currentTripId, placesToSave);
+          await updateTrip(currentTripId, placesToSave);
           console.log("[MapPlanner] Updated trip:", currentTripId);
         }
 

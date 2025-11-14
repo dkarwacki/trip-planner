@@ -607,26 +607,123 @@ The application now follows a layered architecture with clear boundaries:
 - ✅ Branded types flow through all layers via schema transforms
 - ✅ **No behavior changes to end users - all existing code works as before**
 
-### Step 2: Replace Personas (NEXT - Simple)
-- [ ] Use `UserPersonasRepository` directly where personas are loaded/saved
-- [ ] Update plan page to use repository
-- [ ] Remove localStorage persona functions
+### Step 2: Replace Personas ✅ COMPLETED
 
-### Step 3: Replace Trips (Medium)
-- [ ] Use `TripRepository` directly for trip CRUD operations
-- [ ] Handle conversation-trip linking (one-to-one relationship)
-- [ ] Update map and plan pages
-- [ ] Remove localStorage trip functions
+**Browser API Clients Created:**
+- ✅ Created `src/infrastructure/plan/clients/personas.ts`
+  - `getUserPersonas()` - Loads personas from PostgreSQL via GET /api/personas
+  - `updatePersonas()` - Saves personas to PostgreSQL via PUT /api/personas
+  - Uses domain types (PersonaType) and converts from/to API strings
+  - Plain async/await for browser use (no Effect)
 
-### Step 4: Replace Conversations (Complex)
+**API Routes Created:**
+- ✅ Created `src/pages/api/personas/index.ts`
+  - GET /api/personas - Returns user personas (empty array if none)
+  - PUT /api/personas - Upserts user personas
+  - Uses Effect with UserPersonasRepository
+  - Validates persona types with PersonaTypeSchema.parse()
+  - Hardcoded DEV_USER_ID for development
+
+**Components Updated:**
+- ✅ Updated `src/components/plan/ChatPage.tsx`
+  - Replaced `loadPersonas()` with `await getUserPersonas()` on mount
+  - Replaced `savePersonas()` with `await updatePersonas()` on change
+  - Added async loading with error handling
+- ✅ Updated `src/components/map/MapPlanner.tsx`
+  - Replaced `loadPersonas()` with `await getUserPersonas()` for scoring
+  - Added async loading with error handling
+
+**localStorage Cleanup:**
+- ✅ Removed `savePersonas()` function from `src/lib/common/storage.ts`
+- ✅ Removed `loadPersonas()` function from `src/lib/common/storage.ts`
+- ✅ Removed PERSONAS key from STORAGE_KEYS
+- ✅ Removed PersonaType import (no longer needed)
+
+**Type Safety:**
+- ✅ Zero `as any` or `as unknown as` castings
+- ✅ Proper branded type conversions using PersonaTypeBrand()
+- ✅ Type-safe flow: API strings → validated → branded domain types
+- ✅ Build passes with no TypeScript errors
+
+### Step 3: Replace Trips ✅ COMPLETED
+
+**Browser API Clients Created:**
+- ✅ Created `src/infrastructure/plan/clients/trips.ts`
+  - `getAllTrips()` - Lists all user trips (simplified, no full place data)
+  - `getTrip(id)` - Gets single trip with full place data
+  - `createTrip(places, conversationId?)` - Creates new trip, returns trip ID
+  - `updateTrip(id, places)` - Updates trip places (for auto-save)
+  - `deleteTrip(id)` - Deletes trip
+  - `getTripForConversation(conversationId)` - Gets trip by conversation (one-to-one)
+  - All functions use domain types (SavedTrip, Place, ConversationId)
+  - Converts API responses to domain types with proper branded type constructors
+
+**API Routes Created:**
+- ✅ Created `src/pages/api/trips/index.ts`
+  - GET /api/trips - Lists all user trips (newest first)
+  - POST /api/trips - Creates trip from Place[] data (migration-compatible)
+- ✅ Created `src/pages/api/trips/[id].ts`
+  - GET /api/trips/:id - Gets single trip with full place data
+  - PUT /api/trips/:id - Updates trip places (auto-save from map)
+  - DELETE /api/trips/:id - Deletes trip
+- ✅ Created `src/pages/api/trips/by-conversation/[conversationId].ts`
+  - GET /api/trips/by-conversation/:id - Gets trip for conversation (returns null if none)
+  - All routes use Effect with TripRepository
+  - All routes use hardcoded DEV_USER_ID
+  - Helper function `placesToPlaceDAOs()` converts domain Place[] to database format
+  - Helper function `tripDAOToDetailDTO()` converts database to API response
+
+**Components Updated:**
+- ✅ Updated `src/components/map/MapPlanner.tsx`
+  - Replaced `loadTripById()` with `await getTrip()`
+  - Replaced `saveTripToHistory()` and `saveTripForConversation()` with `await createTrip()`
+  - Replaced `updateTripInHistory()` with `await updateTrip()` (debounced auto-save)
+  - Made `saveTrip` function async to work with API clients
+- ✅ Updated `src/components/plan/ChatPage.tsx`
+  - Replaced `saveTripToHistory()` and `saveTripForConversation()` with `await createTrip()`
+  - Replaced `getTripForConversation()` with `await getTripForConversation()`
+  - Replaced `loadTripById()` with `await getTrip()`
+  - Made all trip-related functions async
+  - Removed places parameter from `saveConversation()` calls (trips stored separately)
+  - Removed `migrateConversationTrips()` call (no longer needed)
+- ✅ Updated `src/components/plan/ConversationHistoryPanel.tsx`
+  - Replaced synchronous `getTripForConversation()` with async API call
+  - Added useEffect to load trips for all conversations
+  - Stores trip data in local state map for rendering
+
+**localStorage Cleanup:**
+- ✅ Removed `saveTripToHistory()` from storage.ts
+- ✅ Removed `loadTripHistory()` from storage.ts
+- ✅ Removed `loadTripById()` from storage.ts
+- ✅ Removed `updateTripInHistory()` from storage.ts
+- ✅ Removed `deleteTripFromHistory()` from storage.ts
+- ✅ Removed `saveTripForConversation()` from storage.ts
+- ✅ Removed `getTripForConversation()` from storage.ts
+- ✅ Removed `getTripsForConversation()` from storage.ts (legacy)
+- ✅ Removed `migrateConversationTrips()` from storage.ts (no longer needed)
+- ✅ Removed TRIP_HISTORY key from STORAGE_KEYS
+- ✅ Removed unused imports (SavedTrip, TripId, createSavedTrip, updateTripPlaces)
+- ✅ Updated saveConversation() to remove trip-related logic (trips stored separately in DB)
+
+**Type Safety:**
+- ✅ Zero `as any` or `as unknown as` castings
+- ✅ Proper branded type constructors: PlaceId(), Latitude(), Longitude(), TripId(), ConversationId()
+- ✅ Fixed AttractionDAO location access: `a.location.lat` instead of `a.lat`
+- ✅ Type-safe conversions throughout: domain → DAO → DTO → domain
+- ✅ Build passes with no TypeScript errors
+
+### Step 4: Replace Conversations (NOT STARTED)
+- [ ] Create browser API clients in `src/infrastructure/plan/clients/conversations.ts`
+- [ ] Create API routes: GET, POST, PUT, DELETE for conversations
 - [ ] Use `ConversationRepository` directly for conversation CRUD
 - [ ] Handle message updates carefully
+- [ ] Update ChatPage component
 - [ ] Test chat functionality thoroughly
 - [ ] Remove localStorage conversation functions
 
-### Step 5: Cleanup
+### Step 5: Cleanup (NOT STARTED)
 - [ ] Remove old localStorage code (except current itinerary)
-- [ ] Update documentation
+- [ ] Update this documentation with final status
 
 ## Open Questions
 

@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { History, MessageSquare, MapPin, Trash2 } from "lucide-react";
 import type { SavedConversation, ConversationId } from "@/domain/plan/models";
 import { PERSONA_METADATA } from "@/domain/plan/models";
-import { getTripForConversation } from "@/lib/common/storage";
+import { getTripForConversation } from "@/infrastructure/plan/clients/trips";
+import { useEffect, useState } from "react";
 
 interface ConversationHistoryPanelProps {
   conversations: SavedConversation[];
@@ -21,6 +22,36 @@ export default function ConversationHistoryPanel({
   onOpenTrip,
 }: ConversationHistoryPanelProps) {
   const isEmpty = conversations.length === 0;
+
+  // Store trips for each conversation
+  const [conversationTrips, setConversationTrips] = useState<Map<ConversationId, { id: string; placeCount: number } | null>>(new Map());
+
+  // Load trips for all conversations
+  useEffect(() => {
+    const loadTrips = async () => {
+      const tripMap = new Map<ConversationId, { id: string; placeCount: number } | null>();
+
+      await Promise.all(
+        conversations.map(async (conversation) => {
+          try {
+            const trip = await getTripForConversation(conversation.id);
+            tripMap.set(conversation.id, trip ? { id: trip.id, placeCount: trip.placeCount } : null);
+          } catch (error) {
+            console.error(`Failed to load trip for conversation ${conversation.id}:`, error);
+            tripMap.set(conversation.id, null);
+          }
+        })
+      );
+
+      setConversationTrips(tripMap);
+    };
+
+    if (conversations.length > 0) {
+      loadTrips();
+    } else {
+      setConversationTrips(new Map());
+    }
+  }, [conversations]);
 
   const handleDeleteConversation = (conversationId: ConversationId) => {
     if (confirm("Delete this conversation? Associated trip will remain in history.")) {
@@ -64,7 +95,7 @@ export default function ConversationHistoryPanel({
         ) : (
           <div className="space-y-2">
             {conversations.map((conversation) => {
-              const trip = getTripForConversation(conversation.id);
+              const trip = conversationTrips.get(conversation.id);
 
               return (
                 <div

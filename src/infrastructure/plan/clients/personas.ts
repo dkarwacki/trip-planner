@@ -1,7 +1,13 @@
-import type { PersonaType, GetUserPersonasResponseDTO } from "@/infrastructure/plan/api";
+import type { PersonaType } from "@/domain/plan/models";
+import { PersonaType as PersonaTypeBrand } from "@/domain/plan/models";
 
 // API response types
-interface PersonasSuccessResponse extends GetUserPersonasResponseDTO {}
+interface PersonasSuccessResponse {
+  user_id: string;
+  persona_types: string[];
+  created_at: string;
+  updated_at: string;
+}
 
 interface PersonasSaveSuccessResponse {
   success: true;
@@ -37,7 +43,8 @@ export const getUserPersonas = async (): Promise<PersonaType[]> => {
     throw new Error(data.error || "Failed to load personas");
   }
 
-  return data.persona_types;
+  // Convert plain strings from API to branded domain types
+  return data.persona_types.map(p => PersonaTypeBrand(p));
 };
 
 /**
@@ -45,6 +52,7 @@ export const getUserPersonas = async (): Promise<PersonaType[]> => {
  * Creates or updates (upsert)
  */
 export const updatePersonas = async (personas: PersonaType[]): Promise<void> => {
+  // Branded types are just strings at runtime, so we can send them directly
   const response = await fetch("/api/personas", {
     method: "PUT",
     headers: {

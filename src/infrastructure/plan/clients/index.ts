@@ -10,3 +10,4 @@
  */
 
 export * from "./personas";
+export * from "./trips";
