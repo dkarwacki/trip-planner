@@ -10,8 +10,6 @@ A comprehensive guide to all features available on the `/map` page of the Trip P
 
 The `/map` page is an interactive map-based tool for discovering and organizing travel destinations with AI-powered recommendations for attractions and restaurants.
 
-**Tech Stack:** Astro 5, React 19, TypeScript, Google Maps API, OpenRouter API (AI), Effect (error handling)
-
 ---
 
 ## Core Features
@@ -31,7 +29,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
   - **Must-see**: Essential, iconic attractions
   - **Highly recommended**: Great options if you have time
   - **Hidden gem**: Lesser-known authentic local experiences
-- **Photo previews**: See up to two high-rated images for each suggested place with lightbox viewing
+- **Photo previews**: See high-quality image preview for each suggested place (click to view all photos in lightbox)
 
 **Technical details:**
 
@@ -64,24 +62,21 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 - Automatic viewport management with bounds fitting
 - Custom markers with color coding: blue (attractions), red (restaurants), green (temporary)
 
-### 3. Smart Place Autocomplete
+### 3. Place Autocomplete
 
 **User capabilities:**
 
-- Search adapts to map zoom level (streets vs. cities vs. regions)
-- Results prioritized based on current map view
-- Duplicate prevention
+- Search for places using Google Places autocomplete
+- Keyboard navigation (arrow keys, Enter, Escape)
 - Clear input after selection
+- Duplicate prevention
 
 **Technical details:**
 
-- Zoom-aware filtering: zoom >14 shows only establishments, <14 includes geocode results
-- Viewport-based biasing with dynamic search radius expansion:
-  - Zoom 15-18 (streets): ±1km
-  - Zoom 11-14 (city): ±5km
-  - Zoom 7-10 (region): ±20km
-  - Zoom 0-6 (world): ±50km
-- Uses Google Places Autocomplete API
+- Uses Google Places API New (`AutocompleteSuggestion.fetchAutocompleteSuggestions`)
+- Text-based autocomplete with predictive suggestions
+- 300ms debounce on input for performance
+- Keyboard accessible with ARIA attributes
 
 ### 4. Discover Attractions & Restaurants
 
@@ -102,9 +97,9 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 
 - Two-tab interface with lazy loading (restaurants load on first tab open)
 - **Photo integration:**
-  - List view displays 96x96px thumbnail (400px source) fetched from Google Places Nearby Search API
+  - List view displays 96x96px thumbnail (800px source) fetched from Google Places Nearby Search API
   - Limited to 1 photo per item in list for performance
-  - Details dialog fetches up to 2 high-quality photos (800px) on demand
+  - Details dialog shows 1 high-quality photo (800px, aspect 4:3) with click-to-expand lightbox for all photos
   - Graceful fallback when photos unavailable or fail to load
 - Smart scoring system:
   - **Quality Score (60% for attractions, 70% for restaurants):** rating (60%) + log₁₀(reviews) (40%)
@@ -117,6 +112,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 - **High-score filter:** Toggle button to show only items with scores ≥8.5
   - Shows filtered count (e.g., "15 of 42 results")
   - Applies independently to attractions and restaurants tabs
+  - Note: Scores are calculated on 0-100 scale, displayed as 0-10 (divided by 10)
 - Results cached per place selection, sorted by score, duplicates filtered
 - Details dialog fetches Google Place photos on demand (effect runtime) and reuses them across openings
 - Dialog exposes `Add to Plan` as the primary action
@@ -178,6 +174,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
   - **Map:** Interactive map view with touch-optimized markers
   - **Explore:** Discover attractions and restaurants for selected place
   - **Plan:** View all planned items across all places
+  - **Cross-feature navigation:** "Back to Chat" button appears when arriving from `/plan` route conversation
 - Badge indicators showing counts on Places and Plan tabs
 - Touch-friendly larger markers (24px vs 16px on desktop)
 - Full-screen drawer panels for attractions/restaurants
@@ -203,6 +200,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 - Tooltip hints on collapsed sidebar buttons
 - Smooth animations during collapse/expand
 - Auto-expand sidebars when selecting places or attractions
+- "Back to conversation" button (when conversationId present) for navigation to `/plan` chat
 
 **Technical details:**
 
@@ -214,6 +212,26 @@ Get intelligent recommendations tailored to your travel plan using conversationa
   - Left sidebar: Manual control only
 - Responsive width classes with Tailwind container queries
 - Hidden on mobile (uses drawer navigation instead)
+
+### 9. Trip Persistence & Auto-save
+
+**User capabilities:**
+
+- Automatic saving of all places and planned items to database
+- No manual save required - works seamlessly in background
+- Visual save status indicator (saving/saved/error)
+- Retry option if save fails
+- Resume trips from history via URL parameters
+
+**Technical details:**
+
+- Auto-save with 750ms debounce after changes
+- Creates new trip on first place add
+- Updates existing trip incrementally
+- URL parameters: `?tripId={id}&conversationId={id}`
+- Trip association with `/plan` conversations via conversationId
+- Save states: idle → saving → saved/error
+- Database persistence via Supabase
 
 ---
 
@@ -236,11 +254,3 @@ Get intelligent recommendations tailored to your travel plan using conversationa
   - Mobile: Active mobile tab (places/map/explore/plan), drawer open states
 - **Search State:** Initial search center tracking for "Search this area" button
 - **Map State:** Current map center coordinates for AI suggestions
-
-## Error Handling
-
-- Zod schemas for input/output validation
-- Effect-based error handling with tagged errors
-- User-friendly error messages
-- Loading states for all async operations
-- Empty states with helpful guidance
