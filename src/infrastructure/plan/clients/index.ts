@@ -11,3 +11,4 @@
 
 export * from "./personas";
 export * from "./trips";
+export * from "./conversations";
