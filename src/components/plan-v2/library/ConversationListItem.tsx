@@ -63,9 +63,7 @@ export function ConversationListItem({
         }
       }}
       className={`group w-full rounded-lg border p-3 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer ${
-        isActive
-          ? "border-primary bg-primary/10"
-          : "border-border hover:border-primary/50 hover:bg-accent/50"
+        isActive ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 hover:bg-accent/50"
       }`}
     >
       {/* Header: Title and actions */}
@@ -137,9 +135,7 @@ export function ConversationListItem({
             />
           ))}
           {conversation.personas.length > 3 && (
-            <span className="text-xs text-muted-foreground">
-              +{conversation.personas.length - 3}
-            </span>
+            <span className="text-xs text-muted-foreground">+{conversation.personas.length - 3}</span>
           )}
         </div>
       )}

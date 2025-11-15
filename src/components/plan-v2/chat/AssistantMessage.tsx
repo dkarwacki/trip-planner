@@ -85,45 +85,47 @@ export function AssistantMessage({
         {/* Main message */}
         <div className="max-w-[90%] space-y-1">
           <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-2.5">
-            {isFirstMessage && message.suggestedPlaces && message.suggestedPlaces.length > 0 ? (
-              <NarrativeDisplay
-                content={message.content}
-                suggestedPlaces={message.suggestedPlaces}
-                onPlaceClick={handlePlaceClick}
-              />
-            ) : (
-              <p className="whitespace-pre-wrap break-words text-sm">{message.content}</p>
+            <div>
+              {isFirstMessage && message.suggestedPlaces && message.suggestedPlaces.length > 0 ? (
+                <NarrativeDisplay
+                  content={message.content}
+                  suggestedPlaces={message.suggestedPlaces}
+                  onPlaceClick={handlePlaceClick}
+                />
+              ) : (
+                <p className="whitespace-pre-wrap break-words text-sm">{message.content}</p>
+              )}
+            </div>
+
+            {/* Thinking process (inline, collapsed by default) */}
+            {message.thinking && message.thinking.length > 0 && (
+              <Collapsible
+                open={isThinkingExpanded}
+                onOpenChange={setIsThinkingExpanded}
+                className="mt-3"
+              >
+                <div className="flex justify-end">
+                  <CollapsibleTrigger className="inline-flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+                    <span>reasoning</span>
+                    <ChevronDown
+                      className={`h-3 w-3 transition-transform ${
+                        isThinkingExpanded ? "rotate-180" : ""
+                      }`}
+                    />
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent>
+                  <div className="mt-2 space-y-1 text-xs text-muted-foreground/80">
+                    {message.thinking.map((thought, idx) => (
+                      <p key={idx} className="leading-relaxed">• {thought}</p>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             )}
           </div>
           <p className="px-1 text-xs text-muted-foreground">{timestamp}</p>
         </div>
-
-        {/* Thinking process (collapsible, collapsed by default) */}
-        {message.thinking && message.thinking.length > 0 && (
-          <Collapsible
-            open={isThinkingExpanded}
-            onOpenChange={setIsThinkingExpanded}
-            className="max-w-[90%]"
-          >
-            <div className="rounded-lg border bg-card">
-              <CollapsibleTrigger className="flex w-full items-center justify-between p-3 text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors">
-                <span>Thought process:</span>
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${
-                    isThinkingExpanded ? "rotate-180" : ""
-                  }`}
-                />
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="space-y-1 px-3 pb-3 text-xs text-muted-foreground">
-                  {message.thinking.map((thought, idx) => (
-                    <p key={idx}>• {thought}</p>
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </div>
-          </Collapsible>
-        )}
 
         {/* Place suggestions */}
         {message.suggestedPlaces && message.suggestedPlaces.length > 0 && (
