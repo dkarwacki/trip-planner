@@ -1,0 +1,37 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { MapPlannerV2 } from '../components/map-v2';
+
+// Disable SSR for this fully interactive page
+export const prerender = false;
+
+// Get API key for map display
+// Use GOOGLE_MAPS_API_KEY_PUBLIC if available (domain-restricted),
+// otherwise fall back to GOOGLE_MAPS_API_KEY
+const apiKey = import.meta.env.GOOGLE_MAPS_API_KEY_PUBLIC || import.meta.env.GOOGLE_MAPS_API_KEY;
+
+if (!apiKey) {
+  throw new Error(
+    "Google Maps API key is not configured. Please set GOOGLE_MAPS_API_KEY or GOOGLE_MAPS_API_KEY_PUBLIC in your .env file."
+  );
+}
+
+// Optional: Get Map ID for AdvancedMarkerElement support
+const mapId = import.meta.env.GOOGLE_MAPS_MAP_ID;
+
+// Extract URL parameters
+const { searchParams } = Astro.url;
+const tripId = searchParams.get('tripId') || undefined;
+const conversationId = searchParams.get('conversationId') || undefined;
+---
+
+<Layout title="Trip Planner - Map v2">
+  <MapPlannerV2 
+    client:only="react" 
+    apiKey={apiKey}
+    mapId={mapId}
+    tripId={tripId}
+    conversationId={conversationId}
+  />
+</Layout>
+
