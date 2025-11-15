@@ -58,7 +58,7 @@ export function useChatMessages(options: UseChatMessagesOptions = {}): UseChatMe
   // Track if we need to create a conversation on first message
   const needsConversationCreation = useRef(!conversationId);
   const lastSavedMessageCount = useRef(0);
-  
+
   // Store last user message for retry
   const lastUserMessage = useRef<{ content: string; personas: PersonaType[] } | null>(null);
 
@@ -66,7 +66,7 @@ export function useChatMessages(options: UseChatMessagesOptions = {}): UseChatMe
     async (content: string, personas: PersonaType[]) => {
       // Store for potential retry
       lastUserMessage.current = { content, personas };
-      
+
       // Create user message
       const userMessage = createUserMessage(content);
 
@@ -99,7 +99,7 @@ export function useChatMessages(options: UseChatMessagesOptions = {}): UseChatMe
         if (!response.ok) {
           // Provide specific error messages based on status code
           let errorMessage = "Failed to get response from AI. Please try again.";
-          
+
           if (response.status === 429) {
             errorMessage = "Too many requests. Please wait a moment and try again.";
           } else if (response.status === 503) {
@@ -111,7 +111,7 @@ export function useChatMessages(options: UseChatMessagesOptions = {}): UseChatMe
           } else if (response.status >= 400 && response.status < 500) {
             errorMessage = "Invalid request. Please check your input and try again.";
           }
-          
+
           throw new Error(errorMessage);
         }
 
@@ -134,13 +134,13 @@ export function useChatMessages(options: UseChatMessagesOptions = {}): UseChatMe
             // Signal that conversation creation is in progress to prevent auto-save race
             // MUST be called BEFORE setMessages to prevent auto-save from running
             onCreationStateChange?.(true);
-            
+
             const newConversationId = await onCreateConversation(updatedMessages, personas);
             if (newConversationId) {
               needsConversationCreation.current = false;
               lastSavedMessageCount.current = updatedMessages.length;
             }
-            
+
             // Signal that conversation creation is complete
             onCreationStateChange?.(false);
           }
@@ -160,15 +160,13 @@ export function useChatMessages(options: UseChatMessagesOptions = {}): UseChatMe
         setMessages(updatedMessages);
       } catch (err) {
         console.error("Failed to send message:", err);
-        
+
         // Use specific error message if available
         const errorMsg = err instanceof Error ? err.message : "Failed to get response from AI. Please try again.";
         setError(errorMsg);
 
         // Add error message to chat
-        const errorMessage = createAssistantMessage(
-          "I'm sorry, I encountered an error. Please try again."
-        );
+        const errorMessage = createAssistantMessage("I'm sorry, I encountered an error. Please try again.");
         setMessages((prev) => [...prev, errorMessage]);
       } finally {
         setIsLoading(false);
@@ -191,11 +189,11 @@ export function useChatMessages(options: UseChatMessagesOptions = {}): UseChatMe
     }
 
     const { content, personas } = lastUserMessage.current;
-    
+
     // Remove the error message (last assistant message) before retrying
     setMessages((prev) => {
       // Find last assistant message (likely an error message)
-      const lastAssistantIndex = prev.findLastIndex(m => m.role === 'assistant');
+      const lastAssistantIndex = prev.findLastIndex((m) => m.role === "assistant");
       if (lastAssistantIndex !== -1) {
         return prev.slice(0, lastAssistantIndex);
       }
@@ -204,7 +202,7 @@ export function useChatMessages(options: UseChatMessagesOptions = {}): UseChatMe
 
     // Remove the last user message too (we'll re-add it via sendMessage)
     setMessages((prev) => {
-      const lastUserIndex = prev.findLastIndex(m => m.role === 'user');
+      const lastUserIndex = prev.findLastIndex((m) => m.role === "user");
       if (lastUserIndex !== -1) {
         return prev.slice(0, lastUserIndex);
       }

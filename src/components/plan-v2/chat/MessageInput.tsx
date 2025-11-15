@@ -54,19 +54,17 @@ export function MessageInput({ onSend, isLoading, disabled = false }: MessageInp
 
   return (
     <div className="flex items-end gap-2">
-      <div className="relative flex-1">
-        <textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Describe your dream trip..."
-          disabled={isLoading || disabled}
-          rows={1}
-          className="max-h-[300px] min-h-[2.5rem] w-full resize-none overflow-hidden rounded-md border border-input bg-background px-4 py-2.5 pr-12 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Message input"
-        />
-      </div>
+      <textarea
+        ref={textareaRef}
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Describe your dream trip..."
+        disabled={isLoading || disabled}
+        rows={1}
+        className="flex-1 max-h-[300px] h-10 resize-none overflow-hidden rounded-md border border-input bg-background px-4 py-2 text-sm leading-6 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-label="Message input"
+      />
 
       <Button
         onClick={handleSend}
@@ -75,11 +73,7 @@ export function MessageInput({ onSend, isLoading, disabled = false }: MessageInp
         className="h-10 w-10 flex-shrink-0"
         aria-label="Send message"
       >
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Send className="h-4 w-4" />
-        )}
+        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
       </Button>
     </div>
   );
