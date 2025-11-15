@@ -22,7 +22,9 @@ import { scoreAttractions } from "@/domain/map/scoring/attractions";
 import { scoreRestaurants } from "@/domain/map/scoring/restaurants";
 import type { PersonaType } from "@/domain/plan/models";
 import { getUserPersonas } from "@/infrastructure/plan/clients";
-import { getTrip, createTrip, updateTrip } from "@/infrastructure/plan/clients/trips";
+import { getTrip, createTrip, updateTrip, getTripForConversation } from "@/infrastructure/plan/clients/trips";
+import { loadCurrentItinerary } from "@/lib/common/storage";
+import { ConversationId as ConversationIdBrand } from "@/domain/plan/models/ConversationHistory";
 import { HIGH_SCORE_THRESHOLD } from "@/domain/map/scoring";
 import AttractionsPanel from "@/components/map/AttractionsPanel";
 import PlaceAutocomplete from "@/components/map/PlaceAutocomplete";
@@ -111,23 +113,53 @@ const MapContent = ({
     loadPersonasData();
   }, []);
 
-  // Load places from trip history if tripId is provided
+  // Load places from trip history if tripId is provided, or from conversationId, or from localStorage
   useEffect(() => {
-    if (tripId && typeof window !== "undefined") {
-      const loadTrip = async () => {
-        try {
+    if (typeof window === "undefined") return;
+
+    const loadPlaces = async () => {
+      setIsLoading(true);
+      try {
+        // Priority 1: Load from tripId if provided
+        if (tripId) {
           const trip = await getTrip(tripId);
           if (trip && trip.places) {
             setPlaces(trip.places);
+            setIsLoading(false);
+            return;
           }
-        } catch (error) {
-          // Failed to load trip
         }
-      };
 
-      loadTrip();
-    }
-  }, [tripId]);
+        // Priority 2: Load from conversationId if provided
+        if (conversationId) {
+          const brandedConversationId = ConversationIdBrand(conversationId);
+          const trip = await getTripForConversation(brandedConversationId);
+          if (trip && trip.places) {
+            setPlaces(trip.places);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Priority 3: Fallback to localStorage (like old plan view)
+        const loadedPlaces = loadCurrentItinerary();
+        if (loadedPlaces.length > 0) {
+          setPlaces(loadedPlaces);
+        }
+      } catch (error) {
+        console.error("Failed to load places:", error);
+        // Fallback to localStorage on error
+        const loadedPlaces = loadCurrentItinerary();
+        if (loadedPlaces.length > 0) {
+          setPlaces(loadedPlaces);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPlaces();
+  }, [tripId, conversationId]);
 
   // Auto-save function
   const saveTrip = useCallback(
@@ -141,7 +173,8 @@ const MapContent = ({
 
         if (!currentTripId) {
           // Create new trip on first place add
-          const newTripId = await createTrip(placesToSave, currentConversationId || undefined);
+          const brandedConversationId = currentConversationId ? ConversationIdBrand(currentConversationId) : undefined;
+          const newTripId = await createTrip(placesToSave, brandedConversationId);
 
           setCurrentTripId(newTripId);
         } else {
