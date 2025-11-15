@@ -18,6 +18,7 @@ export interface MapStateV2 {
   // Mobile UI state
   activeMobileTab: MobileTab;
   bottomSheetOpen: boolean;
+  aiChatModalOpen: boolean;
   
   // View preferences
   viewMode: ViewMode;
@@ -63,6 +64,7 @@ export type MapAction =
   | { type: 'SET_SIDEBAR_COLLAPSED'; payload: boolean }
   | { type: 'SET_MOBILE_TAB'; payload: MobileTab }
   | { type: 'SET_BOTTOM_SHEET_OPEN'; payload: boolean }
+  | { type: 'SET_AI_CHAT_MODAL_OPEN'; payload: boolean }
   | { type: 'SET_VIEW_MODE'; payload: ViewMode }
   
   // Filters
@@ -102,6 +104,7 @@ export const initialMapState: MapStateV2 = {
   // Mobile UI state
   activeMobileTab: 'map',
   bottomSheetOpen: false,
+  aiChatModalOpen: false,
   
   // View preferences
   viewMode: 'cards',

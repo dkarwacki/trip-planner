@@ -67,6 +67,9 @@ function mapStateReducer(state: MapStateV2, action: MapAction): MapStateV2 {
     case 'SET_BOTTOM_SHEET_OPEN':
       return { ...state, bottomSheetOpen: action.payload };
     
+    case 'SET_AI_CHAT_MODAL_OPEN':
+      return { ...state, aiChatModalOpen: action.payload };
+    
     case 'SET_VIEW_MODE':
       return { ...state, viewMode: action.payload };
     
@@ -253,6 +256,9 @@ export function useMapState() {
     },
     setSidebarCollapsed: (collapsed: boolean) => {
       dispatch({ type: 'SET_SIDEBAR_COLLAPSED', payload: collapsed });
+    },
+    setAIChatModalOpen: (open: boolean) => {
+      dispatch({ type: 'SET_AI_CHAT_MODAL_OPEN', payload: open });
     },
     
     // Filters

@@ -9,7 +9,10 @@ import { MobileHeader } from "./MobileHeader";
 import { MapView } from "./MapView";
 import { PlanView } from "./PlanView";
 import { SearchOverlay } from "./SearchOverlay";
+import { FloatingAIButton } from "./FloatingAIButton";
+import { AIChatModal } from "./AIChatModal";
 import { useMapState } from "../context";
+import { useAIChat } from "../hooks/useAIChat";
 
 interface MobileLayoutProps {
   mapId?: string;
@@ -20,9 +23,23 @@ interface MobileLayoutProps {
 const TAB_STORAGE_KEY = "map-v2-mobile-active-tab";
 
 export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProps) {
-  const { planItems } = useMapState();
+  const { planItems, aiChatModalOpen, setAIChatModalOpen, state, dispatch } = useMapState();
   const [activeTab, setActiveTab] = useState<MobileTab>("map");
   const [showSearch, setShowSearch] = useState(false);
+
+  // AI chat functionality
+  const { sendMessage, isLoading, addSuggestionToPlan } = useAIChat();
+
+  // Get selected place for AI context
+  const selectedPlace = state.selectedPlaceId ? state.places.find((p) => p.id === state.selectedPlaceId) : null;
+
+  // Get added place IDs for suggestion card states
+  const addedPlaceIds = new Set(state.places.map((p) => p.id));
+
+  // Suggested prompts based on context
+  const suggestedPrompts = selectedPlace
+    ? ["Must-see highlights", "Best local restaurants", "Hidden gems nearby", "Family-friendly activities"]
+    : [];
 
   // Load active tab from sessionStorage or URL on mount
   useEffect(() => {
@@ -55,6 +72,31 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
       // Navigate back to planning page
       window.location.href = `/plan-v2/${conversationId}`;
     }
+  };
+
+  // AI chat handlers
+  const handleOpenAIChat = () => {
+    // Set AI context if place is selected
+    if (selectedPlace && state.aiContext !== selectedPlace.id) {
+      dispatch({ type: "SET_AI_CONTEXT", payload: selectedPlace.id });
+    }
+    setAIChatModalOpen(true);
+  };
+
+  const handleCloseAIChat = () => {
+    setAIChatModalOpen(false);
+  };
+
+  const handleSendMessage = async (message: string) => {
+    if (!selectedPlace) {
+      console.warn("No place selected");
+      return;
+    }
+    await sendMessage(message);
+  };
+
+  const handleAddSuggestion = (placeId: string) => {
+    addSuggestionToPlan(placeId);
   };
 
   return (
@@ -93,6 +135,26 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
 
       {/* Search Overlay */}
       <SearchOverlay isOpen={showSearch} onClose={() => setShowSearch(false)} />
+
+      {/* Floating AI Button - hidden when modal is open or bottom sheet is expanded */}
+      <FloatingAIButton
+        onOpenChat={handleOpenAIChat}
+        isLoading={state.isLoadingAI}
+        hidden={aiChatModalOpen || state.bottomSheetOpen}
+      />
+
+      {/* AI Chat Modal */}
+      <AIChatModal
+        isOpen={aiChatModalOpen}
+        onClose={handleCloseAIChat}
+        messages={state.aiConversation}
+        isLoading={isLoading}
+        onSendMessage={handleSendMessage}
+        onAddSuggestion={handleAddSuggestion}
+        addedPlaceIds={addedPlaceIds}
+        selectedPlace={selectedPlace}
+        suggestedPrompts={suggestedPrompts}
+      />
     </div>
   );
 }

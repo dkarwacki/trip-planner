@@ -7,5 +7,6 @@ export { useResponsive, type ResponsiveState } from './useResponsive';
 export { useNearbyPlaces } from './useNearbyPlaces';
 export { useAIChat } from './useAIChat';
 export { useSwipeToDelete } from './useSwipeToDelete';
+export { useKeyboardHeight } from './useKeyboardHeight';
 export { useLongPress } from './useLongPress';
 
