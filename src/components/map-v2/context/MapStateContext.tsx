@@ -287,6 +287,9 @@ export function useMapState() {
     
     // Renamed for clarity
     planItems: state.places,
+    
+    // Also return state object for components that need it
+    state,
   };
 }
 

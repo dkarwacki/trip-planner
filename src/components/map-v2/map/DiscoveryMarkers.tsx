@@ -38,6 +38,11 @@ export function DiscoveryMarkers({
     });
     markersRef.current.clear();
 
+    // Guard against undefined attractions array
+    if (!attractions || !Array.isArray(attractions)) {
+      return;
+    }
+
     // Color coding
     const markerColor = category === 'attractions' ? '#3B82F6' : '#EF4444'; // blue-600 or red-500
 

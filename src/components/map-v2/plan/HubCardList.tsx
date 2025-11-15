@@ -10,7 +10,7 @@ import { useMapState } from "../context/MapStateContext";
 import HubCard from "./HubCard";
 
 interface HubCardListProps {
-  places: any[]; // Will be typed with domain types
+  places: { id?: string | number; [key: string]: unknown }[]; // Will be typed with domain Place type
 }
 
 export default function HubCardList({ places }: HubCardListProps) {
@@ -59,7 +59,10 @@ export default function HubCardList({ places }: HubCardListProps) {
   };
 
   // Get IDs for sortable context
-  const placeIds = places.map((p) => p.id || p);
+  const placeIds = places.map((p, index) => {
+    const id = p.id ?? index;
+    return typeof id === "string" || typeof id === "number" ? id : String(index);
+  });
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

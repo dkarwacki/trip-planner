@@ -28,6 +28,11 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
     });
     markersRef.current.clear();
 
+    // Guard against undefined places array
+    if (!places || !Array.isArray(places)) {
+      return;
+    }
+
     // Create new markers for each place
     places.forEach((place, index) => {
       const isSelected = place.id === selectedPlaceId;
