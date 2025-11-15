@@ -28,7 +28,7 @@ export function ChatInterface({
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Messages or empty state - scrollable area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex flex-1 flex-col overflow-y-auto">
         {messages.length === 0 && !isLoading ? (
           <ChatEmptyState />
         ) : (
