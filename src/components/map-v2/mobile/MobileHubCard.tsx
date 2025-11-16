@@ -45,9 +45,9 @@ export function MobileHubCard({
     }));
   };
 
-  // TODO: Get actual attractions and restaurants from data structure
-  const attractions: any[] = [];
-  const restaurants: any[] = [];
+  // Get actual attractions and restaurants from place data
+  const attractions: any[] = place.plannedAttractions || [];
+  const restaurants: any[] = place.plannedRestaurants || [];
 
   const placeName = place.name || place.displayName || "Unknown Place";
   const placeLocation = place.location || place.vicinity || "";

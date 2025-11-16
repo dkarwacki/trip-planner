@@ -11,7 +11,13 @@ interface MobileItineraryStatsProps {
 
 export function MobileItineraryStats({ places }: MobileItineraryStatsProps) {
   const hubCount = places.length;
-  const totalPlaces = places.length; // TODO: Calculate actual planned items count when data structure is ready
+
+  // Calculate actual planned items count from attractions and restaurants
+  const totalPlaces = places.reduce((sum, place) => {
+    const attractionCount = place.plannedAttractions?.length || 0;
+    const restaurantCount = place.plannedRestaurants?.length || 0;
+    return sum + attractionCount + restaurantCount;
+  }, 0);
 
   return (
     <div className="text-center">

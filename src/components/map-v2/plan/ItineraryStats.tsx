@@ -13,10 +13,14 @@ export default function ItineraryStats({ places }: ItineraryStatsProps) {
   // Count hubs (unique places)
   const hubCount = places.length;
 
-  // TODO: Count attractions and restaurants when we have the proper data structure
-  // For now, we'll use placeholder counts
-  const attractionCount = 0;
-  const restaurantCount = 0;
+  // Count attractions and restaurants from the data structure
+  const attractionCount = places.reduce((sum, place) => {
+    return sum + (place.plannedAttractions?.length || 0);
+  }, 0);
+  
+  const restaurantCount = places.reduce((sum, place) => {
+    return sum + (place.plannedRestaurants?.length || 0);
+  }, 0);
 
   return (
     <div>

@@ -159,6 +159,7 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
   const handleNavigateToMapWithAttraction = (attractionId: string, _lat: number, _lng: number) => {
     // Switch to map tab first
     setActiveTab("map");
+    dispatch({ type: "SET_MOBILE_TAB", payload: "map" });
 
     // Set the expanded card after a brief delay to ensure MapCanvas is mounted
     // This allows MapCanvas's useEffect to properly center the map
