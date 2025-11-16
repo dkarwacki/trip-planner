@@ -3,29 +3,31 @@
  * Sticky at bottom of chat panel
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { Send } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
   disabled?: boolean;
   placeholder?: string;
   suggestedPrompts?: string[];
+  showSuggestedPrompts?: boolean;
 }
 
-export function ChatInput({ 
-  onSend, 
-  disabled = false, 
-  placeholder = 'Ask anything...',
-  suggestedPrompts = []
+export function ChatInput({
+  onSend,
+  disabled = false,
+  placeholder = "Ask anything...",
+  suggestedPrompts = [],
+  showSuggestedPrompts = true,
 }: ChatInputProps) {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [message]);
@@ -33,11 +35,11 @@ export function ChatInput({
   const handleSubmit = () => {
     if (!message.trim() || disabled) return;
     onSend(message.trim());
-    setMessage('');
+    setMessage("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
@@ -50,8 +52,8 @@ export function ChatInput({
 
   return (
     <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 space-y-3">
-      {/* Suggested prompts */}
-      {suggestedPrompts.length > 0 && message.trim() === '' && (
+      {/* Suggested prompts - only show before first message */}
+      {showSuggestedPrompts && suggestedPrompts.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <p className="text-xs text-gray-500 w-full mb-1">Suggested:</p>
           {suggestedPrompts.map((prompt, index) => (
@@ -76,7 +78,7 @@ export function ChatInput({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder={placeholder}
-          className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed max-h-32 overflow-y-auto"
+          className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed max-h-48 overflow-hidden"
           rows={1}
           maxLength={500}
         />
@@ -91,12 +93,7 @@ export function ChatInput({
       </div>
 
       {/* Character count */}
-      {message.length > 400 && (
-        <p className="text-xs text-gray-500 text-right">
-          {message.length}/500
-        </p>
-      )}
+      {message.length > 400 && <p className="text-xs text-gray-500 text-right">{message.length}/500</p>}
     </div>
   );
 }
-

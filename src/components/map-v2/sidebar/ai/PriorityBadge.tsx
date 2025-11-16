@@ -4,24 +4,25 @@
  */
 
 import React from 'react';
+import { Badge } from '@/components/ui/badge';
 import type { PriorityLevel } from '../../types';
 
 interface PriorityBadgeProps {
   priority: PriorityLevel;
 }
 
-const priorityConfig: Record<PriorityLevel, { label: string; className: string }> = {
+const priorityConfig: Record<PriorityLevel, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   'must-see': {
     label: 'Must-See',
-    className: 'bg-gradient-to-r from-red-500 to-orange-500 text-white',
+    variant: 'destructive',
   },
   'highly-recommended': {
     label: 'Recommended',
-    className: 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white',
+    variant: 'default',
   },
   'hidden-gem': {
     label: 'Hidden Gem',
-    className: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white',
+    variant: 'secondary',
   },
 };
 
@@ -29,14 +30,9 @@ export function PriorityBadge({ priority }: PriorityBadgeProps) {
   const config = priorityConfig[priority];
 
   return (
-    <span
-      className={`
-        inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
-        ${config.className}
-      `}
-    >
+    <Badge variant={config.variant}>
       {config.label}
-    </span>
+    </Badge>
   );
 }
 

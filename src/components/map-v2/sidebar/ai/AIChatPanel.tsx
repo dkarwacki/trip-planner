@@ -29,11 +29,17 @@ export function AIChatPanel() {
   // Handle message send
   const handleSendMessage = async (message: string) => {
     if (!selectedPlace) {
-      // TODO: Show error toast
-      console.warn('No place selected');
+      console.error('No place selected for AI assistant');
+      // TODO: Show error toast to user
       return;
     }
-    await sendMessage(message);
+    
+    try {
+      await sendMessage(message);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      // TODO: Show error toast to user
+    }
   };
 
   // Handle adding suggestion to plan
@@ -42,7 +48,9 @@ export function AIChatPanel() {
   };
 
   // Suggested prompts based on context
-  const suggestedPrompts = selectedPlace
+  // Only show before the first message
+  const hasMessages = state.aiConversation.length > 0;
+  const suggestedPrompts = selectedPlace && !hasMessages
     ? [
         'Must-see highlights',
         'Best local restaurants',
@@ -71,6 +79,7 @@ export function AIChatPanel() {
             : 'Select a place to get started...'
         }
         suggestedPrompts={suggestedPrompts}
+        showSuggestedPrompts={!hasMessages}
       />
     </div>
   );
