@@ -12,13 +12,14 @@
  */
 
 import React, { useState } from 'react';
-import { Plus, Check, ChevronDown } from 'lucide-react';
+import { Plus, Check, ChevronDown, Lightbulb, Loader2 } from 'lucide-react';
 import type { SuggestionCardProps } from '../../types';
 import { PriorityBadge } from '../sidebar/ai/PriorityBadge';
 
 export function MobileSuggestionCard({ 
   suggestion, 
-  isAdded, 
+  isAdded,
+  isAdding = false,
   onAddClick 
 }: SuggestionCardProps) {
   const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
@@ -30,9 +31,11 @@ export function MobileSuggestionCard({
     : suggestion.reasoning;
 
   const shouldShowReadMore = suggestion.reasoning.length > 120;
+  
+  const isGeneralTip = suggestion.type === 'general_tip';
 
   const handleAddClick = () => {
-    if (!isAdded) {
+    if (!isAdded && !isAdding && suggestion.placeId) {
       // Haptic feedback on mobile
       if (navigator.vibrate) {
         navigator.vibrate(10);
@@ -47,50 +50,69 @@ export function MobileSuggestionCard({
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-      {/* Photo with priority badge - taller on mobile */}
-      <div className="relative aspect-[16/10] bg-gray-200">
-        {suggestion.photoUrl ? (
-          <>
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-            )}
-            <img
-              src={suggestion.photoUrl}
-              alt={suggestion.placeName}
-              loading="lazy"
-              onLoad={() => setImageLoaded(true)}
-              className={`w-full h-full object-cover transition-opacity duration-300 ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-            />
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-            <span className="text-5xl">📍</span>
+      {/* Photo with priority badge - taller on mobile (or tip header for general tips) */}
+      {!isGeneralTip && (
+        <div className="relative aspect-[16/10] bg-gray-200">
+          {suggestion.photoUrl ? (
+            <>
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+              )}
+              <img
+                src={suggestion.photoUrl}
+                alt={suggestion.placeName || 'Place photo'}
+                loading="lazy"
+                onLoad={() => setImageLoaded(true)}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+            </>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+              <span className="text-5xl">📍</span>
+            </div>
+          )}
+          
+          {/* Priority badge - slightly larger on mobile */}
+          <div className="absolute top-3 right-3">
+            <PriorityBadge priority={suggestion.priority} />
           </div>
-        )}
-        
-        {/* Priority badge - slightly larger on mobile */}
-        <div className="absolute top-3 right-3">
-          <PriorityBadge priority={suggestion.priority} />
         </div>
-      </div>
+      )}
+      
+      {/* General tip header */}
+      {isGeneralTip && (
+        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 px-5 py-4 flex items-center gap-3 border-b border-amber-100">
+          <Lightbulb className="h-6 w-6 text-amber-600" />
+          <span className="text-base font-semibold text-amber-900">Travel Tip</span>
+          <div className="ml-auto">
+            <PriorityBadge priority={suggestion.priority} />
+          </div>
+        </div>
+      )}
 
       {/* Content - more padding on mobile */}
       <div className="p-5 space-y-4">
-        {/* Name and metadata - larger text */}
-        <div>
-          <h4 className="text-lg font-bold text-gray-900 mb-1.5 line-clamp-1">
-            {suggestion.placeName}
-          </h4>
-          <div className="flex items-center gap-2 text-base text-gray-600">
-            <span>{suggestion.category}</span>
-            <span className="text-gray-400">•</span>
-            <span className="font-semibold text-blue-600">
-              {suggestion.score.toFixed(1)}
-            </span>
+        {/* Name and metadata - larger text (skip for general tips) */}
+        {!isGeneralTip && (
+          <div>
+            <h4 className="text-lg font-bold text-gray-900 mb-1.5 line-clamp-1">
+              {suggestion.placeName}
+            </h4>
+            <div className="flex items-center gap-2 text-base text-gray-600">
+              <span className="capitalize">{suggestion.category}</span>
+              {suggestion.score !== null && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <span className="font-semibold text-blue-600">
+                    {suggestion.score.toFixed(1)}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* AI reasoning - base text size for readability */}
         <div className="text-base text-gray-700">
@@ -113,31 +135,40 @@ export function MobileSuggestionCard({
           )}
         </div>
 
-        {/* Action button - 44px height for touch */}
-        <button
-          onClick={handleAddClick}
-          disabled={isAdded}
-          className={`
-            w-full h-11 px-4 rounded-xl font-semibold text-base
-            transition-all active:scale-[0.98] flex items-center justify-center gap-2
-            ${isAdded
-              ? 'bg-green-50 text-green-700 cursor-default'
-              : 'bg-blue-600 text-white active:bg-blue-700 shadow-sm active:shadow'
-            }
-          `}
-        >
-          {isAdded ? (
-            <>
-              <Check className="h-5 w-5" />
-              Added to Plan
-            </>
-          ) : (
-            <>
-              <Plus className="h-5 w-5" />
-              Add to Plan
-            </>
-          )}
-        </button>
+        {/* Action button - 44px height for touch (only for places, not general tips) */}
+        {!isGeneralTip && (
+          <button
+            onClick={handleAddClick}
+            disabled={isAdded || isAdding}
+            className={`
+              w-full h-11 px-4 rounded-xl font-semibold text-base
+              transition-all active:scale-[0.98] flex items-center justify-center gap-2
+              ${isAdded
+                ? 'bg-green-50 text-green-700 cursor-default'
+                : isAdding
+                ? 'bg-blue-50 text-blue-600 cursor-wait'
+                : 'bg-blue-600 text-white active:bg-blue-700 shadow-sm active:shadow'
+              }
+            `}
+          >
+            {isAdding ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Adding...
+              </>
+            ) : isAdded ? (
+              <>
+                <Check className="h-5 w-5" />
+                Added to Plan
+              </>
+            ) : (
+              <>
+                <Plus className="h-5 w-5" />
+                Add to Plan
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

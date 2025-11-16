@@ -4,13 +4,14 @@
  */
 
 import React, { useState } from 'react';
-import { Plus, Check, ChevronDown } from 'lucide-react';
+import { Plus, Check, ChevronDown, Lightbulb, Loader2 } from 'lucide-react';
 import type { SuggestionCardProps } from '../../types';
 import { PriorityBadge } from './PriorityBadge';
 
 export function SuggestionCard({ 
   suggestion, 
-  isAdded, 
+  isAdded,
+  isAdding = false,
   onAddClick 
 }: SuggestionCardProps) {
   const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
@@ -22,59 +23,80 @@ export function SuggestionCard({
     : suggestion.reasoning;
 
   const shouldShowReadMore = suggestion.reasoning.length > 150;
+  
+  const isGeneralTip = suggestion.type === 'general_tip';
 
   const handleAddClick = () => {
-    if (!isAdded) {
+    if (!isAdded && !isAdding && suggestion.placeId) {
       onAddClick(suggestion.placeId);
     }
   };
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      {/* Photo with priority badge */}
-      <div className="relative aspect-video bg-gray-200">
-        {suggestion.photoUrl ? (
-          <>
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-            )}
-            <img
-              src={suggestion.photoUrl}
-              alt={suggestion.placeName}
-              loading="lazy"
-              onLoad={() => setImageLoaded(true)}
-              className={`w-full h-full object-cover transition-opacity duration-300 ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-            />
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-            <span className="text-4xl">📍</span>
+      {/* Photo with priority badge (or tip icon for general tips) */}
+      {!isGeneralTip && (
+        <div className="relative aspect-video bg-gray-200">
+          {suggestion.photoUrl ? (
+            <>
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+              )}
+              <img
+                src={suggestion.photoUrl}
+                alt={suggestion.placeName || 'Place photo'}
+                loading="lazy"
+                onLoad={() => setImageLoaded(true)}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+            </>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+              <span className="text-4xl">📍</span>
+            </div>
+          )}
+          
+          {/* Priority badge */}
+          <div className="absolute top-2 right-2">
+            <PriorityBadge priority={suggestion.priority} />
           </div>
-        )}
-        
-        {/* Priority badge */}
-        <div className="absolute top-2 right-2">
-          <PriorityBadge priority={suggestion.priority} />
         </div>
-      </div>
+      )}
+      
+      {/* General tip header */}
+      {isGeneralTip && (
+        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-3 flex items-center gap-2 border-b border-amber-100">
+          <Lightbulb className="h-5 w-5 text-amber-600" />
+          <span className="text-sm font-semibold text-amber-900">Travel Tip</span>
+          <div className="ml-auto">
+            <PriorityBadge priority={suggestion.priority} />
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="p-4 space-y-3">
-        {/* Name and metadata */}
-        <div>
-          <h4 className="font-bold text-gray-900 mb-1 line-clamp-1">
-            {suggestion.placeName}
-          </h4>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>{suggestion.category}</span>
-            <span className="text-gray-400">•</span>
-            <span className="font-semibold text-blue-600">
-              Score: {suggestion.score.toFixed(1)}
-            </span>
+        {/* Name and metadata (skip for general tips) */}
+        {!isGeneralTip && (
+          <div>
+            <h4 className="font-bold text-gray-900 mb-1 line-clamp-1">
+              {suggestion.placeName}
+            </h4>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span className="capitalize">{suggestion.category}</span>
+              {suggestion.score !== null && (
+                <>
+                  <span className="text-gray-400">•</span>
+                  <span className="font-semibold text-blue-600">
+                    Score: {suggestion.score.toFixed(1)}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* AI reasoning */}
         <div className="text-sm text-gray-700">
@@ -97,31 +119,40 @@ export function SuggestionCard({
           )}
         </div>
 
-        {/* Action button */}
-        <button
-          onClick={handleAddClick}
-          disabled={isAdded}
-          className={`
-            w-full py-2.5 px-4 rounded-lg font-medium text-sm
-            transition-colors flex items-center justify-center gap-2
-            ${isAdded
-              ? 'bg-green-50 text-green-700 cursor-default'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-            }
-          `}
-        >
-          {isAdded ? (
-            <>
-              <Check className="h-4 w-4" />
-              Added to Plan
-            </>
-          ) : (
-            <>
-              <Plus className="h-4 w-4" />
-              Add to Plan
-            </>
-          )}
-        </button>
+        {/* Action button (only for places, not general tips) */}
+        {!isGeneralTip && (
+          <button
+            onClick={handleAddClick}
+            disabled={isAdded || isAdding}
+            className={`
+              w-full py-2.5 px-4 rounded-lg font-medium text-sm
+              transition-colors flex items-center justify-center gap-2
+              ${isAdded
+                ? 'bg-green-50 text-green-700 cursor-default'
+                : isAdding
+                ? 'bg-blue-50 text-blue-600 cursor-wait'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+              }
+            `}
+          >
+            {isAdding ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Adding...
+              </>
+            ) : isAdded ? (
+              <>
+                <Check className="h-4 w-4" />
+                Added to Plan
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" />
+                Add to Plan
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

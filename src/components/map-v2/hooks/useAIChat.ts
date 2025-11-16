@@ -7,18 +7,45 @@ import { useState, useCallback } from 'react';
 import { useMapState } from '../context';
 import type { AIMessage, AISuggestion } from '../types';
 import { getPhotoUrl } from '@/lib/common/photo-utils';
+import { PlaceId, Latitude, Longitude } from '@/domain/common/models';
+import type { Attraction } from '@/domain/map/models';
 
 interface UseAIChatReturn {
   sendMessage: (message: string) => Promise<void>;
   isLoading: boolean;
   error: string | null;
   addSuggestionToPlan: (placeId: string) => void;
+  addingPlaceIds: Set<string>;
+  addedPlaceIds: Set<string>;
 }
 
 export function useAIChat(): UseAIChatReturn {
-  const { state, dispatch } = useMapState();
+  const { state, dispatch, addAttractionToPlace, addRestaurantToPlace } = useMapState();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [addingPlaceIds, setAddingPlaceIds] = useState<Set<string>>(new Set());
+  
+  // Compute which attractions/restaurants are already in the selected place's plan
+  const addedPlaceIds = (() => {
+    if (!state.aiContext) return new Set<string>();
+    
+    const selectedPlace = state.places.find((p: any) => p.id === state.aiContext);
+    if (!selectedPlace) return new Set<string>();
+    
+    const ids = new Set<string>();
+    
+    // Add all attraction IDs
+    (selectedPlace.plannedAttractions || []).forEach((a: any) => {
+      ids.add(a.id);
+    });
+    
+    // Add all restaurant IDs
+    (selectedPlace.plannedRestaurants || []).forEach((r: any) => {
+      ids.add(r.id);
+    });
+    
+    return ids;
+  })();
 
   // Send message to AI
   const sendMessage = useCallback(async (content: string) => {
@@ -119,29 +146,50 @@ export function useAIChat(): UseAIChatReturn {
       const normalizePriority = (priority: string | undefined): 'must-see' | 'highly-recommended' | 'hidden-gem' => {
         if (!priority) return 'highly-recommended';
         
-        // API returns: "must-see", "highly recommended", "hidden gem"
-        // Component expects: "must-see", "highly-recommended", "hidden-gem"
-        switch (priority.toLowerCase()) {
+        // API can return different formats:
+        // - "must-see", "highly recommended", "hidden gem" (with spaces)
+        // - "must_see", "highly_recommended", "hidden_gem" (with underscores)
+        // Component expects: "must-see", "highly-recommended", "hidden-gem" (with hyphens)
+        const normalized = priority.toLowerCase().replace(/_/g, ' ');
+        
+        switch (normalized) {
           case 'must-see':
+          case 'must see':
             return 'must-see';
           case 'highly recommended':
+          case 'highly-recommended':
             return 'highly-recommended';
           case 'hidden gem':
+          case 'hidden-gem':
             return 'hidden-gem';
           default:
             return 'highly-recommended';
         }
       };
 
-      // Parse suggestions from response
+      // Parse suggestions from response (including general tips)
       const suggestions: AISuggestion[] = agentResponse.suggestions
-        .filter((s: any) => s.type !== 'general_tip' && s.attractionData) // Only include suggestions with attraction data
-        .map((s: any) => {
-          // Get photo reference from attractionData or photos array
+        .map((s: any, index: number) => {
+          // Handle general tips (no attraction data)
+          if (s.type === 'general_tip' || !s.attractionData) {
+            return {
+              id: `suggestion-general-${Date.now()}-${index}`,
+              placeId: null,
+              placeName: null,
+              priority: normalizePriority(s.priority),
+              reasoning: s.reasoning,
+              score: null,
+              category: 'tip',
+              photoUrl: undefined,
+              type: 'general_tip' as const,
+            };
+          }
+          
+          // Handle attractions and restaurants with data
           const photoReference = s.attractionData.photos?.[0]?.photoReference || s.photos?.[0]?.photoReference;
           
           return {
-            id: `suggestion-${s.attractionData.id}-${Date.now()}`,
+            id: `suggestion-${s.attractionData.id}-${Date.now()}-${index}`,
             placeId: s.attractionData.id,
             placeName: s.attractionData.name,
             priority: normalizePriority(s.priority),
@@ -149,6 +197,8 @@ export function useAIChat(): UseAIChatReturn {
             score: s.attractionData.rating || 0,
             category: s.type === 'add_restaurant' ? 'restaurant' : 'attraction',
             photoUrl: photoReference ? getPhotoUrl(photoReference, 800) : undefined,
+            type: s.type as 'add_attraction' | 'add_restaurant',
+            attractionData: s.attractionData, // Store full data for adding to plan
           };
         });
 
@@ -181,26 +231,106 @@ export function useAIChat(): UseAIChatReturn {
 
   // Add suggestion to plan (optimistic update)
   const addSuggestionToPlan = useCallback((placeId: string) => {
-    // TODO: Implement actual place addition
-    // For now, just log the action
-    console.log('Adding suggestion to plan:', placeId);
-    
-    // TODO: Fetch full place details and add to state.places
-    // dispatch({ type: 'ADD_PLACE', payload: placeData });
-    
-    // TODO: Update save status
-    // dispatch({ type: 'SET_SAVE_STATUS', payload: 'saving' });
-    
-    // TODO: Persist to backend
-    // await savePlaceToDB(placeId);
-    // dispatch({ type: 'SET_SAVE_STATUS', payload: 'saved' });
-  }, []);
+    // Check if already in AI context
+    if (!state.aiContext) {
+      console.warn('No AI context set - cannot add suggestion');
+      return;
+    }
+
+    // Check if already adding or added
+    if (addingPlaceIds.has(placeId) || addedPlaceIds.has(placeId)) {
+      return;
+    }
+
+    // Find the suggestion in the conversation messages
+    let foundSuggestion: AISuggestion | null = null;
+
+    for (const message of state.aiConversation) {
+      if (message.suggestions) {
+        const suggestion = message.suggestions.find((s) => s.placeId === placeId);
+        if (suggestion) {
+          foundSuggestion = suggestion;
+          break;
+        }
+      }
+    }
+
+    if (!foundSuggestion) {
+      console.warn('Suggestion not found in conversation:', placeId);
+      return;
+    }
+
+    // Can't add general tips (they don't have place data)
+    if (foundSuggestion.type === 'general_tip' || !foundSuggestion.placeId || !foundSuggestion.placeName || !foundSuggestion.attractionData) {
+      console.warn('Cannot add general tip to plan or missing attraction data');
+      return;
+    }
+
+    // Check if already in current place's attractions/restaurants
+    const contextPlace = state.places.find((p: any) => p.id === state.aiContext);
+    if (!contextPlace) {
+      console.warn('Context place not found');
+      return;
+    }
+
+    const isRestaurant = foundSuggestion.category === 'restaurant';
+    const alreadyExists = isRestaurant
+      ? contextPlace.plannedRestaurants?.some((r: any) => r.id === placeId)
+      : contextPlace.plannedAttractions?.some((a: any) => a.id === placeId);
+
+    if (alreadyExists) {
+      // Already exists, no need to add again
+      return;
+    }
+
+    // Set loading state
+    setAddingPlaceIds((prev) => new Set(prev).add(placeId));
+
+    try {
+      // Use the full attractionData we stored from the API response
+      const apiData = foundSuggestion.attractionData;
+      
+      // Create properly typed Attraction object
+      const attraction: Attraction = {
+        id: PlaceId(apiData.id),
+        name: apiData.name,
+        rating: apiData.rating ?? undefined,
+        userRatingsTotal: apiData.userRatingsTotal ?? undefined,
+        types: apiData.types || [],
+        vicinity: apiData.vicinity || '',
+        priceLevel: apiData.priceLevel,
+        location: {
+          lat: Latitude(apiData.location.lat),
+          lng: Longitude(apiData.location.lng),
+        },
+        photos: apiData.photos,
+      };
+
+      // Add to appropriate array (this will update state and addedPlaceIds will be recomputed)
+      if (isRestaurant) {
+        addRestaurantToPlace(state.aiContext, attraction);
+      } else {
+        addAttractionToPlace(state.aiContext, attraction);
+      }
+    } catch (error) {
+      console.error('Failed to add suggestion:', error);
+    } finally {
+      // Clear loading state
+      setAddingPlaceIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(placeId);
+        return newSet;
+      });
+    }
+  }, [state.aiContext, state.aiConversation, state.places, addingPlaceIds, addAttractionToPlace, addRestaurantToPlace]);
 
   return {
     sendMessage,
     isLoading,
     error,
     addSuggestionToPlan,
+    addingPlaceIds,
+    addedPlaceIds,
   };
 }
 

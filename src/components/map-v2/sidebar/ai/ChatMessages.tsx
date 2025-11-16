@@ -14,13 +14,15 @@ interface ChatMessagesProps {
   isLoading: boolean;
   onAddSuggestion: (placeId: string) => void;
   addedPlaceIds: Set<string>;
+  addingPlaceIds?: Set<string>;
 }
 
 export function ChatMessages({ 
   messages, 
   isLoading, 
   onAddSuggestion,
-  addedPlaceIds 
+  addedPlaceIds,
+  addingPlaceIds = new Set()
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,6 +62,7 @@ export function ChatMessages({
           message={message}
           onAddSuggestion={onAddSuggestion}
           addedPlaceIds={addedPlaceIds}
+          addingPlaceIds={addingPlaceIds}
         />
       ))}
       
@@ -75,9 +78,10 @@ interface MessageBubbleProps {
   message: AIMessage;
   onAddSuggestion: (placeId: string) => void;
   addedPlaceIds: Set<string>;
+  addingPlaceIds: Set<string>;
 }
 
-function MessageBubble({ message, onAddSuggestion, addedPlaceIds }: MessageBubbleProps) {
+function MessageBubble({ message, onAddSuggestion, addedPlaceIds, addingPlaceIds }: MessageBubbleProps) {
   const isUser = message.role === 'user';
 
   return (
@@ -109,7 +113,8 @@ function MessageBubble({ message, onAddSuggestion, addedPlaceIds }: MessageBubbl
               <SuggestionCard
                 key={suggestion.id}
                 suggestion={suggestion}
-                isAdded={addedPlaceIds.has(suggestion.placeId)}
+                isAdded={suggestion.placeId ? addedPlaceIds.has(suggestion.placeId) : false}
+                isAdding={suggestion.placeId ? addingPlaceIds.has(suggestion.placeId) : false}
                 onAddClick={onAddSuggestion}
               />
             ))}

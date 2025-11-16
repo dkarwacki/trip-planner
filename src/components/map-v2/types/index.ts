@@ -36,13 +36,15 @@ export interface AIMessage {
 // AI suggestion card
 export interface AISuggestion {
   id: string;
-  placeId: string;
-  placeName: string;
+  placeId: string | null; // Null for general tips
+  placeName: string | null; // Null for general tips
   priority: PriorityLevel;
   reasoning: string;
-  score: number;
+  score: number | null; // Null for general tips
   category: string;
   photoUrl?: string;
+  type: 'add_attraction' | 'add_restaurant' | 'general_tip';
+  attractionData?: any; // Full attraction data from API for adding to plan
 }
 
 // Component props interfaces
@@ -65,6 +67,7 @@ export interface HubCardProps {
 export interface SuggestionCardProps {
   suggestion: AISuggestion;
   isAdded: boolean;
+  isAdding?: boolean;
   onAddClick: (placeId: string) => void;
 }
 

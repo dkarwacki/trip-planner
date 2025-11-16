@@ -15,16 +15,15 @@ export function AIChatPanel() {
   const { 
     sendMessage, 
     isLoading, 
-    addSuggestionToPlan 
+    addSuggestionToPlan,
+    addingPlaceIds,
+    addedPlaceIds
   } = useAIChat();
 
   // Get selected place for context
   const selectedPlace = state.selectedPlaceId
     ? state.places.find(p => p.id === state.selectedPlaceId)
     : null;
-
-  // Get added place IDs for suggestion card states
-  const addedPlaceIds = new Set(state.places.map(p => p.id));
 
   // Handle message send
   const handleSendMessage = async (message: string) => {
@@ -68,6 +67,7 @@ export function AIChatPanel() {
         isLoading={isLoading}
         onAddSuggestion={handleAddSuggestion}
         addedPlaceIds={addedPlaceIds}
+        addingPlaceIds={addingPlaceIds}
       />
       
       <ChatInput 

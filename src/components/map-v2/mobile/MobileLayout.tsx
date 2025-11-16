@@ -30,13 +30,10 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
   // AI chat functionality
-  const { sendMessage, isLoading, addSuggestionToPlan } = useAIChat();
+  const { sendMessage, isLoading, addSuggestionToPlan, addingPlaceIds, addedPlaceIds } = useAIChat();
 
   // Get selected place for AI context
   const selectedPlace = state.selectedPlaceId ? state.places.find((p) => p.id === state.selectedPlaceId) : null;
-
-  // Get added place IDs for suggestion card states
-  const addedPlaceIds = new Set(state.places.map((p) => p.id));
 
   // Suggested prompts based on context
   const suggestedPrompts = selectedPlace
@@ -223,6 +220,7 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
         onSendMessage={handleSendMessage}
         onAddSuggestion={handleAddSuggestion}
         addedPlaceIds={addedPlaceIds}
+        addingPlaceIds={addingPlaceIds}
         selectedPlace={selectedPlace}
         suggestedPrompts={suggestedPrompts}
       />

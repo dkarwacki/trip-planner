@@ -26,6 +26,7 @@ interface AIChatModalProps {
   onSendMessage: (message: string) => void;
   onAddSuggestion: (placeId: string) => void;
   addedPlaceIds: Set<string>;
+  addingPlaceIds?: Set<string>;
   selectedPlace?: { name: string } | null;
   suggestedPrompts?: string[];
 }
@@ -38,6 +39,7 @@ export function AIChatModal({
   onSendMessage,
   onAddSuggestion,
   addedPlaceIds,
+  addingPlaceIds = new Set(),
   selectedPlace,
   suggestedPrompts = []
 }: AIChatModalProps) {
@@ -115,6 +117,7 @@ export function AIChatModal({
                   message={message}
                   onAddSuggestion={onAddSuggestion}
                   addedPlaceIds={addedPlaceIds}
+                  addingPlaceIds={addingPlaceIds}
                 />
               ))}
               
@@ -166,9 +169,10 @@ interface MessageBubbleProps {
   message: AIMessage;
   onAddSuggestion: (placeId: string) => void;
   addedPlaceIds: Set<string>;
+  addingPlaceIds: Set<string>;
 }
 
-function MessageBubble({ message, onAddSuggestion, addedPlaceIds }: MessageBubbleProps) {
+function MessageBubble({ message, onAddSuggestion, addedPlaceIds, addingPlaceIds }: MessageBubbleProps) {
   const isUser = message.role === 'user';
 
   return (
@@ -200,7 +204,8 @@ function MessageBubble({ message, onAddSuggestion, addedPlaceIds }: MessageBubbl
               <MobileSuggestionCard
                 key={suggestion.id}
                 suggestion={suggestion}
-                isAdded={addedPlaceIds.has(suggestion.placeId)}
+                isAdded={suggestion.placeId ? addedPlaceIds.has(suggestion.placeId) : false}
+                isAdding={suggestion.placeId ? addingPlaceIds.has(suggestion.placeId) : false}
                 onAddClick={onAddSuggestion}
               />
             ))}
