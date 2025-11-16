@@ -35,10 +35,12 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
   // Get selected place for AI context
   const selectedPlace = state.selectedPlaceId ? state.places.find((p) => p.id === state.selectedPlaceId) : null;
 
-  // Suggested prompts based on context
-  const suggestedPrompts = selectedPlace
-    ? ["Must-see highlights", "Best local restaurants", "Hidden gems nearby", "Family-friendly activities"]
-    : [];
+  // Suggested prompts based on context - only show when there are no messages
+  const hasMessages = state.aiConversation.length > 0;
+  const suggestedPrompts =
+    selectedPlace && !hasMessages
+      ? ["Must-see highlights", "Best local restaurants", "Hidden gems nearby", "Family-friendly activities"]
+      : [];
 
   // Handle place selection from search
   const handlePlaceSelect = (placeDetails: {
@@ -108,8 +110,16 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
     sessionStorage.setItem(TAB_STORAGE_KEY, activeTab);
   }, [activeTab]);
 
+  // Sync with global state when activeMobileTab changes (e.g., from PlanView)
+  useEffect(() => {
+    if (state.activeMobileTab && state.activeMobileTab !== activeTab) {
+      setActiveTab(state.activeMobileTab);
+    }
+  }, [state.activeMobileTab, activeTab]);
+
   const handleTabChange = (tab: MobileTab) => {
     setActiveTab(tab);
+    dispatch({ type: "SET_MOBILE_TAB", payload: tab });
   };
 
   const handleBackClick = () => {

@@ -76,8 +76,13 @@ export function MobileChatInput({
   };
 
   const handlePromptClick = (prompt: string) => {
-    setMessage(prompt);
-    textareaRef.current?.focus();
+    if (!disabled) {
+      // Haptic feedback
+      if (navigator.vibrate) {
+        navigator.vibrate(10);
+      }
+      onSend(prompt);
+    }
   };
 
   return (
@@ -88,17 +93,17 @@ export function MobileChatInput({
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      {/* Suggested prompts - horizontal scroll */}
-      {suggestedPrompts.length > 0 && message.trim() === "" && (
+      {/* Suggested prompts - wrap to multiple lines */}
+      {suggestedPrompts.length > 0 && (
         <div className="px-4 pt-3 pb-2">
           <p className="text-xs text-gray-500 mb-2">Suggested:</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+          <div className="flex flex-wrap gap-2">
             {suggestedPrompts.map((prompt, index) => (
               <button
                 key={index}
                 onClick={() => handlePromptClick(prompt)}
                 disabled={disabled}
-                className="flex-shrink-0 text-sm px-4 py-2 rounded-full bg-gray-100 text-gray-700 active:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                className="text-sm px-4 py-2 rounded-full bg-gray-100 text-gray-700 active:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ minHeight: "36px" }}
               >
                 {prompt}

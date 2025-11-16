@@ -3,23 +3,23 @@
  */
 
 // View mode for discovery results display
-export type ViewMode = 'cards' | 'grid' | 'list';
+export type ViewMode = "cards" | "grid" | "list";
 
 // Desktop sidebar modes
-export type DesktopMode = 'discover' | 'plan' | 'ai';
+export type DesktopMode = "discover" | "plan" | "ai";
 
 // Mobile bottom navigation tabs
-export type MobileTab = 'map' | 'plan';
+export type MobileTab = "map" | "plan" | "discover";
 
 // Auto-save status
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 // Priority level for AI suggestions
-export type PriorityLevel = 'must-see' | 'highly-recommended' | 'hidden-gem';
+export type PriorityLevel = "must-see" | "highly-recommended" | "hidden-gem";
 
 // Filter state for discovery results
 export interface FilterState {
-  category: 'all' | 'attractions' | 'restaurants';
+  category: "all" | "attractions" | "restaurants";
   minScore: 7 | 8 | 9;
   showHighQualityOnly: boolean;
 }
@@ -27,7 +27,7 @@ export interface FilterState {
 // AI conversation message
 export interface AIMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   timestamp: Date;
   suggestions?: AISuggestion[];
@@ -43,7 +43,7 @@ export interface AISuggestion {
   score: number | null; // Null for general tips
   category: string;
   photoUrl?: string;
-  type: 'add_attraction' | 'add_restaurant' | 'general_tip';
+  type: "add_attraction" | "add_restaurant" | "general_tip";
   attractionData?: any; // Full attraction data from API for adding to plan
 }
 
@@ -70,4 +70,3 @@ export interface SuggestionCardProps {
   isAdding?: boolean;
   onAddClick: (placeId: string) => void;
 }
-

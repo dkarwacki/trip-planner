@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Plus, Check, ChevronDown, Lightbulb, Loader2 } from 'lucide-react';
 import type { SuggestionCardProps } from '../../types';
 import { PriorityBadge } from './PriorityBadge';
+import { PhotoLightbox } from '../../shared/PhotoLightbox';
 
 export function SuggestionCard({ 
   suggestion, 
@@ -16,6 +17,7 @@ export function SuggestionCard({
 }: SuggestionCardProps) {
   const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Truncate reasoning to 2-3 lines (~150 chars)
   const reasoningExcerpt = suggestion.reasoning.length > 150
@@ -32,38 +34,49 @@ export function SuggestionCard({
     }
   };
 
+  const handlePhotoClick = () => {
+    if (suggestion.photoUrl) {
+      setIsLightboxOpen(true);
+    }
+  };
+
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      {/* Photo with priority badge (or tip icon for general tips) */}
-      {!isGeneralTip && (
-        <div className="relative aspect-video bg-gray-200">
-          {suggestion.photoUrl ? (
-            <>
-              {!imageLoaded && (
-                <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-              )}
-              <img
-                src={suggestion.photoUrl}
-                alt={suggestion.placeName || 'Place photo'}
-                loading="lazy"
-                onLoad={() => setImageLoaded(true)}
-                className={`w-full h-full object-cover transition-opacity duration-300 ${
-                  imageLoaded ? 'opacity-100' : 'opacity-0'
-                }`}
-              />
-            </>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-              <span className="text-4xl">📍</span>
+    <>
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        {/* Photo with priority badge (or tip icon for general tips) */}
+        {!isGeneralTip && (
+          <div className="relative aspect-video bg-gray-200">
+            {suggestion.photoUrl ? (
+              <button
+                onClick={handlePhotoClick}
+                className="w-full h-full relative focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                aria-label="View photo in fullscreen"
+              >
+                {!imageLoaded && (
+                  <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                )}
+                <img
+                  src={suggestion.photoUrl}
+                  alt={suggestion.placeName || 'Place photo'}
+                  loading="lazy"
+                  onLoad={() => setImageLoaded(true)}
+                  className={`w-full h-full object-cover transition-opacity duration-300 hover:opacity-90 ${
+                    imageLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+              </button>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                <span className="text-4xl">📍</span>
+              </div>
+            )}
+            
+            {/* Priority badge */}
+            <div className="absolute top-2 right-2 pointer-events-none">
+              <PriorityBadge priority={suggestion.priority} />
             </div>
-          )}
-          
-          {/* Priority badge */}
-          <div className="absolute top-2 right-2">
-            <PriorityBadge priority={suggestion.priority} />
           </div>
-        </div>
-      )}
+        )}
       
       {/* General tip header */}
       {isGeneralTip && (
@@ -154,7 +167,19 @@ export function SuggestionCard({
           </button>
         )}
       </div>
-    </div>
+      </div>
+
+      {/* Photo Lightbox */}
+      {suggestion.photoUrl && (
+        <PhotoLightbox
+          photos={[suggestion.photoUrl]}
+          initialIndex={0}
+          alt={suggestion.placeName || 'Place photo'}
+          isOpen={isLightboxOpen}
+          onClose={() => setIsLightboxOpen(false)}
+        />
+      )}
+    </>
   );
 }
 

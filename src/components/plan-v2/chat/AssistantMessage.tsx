@@ -99,25 +99,19 @@ export function AssistantMessage({
 
             {/* Thinking process (inline, collapsed by default) */}
             {message.thinking && message.thinking.length > 0 && (
-              <Collapsible
-                open={isThinkingExpanded}
-                onOpenChange={setIsThinkingExpanded}
-                className="mt-3"
-              >
+              <Collapsible open={isThinkingExpanded} onOpenChange={setIsThinkingExpanded} className="mt-3">
                 <div className="flex justify-end">
                   <CollapsibleTrigger className="inline-flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
                     <span>reasoning</span>
-                    <ChevronDown
-                      className={`h-3 w-3 transition-transform ${
-                        isThinkingExpanded ? "rotate-180" : ""
-                      }`}
-                    />
+                    <ChevronDown className={`h-3 w-3 transition-transform ${isThinkingExpanded ? "rotate-180" : ""}`} />
                   </CollapsibleTrigger>
                 </div>
                 <CollapsibleContent>
                   <div className="mt-2 space-y-1 text-xs text-muted-foreground/80">
                     {message.thinking.map((thought, idx) => (
-                      <p key={idx} className="leading-relaxed">• {thought}</p>
+                      <p key={idx} className="leading-relaxed">
+                        • {thought}
+                      </p>
                     ))}
                   </div>
                 </CollapsibleContent>

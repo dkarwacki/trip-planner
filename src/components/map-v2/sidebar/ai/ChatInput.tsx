@@ -46,8 +46,9 @@ export function ChatInput({
   };
 
   const handlePromptClick = (prompt: string) => {
-    setMessage(prompt);
-    textareaRef.current?.focus();
+    if (!disabled) {
+      onSend(prompt);
+    }
   };
 
   return (

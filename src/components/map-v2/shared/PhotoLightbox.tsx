@@ -12,7 +12,7 @@ interface PhotoLightboxProps {
 
 /**
  * Full-screen photo lightbox with zoom and navigation
- * 
+ *
  * Features:
  * - Full-screen overlay
  * - Zoom controls (pinch, double-tap, buttons)
@@ -21,13 +21,7 @@ interface PhotoLightboxProps {
  * - Click outside to close
  * - Focus trap
  */
-export function PhotoLightbox({
-  photos,
-  initialIndex = 0,
-  alt,
-  isOpen,
-  onClose,
-}: PhotoLightboxProps) {
+export function PhotoLightbox({ photos, initialIndex = 0, alt, isOpen, onClose }: PhotoLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [zoom, setZoom] = useState(1);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -137,19 +131,22 @@ export function PhotoLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Photo lightbox"
     >
-      {/* Close button */}
+      {/* Close button - larger touch target for mobile */}
       <button
-        onClick={onClose}
-        className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        className="absolute right-4 top-4 z-10 rounded-full bg-white/20 p-3 text-white backdrop-blur-sm transition-colors hover:bg-white/30 active:bg-white/40 touch-manipulation"
         aria-label="Close lightbox"
       >
-        <X className="h-6 w-6" />
+        <X className="h-7 w-7" />
       </button>
 
       {/* Zoom controls */}
@@ -234,4 +231,3 @@ export function PhotoLightbox({
     </div>
   );
 }
-

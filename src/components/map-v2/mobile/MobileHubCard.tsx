@@ -60,7 +60,7 @@ export function MobileHubCard({
 
   const handleDiscoverMore = () => {
     dispatch({ type: "SELECT_PLACE", payload: place.id });
-    dispatch({ type: "SET_MOBILE_TAB", payload: "map" });
+    dispatch({ type: "SET_MOBILE_TAB", payload: "discover" });
   };
 
   const style = {
