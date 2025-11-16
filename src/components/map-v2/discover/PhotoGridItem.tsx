@@ -4,18 +4,32 @@
 
 import React, { useState } from 'react';
 import type { Attraction } from '@/domain/map/models';
-import { Plus } from 'lucide-react';
+import { Plus, CheckCircle2 } from 'lucide-react';
+import { getPhotoUrl } from '@/lib/map-v2/imageOptimization';
 
 interface PhotoGridItemProps {
   place: Attraction;
   score: number;
+  isAdded?: boolean;
+  isHighlighted?: boolean;
+  onHover?: (placeId: string | null) => void;
+  onExpandCard?: (placeId: string) => void;
+  onAddClick?: (placeId: string) => void;
 }
 
-export function PhotoGridItem({ place, score }: PhotoGridItemProps) {
+export const PhotoGridItem = React.memo(function PhotoGridItem({
+  place,
+  score,
+  isAdded = false,
+  isHighlighted,
+  onHover,
+  onExpandCard,
+  onAddClick,
+}: PhotoGridItemProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const photoUrl = place.photos?.[0]?.photoReference
-    ? `/api/photos/proxy?reference=${place.photos[0].photoReference}&maxwidth=600`
+    ? getPhotoUrl(place.photos[0].photoReference, 600)
     : undefined;
 
   const getScoreBadgeColor = (score: number) => {
@@ -24,14 +38,23 @@ export function PhotoGridItem({ place, score }: PhotoGridItemProps) {
     return 'bg-gray-600/90';
   };
 
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    onHover?.(place.id);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    onHover?.(null);
+  };
+
   const handleClick = () => {
-    // Open lightbox or place details
-    console.log('Open photo lightbox for:', place.id);
+    onExpandCard?.(place.id);
   };
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('Add to plan:', place.id);
+    onAddClick?.(place.id);
   };
 
   if (!photoUrl) {
@@ -40,9 +63,11 @@ export function PhotoGridItem({ place, score }: PhotoGridItemProps) {
 
   return (
     <div
-      className="relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className={`relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group ${
+        isHighlighted ? 'ring-4 ring-blue-600 ring-offset-2' : ''
+      }`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
       {/* Photo */}
@@ -55,6 +80,14 @@ export function PhotoGridItem({ place, score }: PhotoGridItemProps) {
 
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+      {/* Added Badge - top left */}
+      {isAdded && (
+        <div className="absolute top-2 left-2 bg-green-600 text-white px-2 py-1 rounded-md text-xs font-semibold shadow-lg flex items-center gap-1.5 z-10">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>Added</span>
+        </div>
+      )}
 
       {/* Score badge */}
       {score > 0 && (
@@ -70,11 +103,11 @@ export function PhotoGridItem({ place, score }: PhotoGridItemProps) {
         </h3>
       </div>
 
-      {/* Quick add button (visible on hover) */}
-      {isHovered && (
+      {/* Quick add button (visible on hover, hidden if already added) */}
+      {isHovered && !isAdded && (
         <button
           onClick={handleAddClick}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all animate-in fade-in zoom-in duration-200"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all animate-in fade-in zoom-in duration-200 z-10"
           aria-label={`Add ${place.name} to plan`}
         >
           <Plus className="w-6 h-6" />
@@ -82,5 +115,5 @@ export function PhotoGridItem({ place, score }: PhotoGridItemProps) {
       )}
     </div>
   );
-}
+});
 

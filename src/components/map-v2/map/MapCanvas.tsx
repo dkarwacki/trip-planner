@@ -3,56 +3,583 @@
  * Wrapper for Google Maps with markers and controls
  */
 
-import React from 'react';
-import { Map, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
-import { PlaceMarkers } from './PlaceMarkers';
-import { useMapState } from '../context';
+import React, { useCallback, useEffect, useState } from "react";
+import { Map, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
+import { PlaceMarkers } from "./PlaceMarkers";
+import { DiscoveryMarkers } from "./DiscoveryMarkers";
+import { PlannedItemMarkers } from "./PlannedItemMarkers";
+import { SearchAreaButton } from "./SearchAreaButton";
+import { MapBackdrop } from "./MapBackdrop";
+import { HoverMiniCard } from "./HoverMiniCard";
+import { ExpandedPlaceCard } from "./ExpandedPlaceCard";
+import { useMapState } from "../context";
+import { useMapPanDetection } from "../hooks/useMapPanDetection";
+import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
 
 interface MapCanvasProps {
   mapId?: string;
   defaultCenter?: { lat: number; lng: number };
   defaultZoom?: number;
+  onMapLoad?: (map: google.maps.Map) => void;
 }
 
-export function MapCanvas({ 
-  mapId,
-  defaultCenter = { lat: 0, lng: 0 },
-  defaultZoom = 2,
-}: MapCanvasProps) {
+export function MapCanvas({ mapId, defaultCenter = { lat: 0, lng: 0 }, defaultZoom = 2, onMapLoad }: MapCanvasProps) {
   return (
     <div className="relative h-full w-full bg-gray-100">
-      <Map
-        defaultCenter={defaultCenter}
-        defaultZoom={defaultZoom}
-        gestureHandling="greedy"
-        disableDefaultUI={false}
-        mapId={mapId}
-        className="h-full w-full"
-      />
-      
-      {/* Place Markers */}
-      <MapMarkersLayer />
+      <div className="relative h-full w-full" style={{ zIndex: 45 }}>
+        <Map
+          defaultCenter={defaultCenter}
+          defaultZoom={defaultZoom}
+          gestureHandling="greedy"
+          disableDefaultUI={false}
+          mapId={mapId}
+          className="h-full w-full"
+        />
+      </div>
+
+      {/* Place Markers, Map Instance Callback, and Search Area Button */}
+      <MapInteractiveLayer onMapLoad={onMapLoad} />
     </div>
   );
 }
 
 /**
- * Layer component for rendering markers
- * Separated to use context hooks
+ * Layer component for discovery markers
+ * Gets data from context and renders attraction/restaurant markers
  */
-function MapMarkersLayer() {
-  const { places, selectedPlaceId, setSelectedPlace } = useMapState();
+function DiscoveryMarkersLayer() {
+  const {
+    discoveryResults,
+    filters,
+    hoveredMarkerId,
+    setHoveredMarker,
+    setExpandedCard,
+    setActiveMode,
+    setHighlightedPlace,
+  } = useMapState();
 
-  const handlePlaceClick = (place: any) => {
-    setSelectedPlace(place.id);
+  const handleMarkerClick = useCallback(
+    (attractionId: string) => {
+      // Switch to discover mode to show the list
+      setActiveMode("discover");
+      // Highlight the place in the list
+      setHighlightedPlace(attractionId);
+      // Open the expanded card
+      setExpandedCard(attractionId);
+    },
+    [setExpandedCard, setActiveMode, setHighlightedPlace]
+  );
+
+  const handleMarkerHover = useCallback(
+    (attractionId: string | null) => {
+      setHoveredMarker(attractionId);
+    },
+    [setHoveredMarker]
+  );
+
+  // Helper to check if attraction is a restaurant
+  const isRestaurant = (item: { attraction?: { types?: string[] } }) => {
+    return item.attraction?.types?.some((t: string) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
   };
 
+  // Split into attractions and restaurants based on types
+  const attractions = discoveryResults.filter((r: { attraction?: { types?: string[] } }) => !isRestaurant(r));
+  const restaurants = discoveryResults.filter((r: { attraction?: { types?: string[] } }) => isRestaurant(r));
+
+  // Apply category filter
+  let filteredAttractions = attractions;
+  let filteredRestaurants = restaurants;
+
+  if (filters.category === "attractions") {
+    filteredRestaurants = [];
+  } else if (filters.category === "restaurants") {
+    filteredAttractions = [];
+  }
+
   return (
-    <PlaceMarkers
-      places={places}
-      selectedPlaceId={selectedPlaceId}
-      onPlaceClick={handlePlaceClick}
-    />
+    <>
+      {filteredAttractions.length > 0 && (
+        <DiscoveryMarkers
+          attractions={filteredAttractions}
+          category="attractions"
+          onMarkerClick={handleMarkerClick}
+          onMarkerHover={handleMarkerHover}
+          hoveredId={hoveredMarkerId}
+        />
+      )}
+      {filteredRestaurants.length > 0 && (
+        <DiscoveryMarkers
+          attractions={filteredRestaurants}
+          category="restaurants"
+          onMarkerClick={handleMarkerClick}
+          onMarkerHover={handleMarkerHover}
+          hoveredId={hoveredMarkerId}
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * Interactive layer component for markers, search button, and map state
+ * Separated to use context hooks
+ */
+function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map) => void }) {
+  const {
+    places,
+    selectedPlaceId,
+    setSelectedPlace,
+    hoveredMarkerId,
+    setHoveredMarker,
+    expandedCardPlaceId,
+    discoveryResults,
+    addAttractionToPlace,
+    addRestaurantToPlace,
+    removeAttractionFromPlace,
+    removeRestaurantFromPlace,
+    setExpandedCard,
+    setHighlightedPlace,
+    activeMode,
+    setActiveMode,
+    dispatch,
+  } = useMapState();
+  const map = useMap();
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [expandedPlaceId, setExpandedPlaceId] = useState<string | null>(null); // Track which place the expanded item belongs to
+
+  // Close card handler using dispatch
+  const closeCard = useCallback(() => {
+    dispatch({ type: "CLOSE_CARD" });
+  }, [dispatch]);
+
+  // Detect desktop (hover capability)
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+    setIsDesktop(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsDesktop(e.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  // Track viewport size for card positioning
+  useEffect(() => {
+    const updateSize = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
+  // Get nearby places hook
+  const { fetchNearbyPlaces } = useNearbyPlaces();
+
+  // Notify parent when map is loaded
+  useEffect(() => {
+    if (map && onMapLoad) {
+      onMapLoad(map);
+    }
+  }, [map, onMapLoad]);
+
+  // Check if a position is visible in the viewport
+  const isPositionInViewport = useCallback(
+    (lat: number, lng: number): boolean => {
+      if (!map) return false;
+
+      const bounds = map.getBounds();
+      if (!bounds) return false;
+
+      return bounds.contains({ lat, lng });
+    },
+    [map]
+  );
+
+  // Track map center changes and add click listener to close cards
+  useEffect(() => {
+    if (!map) return;
+
+    const centerChangedListener = map.addListener("center_changed", () => {
+      const center = map.getCenter();
+      if (center) {
+        setMapCenter({ lat: center.lat(), lng: center.lng() });
+      }
+    });
+
+    // Add click listener to close expanded card when clicking on map
+    const clickListener = map.addListener("click", () => {
+      closeCard();
+    });
+
+    // Initialize center
+    const center = map.getCenter();
+    if (center) {
+      setMapCenter({ lat: center.lat(), lng: center.lng() });
+    }
+
+    return () => {
+      google.maps.event.removeListener(centerChangedListener);
+      google.maps.event.removeListener(clickListener);
+    };
+  }, [map, closeCard]);
+
+  // Get selected place location for pan detection
+  const selectedPlace = selectedPlaceId
+    ? places.find((p: { id: string; lat: number; lng: number }) => p.id === selectedPlaceId)
+    : null;
+
+  const referenceLocation = selectedPlace ? { lat: selectedPlace.lat, lng: selectedPlace.lng } : null;
+
+  // Center map on selected place (hub places in itinerary)
+  useEffect(() => {
+    if (map && selectedPlace) {
+      const lat = Number(selectedPlace.lat);
+      const lng = Number(selectedPlace.lng);
+
+      map.panTo({ lat, lng });
+
+      // Optionally zoom in if too far out
+      const currentZoom = map.getZoom() || 0;
+      if (currentZoom < 12) {
+        map.setZoom(12);
+      }
+    }
+  }, [map, selectedPlaceId, selectedPlace]);
+
+  // Center map on expanded attraction (clicked from discover panel or plan sidebar)
+  useEffect(() => {
+    if (map && expandedCardPlaceId) {
+      // First, try to find in discovery results (Discover mode)
+      let expandedItem = discoveryResults.find(
+        (r: { attraction?: { id: string; location: { lat: number; lng: number } } }) =>
+          r.attraction?.id === expandedCardPlaceId
+      );
+
+      // If not found, search in planned items (Plan mode)
+      if (!expandedItem) {
+        for (const place of places) {
+          const found =
+            place.plannedAttractions?.find(
+              (a: { id: string; location: { lat: number; lng: number } }) => a.id === expandedCardPlaceId
+            ) ||
+            place.plannedRestaurants?.find(
+              (r: { id: string; location: { lat: number; lng: number } }) => r.id === expandedCardPlaceId
+            );
+          if (found) {
+            expandedItem = { attraction: found };
+            break;
+          }
+        }
+      }
+
+      if (expandedItem?.attraction?.location) {
+        const { lat, lng } = expandedItem.attraction.location;
+        map.panTo({ lat: Number(lat), lng: Number(lng) });
+
+        // Optionally zoom in if too far out
+        const currentZoom = map.getZoom() || 0;
+        if (currentZoom < 14) {
+          map.setZoom(14);
+        }
+      }
+    }
+  }, [map, expandedCardPlaceId, discoveryResults, places]);
+
+  // Use pan detection hook
+  const { shouldShowButton, hideButton } = useMapPanDetection(referenceLocation, mapCenter, {
+    thresholdKm: 2,
+    debounceMs: 100,
+  });
+
+  // Handle search area button click
+  const handleSearchArea = useCallback(async () => {
+    if (!mapCenter) return;
+
+    setIsSearching(true);
+    hideButton();
+
+    try {
+      // Fetch nearby places for the current map center
+      await fetchNearbyPlaces({
+        lat: mapCenter.lat,
+        lng: mapCenter.lng,
+        radius: 5000, // 5km radius
+      });
+    } catch {
+      // Failed to fetch nearby places, user will see no results
+    } finally {
+      setIsSearching(false);
+    }
+  }, [mapCenter, hideButton, fetchNearbyPlaces]);
+
+  const handlePlaceClick = useCallback(
+    (place: { id: string }) => {
+      setSelectedPlace(place.id);
+    },
+    [setSelectedPlace]
+  );
+
+  // Handle "Add to Plan" from expanded card (Discover mode)
+  const handleAddToPlan = useCallback(
+    (attractionId: string) => {
+      // Need a selected place to add attraction to
+      if (!selectedPlaceId) {
+        return;
+      }
+
+      // Find the attraction in discovery results
+      const result = discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === attractionId);
+
+      if (!result?.attraction) {
+        return;
+      }
+
+      // Check if it's a restaurant based on types
+      const isRestaurant = result.attraction.types?.some((t: string) =>
+        ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
+      );
+
+      // Add to the selected place's appropriate array
+      if (isRestaurant) {
+        addRestaurantToPlace(selectedPlaceId, result.attraction);
+      } else {
+        addAttractionToPlace(selectedPlaceId, result.attraction);
+      }
+    },
+    [discoveryResults, selectedPlaceId, addAttractionToPlace, addRestaurantToPlace]
+  );
+
+  // Handle "Remove from Plan" from expanded card (Plan mode)
+  const handleRemoveFromPlan = useCallback(
+    (attractionId: string) => {
+      // Find which place this attraction belongs to
+      let targetPlaceId = expandedPlaceId;
+
+      if (!targetPlaceId) {
+        // If not set (e.g., clicked from sidebar), find it by searching through places
+        for (const place of places) {
+          const isInAttractions = place.plannedAttractions?.some((a: { id: string }) => a.id === attractionId);
+          const isInRestaurants = place.plannedRestaurants?.some((r: { id: string }) => r.id === attractionId);
+          if (isInAttractions || isInRestaurants) {
+            targetPlaceId = place.id;
+            break;
+          }
+        }
+      }
+
+      if (!targetPlaceId) {
+        return;
+      }
+
+      // Find the place
+      const place = places.find((p: { id: string }) => p.id === targetPlaceId);
+      if (!place) {
+        return;
+      }
+
+      // Check if it's in attractions or restaurants
+      const isInAttractions = place.plannedAttractions?.some((a: { id: string }) => a.id === attractionId);
+      const isInRestaurants = place.plannedRestaurants?.some((r: { id: string }) => r.id === attractionId);
+
+      if (isInAttractions) {
+        removeAttractionFromPlace(targetPlaceId, attractionId);
+      } else if (isInRestaurants) {
+        removeRestaurantFromPlace(targetPlaceId, attractionId);
+      }
+
+      // Close the card after removal
+      closeCard();
+      setExpandedPlaceId(null);
+    },
+    [places, expandedPlaceId, removeAttractionFromPlace, removeRestaurantFromPlace, closeCard]
+  );
+
+  // Handle planned item marker click (Plan mode)
+  const handlePlannedItemClick = useCallback(
+    (attractionId: string, placeId: string) => {
+      setExpandedPlaceId(placeId);
+      setHighlightedPlace(attractionId);
+      setExpandedCard(attractionId);
+    },
+    [setExpandedCard, setHighlightedPlace]
+  );
+
+  // Get hovered and expanded attractions for cards
+  // In discover mode, get from discoveryResults
+  // In plan mode, get from places' planned items
+  const hoveredAttraction = hoveredMarkerId
+    ? activeMode === "discover"
+      ? discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === hoveredMarkerId)
+      : (() => {
+          // Find in planned items
+          for (const place of places) {
+            const found =
+              place.plannedAttractions?.find((a: { id: string }) => a.id === hoveredMarkerId) ||
+              place.plannedRestaurants?.find((r: { id: string }) => r.id === hoveredMarkerId);
+            if (found) return { attraction: found, score: 0 }; // Score not needed for plan mode
+          }
+          return null;
+        })()
+    : null;
+
+  const expandedAttraction = expandedCardPlaceId
+    ? activeMode === "discover"
+      ? discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === expandedCardPlaceId)
+      : (() => {
+          // Find in planned items
+          for (const place of places) {
+            const found =
+              place.plannedAttractions?.find((a: { id: string }) => a.id === expandedCardPlaceId) ||
+              place.plannedRestaurants?.find((r: { id: string }) => r.id === expandedCardPlaceId);
+            if (found) return { attraction: found, score: 0 }; // Score not needed for plan mode
+          }
+          return null;
+        })()
+    : null;
+
+  // Close card when the marker moves outside viewport
+  useEffect(() => {
+    if (!expandedCardPlaceId || !expandedAttraction) return;
+
+    const { lat, lng } = expandedAttraction.attraction.location;
+    const isVisible = isPositionInViewport(lat, lng);
+
+    if (!isVisible) {
+      closeCard();
+    }
+  }, [mapCenter, expandedCardPlaceId, expandedAttraction, isPositionInViewport, closeCard]);
+
+  // Check if attraction is already in plan
+  const isInPlan = (attractionId: string) => {
+    return places.some(
+      (p: { plannedAttractions?: { id: string }[]; plannedRestaurants?: { id: string }[] }) =>
+        p.plannedAttractions?.some((a: { id: string }) => a.id === attractionId) ||
+        p.plannedRestaurants?.some((r: { id: string }) => r.id === attractionId)
+    );
+  };
+
+  // Get marker position from map (for card positioning)
+  const getMarkerScreenPosition = useCallback(
+    (lat: number, lng: number): { x: number; y: number } | null => {
+      if (!map) return null;
+
+      const projection = map.getProjection();
+      if (!projection) return null;
+
+      const bounds = map.getBounds();
+      if (!bounds) return null;
+
+      // Get the map container's position in the viewport
+      const mapDiv = map.getDiv();
+      const mapRect = mapDiv.getBoundingClientRect();
+
+      // Convert lat/lng to world coordinates
+      const latLng = new google.maps.LatLng(lat, lng);
+      const worldPoint = projection.fromLatLngToPoint(latLng);
+      if (!worldPoint) return null;
+
+      // Get northwest corner (top-left) in world coordinates
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      const nw = new google.maps.LatLng(ne.lat(), sw.lng());
+      const nwWorldPoint = projection.fromLatLngToPoint(nw);
+      if (!nwWorldPoint) return null;
+
+      // Calculate pixel offset within the map
+      const scale = Math.pow(2, map.getZoom() || 0);
+      const pixelOffset = {
+        x: Math.floor((worldPoint.x - nwWorldPoint.x) * scale),
+        y: Math.floor((worldPoint.y - nwWorldPoint.y) * scale),
+      };
+
+      // Convert to viewport coordinates (for position: fixed)
+      const point = {
+        x: mapRect.left + pixelOffset.x,
+        y: mapRect.top + pixelOffset.y,
+      };
+
+      return point;
+    },
+    [map]
+  );
+
+  return (
+    <>
+      {/* Conditional rendering based on active mode */}
+      {activeMode === "discover" ? (
+        <>
+          {/* Discover Mode: Show hub markers + discovery markers */}
+          <PlaceMarkers places={places} selectedPlaceId={selectedPlaceId} onPlaceClick={handlePlaceClick} />
+          <DiscoveryMarkersLayer />
+        </>
+      ) : (
+        <>
+          {/* Plan Mode: Show only planned item markers */}
+          <PlannedItemMarkers
+            places={places}
+            onMarkerClick={handlePlannedItemClick}
+            onMarkerHover={setHoveredMarker}
+            hoveredId={hoveredMarkerId}
+            expandedCardPlaceId={expandedCardPlaceId}
+          />
+        </>
+      )}
+
+      {/* Search Area Button (Discover mode only) */}
+      <SearchAreaButton
+        isVisible={shouldShowButton && activeMode === "discover"}
+        isLoading={isSearching}
+        onClick={handleSearchArea}
+      />
+
+      {/* Map Backdrop (when card is expanded) */}
+      <MapBackdrop isVisible={!!expandedCardPlaceId} onClick={closeCard} />
+
+      {/* Hover Mini Card (Desktop only, with 300ms delay) */}
+      {isDesktop && hoveredAttraction && !expandedCardPlaceId && (
+        <HoverMiniCard
+          attraction={hoveredAttraction.attraction}
+          markerPosition={
+            getMarkerScreenPosition(
+              hoveredAttraction.attraction.location.lat,
+              hoveredAttraction.attraction.location.lng
+            ) || { x: 0, y: 0 }
+          }
+          viewportSize={viewportSize}
+          onMouseEnter={() => setHoveredMarker(hoveredAttraction.attraction.id)}
+          onMouseLeave={() => setHoveredMarker(null)}
+          onClick={() => setExpandedCard(hoveredAttraction.attraction.id)}
+        />
+      )}
+
+      {/* Expanded Place Card */}
+      {expandedAttraction && (
+        <ExpandedPlaceCard
+          attraction={expandedAttraction.attraction}
+          score={expandedAttraction.score}
+          markerPosition={
+            getMarkerScreenPosition(
+              expandedAttraction.attraction.location.lat,
+              expandedAttraction.attraction.location.lng
+            ) || { x: 0, y: 0 }
+          }
+          viewportSize={viewportSize}
+          isAddedToPlan={isInPlan(expandedAttraction.attraction.id)}
+          onClose={closeCard}
+          onAddToPlan={handleAddToPlan}
+        />
+      )}
+    </>
   );
 }
 
@@ -62,8 +589,8 @@ function MapMarkersLayer() {
  */
 export function useMapInstance() {
   const map = useMap();
-  const markerLibrary = useMapsLibrary('marker');
-  const placesLibrary = useMapsLibrary('places');
+  const markerLibrary = useMapsLibrary("marker");
+  const placesLibrary = useMapsLibrary("places");
 
   return {
     map,
@@ -72,4 +599,3 @@ export function useMapInstance() {
     isReady: !!map && !!markerLibrary,
   };
 }
-

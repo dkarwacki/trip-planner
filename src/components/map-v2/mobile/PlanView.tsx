@@ -7,7 +7,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMapState } from '../context/MapStateContext';
 import { MobileItineraryStats } from './MobileItineraryStats';
-import { MobileViewToggle } from './MobileViewToggle';
 import { MobileHubCardList } from './MobileHubCardList';
 import { MapPin } from 'lucide-react';
 
@@ -59,7 +58,7 @@ export function PlanView() {
 
   return (
     <div className="h-full w-full flex flex-col bg-gray-50">
-      {/* Sticky header with stats and view toggle */}
+      {/* Sticky header with stats */}
       <div 
         className={`sticky top-0 z-10 bg-background border-b border-border transition-shadow ${
           isScrolled ? 'shadow-sm' : ''
@@ -68,11 +67,6 @@ export function PlanView() {
         {/* Stats */}
         <div className="px-4 py-4">
           <MobileItineraryStats places={planItems} />
-        </div>
-
-        {/* View toggle */}
-        <div className="px-4 pb-4 flex justify-center">
-          <MobileViewToggle />
         </div>
       </div>
 

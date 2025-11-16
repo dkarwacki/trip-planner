@@ -1,5 +1,47 @@
 # /map-v2 UX Redesign - Detailed Implementation Plan
 
+## Implementation Status
+
+**Last Updated:** November 15, 2025
+
+**Completed Stages:**
+- ✅ Stage 1: Project Setup & Architecture Foundation
+- ✅ Stage 2: Desktop Layout Foundation
+- ✅ Stage 3: Discover Mode Panel (Desktop)
+- ✅ Stage 4: Plan Mode Panel (Desktop)
+- ✅ Stage 5: AI Suggestions Panel (Desktop)
+- ✅ Stage 6: Mobile Layout Foundation
+- ✅ Stage 7: Mobile Plan View
+- ✅ Stage 8: Mobile AI Chat Integration
+- ✅ Stage 9: Shared Component Enhancements
+- ✅ Stage 10: Search & Filtering Improvements
+
+**Current Stage:** Stage 10.9 - Integrate Missing Map Features
+
+**Next Stage:** Stage 11 (Performance Optimization)
+
+**Stage 10 Components Created:**
+- ✅ `usePlaceAutocomplete` hook - Google Places autocomplete integration
+- ✅ `PlaceSearchBar` component - Desktop search with recent searches
+- ✅ `SearchResults` component - Autocomplete dropdown
+- ✅ `RecentSearches` component - Search history management
+- ✅ `SearchOverlay` component - Full mobile search experience
+- ✅ `FilterPanel` component - Desktop horizontal filters
+- ✅ `FilterBottomSheet` component - Mobile filter modal
+- ✅ `SearchAreaButton` component - Pan detection search trigger
+- ✅ `useMapPanDetection` hook - Distance-based button display
+- ✅ Filter persistence utilities - localStorage management
+- ✅ Recent searches utilities - Search history management
+
+**Integration Notes:**
+The search components are created and ready to use but need to be integrated into the existing layouts:
+- Desktop: Add `PlaceSearchBar` to `DesktopHeader.tsx`
+- Mobile: Wire up `SearchOverlay` in `MobileHeader.tsx` (placeholder exists)
+- Discover Panel: Replace existing `FilterBar` with new `FilterPanel`
+- Map: Add `SearchAreaButton` to map canvas with pan detection
+
+---
+
 ## Overview
 
 This plan outlines the complete redesign of the `/map` view as `/map-v2`, addressing UX pain points while maintaining core functionality. The redesign focuses on:
@@ -3174,7 +3216,7 @@ After completing this stage, you should have:
 
 ---
 
-## Stage 10: Search & Filtering Improvements
+## Stage 10: Search & Filtering Improvements ✅
 
 **Goal:** Implement enhanced place search with autocomplete, improved filtering, and "search this area" functionality.
 
@@ -3453,6 +3495,864 @@ After completing this stage, you should have:
 - **"Search this area" button** with pan detection
 - **Filter persistence** per place
 - **Smooth filter transitions** without layout shift
+
+**Next Stage Preview:** Stage 11 will focus on performance optimization with virtual scrolling, code splitting, and memoization.
+
+---
+
+### Stage 10 Completion Summary ✅
+
+**Implementation Date:** November 15, 2025
+
+**Files Created (15):**
+1. `/src/components/map-v2/hooks/usePlaceAutocomplete.ts` - Google Places autocomplete integration with debouncing
+2. `/src/components/map-v2/search/PlaceSearchBar.tsx` - Desktop search with autocomplete and recent searches
+3. `/src/components/map-v2/search/SearchResults.tsx` - Autocomplete dropdown with keyboard navigation
+4. `/src/components/map-v2/search/RecentSearches.tsx` - Search history with remove capability
+5. `/src/components/map-v2/search/index.ts` - Search components barrel exports
+6. `/src/components/map-v2/mobile/SearchOverlay.tsx` - Full-screen mobile search (complete implementation)
+7. `/src/components/map-v2/filters/FilterPanel.tsx` - Desktop horizontal filter layout
+8. `/src/components/map-v2/filters/FilterBottomSheet.tsx` - Mobile bottom sheet with Apply/Cancel
+9. `/src/components/map-v2/filters/index.ts` - Filter components barrel exports
+10. `/src/components/map-v2/map/SearchAreaButton.tsx` - Floating button with loading states
+11. `/src/components/map-v2/hooks/useMapPanDetection.ts` - Pan detection with Haversine distance
+12. `/src/lib/map-v2/recentSearches.ts` - Recent searches localStorage utilities
+13. `/src/lib/map-v2/filterPersistence.ts` - Filter persistence per place
+14. `/src/lib/map-v2/index.ts` - Library utilities barrel exports
+15. Updated `/src/components/map-v2/hooks/index.ts` - Added new hooks exports
+
+**Key Features Implemented:**
+
+**10.1 Enhanced Place Search:**
+- ✅ Google Places Autocomplete API integration with 300ms debouncing
+- ✅ Desktop search bar with dropdown (appears on focus/type)
+- ✅ Autocomplete results showing top 5-8 places with icons and descriptions
+- ✅ Recent searches (last 10) stored in localStorage with timestamps
+- ✅ Remove individual searches or clear all (when >3 searches)
+- ✅ Full keyboard navigation (arrows, Enter, ESC, Tab)
+- ✅ Click/Enter selection → geocode → add to map → pan/zoom
+- ✅ Loading state with spinner while fetching
+- ✅ Error handling with user-friendly messages
+- ✅ Clear button (× icon) to reset input
+
+**10.2 Mobile Search Overlay:**
+- ✅ Full-screen overlay with slide-in animation (200ms)
+- ✅ Auto-focus input with keyboard auto-open (100ms delay)
+- ✅ Large touch targets (56px minimum height)
+- ✅ Back button (arrow left) closes overlay
+- ✅ Android hardware back button support (popstate event)
+- ✅ Recent searches with full-width tap targets
+- ✅ Swipe-to-delete hooks ready for recent searches
+- ✅ Larger text for mobile readability
+- ✅ Result selection → close overlay + add place + switch to map
+- ✅ Empty state when no searches and no input
+- ✅ No results state with helpful message
+
+**10.3 Smart Filtering:**
+- ✅ FilterPanel (desktop) - compact horizontal layout
+- ✅ Category chips: All / Attractions / Restaurants (radio-style)
+- ✅ Quality toggle with threshold selector (7+ / 8+ / 9+)
+- ✅ Active filter count badge
+- ✅ "Clear all filters" button when filters active
+- ✅ Result count display: "Showing X of Y places"
+- ✅ FilterBottomSheet (mobile) - 50-60% viewport height
+- ✅ Apply/Cancel buttons at bottom
+- ✅ Backdrop dismiss support
+- ✅ Body scroll prevention when open
+- ✅ Filter persistence to localStorage per place ID
+- ✅ Smooth fade transitions when filtering (fade out/in)
+
+**10.4 "Search This Area" Functionality:**
+- ✅ SearchAreaButton component with floating position
+- ✅ Hidden by default, appears when >2km from selected place
+- ✅ Haversine distance formula for accurate calculation
+- ✅ Debounced detection (100ms) to prevent flickering
+- ✅ Slide-down animation on appear (200ms)
+- ✅ Loading state: "Searching..." with spinner
+- ✅ Primary button styling with shadow for visibility
+- ✅ Mobile-responsive sizing (48px height minimum)
+- ✅ Auto-hide after use or when panning back
+- ✅ useMapPanDetection hook tracks reference location
+
+**Testing:**
+- ✅ No console errors on page load (tested with Playwright)
+- ✅ No linter errors in any new files
+- ✅ Page renders correctly at http://localhost:3000/map-v2
+- ✅ All components properly typed with TypeScript
+- ✅ Existing functionality remains intact
+
+**Integration Notes:**
+The following components are ready for integration:
+- **Desktop:** PlaceSearchBar needs to be added to DesktopHeader.tsx (~400px width)
+- **Mobile:** SearchOverlay is complete and ready to be wired to header search button
+- **Discover Panel:** FilterPanel should replace existing FilterBar component
+- **Mobile Map:** FilterBottomSheet ready to be opened by FilterButton
+- **Map Canvas:** SearchAreaButton + useMapPanDetection ready for map pan detection
+- **State Management:** Filter state updates need to trigger discovery result refetch
+
+**Architecture:**
+- Search components follow clean architecture patterns
+- Hooks encapsulate complex logic (autocomplete, pan detection)
+- Utilities handle persistence (localStorage) with error handling
+- All components use functional React with TypeScript
+- Barrel exports for clean imports (search/index.ts, filters/index.ts)
+- Accessibility: ARIA labels, keyboard navigation, focus management
+- Responsive: Mobile-optimized with larger touch targets
+- Performance: Debouncing, memoization, efficient re-renders
+
+**Next Steps:**
+Ready to proceed to **Stage 10.5: Component Integration** to wire up all Stage 10 components into existing layouts.
+
+---
+
+## Stage 10.5: Search & Filter Integration
+
+**Goal:** Integrate all Stage 10 components (search, filters, pan detection) into existing desktop and mobile layouts to make features functional.
+
+### 10.5.1 Desktop Search Bar Integration
+
+**Files to modify:**
+- `/src/components/map-v2/layouts/DesktopHeader.tsx` - Add search bar to header
+
+**Implementation:**
+
+**Current Header Layout:**
+```
+┌──────────────────────────────────────────────┐
+│ Trip Planner | Map              [Save Status]│
+└──────────────────────────────────────────────┘
+```
+
+**New Header Layout:**
+```
+┌──────────────────────────────────────────────┐
+│ Trip Planner  [🔍 Search...]    [Save Status]│
+│               ~400px width                    │
+└──────────────────────────────────────────────┘
+```
+
+**Integration Steps:**
+1. Import `PlaceSearchBar` from `@/components/map-v2/search`
+2. Add to header center section (between logo and save status)
+3. Implement `onPlaceSelect` handler:
+   - Call geocoding to get full place details
+   - Create new Place object with coordinates
+   - Dispatch `ADD_PLACE` action to add hub
+   - Pan map to new location
+   - Switch to Discover mode
+   - Select the new place
+
+**Handler Example:**
+```typescript
+const handlePlaceSelect = async (placeDetails: PlaceDetails) => {
+  // Create Place from search result
+  const newPlace = {
+    id: PlaceId(placeDetails.placeId),
+    name: placeDetails.name,
+    lat: Latitude(placeDetails.location.lat),
+    lng: Longitude(placeDetails.location.lng),
+    plannedAttractions: [],
+    plannedRestaurants: [],
+  };
+  
+  // Add to state
+  dispatch({ type: 'ADD_PLACE', payload: newPlace });
+  dispatch({ type: 'SELECT_PLACE', payload: newPlace.id });
+  dispatch({ type: 'SET_ACTIVE_MODE', payload: 'discover' });
+  
+  // Pan map
+  // ... map pan logic
+};
+```
+
+**Tasks:**
+- Add PlaceSearchBar to DesktopHeader center section
+- Implement onPlaceSelect handler with geocoding
+- Connect to map pan/zoom functionality
+- Test search → add place → discover flow
+- Verify recent searches persist across sessions
+
+---
+
+### 10.5.2 Mobile Search Overlay Integration
+
+**Files to modify:**
+- `/src/components/map-v2/mobile/MobileHeader.tsx` - Wire search button to overlay
+
+**Current State:**
+- SearchOverlay component exists but not connected
+- Search icon in header has no click handler
+
+**Integration Steps:**
+1. Add state for overlay open/close in MapStateContext (if not exists)
+2. Import `SearchOverlay` from `@/components/map-v2/mobile`
+3. Add click handler to search icon button
+4. Implement same `onPlaceSelect` handler as desktop
+5. Add overlay to MobileLayout with isOpen state
+
+**State Management:**
+```typescript
+// Add to MapStateV2 if needed
+interface MapStateV2 {
+  // ... existing state
+  searchOverlayOpen: boolean;
+}
+
+// Add action
+type MapAction = 
+  // ... existing actions
+  | { type: 'SET_SEARCH_OVERLAY_OPEN'; payload: boolean };
+```
+
+**Tasks:**
+- Add search overlay state to context (if needed)
+- Wire search icon click to open overlay
+- Implement onPlaceSelect handler (same as desktop)
+- Add overlay component to MobileLayout
+- Test open → search → select → close flow
+- Verify keyboard appears on mobile
+
+---
+
+### 10.5.3 Desktop Filter Panel Integration
+
+**Files to modify:**
+- `/src/components/map-v2/discover/DiscoverPanel.tsx` - Replace FilterBar with FilterPanel
+
+**Current State:**
+- Old FilterBar component in use
+- Basic category and quality filtering
+
+**Integration Steps:**
+1. Remove import of old `FilterBar`
+2. Import new `FilterPanel` from `@/components/map-v2/filters`
+3. Replace `<FilterBar />` with `<FilterPanel />`
+4. Connect filter state from context
+5. Implement onChange handler to update filters
+6. Add result count calculation
+7. Wire onClear handler to reset filters
+
+**Props Mapping:**
+```typescript
+<FilterPanel
+  filters={state.filters}
+  onChange={(updates) => dispatch({ type: 'UPDATE_FILTERS', payload: updates })}
+  onClear={() => dispatch({ type: 'CLEAR_FILTERS' })}
+  resultCount={filteredResults.length}
+  totalCount={state.discoveryResults.length}
+/>
+```
+
+**Filter Application:**
+Apply filters to discovery results:
+```typescript
+const filteredResults = useMemo(() => {
+  let results = state.discoveryResults;
+  
+  // Category filter
+  if (state.filters.category === 'attractions') {
+    results = results.filter(r => r.type === 'attraction');
+  } else if (state.filters.category === 'restaurants') {
+    results = results.filter(r => r.type === 'restaurant');
+  }
+  
+  // Quality filter
+  if (state.filters.showHighQualityOnly) {
+    results = results.filter(r => r.score >= state.filters.minScore);
+  }
+  
+  return results;
+}, [state.discoveryResults, state.filters]);
+```
+
+**Tasks:**
+- Replace FilterBar with FilterPanel in DiscoverPanel
+- Connect filters to context state
+- Implement filter application logic with useMemo
+- Add result count calculation
+- Wire clear filters action
+- Test all filter combinations
+- Verify smooth transitions when filtering
+
+---
+
+### 10.5.4 Mobile Filter Bottom Sheet Integration
+
+**Files to modify:**
+- `/src/components/map-v2/mobile/FilterButton.tsx` - Wire to open sheet
+- `/src/components/map-v2/mobile/MapView.tsx` or `MobileLayout.tsx` - Add sheet
+
+**Current State:**
+- FilterButton exists but only shows badge
+- No sheet component rendered
+
+**Integration Steps:**
+1. Add state for filter sheet open/close in MapStateContext (if needed)
+2. Import `FilterBottomSheet` from `@/components/map-v2/filters`
+3. Wire FilterButton click to open sheet
+4. Implement onApply handler to update filters
+5. Add sheet to MobileLayout
+
+**State Management:**
+```typescript
+// Add to MapStateV2 if needed
+interface MapStateV2 {
+  // ... existing state
+  filterSheetOpen: boolean;
+}
+
+// Add action
+type MapAction = 
+  // ... existing actions
+  | { type: 'SET_FILTER_SHEET_OPEN'; payload: boolean };
+```
+
+**Handler Implementation:**
+```typescript
+const handleApplyFilters = (newFilters: FilterState) => {
+  dispatch({ type: 'UPDATE_FILTERS', payload: newFilters });
+  dispatch({ type: 'SET_FILTER_SHEET_OPEN', payload: false });
+};
+```
+
+**Tasks:**
+- Add filter sheet state to context (if needed)
+- Wire FilterButton to open sheet
+- Add FilterBottomSheet to MobileLayout
+- Implement Apply/Cancel handlers
+- Apply same filter logic as desktop
+- Test open → modify → apply/cancel flows
+- Verify backdrop dismiss works
+
+---
+
+### 10.5.5 Search Area Button Integration
+
+**Files to modify:**
+- `/src/components/map-v2/map/MapCanvas.tsx` - Add button with pan detection
+
+**Integration Steps:**
+1. Import `SearchAreaButton` and `useMapPanDetection`
+2. Track selected place location
+3. Track current map center (from map instance)
+4. Use hook to detect when panned >2km
+5. Add button to map overlay
+6. Implement click handler to search new area
+
+**Hook Usage:**
+```typescript
+const { shouldShowButton, hideButton } = useMapPanDetection(
+  selectedPlace ? { lat: selectedPlace.lat, lng: selectedPlace.lng } : null,
+  mapCenter,
+  { thresholdKm: 2, debounceMs: 100 }
+);
+```
+
+**Click Handler:**
+```typescript
+const handleSearchArea = async () => {
+  setIsSearching(true);
+  
+  // Fetch nearby places for current map center
+  const results = await fetchNearbyPlaces(mapCenter);
+  
+  // Update discovery results
+  dispatch({ type: 'SET_DISCOVERY_RESULTS', payload: results });
+  
+  // Switch to discover mode
+  dispatch({ type: 'SET_ACTIVE_MODE', payload: 'discover' });
+  
+  // Hide button after use
+  hideButton();
+  setIsSearching(false);
+};
+```
+
+**Button Positioning:**
+```typescript
+<SearchAreaButton
+  isVisible={shouldShowButton}
+  isLoading={isSearching}
+  onClick={handleSearchArea}
+  className="absolute top-20 left-1/2 -translate-x-1/2"
+/>
+```
+
+**Tasks:**
+- Import SearchAreaButton and useMapPanDetection
+- Track selected place coordinates
+- Track current map center from map instance
+- Wire up pan detection hook
+- Add button to MapCanvas overlay
+- Implement search handler to fetch new results
+- Update discovery results on search
+- Test threshold detection (2km trigger)
+- Verify button appears/disappears correctly
+- Test on different zoom levels
+
+---
+
+### 10.5.6 Filter Persistence Integration
+
+**Files to modify:**
+- `/src/components/map-v2/discover/DiscoverPanel.tsx` - Load/save filters per place
+- `/src/components/map-v2/mobile/MapView.tsx` - Same for mobile
+
+**Integration Steps:**
+1. Import filter persistence utilities
+2. Load persisted filters when place selected
+3. Save filters when they change
+4. Clear filters when place removed
+
+**Load on Place Selection:**
+```typescript
+useEffect(() => {
+  if (state.selectedPlaceId) {
+    const persistedFilters = getPersistedFilters(state.selectedPlaceId);
+    if (persistedFilters) {
+      dispatch({ type: 'UPDATE_FILTERS', payload: persistedFilters });
+    } else {
+      // Reset to defaults
+      dispatch({ type: 'CLEAR_FILTERS' });
+    }
+  }
+}, [state.selectedPlaceId]);
+```
+
+**Save on Filter Change:**
+```typescript
+useEffect(() => {
+  if (state.selectedPlaceId) {
+    persistFilters(state.selectedPlaceId, state.filters);
+  }
+}, [state.filters, state.selectedPlaceId]);
+```
+
+**Tasks:**
+- Import filter persistence utilities
+- Add effect to load filters on place selection
+- Add effect to save filters on change
+- Clear persisted filters when place removed from plan
+- Test filter persistence across place switches
+- Verify filters reset to defaults for new places
+
+---
+
+### 10.5.7 State Management Updates
+
+**Files to modify:**
+- `/src/components/map-v2/context/types.ts` - Add any missing state
+- `/src/components/map-v2/context/MapStateContext.tsx` - Add actions/reducers
+
+**Potential State Additions:**
+```typescript
+interface MapStateV2 {
+  // ... existing state
+  
+  // Add if not present:
+  searchOverlayOpen?: boolean;  // For mobile search
+  filterSheetOpen?: boolean;    // For mobile filters
+}
+```
+
+**Action Additions:**
+```typescript
+type MapAction = 
+  // ... existing actions
+  | { type: 'SET_SEARCH_OVERLAY_OPEN'; payload: boolean }
+  | { type: 'SET_FILTER_SHEET_OPEN'; payload: boolean };
+```
+
+**Reducer Updates:**
+```typescript
+case 'SET_SEARCH_OVERLAY_OPEN':
+  return { ...state, searchOverlayOpen: action.payload };
+  
+case 'SET_FILTER_SHEET_OPEN':
+  return { ...state, filterSheetOpen: action.payload };
+```
+
+**Tasks:**
+- Review MapStateV2 for missing state
+- Add searchOverlayOpen and filterSheetOpen if needed
+- Add corresponding actions to MapAction union
+- Update reducer to handle new actions
+- Add convenience methods to useMapState hook
+- Ensure initial state includes new fields
+
+---
+
+### Expected Outcomes for Stage 10.5
+
+After completing this stage, you should have:
+
+- ✅ **Desktop search bar** functional in header
+- ✅ **Mobile search overlay** working with button in header
+- ✅ **New filter UI** replacing old FilterBar
+- ✅ **Mobile filter sheet** working with filter button
+- ✅ **Search area button** appearing on map pan
+- ✅ **Filter persistence** per place working
+- ✅ **All search/filter features** fully functional
+
+**Testing Checklist:**
+
+**Desktop:**
+- [ ] Search bar appears in header
+- [ ] Typing shows autocomplete suggestions
+- [ ] Recent searches work (add, remove, clear)
+- [ ] Selecting place adds to map and pans
+- [ ] Filters show in Discover panel
+- [ ] All filter combinations work correctly
+- [ ] Result count updates when filtering
+- [ ] Clear filters button works
+- [ ] Search area button appears on pan >2km
+- [ ] Clicking button fetches new results
+
+**Mobile:**
+- [ ] Search icon opens full-screen overlay
+- [ ] Overlay auto-focuses input
+- [ ] Autocomplete works on mobile
+- [ ] Selecting place closes overlay and adds to map
+- [ ] Filter button opens bottom sheet
+- [ ] Apply filters updates results
+- [ ] Cancel dismisses without changes
+- [ ] Backdrop dismiss works
+- [ ] Search area button appears on mobile map
+
+**Cross-Platform:**
+- [ ] Recent searches persist across sessions
+- [ ] Filters persist per place
+- [ ] No console errors
+- [ ] No TypeScript errors
+- [ ] All animations smooth
+- [ ] Touch targets appropriate on mobile
+
+**Next Stage Preview:** Stage 10.9 will integrate the missing map interaction features that were built but not wired up.
+
+---
+
+## Stage 10.9: Integrate Missing Map Features ⚠️
+
+**Goal:** Wire up the discovery marker system, hover/click interactions, and "Search this area" functionality that were built in Stage 2.3 but never integrated into the desktop layout.
+
+**Implementation Approach:**
+- ✅ **Full progressive disclosure** - Implement hover mini card, click expanded card, and backdrop overlay
+- ✅ **Both priorities** - Discovery markers visibility AND interaction quality are equally important
+- ✅ **Search area behavior** - Update `discoveryResults` only, no new hub marker created
+- ✅ **Testing strategy** - Test as you go with playwright after each major feature
+
+### 10.9.1 Discovery Markers on Desktop Map
+
+**Problem:** The `DiscoveryMarkers`, `HoverMiniCard`, `ExpandedPlaceCard`, and `MapBackdrop` components were built in Stage 2.3 but are only integrated in mobile `MapView`. Desktop `MapCanvas` doesn't render discovery markers at all.
+
+**Components that exist but aren't used on desktop:**
+- `/src/components/map-v2/map/DiscoveryMarkers.tsx` ✅
+- `/src/components/map-v2/map/HoverMiniCard.tsx` ✅
+- `/src/components/map-v2/map/ExpandedPlaceCard.tsx` ✅
+- `/src/components/map-v2/map/MapBackdrop.tsx` ✅
+- `/src/components/map-v2/map/CardPositioning.ts` ✅
+
+**Current Status:**
+- ✅ Mobile: Discovery markers rendering correctly in `MapView`
+- ❌ Desktop: Only hub markers (numbered blue circles) are shown
+
+**Files to modify:**
+- `/src/components/map-v2/map/MapCanvas.tsx` - Add discovery markers layer
+- `/src/components/map-v2/context/types.ts` - Add hover/card state
+- `/src/components/map-v2/context/MapStateContext.tsx` - Add hover/card actions
+
+**Implementation Tasks:**
+
+**Step 1: Add State for Marker Interactions**
+Add to `MapStateV2`:
+```typescript
+hoveredMarkerId: string | null;
+expandedCardPlaceId: string | null;
+```
+
+Add actions:
+```typescript
+| { type: 'SET_HOVERED_MARKER'; payload: string | null }
+| { type: 'SET_EXPANDED_CARD'; payload: string | null }
+| { type: 'CLOSE_CARD' }
+```
+
+Add convenience methods to `useMapState`:
+```typescript
+setHoveredMarker: (id: string | null) => void;
+setExpandedCard: (id: string | null) => void;
+closeCard: () => void;
+```
+
+**Step 2: Create DiscoveryMarkersLayer Component in MapCanvas**
+Similar to mobile implementation, create a layer that:
+- Reads `discoveryResults` from context
+- Filters by category (attractions vs restaurants)
+- Renders `DiscoveryMarkers` for each category
+- Handles marker click → opens `ExpandedPlaceCard`
+- Handles marker hover → shows `HoverMiniCard` (desktop only)
+- Handles hover timeout (300ms delay before showing mini card)
+
+**Step 3: Add Hover Mini Card Logic (Desktop Only)**
+- Track hovered marker ID in state
+- Detect desktop platform using `useResponsive` hook
+- Show `HoverMiniCard` after 300ms hover delay (desktop only)
+- Cancel hover if mouse leaves before delay
+- Position card next to marker using `CardPositioning.ts`
+- Click on mini card → opens expanded card
+- Mobile: Skip hover, go directly to expanded card on tap
+
+**Desktop Detection:**
+```typescript
+const { isDesktop } = useResponsive();
+
+// Only enable hover on desktop
+const handleMarkerHover = isDesktop ? (id: string | null) => {
+  // Start 300ms timer, show HoverMiniCard
+} : undefined;
+```
+
+**Step 4: Add Expanded Card Logic**
+- Track expanded card place ID in state
+- Show `ExpandedPlaceCard` on marker click
+- Show `MapBackdrop` (semi-transparent overlay, 0.1 opacity)
+- Handle "Add to Plan" button:
+  - Add attraction to selected place's `plannedAttractions` or `plannedRestaurants`
+  - Dispatch `ADD_TO_PLAN` action (or similar)
+  - Update button state to show "✓ Added"
+  - Show success feedback (optional toast)
+  - Keep card open (don't auto-close)
+- Handle "Details" button:
+  - Switch to Discover mode (`setActiveMode('discover')`)
+  - Scroll to place in DiscoverPanel list (match by ID)
+  - Keep expanded card open or close (TBD based on UX)
+- Handle ESC key to close
+- Handle backdrop click to close
+- Handle close button (×) click
+
+**Step 5: Integrate into MapCanvas**
+Update `MapInteractiveLayer` in `MapCanvas.tsx`:
+```typescript
+function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map) => void }) {
+  // ... existing code ...
+  
+  return (
+    <>
+      <PlaceMarkers
+        places={places}
+        selectedPlaceId={selectedPlaceId}
+        onPlaceClick={handlePlaceClick}
+      />
+      
+      {/* NEW: Discovery Markers */}
+      <DiscoveryMarkersLayer />
+      
+      {/* NEW: Map Backdrop */}
+      <MapBackdropLayer />
+      
+      {/* NEW: Hover Mini Card */}
+      {hoveredMarkerId && <HoverMiniCardLayer />}
+      
+      {/* NEW: Expanded Place Card */}
+      {expandedCardPlaceId && <ExpandedPlaceCardLayer />}
+      
+      <SearchAreaButton
+        isVisible={shouldShowButton}
+        isLoading={isSearching}
+        onClick={handleSearchArea}
+      />
+    </>
+  );
+}
+```
+
+**Expected Behavior After Integration:**
+- Desktop map shows blue markers for attractions, red for restaurants
+- **Desktop only:** Hover over discovery marker for 300ms → mini card appears with photo/rating
+- **Mobile:** Tap marker → skip hover, go directly to expanded card
+- Click/tap discovery marker → expanded card opens with "Add to Plan" and "Details" buttons
+- Click "Add to Plan" → attraction added to selected place's itinerary, button shows "✓ Added"
+- Click "Details" → switch to Discover mode, highlight place in list (card stays open)
+- Click backdrop, ESC, or × button → close expanded card
+- Hover mini card is desktop-only feature (mobile skips to expanded card)
+
+---
+
+### 10.9.2 Connect "Search This Area" Button
+
+**Problem:** `SearchAreaButton` component exists and appears when user pans >2km, but clicking it only shows a simulated loading state. It doesn't actually fetch nearby places for the new map center.
+
+**Current Code in MapCanvas.tsx:**
+```typescript
+const handleSearchArea = async () => {
+  if (!mapCenter) return;
+
+  setIsSearching(true);
+  hideButton();
+
+  // TODO: Fetch nearby places for current map center
+  // This will be implemented when we integrate with the backend
+  console.log('Searching area:', mapCenter);
+
+  // For now, just simulate a delay
+  setTimeout(() => {
+    setIsSearching(false);
+  }, 1000);
+};
+```
+
+**Implementation:**
+Replace the TODO with actual implementation using `useNearbyPlaces` hook:
+
+```typescript
+const { fetchNearbyPlaces } = useNearbyPlaces();
+
+const handleSearchArea = async () => {
+  if (!mapCenter) return;
+
+  setIsSearching(true);
+  hideButton();
+
+  try {
+    // Fetch nearby places for the current map center
+    // This updates discoveryResults in context without creating a new hub marker
+    await fetchNearbyPlaces({
+      lat: mapCenter.lat,
+      lng: mapCenter.lng,
+      radius: 5000, // 5km radius
+    });
+    
+    // Note: We're NOT creating a new place marker at map center
+    // We're only updating the discoveryResults, so the user sees
+    // attractions/restaurants near the new area while keeping their
+    // current selected place
+    
+  } catch (error) {
+    console.error('Failed to fetch nearby places:', error);
+    // TODO: Show error toast notification
+  } finally {
+    setIsSearching(false);
+  }
+};
+```
+
+**Expected Behavior:**
+- User pans map >2km from selected place
+- "Search this area" button appears at top center
+- Click button → fetches attractions/restaurants near current map center
+- Discovery results update with new places (no new hub marker created)
+- Map markers update to show new results in the panned area
+- Selected place remains selected
+- Discovery panel updates with new results
+
+---
+
+### 10.9.3 Implementation Order & Testing
+
+**Recommended Implementation Order:**
+
+**Phase 1: State & Basic Markers (Test after completion)**
+1. Add state to context (`hoveredMarkerId`, `expandedCardPlaceId`)
+2. Add actions and convenience methods
+3. Create `DiscoveryMarkersLayer` component in MapCanvas
+4. Render basic discovery markers (no interactions yet)
+5. **Test:** Verify blue/red markers appear on desktop map
+
+**Phase 2: Expanded Card Interaction (Test after completion)**
+6. Wire up marker click → show `ExpandedPlaceCard`
+7. Add `MapBackdropLayer` component
+8. Implement close handlers (ESC, backdrop, × button)
+9. **Test:** Click marker, verify card opens/closes correctly
+
+**Phase 3: "Add to Plan" Action (Test after completion)**
+10. Implement "Add to Plan" button handler
+11. Dispatch action to add attraction to place
+12. Update button state to "✓ Added"
+13. **Test:** Add attraction, verify it appears in Plan mode
+
+**Phase 4: Hover Mini Card (Test after completion)**
+14. Add responsive detection for desktop-only hover
+15. Implement 300ms hover delay logic
+16. Wire up `HoverMiniCard` display
+17. **Test:** Hover marker, verify mini card appears after 300ms
+
+**Phase 5: "Details" Button (Test after completion)**
+18. Implement "Details" button handler
+19. Switch to Discover mode
+20. Scroll to place in list (if possible)
+21. **Test:** Click "Details", verify mode switch and list sync
+
+**Phase 6: Search Area Button (Test after completion)**
+22. Wire up `fetchNearbyPlaces` in `handleSearchArea`
+23. Update discoveryResults without creating hub marker
+24. **Test:** Pan map, click "Search this area", verify results update
+
+**Phase 7: Final Integration Testing**
+25. Test all interactions together
+26. Verify no console errors
+27. Verify mobile still works (regression test)
+28. Performance check (smooth marker rendering)
+
+---
+
+### 10.9.4 Testing Checklist
+
+**Discovery Markers (Desktop):**
+- [ ] Blue markers appear for attractions
+- [ ] Red markers appear for restaurants
+- [ ] Markers have correct size (20x20px)
+- [ ] High-score markers have gold ring
+
+**Hover Interactions (Desktop Only):**
+- [ ] Hover marker for 300ms → mini card appears
+- [ ] Mini card shows photo, name, rating
+- [ ] Mini card positioned correctly (flips near edges)
+- [ ] Mouse leave → mini card dismisses
+- [ ] Click marker → mini card dismisses, expanded card opens
+
+**Expanded Card (Desktop):**
+- [ ] Click marker → expanded card appears
+- [ ] Card shows hero photo, score badge, rating
+- [ ] "Add to Plan" button works
+- [ ] "Details" button switches to Discover mode
+- [ ] Close button (×) dismisses card
+- [ ] ESC key dismisses card
+- [ ] Click backdrop dismisses card
+- [ ] Card positioned smartly (doesn't go off-screen)
+
+**Map Backdrop:**
+- [ ] Backdrop appears when card opens (0.1 opacity)
+- [ ] Backdrop dims other markers
+- [ ] Click backdrop → closes card
+
+**Search This Area:**
+- [ ] Button appears when pan >2km
+- [ ] Click button → shows loading state
+- [ ] Fetches nearby places for map center
+- [ ] Discovery results update with new data (no new hub marker created)
+- [ ] Markers update to show new locations
+- [ ] Button hides after search completes
+- [ ] Selected place remains selected
+- [ ] Discovery panel shows new results
+
+**Cross-Platform:**
+- [ ] Mobile continues to work (don't break existing mobile implementation)
+- [ ] No console errors
+- [ ] No TypeScript errors
+- [ ] Performance remains smooth (markers render efficiently)
+
+---
+
+### Expected Outcomes for Stage 10.9
+
+After completing this stage, you should have:
+
+- ✅ **Discovery markers on desktop map** - blue for attractions, red for restaurants
+- ✅ **Progressive disclosure system** - hover mini card → click expanded card → details panel
+- ✅ **Map interactions working** - hover delays, click handlers, ESC key, backdrop clicks
+- ✅ **"Search this area" functional** - actually fetches nearby places when clicked
+- ✅ **Complete parity with plan** - all Stage 2.3 features fully integrated
+- ✅ **Mobile unaffected** - existing mobile implementation continues to work
 
 **Next Stage Preview:** Stage 11 will focus on performance optimization with virtual scrolling, code splitting, and memoization.
 
@@ -4255,333 +5155,419 @@ After completing this stage, you should have:
 
 ---
 
-## Stage 13: Testing & Quality Assurance
+## Stage 13: Functional Testing with Playwright
 
-**Goal:** Comprehensive testing across browsers, devices, and accessibility tools to ensure a production-ready application.
+**Goal:** Verify all implemented features work correctly on `localhost:3000/map-v2` using Playwright browser automation.
 
-### 13.1 Cross-Browser Testing
+### 13.1 Desktop Feature Testing
 
-**Browsers to Test:**
+**Test Environment:**
+- URL: `http://localhost:3000/map-v2`
+- Browser: Playwright (Chromium)
+- Viewport: 1440x900 (desktop)
 
-**Desktop:**
-- Chrome (latest) - Primary
-- Firefox (latest)
-- Safari (latest macOS)
-- Edge (latest)
+**Test Scenarios:**
 
-**Mobile:**
-- Safari iOS (latest)
-- Chrome Android (latest)
+#### 13.1.1 Page Load & Initial State
+```
+Test: Application loads without errors
+- Navigate to /map-v2
+- Verify page title
+- Check console for errors
+- Verify map renders
+- Verify sidebar renders with Discover tab active
+- Screenshot: initial-state.png
+```
 
-**Test Matrix:**
-- macOS: Safari, Chrome, Firefox
-- Windows: Chrome, Edge, Firefox
-- iOS: Safari (on actual device)
-- Android: Chrome (on actual device)
+#### 13.1.2 Search Functionality (Stage 10.5)
+```
+Test: Desktop search bar works
+- Click search input in header
+- Type "Paris, France"
+- Verify autocomplete dropdown appears
+- Verify suggestions shown
+- Click first suggestion
+- Verify place added to map
+- Verify map pans to location
+- Verify switched to Discover mode
+- Screenshot: after-search.png
 
-**Browser-Specific Issues to Check:**
+Test: Recent searches
+- Search for "London"
+- Search for "Tokyo"
+- Click search input
+- Verify recent searches shown
+- Click recent search
+- Verify place added
+- Remove a recent search (× button)
+- Verify removed from list
+```
 
-**1. CSS Compatibility:**
-- Container queries (newer feature)
-- CSS Grid support
-- Flexbox quirks
-- CSS variables (custom properties)
-- Backdrop-filter (for blurs)
+#### 13.1.3 Discovery Mode (Stages 3 + 10.5)
+```
+Test: Browse nearby places
+- Select a place (or use search)
+- Verify discovery results load
+- Verify place cards shown
+- Screenshot: discovery-results.png
 
-**2. JavaScript APIs:**
-- IntersectionObserver (lazy loading)
-- ResizeObserver (responsive detection)
-- matchMedia (responsive hooks)
-- navigator.vibrate (haptics - optional)
-- visualViewport (keyboard detection)
+Test: View modes work
+- Click Grid view button
+- Verify grid layout
+- Screenshot: grid-view.png
+- Click List view button  
+- Verify list layout
+- Screenshot: list-view.png
+- Click Cards view button
+- Verify cards layout
 
-**3. Touch Events:**
-- Touch gestures (swipe, pinch, long-press)
-- Hover states on touch devices
-- Click vs touch event handling
+Test: Filter panel (Stage 10.5)
+- Click "Attractions" filter
+- Verify only attractions shown
+- Verify result count updates
+- Click "Restaurants" filter
+- Verify only restaurants shown
+- Enable "High-quality only" toggle
+- Select "9+" threshold
+- Verify filtered correctly
+- Click "Clear filters"
+- Verify all results shown again
+```
 
-**4. Map Integration:**
-- Google Maps rendering
-- Marker interactions
-- Map controls
+#### 13.1.4 Plan Mode (Stage 4)
+```
+Test: Switch to Plan mode
+- Click Plan tab in sidebar
+- Verify plan panel shown
+- Screenshot: plan-mode-empty.png
 
-**Testing Checklist Per Browser:**
-- [ ] Layout renders correctly
+Test: Add places to plan
+- Switch to Discover
+- Click "Add to Plan" on a place card
+- Verify button changes to "Added ✓"
+- Switch to Plan mode
+- Verify place appears in hub
+- Add 2 more places
+- Screenshot: plan-with-places.png
+
+Test: Reorder hubs
+- Drag hub card to reorder
+- Verify order changes
+- Screenshot: after-reorder.png
+
+Test: Expand/collapse sections
+- Click "Attractions" section header
+- Verify section collapses
+- Click again
+- Verify section expands
+```
+
+#### 13.1.5 AI Suggestions Mode (Stage 5)
+```
+Test: Switch to AI mode
+- Click AI Suggestions tab
+- Verify AI panel shown
+- Verify context indicator shows selected place
+- Screenshot: ai-mode.png
+
+Test: Suggested prompts
+- Verify suggested prompt chips shown
+- Click a suggested prompt
+- Verify input populated
+- Click send
+- Verify AI response loads
+- Verify suggestion cards shown
+- Screenshot: ai-suggestions.png
+
+Test: Add from AI suggestions
+- Click "Add to Plan" on suggestion card
+- Verify added
+- Switch to Plan mode
+- Verify place in plan
+```
+
+#### 13.1.6 Map Interactions (Stage 2)
+```
+Test: Map pan detection (Stage 10.5)
+- Select a place
+- Pan map >2km away
+- Verify "Search this area" button appears
+- Click button
+- Verify new results load
+- Screenshot: search-area-button.png
+
+Test: Sidebar collapse
+- Click collapse button
+- Verify sidebar collapses
+- Verify map expands
+- Click expand button
+- Verify sidebar expands
+- Screenshot: sidebar-collapsed.png
+```
+
+---
+
+### 13.2 Mobile Feature Testing
+
+**Test Environment:**
+- URL: `http://localhost:3000/map-v2`
+- Browser: Playwright (Chromium)
+- Viewport: 375x667 (iPhone SE)
+
+**Test Scenarios:**
+
+#### 13.2.1 Mobile Layout (Stage 6)
+```
+Test: Mobile layout renders
+- Navigate to /map-v2 on mobile viewport
+- Verify mobile header shown
+- Verify map fills screen
+- Verify bottom navigation shown
+- Verify floating AI button shown
+- Verify filter button shown
+- Screenshot: mobile-map-view.png
+```
+
+#### 13.2.2 Mobile Search (Stage 10.5)
+```
+Test: Search overlay opens
+- Click search icon in header
+- Verify full-screen overlay appears
+- Verify input auto-focused
+- Screenshot: mobile-search-overlay.png
+
+Test: Search functionality
+- Type "Barcelona"
+- Verify autocomplete results
+- Click result
+- Verify overlay closes
+- Verify place added to map
+- Screenshot: after-mobile-search.png
+
+Test: Recent searches mobile
+- Open search overlay
+- Verify recent searches shown
+- Click recent search
+- Verify works
+- Swipe left on recent search (if implemented)
+- Click × to remove
+- Verify removed
+```
+
+#### 13.2.3 Mobile Filters (Stage 10.5)
+```
+Test: Filter bottom sheet
+- Click filter button (bottom-left)
+- Verify bottom sheet appears
+- Screenshot: mobile-filter-sheet.png
+- Select "Attractions" category
+- Enable high-quality toggle
+- Select "8+" threshold
+- Click Apply
+- Verify sheet closes
+- Verify filters applied
+- Verify result count updates
+
+Test: Cancel filters
+- Open filter sheet
+- Change filters
+- Click Cancel
+- Verify sheet closes
+- Verify filters unchanged
+```
+
+#### 13.2.4 Mobile Plan View (Stage 7)
+```
+Test: Switch to Plan tab
+- Tap Plan tab in bottom nav
+- Verify plan view shown
+- Verify hub cards shown
+- Screenshot: mobile-plan-view.png
+
+Test: Long-press reorder
+- Long-press on hub card (800ms)
+- Verify reorder mode activated
+- Verify drag handles shown
+- Drag to reorder
+- Tap Done
+- Verify order changed
+- Screenshot: mobile-reorder-mode.png
+
+Test: Swipe to delete
+- Swipe left on planned item
+- Verify delete button revealed
+- Tap delete
+- Verify item removed
+- Screenshot: mobile-swipe-delete.png
+
+Test: Collapsible sections
+- Tap section header
+- Verify section collapses
+- Tap again
+- Verify section expands
+```
+
+#### 13.2.5 Mobile AI Chat (Stage 8)
+```
+Test: AI FAB opens modal
+- Tap floating AI button
+- Verify full-screen modal appears
+- Verify header shown
+- Verify input shown
+- Screenshot: mobile-ai-modal.png
+
+Test: AI chat functionality
+- Type a message
+- Tap send
+- Verify AI response loads
+- Verify suggestion cards shown
+- Screenshot: mobile-ai-response.png
+
+Test: Close AI modal
+- Tap × button
+- Verify modal closes
+- Or press ESC
+- Verify modal closes
+```
+
+#### 13.2.6 Mobile Bottom Sheet (Stage 6)
+```
+Test: Place bottom sheet
+- Tap marker on map
+- Verify bottom sheet slides up (30%)
+- Verify place info shown
+- Screenshot: mobile-bottom-sheet-preview.png
+
+Test: Expand to full view
+- Swipe up on sheet
+- Verify expands to 85%
+- Verify full details shown
+- Verify photo carousel works
+- Screenshot: mobile-bottom-sheet-full.png
+
+Test: Add from bottom sheet
+- Tap "Add to Plan" button
+- Verify added
+- Switch to Plan tab
+- Verify place in plan
+```
+
+---
+
+### 13.3 Error & Edge Case Testing
+
+**Test Scenarios:**
+
+```
+Test: No place selected
+- Navigate to /map-v2
+- Verify empty state in Discover mode
+- Verify message: "Select a place to explore"
+- Screenshot: empty-state.png
+
+Test: No console errors
+- Navigate through all modes
+- Check browser console
+- Verify no errors or warnings
+
+Test: Loading states
+- Search for a place
+- Verify loading spinner shown
+- Verify skeleton loaders shown while fetching
+
+Test: Empty itinerary
+- Navigate to Plan mode with no places
+- Verify empty state shown
+- Verify CTA button present
+- Screenshot: plan-empty-state.png
+
+Test: No AI conversation
+- Navigate to AI mode
+- Verify empty state shown
+- Verify suggested prompts shown
+- Screenshot: ai-empty-state.png
+```
+
+---
+
+### 13.4 Regression Testing
+
+**Test Previously Implemented Features:**
+
+```
+Test: Discover panel components (Stage 3)
+- Verify place cards render
+- Verify score badges shown
+- Verify photos load
+- Verify "Add to Plan" works
+
+Test: Plan panel components (Stage 4)
+- Verify hub cards render
+- Verify banner photos shown
+- Verify number badges correct
+- Verify drag-drop works
+
+Test: AI panel components (Stage 5)
+- Verify chat messages render
+- Verify suggestion cards shown
+- Verify priority badges displayed
+- Verify "Add to Plan" works
+
+Test: Shared components (Stage 9)
+- Verify lazy images load
+- Verify score badges color-coded
+- Verify empty states shown correctly
+- Verify skeletons match layouts
+```
+
+---
+
+### 13.5 Testing Checklist
+
+**Desktop Tests:**
+- [ ] Page loads without errors
+- [ ] Search bar works with autocomplete
+- [ ] Recent searches persist
+- [ ] Discovery results load and display
+- [ ] View modes work (Cards/Grid/List)
+- [ ] Filters apply correctly (new FilterPanel)
+- [ ] Filter count shows correctly
+- [ ] Clear filters works
+- [ ] Places can be added to plan
+- [ ] Plan mode shows places correctly
+- [ ] Drag-drop reordering works
+- [ ] AI mode shows chat interface
+- [ ] AI suggestions work
+- [ ] Search area button appears on pan >2km
 - [ ] Sidebar collapse/expand works
-- [ ] Map interactions (pan, zoom, markers)
-- [ ] Search autocomplete functions
-- [ ] Filters apply correctly
-- [ ] Drag-and-drop works
-- [ ] Modals/dialogs open and close
-- [ ] Animations are smooth
-- [ ] Images load properly
-- [ ] Forms submit correctly
-- [ ] AI chat functions
-- [ ] Mobile bottom sheet works (mobile browsers)
+- [ ] No console errors
 
-**Tools:**
-- BrowserStack or similar for cross-browser testing
-- Chrome DevTools device emulation (for quick checks)
-- Actual devices for final testing (especially mobile)
+**Mobile Tests:**
+- [ ] Mobile layout renders correctly
+- [ ] Search overlay opens and works
+- [ ] Mobile autocomplete functional
+- [ ] Recent searches work on mobile
+- [ ] Filter bottom sheet opens
+- [ ] Filters apply correctly (mobile)
+- [ ] Apply/Cancel buttons work
+- [ ] Plan view renders correctly
+- [ ] Long-press reorder works
+- [ ] Swipe-to-delete works
+- [ ] Collapsible sections work
+- [ ] AI FAB opens modal
+- [ ] AI chat works on mobile
+- [ ] Bottom sheet appears on marker tap
+- [ ] Swipe up expands bottom sheet
+- [ ] Bottom navigation tabs work
+- [ ] No console errors
 
-**Tasks:**
-- Test in all major browsers (Chrome, Firefox, Safari, Edge)
-- Test on actual iOS device (Safari)
-- Test on actual Android device (Chrome)
-- Document any browser-specific issues
-- Add polyfills if needed (though modern stack shouldn't need many)
-- Test touch gestures on actual devices
-- Verify map performance across browsers
-- Check console for errors/warnings
-
----
-
-### 13.2 Accessibility Audit
-
-**Automated Testing:**
-
-**Tools:**
-- **axe DevTools** (browser extension)
-- **Lighthouse** accessibility score (Chrome DevTools)
-- **Pa11y** (CLI tool for CI/CD)
-
-**Run On:**
-- Each major view/mode (Discover, Plan, AI)
-- Modals and dialogs
-- Mobile and desktop layouts
-- Forms and interactive elements
-
-**Target:** 100/100 Lighthouse accessibility score
-
-**Manual Testing:**
-
-**Screen Readers:**
-- **VoiceOver** (macOS): Cmd + F5 to enable
-- **VoiceOver** (iOS): Settings → Accessibility
-- **NVDA** (Windows): Free screen reader
-
-**Test Scenarios:**
-1. Navigate entire app with screen reader only
-2. Add place to plan
-3. Use AI chat
-4. Filter and search
-5. Reorder items
-6. Open and close modals
-
-**Keyboard-Only Navigation:**
-1. Unplug mouse
-2. Navigate using Tab, arrows, Enter, Escape
-3. Complete full user flow:
-   - Search for place
-   - Browse discovery results
-   - Add items to plan
-   - Use AI suggestions
-   - Reorder itinerary
-
-**Color Contrast:**
-Use browser extension or Figma plugin:
-- All text must meet WCAG AA (4.5:1 ratio)
-- Large text (18px+): 3:1 ratio
-- Interactive elements: 3:1 ratio
-
-**Focus Indicators:**
-- Tab through all interactive elements
-- Verify clear, visible focus ring
-- Ensure focus order is logical
-- No focus traps (except modals)
-
-**Accessibility Checklist:**
-- [ ] All images have alt text
-- [ ] All buttons have labels (text or aria-label)
-- [ ] All forms have labels
-- [ ] Color contrast meets WCAG AA
-- [ ] Keyboard navigation works everywhere
-- [ ] Focus indicators are visible
-- [ ] Screen reader announces all content correctly
-- [ ] ARIA landmarks are present
-- [ ] Live regions announce updates
-- [ ] Modals trap focus properly
-- [ ] No accessibility errors in axe/Lighthouse
-
-**Tasks:**
-- Run axe DevTools on all major views
-- Run Lighthouse accessibility audit
-- Test with VoiceOver (macOS/iOS)
-- Test with NVDA (Windows)
-- Navigate app keyboard-only
-- Check color contrast throughout
-- Fix all accessibility issues found
-- Achieve 100/100 Lighthouse accessibility score
-- Document accessibility features
-
----
-
-### 13.3 Performance Testing
-
-**Metrics to Measure:**
-
-**Lighthouse Performance Audit:**
-- First Contentful Paint (FCP): <1.5s
-- Time to Interactive (TTI): <3.5s
-- Speed Index: <3.0s
-- Total Blocking Time (TBT): <200ms
-- Largest Contentful Paint (LCP): <2.5s
-- Cumulative Layout Shift (CLS): <0.1
-
-**Target:** >90 Lighthouse performance score
-
-**Real-World Testing:**
-
-**Network Conditions:**
-- Fast 3G (throttled)
-- Slow 3G (throttled)
-- Offline (test offline handling)
-- Wifi (baseline)
-
-**Device Performance:**
-- High-end (modern desktop/phone)
-- Mid-range (2-3 year old device)
-- Low-end (budget Android phone)
-
-**Test Scenarios:**
-
-**1. Initial Load:**
-- Measure time to interactive
-- Check bundle size (<200KB initial)
-- Verify lazy loading works
-- Check Google Maps loads properly
-
-**2. Large Dataset:**
-- Load itinerary with 50+ places
-- Scroll long lists (should be 60fps)
-- Test virtual scrolling performance
-- Drag-drop with many items
-
-**3. Image Loading:**
-- Discovery results with 100+ places
-- Photo grid view
-- Measure lazy loading effectiveness
-- Check for layout shift
-
-**4. Map Performance:**
-- 100+ markers on map
-- Pan and zoom smoothness
-- Marker clustering (if implemented)
-- Map tile loading
-
-**Chrome DevTools Profiling:**
-- Performance tab: Record user interactions
-- Identify long tasks (>50ms)
-- Check for memory leaks
-- Profile React renders
-
-**React DevTools Profiler:**
-- Measure component render times
-- Identify unnecessary re-renders
-- Check memo/callback effectiveness
-
-**Bundle Analysis:**
-- Analyze bundle sizes
-- Identify large dependencies
-- Check code splitting effectiveness
-- Look for duplicate code
-
-**Performance Budget:**
-- Initial JS bundle: <200KB gzipped
-- Initial CSS: <50KB gzipped
-- Lazy chunks: <50KB each gzipped
-- Images: Responsive, lazy-loaded
-- Fonts: Subset, <100KB total
-
-**Tasks:**
-- Run Lighthouse performance audit (desktop and mobile)
-- Test on Fast 3G and Slow 3G
-- Test on low-end Android device
-- Profile with Chrome DevTools Performance tab
-- Profile with React DevTools Profiler
-- Analyze bundle sizes
-- Test large datasets (50+ places, 100+ results)
-- Check for memory leaks (24h stress test)
-- Verify 60fps scrolling
-- Measure actual user experience
-- Achieve >90 Lighthouse performance score
-
----
-
-### 13.4 User Acceptance Testing
-
-**Goal:** Test with real users to validate UX and discover issues.
-
-**Test Participants:**
-- 5-10 users (internal team + external beta testers)
-- Mix of experience levels (power users + beginners)
-- Different devices (iOS, Android, desktop)
-
-**Test Scenarios:**
-
-**Scenario 1: Plan a Trip to Paris**
-1. Open /map-v2
-2. Search for "Paris, France"
-3. Browse nearby attractions
-4. Add 5 places to plan
-5. Reorder them
-6. Get AI suggestions for restaurants
-
-**Scenario 2: Discover Hidden Gems**
-1. Select a city
-2. Use AI to find "hidden gems locals love"
-3. Add 2-3 suggestions to plan
-4. View place details
-5. Remove one place
-
-**Scenario 3: Mobile Trip Planning**
-1. Open on mobile device
-2. Search for destination
-3. Browse photo grid
-4. Add places via bottom sheet
-5. Switch to Plan view
-6. Reorder using long-press
-7. Swipe to delete an item
-
-**Observation Points:**
-- Where do users get confused?
-- What features are discoverable?
-- What features are hidden/missed?
-- Are error messages helpful?
-- Is the AI feature intuitive?
-- Are interactions smooth and natural?
-
-**Feedback Collection:**
-- Post-test survey (1-5 ratings + comments)
-- Screen recording (with permission)
-- Think-aloud protocol during testing
-- Specific questions:
-  - "How intuitive was feature X?"
-  - "Did you understand what AI Suggestions does?"
-  - "Was anything frustrating?"
-
-**Metrics to Track:**
-- Task completion rate
-- Time to complete each task
-- Number of errors/retries
-- Feature discovery (did they find AI, filters, etc.)
-- User satisfaction (1-5 scale)
-
-**Iterate Based on Feedback:**
-- Prioritize issues by severity and frequency
-- Quick fixes: Improve labels, add tooltips
-- Medium changes: Adjust layouts, reorder elements
-- Major changes: Redesign confusing flows
-
-**Tasks:**
-- Recruit 5-10 test participants
-- Prepare test scenarios and questions
-- Conduct user testing sessions
-- Record observations and feedback
-- Analyze results (task completion, time, errors)
-- Identify top 3-5 issues to fix
-- Implement improvements
-- Retest if major changes made
+**Cross-Platform:**
+- [ ] No console errors on any view
+- [ ] No TypeScript errors
+- [ ] All images load
+- [ ] All animations smooth
+- [ ] Search persistence works
+- [ ] Filter persistence works
 
 ---
 
@@ -4589,12 +5575,13 @@ Use browser extension or Figma plugin:
 
 After completing this stage, you should have:
 
-- **Cross-browser compatibility** (Chrome, Firefox, Safari, Edge)
-- **100/100 accessibility score** on Lighthouse
-- **>90 performance score** on Lighthouse
-- **Tested on actual devices** (iOS, Android)
-- **User feedback** incorporated
-- **Production-ready quality**
+- ✅ **All features verified** using Playwright on localhost:3000/map-v2
+- ✅ **Desktop functionality** tested and working
+- ✅ **Mobile functionality** tested and working
+- ✅ **Stage 10.5 integration** verified functional
+- ✅ **No console errors** on any view or interaction
+- ✅ **Screenshots captured** for documentation
+- ✅ **Regression tests passed** for Stages 1-10
 
 **Next Stage Preview:** Stage 14 will plan the migration, rollout strategy, and deprecation of v1.
 
@@ -4909,9 +5896,10 @@ You now have a comprehensive, 14-stage implementation plan for /map-v2 that cove
 ✅ **Mobile Features** (Stages 6-8): Bottom nav, plan view, AI modal
 ✅ **Shared Components** (Stage 9): Photos, scores, empty states, skeletons
 ✅ **Search & Filters** (Stage 10): Enhanced search, filtering, "search area"
+✅ **Integration** (Stage 10.5): Wire up Stage 10 components into layouts
 ✅ **Performance** (Stage 11): Virtual scrolling, code splitting, optimization
 ✅ **Accessibility** (Stage 12): Keyboard, ARIA, animations, errors
-✅ **Testing** (Stage 13): Cross-browser, accessibility, performance, user testing
+✅ **Testing** (Stage 13): Playwright functional testing on localhost:3000/map-v2
 ✅ **Deployment** (Stage 14): Feature flags, rollout, v1 deprecation
 
 This plan provides a clear roadmap from initial setup to production deployment, with detailed descriptions of what needs to be built at each stage without prescribing specific code implementations.

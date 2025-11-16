@@ -3,9 +3,10 @@
  * Stage 3.2: Large Photo Card View
  */
 
-import React from 'react';
-import type { Attraction } from '@/domain/map/models';
-import { MapPin, Star } from 'lucide-react';
+import React from "react";
+import type { Attraction } from "@/domain/map/models";
+import { MapPin, Star, CheckCircle2 } from "lucide-react";
+import { getPhotoUrl } from "@/lib/map-v2/imageOptimization";
 
 interface PlaceCardProps {
   place: Attraction;
@@ -13,27 +14,43 @@ interface PlaceCardProps {
   isAdded: boolean;
   onAddClick: (placeId: string) => void;
   onCardClick: (placeId: string) => void;
+  isHighlighted?: boolean;
+  onHover?: (placeId: string | null) => void;
 }
 
-export function PlaceCard({ place, score, isAdded, onAddClick, onCardClick }: PlaceCardProps) {
+export const PlaceCard = React.memo(function PlaceCard({
+  place,
+  score,
+  isAdded,
+  onAddClick,
+  onCardClick,
+  isHighlighted,
+  onHover,
+}: PlaceCardProps) {
   // Get photo URL from place photos
-  const photoUrl = place.photos?.[0]?.photoReference
-    ? `/api/photos/proxy?reference=${place.photos[0].photoReference}&maxwidth=800`
-    : undefined;
+  const photoUrl = place.photos?.[0]?.photoReference ? getPhotoUrl(place.photos[0].photoReference, 800) : undefined;
 
   // Format rating
   const rating = place.rating || 0;
   const totalRatings = place.userRatingsTotal || 0;
 
   // Get category from types (simplified)
-  const category = place.types?.[0]?.replace(/_/g, ' ') || 'Place';
-  const priceLevel = place.priceLevel ? '💰'.repeat(place.priceLevel) : '';
+  const category = place.types?.[0]?.replace(/_/g, " ") || "Place";
+  const priceLevel = place.priceLevel ? "💰".repeat(place.priceLevel) : "";
 
   // Score badge color
   const getScoreBadgeColor = (score: number) => {
-    if (score >= 90) return 'bg-green-600 text-white';
-    if (score >= 80) return 'bg-blue-600 text-white';
-    return 'bg-gray-600 text-white';
+    if (score >= 90) return "bg-green-600 text-white";
+    if (score >= 80) return "bg-blue-600 text-white";
+    return "bg-gray-600 text-white";
+  };
+
+  const handleMouseEnter = () => {
+    onHover?.(place.id);
+  };
+
+  const handleMouseLeave = () => {
+    onHover?.(null);
   };
 
   const handleAddButtonClick = (e: React.MouseEvent) => {
@@ -41,10 +58,29 @@ export function PlaceCard({ place, score, isAdded, onAddClick, onCardClick }: Pl
     onAddClick(place.id);
   };
 
+  const handleCardKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onCardClick(place.id);
+    }
+  };
+
   return (
     <div
       onClick={() => onCardClick(place.id)}
-      className="bg-white rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all duration-200"
+      onKeyDown={handleCardKeyDown}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      role="button"
+      tabIndex={0}
+      aria-label={`View details for ${place.name}`}
+      className={`bg-white rounded-lg border overflow-hidden cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all duration-200 ${
+        isHighlighted
+          ? "border-blue-600 border-2 ring-2 ring-blue-200"
+          : isAdded
+            ? "border-green-500 border-2"
+            : "border-gray-200"
+      }`}
     >
       {/* Hero Photo */}
       <div className="relative aspect-video bg-gray-100">
@@ -52,7 +88,7 @@ export function PlaceCard({ place, score, isAdded, onAddClick, onCardClick }: Pl
           <img
             src={photoUrl}
             alt={place.name}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${isAdded ? "opacity-90" : ""}`}
             loading="lazy"
           />
         ) : (
@@ -60,10 +96,20 @@ export function PlaceCard({ place, score, isAdded, onAddClick, onCardClick }: Pl
             <MapPin className="w-12 h-12" />
           </div>
         )}
-        
+
+        {/* Added Badge - top left */}
+        {isAdded && (
+          <div className="absolute top-2 left-2 bg-green-600 text-white px-2.5 py-1 rounded-md text-xs font-semibold shadow-lg flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Added</span>
+          </div>
+        )}
+
         {/* Score Badge */}
         {score > 0 && (
-          <div className={`absolute top-2 right-2 px-2 py-1 rounded-md text-sm font-bold shadow-lg ${getScoreBadgeColor(score)}`}>
+          <div
+            className={`absolute top-2 right-2 px-2 py-1 rounded-md text-sm font-bold shadow-lg ${getScoreBadgeColor(score)}`}
+          >
             {(score / 10).toFixed(1)}
           </div>
         )}
@@ -72,9 +118,7 @@ export function PlaceCard({ place, score, isAdded, onAddClick, onCardClick }: Pl
       {/* Content */}
       <div className="p-4 space-y-2">
         {/* Place Name */}
-        <h3 className="font-semibold text-gray-900 text-base line-clamp-1">
-          {place.name}
-        </h3>
+        <h3 className="font-semibold text-gray-900 text-base line-clamp-1">{place.name}</h3>
 
         {/* Meta Info */}
         <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -98,15 +142,10 @@ export function PlaceCard({ place, score, isAdded, onAddClick, onCardClick }: Pl
           <div className="flex items-center gap-2 text-sm">
             <div className="flex items-center gap-1 text-yellow-500">
               {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-4 h-4 ${i < Math.floor(rating) ? 'fill-current' : ''}`}
-                />
+                <Star key={i} className={`w-4 h-4 ${i < Math.floor(rating) ? "fill-current" : ""}`} />
               ))}
             </div>
-            <span className="text-gray-600">
-              ({totalRatings.toLocaleString()} reviews)
-            </span>
+            <span className="text-gray-600">({totalRatings.toLocaleString()} reviews)</span>
           </div>
         )}
 
@@ -118,15 +157,14 @@ export function PlaceCard({ place, score, isAdded, onAddClick, onCardClick }: Pl
             w-full py-2.5 rounded-lg font-medium transition-colors
             ${
               isAdded
-                ? 'bg-green-100 text-green-700 cursor-default'
-                : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
+                ? "bg-green-100 text-green-700 cursor-default"
+                : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
             }
           `}
         >
-          {isAdded ? '✓ Added' : '+ Add to Plan'}
+          {isAdded ? "✓ Added" : "+ Add to Plan"}
         </button>
       </div>
     </div>
   );
-}
-
+});

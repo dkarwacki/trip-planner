@@ -1,8 +1,8 @@
 /**
- * Map-v2 feature-specific utilities
- * Utilities will be added as needed in later stages
+ * Map v2 library utilities barrel exports
  */
 
-// Placeholder for future utilities
-export {};
-
+export * from './recentSearches';
+export * from './filterPersistence';
+export * from './imageOptimization';
+export * from './scoreUtils';

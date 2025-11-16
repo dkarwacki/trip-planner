@@ -52,7 +52,7 @@ export function DevStats() {
   const totalCalls = stats ? Object.values(stats).reduce((sum, count) => sum + count, 0) : 0;
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] font-mono text-xs">
+    <div className="fixed top-4 right-4 z-[9999] font-mono text-xs hidden md:block">
       <div className="bg-black/80 text-white rounded-lg shadow-lg border border-gray-700 overflow-hidden">
         {/* Header */}
         <button

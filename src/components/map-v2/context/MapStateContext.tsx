@@ -39,12 +39,70 @@ function mapStateReducer(state: MapStateV2, action: MapAction): MapStateV2 {
       return { ...state, places: newPlaces };
     }
     
-    // Selection - auto-switch to discover mode when place selected
+    case 'ADD_ATTRACTION_TO_PLACE': {
+      const { placeId, attraction } = action.payload;
+      const newPlaces = state.places.map((place: any) => {
+        if (place.id === placeId) {
+          return {
+            ...place,
+            plannedAttractions: [...(place.plannedAttractions || []), attraction],
+          };
+        }
+        return place;
+      });
+      return { ...state, places: newPlaces };
+    }
+    
+    case 'ADD_RESTAURANT_TO_PLACE': {
+      const { placeId, restaurant } = action.payload;
+      const newPlaces = state.places.map((place: any) => {
+        if (place.id === placeId) {
+          return {
+            ...place,
+            plannedRestaurants: [...(place.plannedRestaurants || []), restaurant],
+          };
+        }
+        return place;
+      });
+      return { ...state, places: newPlaces };
+    }
+    
+    case 'REMOVE_ATTRACTION_FROM_PLACE': {
+      const { placeId, attractionId } = action.payload;
+      const newPlaces = state.places.map((place: any) => {
+        if (place.id === placeId) {
+          return {
+            ...place,
+            plannedAttractions: (place.plannedAttractions || []).filter((a: any) => a.id !== attractionId),
+          };
+        }
+        return place;
+      });
+      return { ...state, places: newPlaces };
+    }
+    
+    case 'REMOVE_RESTAURANT_FROM_PLACE': {
+      const { placeId, restaurantId } = action.payload;
+      const newPlaces = state.places.map((place: any) => {
+        if (place.id === placeId) {
+          return {
+            ...place,
+            plannedRestaurants: (place.plannedRestaurants || []).filter((r: any) => r.id !== restaurantId),
+          };
+        }
+        return place;
+      });
+      return { ...state, places: newPlaces };
+    }
+    
+    // Selection - auto-switch to discover mode when place selected (unless already in plan mode)
     case 'SELECT_PLACE':
       return {
         ...state,
         selectedPlaceId: action.payload,
-        activeMode: action.payload ? 'discover' : state.activeMode,
+        // Only switch to discover mode if not already in plan mode
+        // This allows centering on places in plan mode without switching modes
+        activeMode: action.payload && state.activeMode !== 'plan' ? 'discover' : state.activeMode,
       };
     
     // Discovery
@@ -69,6 +127,9 @@ function mapStateReducer(state: MapStateV2, action: MapAction): MapStateV2 {
     
     case 'SET_AI_CHAT_MODAL_OPEN':
       return { ...state, aiChatModalOpen: action.payload };
+    
+    case 'SET_FILTER_SHEET_OPEN':
+      return { ...state, filterSheetOpen: action.payload };
     
     case 'SET_VIEW_MODE':
       return { ...state, viewMode: action.payload };
@@ -136,6 +197,9 @@ function mapStateReducer(state: MapStateV2, action: MapAction): MapStateV2 {
         expandedCardPlaceId: null,
         hoveredMarkerId: null,
       };
+    
+    case 'SET_HIGHLIGHTED_PLACE':
+      return { ...state, highlightedPlaceId: action.payload };
     
     default:
       return state;
@@ -229,6 +293,18 @@ export function useMapState() {
     reorderPlaces: (sourceIndex: number, destinationIndex: number) => {
       dispatch({ type: 'REORDER_PLACES', payload: { sourceIndex, destinationIndex } });
     },
+    addAttractionToPlace: (placeId: string, attraction: any) => {
+      dispatch({ type: 'ADD_ATTRACTION_TO_PLACE', payload: { placeId, attraction } });
+    },
+    addRestaurantToPlace: (placeId: string, restaurant: any) => {
+      dispatch({ type: 'ADD_RESTAURANT_TO_PLACE', payload: { placeId, restaurant } });
+    },
+    removeAttractionFromPlace: (placeId: string, attractionId: string) => {
+      dispatch({ type: 'REMOVE_ATTRACTION_FROM_PLACE', payload: { placeId, attractionId } });
+    },
+    removeRestaurantFromPlace: (placeId: string, restaurantId: string) => {
+      dispatch({ type: 'REMOVE_RESTAURANT_FROM_PLACE', payload: { placeId, restaurantId } });
+    },
     
     // Selection
     setSelectedPlace: (placeId: string | null) => {
@@ -257,9 +333,6 @@ export function useMapState() {
     setSidebarCollapsed: (collapsed: boolean) => {
       dispatch({ type: 'SET_SIDEBAR_COLLAPSED', payload: collapsed });
     },
-    setAIChatModalOpen: (open: boolean) => {
-      dispatch({ type: 'SET_AI_CHAT_MODAL_OPEN', payload: open });
-    },
     
     // Filters
     updateFilters: (filters: any) => {
@@ -279,6 +352,9 @@ export function useMapState() {
     closeCard: () => {
       dispatch({ type: 'CLOSE_CARD' });
     },
+    setHighlightedPlace: (placeId: string | null) => {
+      dispatch({ type: 'SET_HIGHLIGHTED_PLACE', payload: placeId });
+    },
     
     // AI
     addAIMessage: (message: any) => {
@@ -289,6 +365,14 @@ export function useMapState() {
     },
     setAIContext: (placeId: string | null) => {
       dispatch({ type: 'SET_AI_CONTEXT', payload: placeId });
+    },
+    setAIChatModalOpen: (open: boolean) => {
+      dispatch({ type: 'SET_AI_CHAT_MODAL_OPEN', payload: open });
+    },
+    
+    // Modal/Sheet controls
+    setFilterSheetOpen: (open: boolean) => {
+      dispatch({ type: 'SET_FILTER_SHEET_OPEN', payload: open });
     },
     
     // Renamed for clarity

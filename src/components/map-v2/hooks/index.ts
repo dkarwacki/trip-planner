@@ -9,4 +9,6 @@ export { useAIChat } from './useAIChat';
 export { useSwipeToDelete } from './useSwipeToDelete';
 export { useKeyboardHeight } from './useKeyboardHeight';
 export { useLongPress } from './useLongPress';
+export { usePlaceAutocomplete, type PlaceSuggestion, type PlaceDetails } from './usePlaceAutocomplete';
+export { useMapPanDetection } from './useMapPanDetection';
 

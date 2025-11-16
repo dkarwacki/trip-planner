@@ -1,11 +1,12 @@
 /**
  * Place markers component
  * Renders hub markers (places in itinerary) on the map
+ * Optimized with incremental updates to prevent full re-renders
  */
 
-import { useEffect, useRef } from 'react';
-import { useMapInstance } from './MapCanvas';
-import type { Place } from '@/domain/common/models';
+import { useCallback, useEffect, useRef } from "react";
+import { useMapInstance } from "./MapCanvas";
+import type { Place } from "@/domain/common/models";
 
 interface PlaceMarkersProps {
   places: Place[];
@@ -13,81 +14,185 @@ interface PlaceMarkersProps {
   onPlaceClick: (place: Place) => void;
 }
 
+interface MarkerData {
+  marker: google.maps.marker.AdvancedMarkerElement;
+  element: HTMLDivElement;
+  place: Place;
+}
+
 export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMarkersProps) {
   const { map, markerLibrary, isReady } = useMapInstance();
-  const markersRef = useRef<Map<string, google.maps.marker.AdvancedMarkerElement>>(new Map());
+  const markersRef = useRef<Map<string, MarkerData>>(new Map());
+  const previousPlacesRef = useRef<Place[]>([]);
+  const hasFitBoundsRef = useRef(false);
 
+  // Create marker element with proper styling
+  const createMarkerElement = useCallback((place: Place, index: number, isSelected: boolean) => {
+    const element = document.createElement("div");
+    element.className = "relative cursor-pointer transition-all duration-200";
+    element.style.width = isSelected ? "40px" : "32px";
+    element.style.height = isSelected ? "40px" : "32px";
+
+    element.innerHTML = `
+      <div class="w-full h-full rounded-full bg-blue-600 border-4 border-white shadow-lg flex items-center justify-center ${
+        isSelected ? "ring-2 ring-blue-400" : ""
+      }">
+        <span class="text-white font-bold text-sm">${index + 1}</span>
+      </div>
+    `;
+
+    return element;
+  }, []);
+
+  // Update marker visual state when selection changes
+  const updateMarkerVisualState = useCallback((element: HTMLDivElement, index: number, isSelected: boolean) => {
+    element.style.width = isSelected ? "40px" : "32px";
+    element.style.height = isSelected ? "40px" : "32px";
+
+    const innerDiv = element.querySelector("div");
+    if (innerDiv) {
+      if (isSelected) {
+        innerDiv.classList.add("ring-2", "ring-blue-400");
+      } else {
+        innerDiv.classList.remove("ring-2", "ring-blue-400");
+      }
+
+      const span = innerDiv.querySelector("span");
+      if (span) {
+        span.textContent = `${index + 1}`;
+      }
+    }
+  }, []);
+
+  // Incremental marker updates - only add/remove/update changed markers
   useEffect(() => {
     if (!isReady || !map || !markerLibrary) {
       return;
     }
 
-    // Clear existing markers
-    markersRef.current.forEach((marker) => {
-      marker.map = null;
-    });
-    markersRef.current.clear();
-
-    // Guard against undefined places array
     if (!places || !Array.isArray(places)) {
+      // Clear all markers if places is invalid
+      markersRef.current.forEach(({ marker }) => {
+        marker.map = null;
+      });
+      markersRef.current.clear();
+      previousPlacesRef.current = [];
       return;
     }
 
-    // Create new markers for each place
-    places.forEach((place, index) => {
+    const previousPlaces = previousPlacesRef.current;
+    const currentPlaceIds = new Set(places.map((p) => p.id));
+    const previousPlaceIds = new Set(previousPlaces.map((p) => p.id));
+
+    // Find removed places
+    const removedPlaceIds = previousPlaces.filter((p) => !currentPlaceIds.has(p.id)).map((p) => p.id);
+
+    // Find added places
+    const addedPlaces = places.filter((p) => !previousPlaceIds.has(p.id));
+
+    // Remove markers for removed places
+    removedPlaceIds.forEach((placeId) => {
+      const markerData = markersRef.current.get(placeId);
+      if (markerData) {
+        markerData.marker.map = null;
+        markersRef.current.delete(placeId);
+      }
+    });
+
+    // Add markers for new places
+    addedPlaces.forEach((place) => {
+      const index = places.findIndex((p) => p.id === place.id);
       const isSelected = place.id === selectedPlaceId;
 
-      // Create marker element
-      const element = document.createElement('div');
-      element.className = 'relative cursor-pointer transition-all duration-200';
-      element.style.width = isSelected ? '40px' : '32px';
-      element.style.height = isSelected ? '40px' : '32px';
+      // Convert branded types to numbers
+      const lat = Number(place.lat);
+      const lng = Number(place.lng);
 
-      // Circular marker with number badge
-      element.innerHTML = `
-        <div class="w-full h-full rounded-full bg-blue-600 border-4 border-white shadow-lg flex items-center justify-center ${
-          isSelected ? 'ring-2 ring-blue-400' : ''
-        }">
-          <span class="text-white font-bold text-sm">${index + 1}</span>
-        </div>
-      `;
+      // Skip invalid coordinates
+      if (isNaN(lat) || isNaN(lng) || !isFinite(lat) || !isFinite(lng)) {
+        return;
+      }
+
+      // Create marker element
+      const element = createMarkerElement(place, index, isSelected);
 
       const marker = new markerLibrary.AdvancedMarkerElement({
         map,
-        position: { lat: place.lat, lng: place.lng },
+        position: { lat, lng },
         content: element,
         title: place.name,
       });
 
       // Click handler
-      marker.addListener('click', () => {
+      marker.addListener("click", () => {
         onPlaceClick(place);
       });
 
-      markersRef.current.set(place.id, marker);
+      markersRef.current.set(place.id, { marker, element, place });
     });
 
-    // Fit bounds if multiple places
-    if (places.length > 1) {
-      const bounds = new google.maps.LatLngBounds();
-      places.forEach((place) => {
-        bounds.extend({ lat: place.lat, lng: place.lng });
-      });
-      map.fitBounds(bounds, { top: 80, right: 80, bottom: 80, left: 400 });
-    } else if (places.length === 1) {
-      map.panTo({ lat: places[0].lat, lng: places[0].lng });
-      map.setZoom(14);
+    // Update existing markers (for index changes or selection state)
+    places.forEach((place, index) => {
+      const markerData = markersRef.current.get(place.id);
+      if (markerData && !addedPlaces.includes(place)) {
+        const isSelected = place.id === selectedPlaceId;
+        updateMarkerVisualState(markerData.element, index, isSelected);
+        markerData.place = place;
+      }
+    });
+
+    // Fit bounds only on initial load or when places change significantly
+    const shouldFitBounds = !hasFitBoundsRef.current || removedPlaceIds.length > 0 || addedPlaces.length > 0;
+
+    if (shouldFitBounds && places.length > 0) {
+      if (places.length > 1) {
+        const bounds = new google.maps.LatLngBounds();
+        places.forEach((place) => {
+          const lat = Number(place.lat);
+          const lng = Number(place.lng);
+          if (isFinite(lat) && isFinite(lng)) {
+            bounds.extend({ lat, lng });
+          }
+        });
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, { top: 80, right: 80, bottom: 80, left: 400 });
+          hasFitBoundsRef.current = true;
+        }
+      } else if (places.length === 1) {
+        const place = places[0];
+        const lat = Number(place.lat);
+        const lng = Number(place.lng);
+        if (isFinite(lat) && isFinite(lng)) {
+          map.panTo({ lat, lng });
+          map.setZoom(14);
+          hasFitBoundsRef.current = true;
+        }
+      }
     }
 
-    // Cleanup
+    // Update previous places reference
+    previousPlacesRef.current = places;
+  }, [
+    places,
+    selectedPlaceId,
+    map,
+    markerLibrary,
+    isReady,
+    onPlaceClick,
+    createMarkerElement,
+    updateMarkerVisualState,
+  ]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    const markers = markersRef.current;
     return () => {
-      markersRef.current.forEach((marker) => {
+      markers.forEach(({ marker }) => {
         marker.map = null;
       });
-      markersRef.current.clear();
+      markers.clear();
     };
-  }, [places, selectedPlaceId, map, markerLibrary, isReady, onPlaceClick]);
+  }, []);
 
   return null; // This component doesn't render DOM directly
 }
-

@@ -4,16 +4,22 @@
 
 import React from 'react';
 import type { Attraction } from '@/domain/map/models';
-import { MapPin, Star, Plus } from 'lucide-react';
+import { MapPin, Star, Plus, CheckCircle2 } from 'lucide-react';
+import { getPhotoUrl } from '@/lib/map-v2/imageOptimization';
 
 interface PlaceListItemProps {
   place: Attraction;
   score: number;
+  isAdded?: boolean;
+  isHighlighted?: boolean;
+  onHover?: (placeId: string | null) => void;
+  onExpandCard?: (placeId: string) => void;
+  onAddClick?: (placeId: string) => void;
 }
 
-export function PlaceListItem({ place, score }: PlaceListItemProps) {
+export const PlaceListItem = React.memo(function PlaceListItem({ place, score, isAdded = false, isHighlighted, onHover, onExpandCard, onAddClick }: PlaceListItemProps) {
   const photoUrl = place.photos?.[0]?.photoReference
-    ? `/api/photos/proxy?reference=${place.photos[0].photoReference}&maxwidth=200`
+    ? getPhotoUrl(place.photos[0].photoReference, 200)
     : undefined;
 
   const rating = place.rating || 0;
@@ -27,20 +33,31 @@ export function PlaceListItem({ place, score }: PlaceListItemProps) {
     return 'text-gray-600';
   };
 
+  const handleMouseEnter = () => {
+    onHover?.(place.id);
+  };
+
+  const handleMouseLeave = () => {
+    onHover?.(null);
+  };
+
   const handleClick = () => {
-    // Select place on map and open details
-    console.log('Open place:', place.id);
+    onExpandCard?.(place.id);
   };
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('Add to plan:', place.id);
+    onAddClick?.(place.id);
   };
 
   return (
     <div
       onClick={handleClick}
-      className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-colors ${
+        isHighlighted ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+      }`}
     >
       {/* Thumbnail Photo */}
       <div className="flex-shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden bg-gray-100">
@@ -96,12 +113,20 @@ export function PlaceListItem({ place, score }: PlaceListItemProps) {
       {/* Add button */}
       <button
         onClick={handleAddClick}
-        className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors"
-        aria-label={`Add ${place.name} to plan`}
+        disabled={isAdded}
+        className={`
+          flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors
+          ${
+            isAdded
+              ? "bg-green-600 text-white cursor-default"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+          }
+        `}
+        aria-label={isAdded ? `${place.name} added to plan` : `Add ${place.name} to plan`}
       >
-        <Plus className="w-5 h-5" />
+        {isAdded ? <CheckCircle2 className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
       </button>
     </div>
   );
-}
+});
 

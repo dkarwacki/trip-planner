@@ -1,7 +1,7 @@
 /**
  * Mobile Chat Input
  * Touch-optimized input field with keyboard handling
- * 
+ *
  * Features:
  * - Auto-expanding textarea (1-4 lines max)
  * - Prevents zoom on focus (font-size ≥16px)
@@ -10,9 +10,9 @@
  * - Suggested prompts as horizontal scrolling chips
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
-import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
+import React, { useState, useRef, useEffect } from "react";
+import { Send } from "lucide-react";
+import { useKeyboardHeight } from "../hooks/useKeyboardHeight";
 
 interface MobileChatInputProps {
   onSend: (message: string) => void;
@@ -22,14 +22,14 @@ interface MobileChatInputProps {
   autoFocus?: boolean;
 }
 
-export function MobileChatInput({ 
-  onSend, 
-  disabled = false, 
-  placeholder = 'Ask anything...',
+export function MobileChatInput({
+  onSend,
+  disabled = false,
+  placeholder = "Ask anything...",
   suggestedPrompts = [],
-  autoFocus = false
+  autoFocus = false,
 }: MobileChatInputProps) {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { keyboardHeight } = useKeyboardHeight();
 
@@ -47,7 +47,7 @@ export function MobileChatInput({
   // Auto-resize textarea (max 4 lines)
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       const scrollHeight = textareaRef.current.scrollHeight;
       // Max 4 lines (~96px)
       const maxHeight = 96;
@@ -57,19 +57,19 @@ export function MobileChatInput({
 
   const handleSubmit = () => {
     if (!message.trim() || disabled) return;
-    
+
     // Haptic feedback
     if (navigator.vibrate) {
       navigator.vibrate(10);
     }
-    
+
     onSend(message.trim());
-    setMessage('');
+    setMessage("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // On mobile, Enter submits (no Shift+Enter needed)
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleSubmit();
     }
@@ -81,15 +81,15 @@ export function MobileChatInput({
   };
 
   return (
-    <div 
+    <div
       className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 transition-transform duration-200"
       style={{
-        transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
-        paddingBottom: 'env(safe-area-inset-bottom)',
+        transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : "none",
+        paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
       {/* Suggested prompts - horizontal scroll */}
-      {suggestedPrompts.length > 0 && message.trim() === '' && (
+      {suggestedPrompts.length > 0 && message.trim() === "" && (
         <div className="px-4 pt-3 pb-2">
           <p className="text-xs text-gray-500 mb-2">Suggested:</p>
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
@@ -99,7 +99,7 @@ export function MobileChatInput({
                 onClick={() => handlePromptClick(prompt)}
                 disabled={disabled}
                 className="flex-shrink-0 text-sm px-4 py-2 rounded-full bg-gray-100 text-gray-700 active:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                style={{ minHeight: '36px' }}
+                style={{ minHeight: "36px" }}
               >
                 {prompt}
               </button>
@@ -122,7 +122,7 @@ export function MobileChatInput({
           maxLength={500}
           style={{
             // Prevent zoom on iOS when focusing input
-            fontSize: '16px',
+            fontSize: "16px",
           }}
         />
         <button
@@ -136,12 +136,7 @@ export function MobileChatInput({
       </div>
 
       {/* Character count */}
-      {message.length > 400 && (
-        <p className="text-xs text-gray-500 text-right px-4 pb-2">
-          {message.length}/500
-        </p>
-      )}
+      {message.length > 400 && <p className="text-xs text-gray-500 text-right px-4 pb-2">{message.length}/500</p>}
     </div>
   );
 }
-

@@ -3,11 +3,12 @@
  * Shows on marker click with action buttons
  */
 
-import React, { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { X, Loader2, Check } from 'lucide-react';
-import type { Attraction } from '@/domain/map/models';
-import { calculateCardPosition } from './CardPositioning';
+import React, { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { X, Loader2, Check } from "lucide-react";
+import type { Attraction } from "@/domain/map/models";
+import { calculateCardPosition } from "./CardPositioning";
+import { getPhotoUrl } from "@/lib/map-v2/imageOptimization";
 
 interface ExpandedPlaceCardProps {
   attraction: Attraction;
@@ -18,7 +19,6 @@ interface ExpandedPlaceCardProps {
   isAddingToPlan?: boolean;
   onClose: () => void;
   onAddToPlan: (attractionId: string) => void;
-  onViewDetails: (attractionId: string) => void;
 }
 
 const CARD_WIDTH = 280;
@@ -33,9 +33,19 @@ export function ExpandedPlaceCard({
   isAddingToPlan,
   onClose,
   onAddToPlan,
-  onViewDetails,
 }: ExpandedPlaceCardProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Fade-in animation
   useEffect(() => {
@@ -46,25 +56,53 @@ export function ExpandedPlaceCard({
   // ESC key to close
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // Calculate position
-  const position = calculateCardPosition({
-    markerPosition,
-    cardSize: { width: CARD_WIDTH, height: CARD_HEIGHT },
-    viewportSize,
-    offset: 20,
-    preferredSide: 'right',
-  });
+  // Calculate position - center on mobile, near marker on desktop
+  // Ensure card doesn't overlap sidebar area (max sidebar width: ~500px)
+  const SIDEBAR_SAFE_ZONE = 500; // Conservative estimate for sidebar area
+
+  const position = isMobile
+    ? {
+        x: (viewportSize.width - CARD_WIDTH) / 2,
+        y: (viewportSize.height - CARD_HEIGHT) / 2,
+      }
+    : (() => {
+        const calculated = calculateCardPosition({
+          markerPosition,
+          cardSize: { width: CARD_WIDTH, height: CARD_HEIGHT },
+          viewportSize,
+          offset: 20,
+          preferredSide: "right",
+        });
+
+        // If card would overlap sidebar area (left side), adjust position to the right
+        if (calculated.x < SIDEBAR_SAFE_ZONE) {
+          // Position card to the right of sidebar
+          const adjustedX = SIDEBAR_SAFE_ZONE + 20;
+
+          // Ensure it doesn't overflow right side
+          const finalX = Math.min(adjustedX, viewportSize.width - CARD_WIDTH - 20);
+
+          return {
+            x: finalX,
+            y: calculated.y,
+          };
+        }
+
+        return calculated;
+      })();
 
   // Get hero photo
-  const photoUrl = attraction.photos?.[0]?.url;
+  const photoUrl = attraction.photos?.[0]?.photoReference
+    ? getPhotoUrl(attraction.photos[0].photoReference, 800)
+    : undefined;
 
   // Format rating
   const rating = attraction.rating || 0;
@@ -75,26 +113,27 @@ export function ExpandedPlaceCard({
   // Score badge color
   const scoreColor = score
     ? score >= 9.0
-      ? 'bg-green-500'
+      ? "bg-green-500"
       : score >= 8.0
-      ? 'bg-blue-500'
-      : 'bg-gray-500'
-    : 'bg-gray-500';
+        ? "bg-blue-500"
+        : "bg-gray-500"
+    : "bg-gray-500";
 
   return (
     <div
-      className={`fixed bg-white rounded-xl shadow-2xl overflow-hidden transition-opacity duration-200 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
+      className={`fixed bg-white rounded-xl shadow-2xl overflow-hidden transition-opacity duration-200 pointer-events-auto ${
+        isVisible ? "opacity-100" : "opacity-0"
       }`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
         width: `${CARD_WIDTH}px`,
-        zIndex: 60,
+        zIndex: 100,
+        pointerEvents: "auto",
       }}
     >
       {/* Hero Photo with Score Badge */}
-      <div className="relative w-full h-44 bg-gray-200">
+      <div className="relative w-full h-32 md:h-44 bg-gray-200">
         {photoUrl ? (
           <img src={photoUrl} alt={attraction.name} className="w-full h-full object-cover" />
         ) : (
@@ -129,8 +168,8 @@ export function ExpandedPlaceCard({
         <div className="text-sm text-gray-600">
           {attraction.types && attraction.types[0] && (
             <>
-              <span className="capitalize">{attraction.types[0].replace(/_/g, ' ')}</span>
-              {attraction.priceLevel && <span> • {'$'.repeat(attraction.priceLevel)}</span>}
+              <span className="capitalize">{attraction.types[0].replace(/_/g, " ")}</span>
+              {attraction.priceLevel && <span> • {"$".repeat(attraction.priceLevel)}</span>}
             </>
           )}
         </div>
@@ -143,9 +182,13 @@ export function ExpandedPlaceCard({
                 return <span key={i}>★</span>;
               }
               if (i === fullStars && hasHalfStar) {
-                return <span key={i}>⯪</span>;
+                return <span key={i}>☆</span>;
               }
-              return <span key={i} className="text-gray-300">★</span>;
+              return (
+                <span key={i} className="text-gray-300">
+                  ☆
+                </span>
+              );
             })}
           </div>
           <span className="text-gray-700 font-medium">{rating.toFixed(1)}</span>
@@ -170,15 +213,11 @@ export function ExpandedPlaceCard({
                 In Plan
               </>
             ) : (
-              'Add to Plan'
+              "Add to Plan"
             )}
-          </Button>
-          <Button onClick={() => onViewDetails(attraction.id)} variant="outline" className="flex-1 h-11">
-            Details
           </Button>
         </div>
       </div>
     </div>
   );
 }
-

@@ -19,6 +19,7 @@ export interface MapStateV2 {
   activeMobileTab: MobileTab;
   bottomSheetOpen: boolean;
   aiChatModalOpen: boolean;
+  filterSheetOpen: boolean;
   
   // View preferences
   viewMode: ViewMode;
@@ -42,6 +43,7 @@ export interface MapStateV2 {
   // Progressive disclosure card state
   hoveredMarkerId: string | null;
   expandedCardPlaceId: string | null;
+  highlightedPlaceId: string | null;
 }
 
 // Action types
@@ -51,6 +53,10 @@ export type MapAction =
   | { type: 'ADD_PLACE'; payload: any }
   | { type: 'REMOVE_PLACE'; payload: string }
   | { type: 'REORDER_PLACES'; payload: { sourceIndex: number; destinationIndex: number } }
+  | { type: 'ADD_ATTRACTION_TO_PLACE'; payload: { placeId: string; attraction: any } }
+  | { type: 'ADD_RESTAURANT_TO_PLACE'; payload: { placeId: string; restaurant: any } }
+  | { type: 'REMOVE_ATTRACTION_FROM_PLACE'; payload: { placeId: string; attractionId: string } }
+  | { type: 'REMOVE_RESTAURANT_FROM_PLACE'; payload: { placeId: string; restaurantId: string } }
   
   // Selection
   | { type: 'SELECT_PLACE'; payload: string | null }
@@ -65,6 +71,7 @@ export type MapAction =
   | { type: 'SET_MOBILE_TAB'; payload: MobileTab }
   | { type: 'SET_BOTTOM_SHEET_OPEN'; payload: boolean }
   | { type: 'SET_AI_CHAT_MODAL_OPEN'; payload: boolean }
+  | { type: 'SET_FILTER_SHEET_OPEN'; payload: boolean }
   | { type: 'SET_VIEW_MODE'; payload: ViewMode }
   
   // Filters
@@ -88,7 +95,8 @@ export type MapAction =
   // Progressive disclosure cards
   | { type: 'SET_HOVERED_MARKER'; payload: string | null }
   | { type: 'SET_EXPANDED_CARD'; payload: string | null }
-  | { type: 'CLOSE_CARD' };
+  | { type: 'CLOSE_CARD' }
+  | { type: 'SET_HIGHLIGHTED_PLACE'; payload: string | null };
 
 // Initial state
 export const initialMapState: MapStateV2 = {
@@ -105,6 +113,7 @@ export const initialMapState: MapStateV2 = {
   activeMobileTab: 'map',
   bottomSheetOpen: false,
   aiChatModalOpen: false,
+  filterSheetOpen: false,
   
   // View preferences
   viewMode: 'cards',
@@ -132,5 +141,6 @@ export const initialMapState: MapStateV2 = {
   // Progressive disclosure cards
   hoveredMarkerId: null,
   expandedCardPlaceId: null,
+  highlightedPlaceId: null,
 };
 

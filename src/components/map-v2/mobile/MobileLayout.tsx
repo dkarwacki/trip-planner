@@ -3,10 +3,11 @@
  * Main container with bottom navigation, header, and view switching
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MobileBottomNav, type MobileTab } from "./MobileBottomNav";
 import { MobileHeader } from "./MobileHeader";
 import { MapView } from "./MapView";
+import { DiscoverView } from "./DiscoverView";
 import { PlanView } from "./PlanView";
 import { SearchOverlay } from "./SearchOverlay";
 import { FloatingAIButton } from "./FloatingAIButton";
@@ -26,6 +27,7 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
   const { planItems, aiChatModalOpen, setAIChatModalOpen, state, dispatch } = useMapState();
   const [activeTab, setActiveTab] = useState<MobileTab>("map");
   const [showSearch, setShowSearch] = useState(false);
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
   // AI chat functionality
   const { sendMessage, isLoading, addSuggestionToPlan } = useAIChat();
@@ -41,19 +43,65 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
     ? ["Must-see highlights", "Best local restaurants", "Hidden gems nearby", "Family-friendly activities"]
     : [];
 
+  // Handle place selection from search
+  const handlePlaceSelect = (placeDetails: {
+    placeId: string;
+    name: string;
+    formattedAddress: string;
+    location: { lat: number; lng: number };
+  }) => {
+    // Ensure coordinates are numbers (handle both number and function cases)
+    const latValue = placeDetails.location.lat as unknown;
+    const lngValue = placeDetails.location.lng as unknown;
+    const lat = typeof latValue === "function" ? (latValue as () => number)() : Number(latValue);
+    const lng = typeof lngValue === "function" ? (lngValue as () => number)() : Number(lngValue);
+
+    // Validate coordinates
+    if (isNaN(lat) || isNaN(lng) || !isFinite(lat) || !isFinite(lng)) {
+      console.error("Invalid coordinates:", placeDetails.location);
+      return;
+    }
+
+    // Create new place object
+    const newPlace = {
+      id: placeDetails.placeId,
+      name: placeDetails.name,
+      address: placeDetails.formattedAddress,
+      lat,
+      lng,
+      plannedAttractions: [],
+      plannedRestaurants: [],
+    };
+
+    // Add to state
+    dispatch({ type: "ADD_PLACE", payload: newPlace });
+    dispatch({ type: "SELECT_PLACE", payload: newPlace.id });
+
+    // Switch to map tab if not already there
+    if (activeTab !== "map") {
+      setActiveTab("map");
+    }
+
+    // Pan map to new location
+    if (mapInstance) {
+      mapInstance.panTo({ lat, lng });
+      mapInstance.setZoom(13);
+    }
+  };
+
   // Load active tab from sessionStorage or URL on mount
   useEffect(() => {
     // Check URL parameter first
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get("tab");
-    if (tabParam === "plan" || tabParam === "map") {
+    if (tabParam === "plan" || tabParam === "map" || tabParam === "discover") {
       setActiveTab(tabParam);
       return;
     }
 
     // Otherwise load from sessionStorage
     const savedTab = sessionStorage.getItem(TAB_STORAGE_KEY);
-    if (savedTab === "plan" || savedTab === "map") {
+    if (savedTab === "plan" || savedTab === "map" || savedTab === "discover") {
       setActiveTab(savedTab);
     }
   }, []);
@@ -99,6 +147,20 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
     addSuggestionToPlan(placeId);
   };
 
+  // Helper to navigate from Discover to Map with centered attraction
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleNavigateToMapWithAttraction = (attractionId: string, _lat: number, _lng: number) => {
+    // Switch to map tab first
+    setActiveTab("map");
+
+    // Set the expanded card after a brief delay to ensure MapCanvas is mounted
+    // This allows MapCanvas's useEffect to properly center the map
+    // (reuses desktop logic from MapCanvas.tsx lines 260-296)
+    setTimeout(() => {
+      dispatch({ type: "SET_EXPANDED_CARD", payload: attractionId });
+    }, 100);
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-gray-50">
       {/* Header */}
@@ -119,7 +181,16 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
         <div className="relative h-full w-full">
           {activeTab === "map" && (
             <div className="absolute inset-0 animate-in fade-in duration-150">
-              <MapView mapId={mapId} />
+              <MapView mapId={mapId} onMapLoad={setMapInstance} />
+            </div>
+          )}
+          {activeTab === "discover" && (
+            <div className="absolute inset-0 animate-in fade-in duration-150">
+              <DiscoverView
+                mapId={mapId}
+                onMapLoad={setMapInstance}
+                onNavigateToMap={handleNavigateToMapWithAttraction}
+              />
             </div>
           )}
           {activeTab === "plan" && (
@@ -134,7 +205,7 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
       <MobileBottomNav activeTab={activeTab} onTabChange={handleTabChange} planItemCount={planItems.length} />
 
       {/* Search Overlay */}
-      <SearchOverlay isOpen={showSearch} onClose={() => setShowSearch(false)} />
+      <SearchOverlay isOpen={showSearch} onClose={() => setShowSearch(false)} onPlaceSelect={handlePlaceSelect} />
 
       {/* Floating AI Button - hidden when modal is open or bottom sheet is expanded */}
       <FloatingAIButton

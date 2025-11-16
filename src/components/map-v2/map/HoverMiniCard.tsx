@@ -3,9 +3,10 @@
  * Shows on marker hover after 300ms delay (desktop only)
  */
 
-import React, { useEffect, useState } from 'react';
-import type { Attraction } from '@/domain/map/models';
-import { calculateCardPosition } from './CardPositioning';
+import React, { useEffect, useState } from "react";
+import type { Attraction } from "@/domain/map/models";
+import { calculateCardPosition } from "./CardPositioning";
+import { getPhotoUrl } from "@/lib/map-v2/imageOptimization";
 
 interface HoverMiniCardProps {
   attraction: Attraction;
@@ -41,11 +42,13 @@ export function HoverMiniCard({
     cardSize: { width: CARD_WIDTH, height: CARD_HEIGHT },
     viewportSize,
     offset: 12,
-    preferredSide: 'right',
+    preferredSide: "right",
   });
 
   // Get first photo (if available)
-  const photoUrl = attraction.photos?.[0]?.url;
+  const photoUrl = attraction.photos?.[0]?.photoReference
+    ? getPhotoUrl(attraction.photos[0].photoReference, 200)
+    : undefined;
 
   // Format rating
   const rating = attraction.rating || 0;
@@ -55,13 +58,13 @@ export function HoverMiniCard({
   return (
     <div
       className={`fixed bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden cursor-pointer transition-opacity duration-150 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
+        isVisible ? "opacity-100" : "opacity-0"
       }`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
         width: `${CARD_WIDTH}px`,
-        zIndex: 50,
+        zIndex: 48,
       }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -89,9 +92,13 @@ export function HoverMiniCard({
                 return <span key={i}>★</span>;
               }
               if (i === fullStars && hasHalfStar) {
-                return <span key={i}>⯪</span>;
+                return <span key={i}>☆</span>;
               }
-              return <span key={i} className="text-gray-300">★</span>;
+              return (
+                <span key={i} className="text-gray-300">
+                  ☆
+                </span>
+              );
             })}
           </div>
           <span className="text-gray-600 font-medium">{rating.toFixed(1)}</span>
@@ -100,4 +107,3 @@ export function HoverMiniCard({
     </div>
   );
 }
-

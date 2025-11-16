@@ -2,7 +2,8 @@
  * Discover header - shows selected place context and result counts
  */
 
-import React from 'react';
+import React from "react";
+import { useMapState } from "../context";
 
 interface DiscoverHeaderProps {
   selectedPlaceId: string | null;
@@ -11,13 +12,25 @@ interface DiscoverHeaderProps {
 }
 
 export function DiscoverHeader({ selectedPlaceId, totalCount, filteredCount }: DiscoverHeaderProps) {
-  // For now, we'll just show the place ID. In a full implementation,
-  // we'd look up the place name from the places array in context
-  const placeName = selectedPlaceId || 'Unknown';
+  const { places, discoveryResults } = useMapState();
 
-  // Count attractions vs restaurants (simplified)
-  const attractionsCount = Math.floor(totalCount * 0.6);
-  const restaurantsCount = totalCount - attractionsCount;
+  // Look up the place name from the places array
+  const selectedPlace = selectedPlaceId ? places.find((p: any) => p.id === selectedPlaceId) : null;
+  const placeName = selectedPlace?.name || selectedPlaceId || "Unknown";
+
+  // Count actual attractions vs restaurants from results
+  const attractionsCount = discoveryResults.filter((item: any) => {
+    const isRestaurant = item.attraction?.types?.some((t: string) =>
+      ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
+    );
+    return !isRestaurant;
+  }).length;
+  const restaurantsCount = discoveryResults.filter((item: any) => {
+    const isRestaurant = item.attraction?.types?.some((t: string) =>
+      ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
+    );
+    return isRestaurant;
+  }).length;
 
   if (!selectedPlaceId) {
     return null;
@@ -27,9 +40,7 @@ export function DiscoverHeader({ selectedPlaceId, totalCount, filteredCount }: D
     <div className="px-4 py-3 border-b border-gray-200 bg-white">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900 mb-1">
-            Selected: {placeName}
-          </h2>
+          <h2 className="text-sm font-semibold text-gray-900 mb-1">Selected: {placeName}</h2>
           <p className="text-xs text-gray-600">
             {attractionsCount} attractions • {restaurantsCount} restaurants
           </p>
@@ -43,4 +54,3 @@ export function DiscoverHeader({ selectedPlaceId, totalCount, filteredCount }: D
     </div>
   );
 }
-

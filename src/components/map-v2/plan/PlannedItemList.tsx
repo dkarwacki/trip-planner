@@ -3,39 +3,38 @@
  * Supports drag-to-reorder within the same category
  */
 
-import React from 'react';
-import PlannedItem from './PlannedItem';
+import React from "react";
+import PlannedItem from "./PlannedItem";
+import { useMapState } from "../context";
 
 interface PlannedItemListProps {
   items: any[]; // Will be typed with domain types
-  category: 'attractions' | 'restaurants';
+  category: "attractions" | "restaurants";
+  placeId: string;
 }
 
-export default function PlannedItemList({ items, category }: PlannedItemListProps) {
-  // TODO: Implement drag-drop reordering with @dnd-kit
+export default function PlannedItemList({ items, category, placeId }: PlannedItemListProps) {
+  const { removeAttractionFromPlace, removeRestaurantFromPlace, setExpandedCard, setHighlightedPlace } = useMapState();
 
   const handleRemove = (itemId: string) => {
-    // TODO: Implement remove from plan
-    console.log('Remove item:', itemId);
+    if (category === "attractions") {
+      removeAttractionFromPlace(placeId, itemId);
+    } else {
+      removeRestaurantFromPlace(placeId, itemId);
+    }
   };
 
   const handleClick = (itemId: string) => {
-    // TODO: Pan map to location and show details
-    console.log('Show item details:', itemId);
+    // Set highlighted place and expanded card to show the attraction on the map
+    setHighlightedPlace(itemId);
+    setExpandedCard(itemId);
   };
 
   return (
     <div className="space-y-2">
       {items.map((item) => (
-        <PlannedItem
-          key={item.id}
-          item={item}
-          category={category}
-          onRemove={handleRemove}
-          onClick={handleClick}
-        />
+        <PlannedItem key={item.id} item={item} category={category} onRemove={handleRemove} onClick={handleClick} />
       ))}
     </div>
   );
 }
-

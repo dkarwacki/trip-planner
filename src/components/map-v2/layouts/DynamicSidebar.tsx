@@ -4,17 +4,11 @@
  * Collapsible to icon rail
  */
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Compass, 
-  Calendar,
-  Sparkles 
-} from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { DesktopMode } from '../types';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Compass, Calendar, Sparkles } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import type { DesktopMode } from "../types";
 
 interface DynamicSidebarProps {
   activeMode: DesktopMode;
@@ -26,22 +20,22 @@ interface DynamicSidebarProps {
 
 const MODE_CONFIG = {
   discover: {
-    id: 'discover' as const,
-    label: 'Discover',
+    id: "discover" as const,
+    label: "Discover",
     icon: Compass,
-    description: 'Find places and attractions',
+    description: "Find places and attractions",
   },
   plan: {
-    id: 'plan' as const,
-    label: 'Plan',
+    id: "plan" as const,
+    label: "Plan",
     icon: Calendar,
-    description: 'Build your itinerary',
+    description: "Build your itinerary",
   },
   ai: {
-    id: 'ai' as const,
-    label: 'AI Assistant',
+    id: "ai" as const,
+    label: "AI Assistant",
     icon: Sparkles,
-    description: 'Get personalized suggestions',
+    description: "Get personalized suggestions",
   },
 } as const;
 
@@ -56,14 +50,14 @@ export function DynamicSidebar({
     <TooltipProvider>
       <div
         className={`${
-          isCollapsed ? 'w-16' : 'w-80 lg:w-96'
-        } flex flex-col bg-white border-r shadow-sm transition-all duration-300 ease-in-out relative z-20 flex-shrink-0`}
+          isCollapsed ? "w-16" : "w-[24rem] lg:w-[28rem]"
+        } flex flex-col bg-white border-r shadow-sm transition-all duration-300 ease-in-out relative z-[110] flex-shrink-0`}
       >
         {isCollapsed ? (
           /* Collapsed Icon Rail */
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full" style={{ pointerEvents: "auto" }}>
             {/* Mode Icons */}
-            <div className="flex-1 flex flex-col items-center gap-2 py-4">
+            <div className="flex-1 flex flex-col items-center gap-2 py-4" style={{ pointerEvents: "auto" }}>
               {Object.values(MODE_CONFIG).map((mode) => {
                 const Icon = mode.icon;
                 const isActive = activeMode === mode.id;
@@ -72,7 +66,7 @@ export function DynamicSidebar({
                   <Tooltip key={mode.id}>
                     <TooltipTrigger asChild>
                       <Button
-                        variant={isActive ? 'default' : 'ghost'}
+                        variant={isActive ? "default" : "ghost"}
                         size="icon"
                         className="h-10 w-10"
                         onClick={() => {
@@ -81,6 +75,7 @@ export function DynamicSidebar({
                           onToggleCollapse();
                         }}
                         aria-label={mode.label}
+                        style={{ pointerEvents: "auto", position: "relative", zIndex: 121 }}
                       >
                         <Icon className="h-5 w-5" />
                       </Button>
@@ -117,10 +112,10 @@ export function DynamicSidebar({
           /* Expanded Sidebar */
           <>
             {/* Mode Tabs - Sticky Header */}
-            <div className="flex-shrink-0 bg-white border-b sticky top-0 z-10">
-              <div className="flex items-center justify-between p-3">
+            <div className="flex-shrink-0 bg-white border-b sticky top-0 z-[120] relative">
+              <div className="flex items-center justify-between p-3 relative" style={{ pointerEvents: "auto" }}>
                 {/* Mode Tabs */}
-                <div className="flex gap-1 flex-1">
+                <div className="flex gap-1 flex-1" style={{ pointerEvents: "auto" }}>
                   {Object.values(MODE_CONFIG).map((mode) => {
                     const Icon = mode.icon;
                     const isActive = activeMode === mode.id;
@@ -128,10 +123,11 @@ export function DynamicSidebar({
                     return (
                       <Button
                         key={mode.id}
-                        variant={isActive ? 'default' : 'ghost'}
+                        variant={isActive ? "default" : "ghost"}
                         size="sm"
                         onClick={() => onModeChange(mode.id)}
                         className="flex items-center gap-2 flex-1"
+                        style={{ pointerEvents: "auto", position: "relative", zIndex: 121 }}
                       >
                         <Icon className="h-4 w-4" />
                         <span className="hidden lg:inline">{mode.label}</span>
@@ -161,13 +157,10 @@ export function DynamicSidebar({
             </div>
 
             {/* Mode Content */}
-            <div className="flex-1 overflow-hidden flex flex-col">
-              {children}
-            </div>
+            <div className="flex-1 overflow-hidden flex flex-col">{children}</div>
           </>
         )}
       </div>
     </TooltipProvider>
   );
 }
-

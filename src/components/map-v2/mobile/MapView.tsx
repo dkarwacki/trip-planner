@@ -3,18 +3,19 @@
  * Fullscreen map with floating buttons (Filter + AI)
  */
 
-import React from "react";
+import React, { useEffect } from "react";
 import { MapCanvas } from "../map/MapCanvas";
 import { DiscoveryMarkers } from "../map/DiscoveryMarkers";
 import { PlaceMarkers } from "../map/PlaceMarkers";
 import { MapBackdrop } from "../map/MapBackdrop";
-import { FloatingAIButton } from "./FloatingAIButton";
 import { FilterButton } from "./FilterButton";
-import { PlaceBottomSheet } from "./PlaceBottomSheet";
+import { FilterBottomSheet } from "../filters/FilterBottomSheet";
 import { useMapState } from "../context";
+import { getPersistedFilters, persistFilters } from "@/lib/map-v2/filterPersistence";
 
 interface MapViewProps {
   mapId?: string;
+  onMapLoad?: (map: google.maps.Map) => void;
 }
 
 /**
@@ -22,43 +23,47 @@ interface MapViewProps {
  * Gets data from context
  */
 function DiscoveryMarkersLayer() {
-  const { discoveryResults, filters, hoveredMarkerId, setHoveredMarker, setExpandedCard } = useMapState();
-
-  // Filter discovery results by category
-  const filteredResults = discoveryResults.filter((result: any) => {
-    if (filters.category === "attractions") {
-      return result.attraction?.type === "attraction";
-    }
-    if (filters.category === "restaurants") {
-      return result.attraction?.type === "restaurant";
-    }
-    return true;
-  });
+  const { discoveryResults, filters, setExpandedCard } = useMapState();
 
   const handleMarkerClick = (attractionId: string) => {
     setExpandedCard(attractionId);
   };
 
-  // Split into attractions and restaurants
-  const attractions = filteredResults.filter((r: any) => r.attraction?.type === "attraction");
-  const restaurants = filteredResults.filter((r: any) => r.attraction?.type === "restaurant");
+  // Helper to check if attraction is a restaurant
+  const isRestaurant = (item: { attraction?: { types?: string[] } }) => {
+    return item.attraction?.types?.some((t: string) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
+  };
+
+  // Split into attractions and restaurants based on types
+  const attractions = discoveryResults.filter((r: { attraction?: { types?: string[] } }) => !isRestaurant(r));
+  const restaurants = discoveryResults.filter((r: { attraction?: { types?: string[] } }) => isRestaurant(r));
+
+  // Apply category filter
+  let filteredAttractions = attractions;
+  let filteredRestaurants = restaurants;
+
+  if (filters.category === "attractions") {
+    filteredRestaurants = [];
+  } else if (filters.category === "restaurants") {
+    filteredAttractions = [];
+  }
 
   return (
     <>
-      {attractions.length > 0 && (
+      {filteredAttractions.length > 0 && (
         <DiscoveryMarkers
-          attractions={attractions}
+          attractions={filteredAttractions}
           category="attractions"
           onMarkerClick={handleMarkerClick}
-          hoveredId={hoveredMarkerId}
+          hoveredId={null}
         />
       )}
-      {restaurants.length > 0 && (
+      {filteredRestaurants.length > 0 && (
         <DiscoveryMarkers
-          attractions={restaurants}
+          attractions={filteredRestaurants}
           category="restaurants"
           onMarkerClick={handleMarkerClick}
-          hoveredId={hoveredMarkerId}
+          hoveredId={null}
         />
       )}
     </>
@@ -72,7 +77,7 @@ function DiscoveryMarkersLayer() {
 function PlaceMarkersLayer() {
   const { places, selectedPlaceId, setSelectedPlace } = useMapState();
 
-  const handlePlaceClick = (place: any) => {
+  const handlePlaceClick = (place: { id: string }) => {
     setSelectedPlace(place.id);
   };
 
@@ -89,11 +94,37 @@ function MapBackdropLayer() {
   return <MapBackdrop isVisible={!!expandedCardPlaceId} onClick={closeCard} />;
 }
 
-export function MapView({ mapId }: MapViewProps) {
+export function MapView({ mapId, onMapLoad }: MapViewProps) {
+  const { filters, filterSheetOpen, setFilterSheetOpen, selectedPlaceId, dispatch } = useMapState();
+
+  // Load persisted filters when place is selected
+  useEffect(() => {
+    if (selectedPlaceId) {
+      const persistedFilters = getPersistedFilters(selectedPlaceId);
+      if (persistedFilters) {
+        dispatch({ type: "UPDATE_FILTERS", payload: persistedFilters });
+      } else {
+        // Reset to defaults for new place
+        dispatch({ type: "CLEAR_FILTERS" });
+      }
+    }
+  }, [selectedPlaceId, dispatch]);
+
+  // Save filters when they change
+  useEffect(() => {
+    if (selectedPlaceId) {
+      persistFilters(selectedPlaceId, filters);
+    }
+  }, [filters, selectedPlaceId]);
+
+  const handleApplyFilters = (newFilters: typeof filters) => {
+    dispatch({ type: "UPDATE_FILTERS", payload: newFilters });
+  };
+
   return (
     <div className="relative h-full w-full">
       {/* Map Canvas */}
-      <MapCanvas mapId={mapId} />
+      <MapCanvas mapId={mapId} onMapLoad={onMapLoad} />
 
       {/* Map Markers */}
       <DiscoveryMarkersLayer />
@@ -102,19 +133,19 @@ export function MapView({ mapId }: MapViewProps) {
       {/* Map Backdrop (when bottom sheet is open) */}
       <MapBackdropLayer />
 
-      {/* Place Bottom Sheet (replaces ExpandedPlaceCard on mobile) */}
-      <PlaceBottomSheet />
+      {/* Filter Bottom Sheet */}
+      <FilterBottomSheet
+        isOpen={filterSheetOpen}
+        onClose={() => setFilterSheetOpen(false)}
+        filters={filters}
+        onApply={handleApplyFilters}
+      />
 
-      {/* Floating Buttons */}
+      {/* Floating Filter Button */}
       <div className="pointer-events-none fixed inset-0 z-30">
         {/* Filter Button - Bottom Left */}
         <div className="pointer-events-auto absolute bottom-[92px] left-4">
           <FilterButton />
-        </div>
-
-        {/* AI Button - Bottom Right */}
-        <div className="pointer-events-auto absolute bottom-[92px] right-4">
-          <FloatingAIButton />
         </div>
       </div>
     </div>

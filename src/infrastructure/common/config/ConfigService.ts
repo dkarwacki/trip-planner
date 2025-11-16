@@ -14,6 +14,7 @@ export interface IConfigService {
   readonly getOpenRouterModel: () => Effect.Effect<OpenRouterModel, MissingOpenRouterModelError>;
   readonly getSupabaseUrl: () => Effect.Effect<string, MissingSupabaseUrlError>;
   readonly getSupabaseKey: () => Effect.Effect<string, MissingSupabaseKeyError>;
+  readonly isDev: () => boolean;
 }
 
 export class ConfigService extends Context.Tag("ConfigService")<ConfigService, IConfigService>() {}
@@ -74,4 +75,7 @@ export const ConfigServiceLive = Layer.succeed(ConfigService, {
 
       return key;
     }),
+  isDev: () => {
+    return import.meta.env.DEV === true || import.meta.env.MODE === "development";
+  },
 });
