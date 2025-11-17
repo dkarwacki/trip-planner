@@ -6,7 +6,7 @@
 import React from "react";
 import type { Attraction } from "@/domain/map/models";
 import { MapPin, Star, CheckCircle2 } from "lucide-react";
-import { getPhotoUrl } from "@/lib/map-v2/imageOptimization";
+import { LazyImage } from "../shared/LazyImage";
 
 interface PlaceCardProps {
   place: Attraction;
@@ -27,8 +27,8 @@ export const PlaceCard = React.memo(function PlaceCard({
   isHighlighted,
   onHover,
 }: PlaceCardProps) {
-  // Get photo URL from place photos
-  const photoUrl = place.photos?.[0]?.photoReference ? getPhotoUrl(place.photos[0].photoReference, 800) : undefined;
+  // Get photo reference from place photos
+  const photoReference = place.photos?.[0]?.photoReference;
 
   // Format rating
   const rating = place.rating || 0;
@@ -84,12 +84,12 @@ export const PlaceCard = React.memo(function PlaceCard({
     >
       {/* Hero Photo */}
       <div className="relative aspect-video bg-gray-100">
-        {photoUrl ? (
-          <img
-            src={photoUrl}
+        {photoReference ? (
+          <LazyImage
+            photoReference={photoReference}
             alt={place.name}
+            size="medium"
             className={`w-full h-full object-cover ${isAdded ? "opacity-90" : ""}`}
-            loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">

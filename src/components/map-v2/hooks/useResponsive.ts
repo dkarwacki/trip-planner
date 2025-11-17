@@ -3,13 +3,13 @@
  * Provides semantic breakpoints aligned with Tailwind CSS
  */
 
-import { useMediaQuery } from './useMediaQuery';
+import { useMediaQuery } from "./useMediaQuery";
 
 export interface ResponsiveState {
   isMobile: boolean;
   isTablet: boolean;
   isDesktop: boolean;
-  platform: 'mobile' | 'tablet' | 'desktop';
+  platform: "mobile" | "tablet" | "desktop";
 }
 
 export function useResponsive(): ResponsiveState {
@@ -17,24 +17,24 @@ export function useResponsive(): ResponsiveState {
   // sm: 640px
   // md: 768px
   // lg: 1024px
-  
+
   // Mobile: max-width 639px
-  const isMobile = useMediaQuery('(max-width: 639px)');
-  
+  const isMobile = useMediaQuery("(max-width: 639px)");
+
   // Tablet: 640px - 1023px
-  const isTablet = useMediaQuery('(min-width: 640px) and (max-width: 1023px)');
-  
+  const isTablet = useMediaQuery("(min-width: 640px) and (max-width: 1023px)");
+
   // Desktop: 1024px and up
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   // Determine platform (priority: desktop > tablet > mobile)
-  let platform: 'mobile' | 'tablet' | 'desktop';
+  let platform: "mobile" | "tablet" | "desktop";
   if (isDesktop) {
-    platform = 'desktop';
+    platform = "desktop";
   } else if (isTablet) {
-    platform = 'tablet';
+    platform = "tablet";
   } else {
-    platform = 'mobile';
+    platform = "mobile";
   }
 
   return {
@@ -44,4 +44,3 @@ export function useResponsive(): ResponsiveState {
     platform,
   };
 }
-

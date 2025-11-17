@@ -60,16 +60,8 @@ const STORAGE_KEY_PREFIX = "autosave_fallback_";
  * }, [messages]);
  * ```
  */
-export function useAutoSave<T>(
-  data: T | null,
-  options: UseAutoSaveOptions<T>
-): UseAutoSaveReturn {
-  const {
-    saveFn,
-    debounceMs = 2000,
-    maxRetries = 3,
-    enabled = true,
-  } = options;
+export function useAutoSave<T>(data: T | null, options: UseAutoSaveOptions<T>): UseAutoSaveReturn {
+  const { saveFn, debounceMs = 2000, maxRetries = 3, enabled = true } = options;
 
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -80,58 +72,61 @@ export function useAutoSave<T>(
   /**
    * Perform the save operation with retry logic
    */
-  const performSave = useCallback(async (dataToSave: T): Promise<void> => {
-    if (isSavingRef.current) {
-      return; // Prevent concurrent saves
-    }
+  const performSave = useCallback(
+    async (dataToSave: T): Promise<void> => {
+      if (isSavingRef.current) {
+        return; // Prevent concurrent saves
+      }
 
-    isSavingRef.current = true;
-    setSaveStatus("saving");
+      isSavingRef.current = true;
+      setSaveStatus("saving");
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        await saveFn(dataToSave);
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          await saveFn(dataToSave);
 
-        // Success!
-        retryCountRef.current = 0;
-        setSaveStatus("saved");
-        isSavingRef.current = false;
-
-        // Clear localStorage fallback on successful save
-        const keys = Object.keys(localStorage);
-        keys.forEach(key => {
-          if (key.startsWith(STORAGE_KEY_PREFIX)) {
-            localStorage.removeItem(key);
-          }
-        });
-
-        return;
-      } catch (error) {
-        console.error(`Save attempt ${attempt + 1} failed:`, error);
-
-        if (attempt < maxRetries) {
-          // Wait before retrying (exponential backoff: 1s, 2s, 4s)
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
-          retryCountRef.current = attempt + 1;
-        } else {
-          // All retries exhausted
-          setSaveStatus("error");
+          // Success!
+          retryCountRef.current = 0;
+          setSaveStatus("saved");
           isSavingRef.current = false;
 
-          // Store in localStorage as fallback
-          try {
-            const fallbackKey = `${STORAGE_KEY_PREFIX}${Date.now()}`;
-            localStorage.setItem(fallbackKey, JSON.stringify(dataToSave));
-            console.warn("Save failed, data stored in localStorage:", fallbackKey);
-          } catch (storageError) {
-            console.error("Failed to store in localStorage:", storageError);
-          }
+          // Clear localStorage fallback on successful save
+          const keys = Object.keys(localStorage);
+          keys.forEach((key) => {
+            if (key.startsWith(STORAGE_KEY_PREFIX)) {
+              localStorage.removeItem(key);
+            }
+          });
 
-          throw error;
+          return;
+        } catch (error) {
+          console.error(`Save attempt ${attempt + 1} failed:`, error);
+
+          if (attempt < maxRetries) {
+            // Wait before retrying (exponential backoff: 1s, 2s, 4s)
+            await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+            retryCountRef.current = attempt + 1;
+          } else {
+            // All retries exhausted
+            setSaveStatus("error");
+            isSavingRef.current = false;
+
+            // Store in localStorage as fallback
+            try {
+              const fallbackKey = `${STORAGE_KEY_PREFIX}${Date.now()}`;
+              localStorage.setItem(fallbackKey, JSON.stringify(dataToSave));
+              console.warn("Save failed, data stored in localStorage:", fallbackKey);
+            } catch (storageError) {
+              console.error("Failed to store in localStorage:", storageError);
+            }
+
+            throw error;
+          }
         }
       }
-    }
-  }, [saveFn, maxRetries]);
+    },
+    [saveFn, maxRetries]
+  );
 
   /**
    * Manually trigger a save (bypasses debounce)
@@ -166,7 +161,7 @@ export function useAutoSave<T>(
     // Schedule new save
     debounceTimerRef.current = setTimeout(() => {
       lastDataRef.current = data;
-      performSave(data).catch(error => {
+      performSave(data).catch((error) => {
         console.error("Auto-save failed:", error);
       });
     }, debounceMs);
@@ -214,8 +209,8 @@ export function useAutoSave<T>(
 /**
  * Get unsaved data from localStorage fallback
  */
-export function getUnsavedDataFromStorage<T>(filter?: (key: string) => boolean): Array<{ key: string; data: T }> {
-  const unsavedData: Array<{ key: string; data: T }> = [];
+export function getUnsavedDataFromStorage<T>(filter?: (key: string) => boolean): { key: string; data: T }[] {
+  const unsavedData: { key: string; data: T }[] = [];
 
   try {
     const keys = Object.keys(localStorage);

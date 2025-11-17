@@ -3,10 +3,10 @@
  * Displays search history with remove capability
  */
 
-import React from 'react';
-import { Clock, X } from 'lucide-react';
-import { cn } from '@/lib/common/utils';
-import type { RecentSearch } from '@/lib/map-v2/recentSearches';
+import React from "react";
+import { Clock, X } from "lucide-react";
+import { cn } from "@/lib/common/utils";
+import type { RecentSearch } from "@/lib/map-v2/recentSearches";
 
 interface RecentSearchesProps {
   searches: RecentSearch[];
@@ -16,19 +16,13 @@ interface RecentSearchesProps {
   className?: string;
 }
 
-export function RecentSearches({
-  searches,
-  onSelect,
-  onRemove,
-  onClearAll,
-  className,
-}: RecentSearchesProps) {
+export function RecentSearches({ searches, onSelect, onRemove, onClearAll, className }: RecentSearchesProps) {
   if (searches.length === 0) {
     return null;
   }
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between px-3 py-2">
         <h3 className="text-xs font-semibold text-gray-500 uppercase">Recent Searches</h3>
         {searches.length >= 3 && (
@@ -46,10 +40,10 @@ export function RecentSearches({
           <div
             key={search.placeId}
             className={cn(
-              'group flex items-center justify-between',
-              'px-3 py-2 rounded-md',
-              'hover:bg-gray-50 transition-colors',
-              'cursor-pointer'
+              "group flex items-center justify-between",
+              "px-3 py-2 rounded-md",
+              "hover:bg-gray-50 transition-colors",
+              "cursor-pointer"
             )}
           >
             <button
@@ -59,14 +53,8 @@ export function RecentSearches({
             >
               <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 truncate">
-                  {search.mainText}
-                </div>
-                {search.secondaryText && (
-                  <div className="text-xs text-gray-500 truncate">
-                    {search.secondaryText}
-                  </div>
-                )}
+                <div className="text-sm font-medium text-gray-900 truncate">{search.mainText}</div>
+                {search.secondaryText && <div className="text-xs text-gray-500 truncate">{search.secondaryText}</div>}
               </div>
             </button>
             <button
@@ -75,9 +63,9 @@ export function RecentSearches({
                 onRemove(search.placeId);
               }}
               className={cn(
-                'p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600',
-                'opacity-0 group-hover:opacity-100 transition-opacity',
-                'focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
+                "p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600",
+                "opacity-0 group-hover:opacity-100 transition-opacity",
+                "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               )}
               aria-label={`Remove ${search.mainText} from recent searches`}
             >
@@ -89,4 +77,3 @@ export function RecentSearches({
     </div>
   );
 }
-

@@ -57,7 +57,7 @@ export function useStateRecovery<T>({
       const stored = localStorage.getItem(storageKey);
       if (stored) {
         const recoveredState = JSON.parse(stored) as T;
-        
+
         // Call recovery callback
         if (onRecover) {
           onRecover(recoveredState);
@@ -121,5 +121,3 @@ export function clearRecoveryState(storageKey: string): void {
     console.error(`Failed to clear recovery state ${storageKey}:`, error);
   }
 }
-
-

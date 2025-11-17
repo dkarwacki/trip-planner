@@ -3,7 +3,7 @@
  * Implements Stage 3.1 of the UX implementation plan
  */
 
-import React, { useEffect, useRef, useLayoutEffect } from "react";
+import React, { useEffect, useRef, useLayoutEffect, useCallback, useMemo } from "react";
 import { useMapState } from "../context";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
 import { DiscoverHeader } from "./DiscoverHeader";
@@ -75,7 +75,7 @@ export function DiscoverPanel() {
   }, []);
 
   // Function to save current scroll position
-  const saveScrollPosition = React.useCallback(() => {
+  const saveScrollPosition = useCallback(() => {
     const container = scrollContainerRef.current;
     if (container) {
       scrollPositionRef.current = container.scrollTop;
@@ -84,7 +84,7 @@ export function DiscoverPanel() {
   }, []);
 
   // Function to restore scroll position
-  const restoreScrollPosition = React.useCallback(() => {
+  const restoreScrollPosition = useCallback(() => {
     if (!shouldRestoreScrollRef.current) return;
 
     const container = scrollContainerRef.current;
@@ -107,7 +107,7 @@ export function DiscoverPanel() {
   }, []);
 
   // Filter results based on active filters
-  const filteredResults = React.useMemo(() => {
+  const filteredResults = useMemo(() => {
     let results = [...discoveryResults];
 
     // Category filter
@@ -133,17 +133,23 @@ export function DiscoverPanel() {
     return results;
   }, [discoveryResults, filters]);
 
-  const handleViewModeChange = (mode: typeof viewMode) => {
-    dispatch({ type: "SET_VIEW_MODE", payload: mode });
-  };
+  const handleViewModeChange = useCallback(
+    (mode: typeof viewMode) => {
+      dispatch({ type: "SET_VIEW_MODE", payload: mode });
+    },
+    [dispatch]
+  );
 
-  const handleFilterChange = (newFilters: Partial<typeof filters>) => {
-    dispatch({ type: "UPDATE_FILTERS", payload: newFilters });
-  };
+  const handleFilterChange = useCallback(
+    (newFilters: Partial<typeof filters>) => {
+      dispatch({ type: "UPDATE_FILTERS", payload: newFilters });
+    },
+    [dispatch]
+  );
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     dispatch({ type: "CLEAR_FILTERS" });
-  };
+  }, [dispatch]);
 
   // Render appropriate view based on viewMode
   const renderContent = React.useCallback(() => {
@@ -199,10 +205,18 @@ export function DiscoverPanel() {
       default:
         return <PlaceCardGrid places={filteredResults} />;
     }
-  }, [selectedPlaceId, isLoadingDiscovery, filteredResults, viewMode]);
+  }, [
+    selectedPlaceId,
+    isLoadingDiscovery,
+    filteredResults,
+    viewMode,
+    handleClearFilters,
+    filters.category,
+    filters.showHighQualityOnly,
+  ]);
 
   // Memoize content to prevent unnecessary re-renders
-  const memoizedContent = React.useMemo(() => {
+  const memoizedContent = useMemo(() => {
     return renderContent();
   }, [renderContent]);
 
@@ -268,7 +282,7 @@ export function DiscoverPanel() {
   });
 
   // Ref callback to preserve scroll when container is recreated
-  const scrollContainerCallback = React.useCallback((node: HTMLDivElement | null) => {
+  const scrollContainerCallback = useCallback((node: HTMLDivElement | null) => {
     if (node) {
       const savedScroll = scrollPositionRef.current;
       scrollContainerRef.current = node;

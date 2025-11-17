@@ -25,7 +25,7 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
     selectedPlaceId,
     discoveryResults = [],
     viewMode: cardViewMode,
-    filters = { category: 'all', radius: 5000, sortBy: 'relevance', priceLevel: [] as number[], openNow: false },
+    filters = { category: "all", radius: 5000, sortBy: "relevance", priceLevel: [] as number[], openNow: false },
     isLoadingDiscovery,
     dispatch,
     places: plannedPlaces = [],
@@ -72,9 +72,7 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
 
   // Helper to check if attraction is a restaurant
   const isRestaurant = (item: { attraction?: { types?: string[] } }) => {
-    return item.attraction?.types?.some((t: string) =>
-      ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-    );
+    return item.attraction?.types?.some((t: string) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
   };
 
   // Split into attractions and restaurants based on types
@@ -110,67 +108,62 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
     <div className="relative h-full w-full bg-gray-50">
       {/* List View */}
       <div ref={scrollContainerRef} className="h-full w-full overflow-y-auto">
-          <div className="flex flex-col">
-            {/* Discover Header */}
-            <div className="sticky top-0 z-10 bg-white shadow-sm">
-              <DiscoverHeader />
-            </div>
+        <div className="flex flex-col">
+          {/* Discover Header */}
+          <div className="sticky top-0 z-10 bg-white shadow-sm">
+            <DiscoverHeader />
+          </div>
 
-            {/* Filter Panel */}
-            <div className="border-b border-gray-200 bg-white p-4">
-              <FilterPanel
-                filters={filters}
-                onChange={handleFilterChange}
-                onClear={handleClearFilters}
-                resultCount={filteredResults.length}
-                totalCount={discoveryResults.length}
-              />
-            </div>
+          {/* Filter Panel */}
+          <div className="border-b border-gray-200 bg-white p-4">
+            <FilterPanel
+              filters={filters}
+              onChange={handleFilterChange}
+              onClear={handleClearFilters}
+              resultCount={filteredResults.length}
+              totalCount={discoveryResults.length}
+            />
+          </div>
 
-            {/* View Mode Toggle */}
-            <div className="border-b border-gray-200 bg-white px-4 py-3">
-              <ViewToggle activeMode={cardViewMode} onChange={handleViewModeChange} />
-            </div>
+          {/* View Mode Toggle */}
+          <div className="border-b border-gray-200 bg-white px-4 py-3">
+            <ViewToggle activeMode={cardViewMode} onChange={handleViewModeChange} />
+          </div>
 
-            {/* Content Area */}
-            <div className="flex-1 p-4">
-              {!selectedPlace ? (
-                <div className="flex h-full items-center justify-center p-8 text-center">
-                  <div className="space-y-3">
-                    <p className="text-lg font-medium text-gray-900">No place selected</p>
-                    <p className="text-sm text-gray-500">
-                      Search for a place to discover nearby attractions and restaurants
-                    </p>
-                  </div>
+          {/* Content Area */}
+          <div className="flex-1 p-4">
+            {!selectedPlace ? (
+              <div className="flex h-full items-center justify-center p-8 text-center">
+                <div className="space-y-3">
+                  <p className="text-lg font-medium text-gray-900">No place selected</p>
+                  <p className="text-sm text-gray-500">
+                    Search for a place to discover nearby attractions and restaurants
+                  </p>
                 </div>
-              ) : isLoadingDiscovery ? (
-                <div className="flex items-center justify-center p-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+              </div>
+            ) : isLoadingDiscovery ? (
+              <div className="flex items-center justify-center p-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+              </div>
+            ) : filteredResults.length === 0 ? (
+              <div className="flex items-center justify-center p-8 text-center">
+                <div className="space-y-3">
+                  <p className="text-lg font-medium text-gray-900">No results found</p>
+                  <p className="text-sm text-gray-500">Try adjusting your filters</p>
                 </div>
-              ) : filteredResults.length === 0 ? (
-                <div className="flex items-center justify-center p-8 text-center">
-                  <div className="space-y-3">
-                    <p className="text-lg font-medium text-gray-900">No results found</p>
-                    <p className="text-sm text-gray-500">Try adjusting your filters</p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {cardViewMode === "cards" && (
-                    <PlaceCardGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />
-                  )}
-                  {cardViewMode === "photos" && (
-                    <PhotoGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />
-                  )}
-                  {cardViewMode === "list" && (
-                    <PlaceList places={filteredResults} onNavigateToMap={onNavigateToMap} />
-                  )}
-                </>
-              )}
-            </div>
+              </div>
+            ) : (
+              <>
+                {cardViewMode === "cards" && (
+                  <PlaceCardGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />
+                )}
+                {cardViewMode === "photos" && <PhotoGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />}
+                {cardViewMode === "list" && <PlaceList places={filteredResults} onNavigateToMap={onNavigateToMap} />}
+              </>
+            )}
           </div>
         </div>
       </div>
+    </div>
   );
 }
-

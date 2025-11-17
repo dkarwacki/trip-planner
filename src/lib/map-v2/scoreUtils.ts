@@ -3,7 +3,7 @@
  * Consolidates scoring logic into a single system with quality, diversity, confidence, and persona components
  */
 
-export type ScoreLevel = 'exceptional' | 'excellent' | 'good' | 'hidden';
+export type ScoreLevel = "exceptional" | "excellent" | "good" | "hidden";
 
 export interface ScoreBreakdown {
   total: number;
@@ -21,7 +21,7 @@ export interface ScoreColor {
 
 /**
  * Calculate unified place score (0-10)
- * 
+ *
  * Components:
  * - Quality (60-70%): Based on rating and review volume
  * - Diversity (25% for attractions): Uniqueness boost
@@ -55,11 +55,11 @@ export function calculatePlaceScore(params: {
   const confidenceWeight = isAttraction && isDiverse ? 0.15 : 0.3;
 
   let total = quality * qualityWeight + confidence * confidenceWeight;
-  
+
   if (diversity !== undefined) {
     total += diversity * diversityWeight;
   }
-  
+
   if (personaBoost !== undefined) {
     total = Math.min(10, total + personaBoost * 0.3);
   }
@@ -77,10 +77,10 @@ export function calculatePlaceScore(params: {
  * Get score level from numeric score
  */
 export function getScoreLevel(score: number): ScoreLevel {
-  if (score >= 9.0) return 'exceptional';
-  if (score >= 8.0) return 'excellent';
-  if (score >= 7.0) return 'good';
-  return 'hidden';
+  if (score >= 9.0) return "exceptional";
+  if (score >= 8.0) return "excellent";
+  if (score >= 7.0) return "good";
+  return "hidden";
 }
 
 /**
@@ -88,29 +88,29 @@ export function getScoreLevel(score: number): ScoreLevel {
  */
 export function getScoreColors(level: ScoreLevel): ScoreColor {
   switch (level) {
-    case 'exceptional':
+    case "exceptional":
       return {
-        bg: 'bg-green-500',
-        text: 'text-white',
-        border: 'border-green-600',
+        bg: "bg-green-500",
+        text: "text-white",
+        border: "border-green-600",
       };
-    case 'excellent':
+    case "excellent":
       return {
-        bg: 'bg-blue-500',
-        text: 'text-white',
-        border: 'border-blue-600',
+        bg: "bg-blue-500",
+        text: "text-white",
+        border: "border-blue-600",
       };
-    case 'good':
+    case "good":
       return {
-        bg: 'bg-gray-500',
-        text: 'text-white',
-        border: 'border-gray-600',
+        bg: "bg-gray-500",
+        text: "text-white",
+        border: "border-gray-600",
       };
-    case 'hidden':
+    case "hidden":
       return {
-        bg: 'bg-gray-300',
-        text: 'text-gray-700',
-        border: 'border-gray-400',
+        bg: "bg-gray-300",
+        text: "text-gray-700",
+        border: "border-gray-400",
       };
   }
 }
@@ -120,14 +120,14 @@ export function getScoreColors(level: ScoreLevel): ScoreColor {
  */
 export function getScoreLabel(level: ScoreLevel): string {
   switch (level) {
-    case 'exceptional':
-      return 'Exceptional';
-    case 'excellent':
-      return 'Excellent';
-    case 'good':
-      return 'Good';
-    case 'hidden':
-      return 'Fair';
+    case "exceptional":
+      return "Exceptional";
+    case "excellent":
+      return "Excellent";
+    case "good":
+      return "Good";
+    case "hidden":
+      return "Fair";
   }
 }
 
@@ -137,4 +137,3 @@ export function getScoreLabel(level: ScoreLevel): string {
 export function formatScore(score: number): string {
   return score.toFixed(1);
 }
-

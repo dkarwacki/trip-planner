@@ -13,11 +13,7 @@ import { Loader2 } from "lucide-react";
  * - Always visible at top of chat area
  * - Shows loading state while fetching preferences
  */
-export function PersonaSelector({
-  selected,
-  onChange,
-  isLoading = false,
-}: PersonaSelectorProps) {
+export function PersonaSelector({ selected, onChange, isLoading = false }: PersonaSelectorProps) {
   const allPersonas = getAllPersonas();
 
   const handleToggle = (persona: PersonaType) => {

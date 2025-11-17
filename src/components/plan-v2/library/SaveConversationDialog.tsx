@@ -16,12 +16,7 @@ interface SaveConversationDialogProps {
  * - Clear messaging
  * - Keyboard support (Escape to cancel)
  */
-export function SaveConversationDialog({
-  isOpen,
-  onSave,
-  onDiscard,
-  onCancel,
-}: SaveConversationDialogProps) {
+export function SaveConversationDialog({ isOpen, onSave, onDiscard, onCancel }: SaveConversationDialogProps) {
   if (!isOpen) return null;
 
   return (

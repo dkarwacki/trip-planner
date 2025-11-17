@@ -16,9 +16,7 @@ export function ItineraryEmptyState() {
         <MapPinned className="h-8 w-8 text-muted-foreground" />
       </div>
       <h3 className="mb-2 font-semibold">No places yet</h3>
-      <p className="text-sm text-muted-foreground">
-        Add places from chat suggestions to build your itinerary
-      </p>
+      <p className="text-sm text-muted-foreground">Add places from chat suggestions to build your itinerary</p>
     </div>
   );
 }

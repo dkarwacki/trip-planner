@@ -3,7 +3,7 @@
  * Dims map when expanded card is open
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
 interface MapBackdropProps {
   isVisible: boolean;
@@ -29,12 +29,9 @@ export function MapBackdrop({ isVisible, onClick }: MapBackdropProps) {
 
   return (
     <div
-      className={`fixed inset-0 bg-black transition-opacity duration-150 ${
-        isVisible ? 'opacity-10' : 'opacity-0'
-      }`}
+      className={`fixed inset-0 bg-black transition-opacity duration-150 ${isVisible ? "opacity-10" : "opacity-0"}`}
       style={{ zIndex: 40 }}
       onClick={onClick}
     />
   );
 }
-

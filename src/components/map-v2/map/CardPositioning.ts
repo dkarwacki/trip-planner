@@ -18,11 +18,11 @@ interface PositionOptions {
   cardSize: Size;
   viewportSize: Size;
   offset?: number;
-  preferredSide?: 'top' | 'bottom' | 'left' | 'right';
+  preferredSide?: "top" | "bottom" | "left" | "right";
 }
 
 interface PositionResult extends Position {
-  side: 'top' | 'bottom' | 'left' | 'right';
+  side: "top" | "bottom" | "left" | "right";
 }
 
 /**
@@ -33,7 +33,7 @@ export function calculateCardPosition({
   cardSize,
   viewportSize,
   offset = 12,
-  preferredSide = 'right',
+  preferredSide = "right",
 }: PositionOptions): PositionResult {
   const margin = 16;
 
@@ -42,22 +42,22 @@ export function calculateCardPosition({
     right: {
       x: markerPosition.x + offset,
       y: markerPosition.y - cardSize.height / 2,
-      side: 'right' as const,
+      side: "right" as const,
     },
     left: {
       x: markerPosition.x - cardSize.width - offset,
       y: markerPosition.y - cardSize.height / 2,
-      side: 'left' as const,
+      side: "left" as const,
     },
     bottom: {
       x: markerPosition.x - cardSize.width / 2,
       y: markerPosition.y + offset,
-      side: 'bottom' as const,
+      side: "bottom" as const,
     },
     top: {
       x: markerPosition.x - cardSize.width / 2,
       y: markerPosition.y - cardSize.height - offset,
-      side: 'top' as const,
+      side: "top" as const,
     },
   };
 
@@ -68,7 +68,7 @@ export function calculateCardPosition({
   }
 
   // Try other sides in order
-  const sideOrder: Array<'top' | 'bottom' | 'left' | 'right'> = ['right', 'left', 'bottom', 'top'];
+  const sideOrder: ("top" | "bottom" | "left" | "right")[] = ["right", "left", "bottom", "top"];
   for (const side of sideOrder) {
     const position = positions[side];
     if (!wouldOverflow({ position, size: cardSize, viewport: viewportSize, margin })) {
@@ -141,4 +141,3 @@ export function constrainToViewport({
 
   return { x, y };
 }
-

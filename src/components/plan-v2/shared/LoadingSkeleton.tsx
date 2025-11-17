@@ -14,10 +14,7 @@ interface LoadingSkeletonProps {
  * - place-card: Loading state for place suggestion cards
  * - itinerary-item: Loading state for itinerary items
  */
-export function LoadingSkeleton({
-  variant = "message",
-  count = 1,
-}: LoadingSkeletonProps) {
+export function LoadingSkeleton({ variant = "message", count = 1 }: LoadingSkeletonProps) {
   const skeletons = Array.from({ length: count }, (_, i) => i);
 
   if (variant === "message") {
@@ -86,10 +83,7 @@ export function LoadingSkeleton({
     return (
       <>
         {skeletons.map((i) => (
-          <div
-            key={i}
-            className="flex items-center gap-3 rounded-lg border p-3 animate-pulse"
-          >
+          <div key={i} className="flex items-center gap-3 rounded-lg border p-3 animate-pulse">
             {/* Drag handle */}
             <div className="h-4 w-4 rounded bg-muted" />
             {/* Photo */}
@@ -109,5 +103,3 @@ export function LoadingSkeleton({
 
   return null;
 }
-
-

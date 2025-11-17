@@ -18,12 +18,7 @@ interface ExportButtonProps {
  * - Prominent styling
  * - Shows place count
  */
-export function ExportButton({
-  disabled = false,
-  isLoading = false,
-  onClick,
-  placeCount,
-}: ExportButtonProps) {
+export function ExportButton({ disabled = false, isLoading = false, onClick, placeCount }: ExportButtonProps) {
   return (
     <Button
       onClick={onClick}

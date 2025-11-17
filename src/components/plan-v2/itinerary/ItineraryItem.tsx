@@ -49,9 +49,8 @@ interface ItineraryItemProps {
  */
 export function ItineraryItem({ place, onRemove }: ItineraryItemProps) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: place.id });
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: place.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -67,11 +66,7 @@ export function ItineraryItem({ place, onRemove }: ItineraryItemProps) {
 
   return (
     <>
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="group flex gap-3 rounded-lg border bg-card p-3 hover:bg-accent/50"
-      >
+      <div ref={setNodeRef} style={style} className="group flex gap-3 rounded-lg border bg-card p-3 hover:bg-accent/50">
         {/* Drag handle */}
         <button
           {...attributes}
@@ -96,9 +91,7 @@ export function ItineraryItem({ place, onRemove }: ItineraryItemProps) {
         <div className="flex-1 min-w-0">
           <h4 className="truncate font-medium text-sm">{place.name}</h4>
           {place.description && (
-            <p className="line-clamp-1 text-xs text-muted-foreground">
-              {parseBoldText(place.description)}
-            </p>
+            <p className="line-clamp-1 text-xs text-muted-foreground">{parseBoldText(place.description)}</p>
           )}
           <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin size={10} />

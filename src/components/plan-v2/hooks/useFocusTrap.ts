@@ -29,11 +29,7 @@ export interface UseFocusTrapOptions {
  * return <div ref={dialogRef}>...</div>
  * ```
  */
-export function useFocusTrap({
-  isActive,
-  restoreFocus = true,
-  initialFocusSelector,
-}: UseFocusTrapOptions) {
+export function useFocusTrap({ isActive, restoreFocus = true, initialFocusSelector }: UseFocusTrapOptions) {
   const containerRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -45,9 +41,7 @@ export function useFocusTrap({
 
     // Set initial focus
     if (initialFocusSelector) {
-      const initialElement = containerRef.current.querySelector(
-        initialFocusSelector
-      ) as HTMLElement;
+      const initialElement = containerRef.current.querySelector(initialFocusSelector) as HTMLElement;
       if (initialElement) {
         initialElement.focus();
       }
@@ -101,15 +95,13 @@ export function useFocusTrap({
  */
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
   const selector = [
-    'a[href]',
-    'button:not([disabled])',
-    'textarea:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
+    "a[href]",
+    "button:not([disabled])",
+    "textarea:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
     '[tabindex]:not([tabindex="-1"])',
   ].join(",");
 
   return Array.from(container.querySelectorAll(selector)) as HTMLElement[];
 }
-
-

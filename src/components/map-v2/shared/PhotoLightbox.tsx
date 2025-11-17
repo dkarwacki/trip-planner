@@ -131,7 +131,7 @@ export function PhotoLightbox({ photos, initialIndex = 0, alt, isOpen, onClose }
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95"
       onClick={onClose}
       role="dialog"
       aria-modal="true"

@@ -41,9 +41,7 @@ export function ConversationList({
   if (conversations.length === 0) {
     return (
       <div className="py-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          No conversations yet. Start a new one to begin planning!
-        </p>
+        <p className="text-sm text-muted-foreground">No conversations yet. Start a new one to begin planning!</p>
       </div>
     );
   }

@@ -18,8 +18,7 @@ export function ChatEmptyState() {
 
       <h2 className="mb-2 text-2xl font-semibold">Start Planning Your Trip</h2>
       <p className="mb-8 max-w-md text-muted-foreground">
-        Tell me about your dream destination, and I'll help you discover amazing places
-        tailored to your travel style.
+        Tell me about your dream destination, and I'll help you discover amazing places tailored to your travel style.
       </p>
 
       <div className="w-full max-w-lg space-y-3">
@@ -28,8 +27,7 @@ export function ChatEmptyState() {
           <div>
             <p className="text-sm font-medium">Try asking:</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              "I want to explore Japan for 2 weeks, focusing on traditional culture and
-              food"
+              "I want to explore Japan for 2 weeks, focusing on traditional culture and food"
             </p>
           </div>
         </div>

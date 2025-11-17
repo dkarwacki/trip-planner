@@ -29,8 +29,7 @@ export function DeleteConversationDialog({
       <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg">
         <h2 className="mb-2 text-lg font-semibold">Delete Conversation?</h2>
         <p className="mb-6 text-sm text-muted-foreground">
-          Are you sure you want to delete <strong>{conversationTitle}</strong>? This action
-          cannot be undone.
+          Are you sure you want to delete <strong>{conversationTitle}</strong>? This action cannot be undone.
         </p>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">

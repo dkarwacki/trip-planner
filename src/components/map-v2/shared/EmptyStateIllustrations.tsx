@@ -9,12 +9,7 @@ interface IllustrationProps {
 
 export function MapPinIllustration({ className = "h-16 w-16" }: IllustrationProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M32 8C23.716 8 17 14.716 17 23c0 11.25 15 29 15 29s15-17.75 15-29c0-8.284-6.716-15-15-15z"
         stroke="currentColor"
@@ -39,12 +34,7 @@ export function MapPinIllustration({ className = "h-16 w-16" }: IllustrationProp
 
 export function SearchIllustration({ className = "h-16 w-16" }: IllustrationProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle
         cx="28"
         cy="28"
@@ -67,12 +57,7 @@ export function SearchIllustration({ className = "h-16 w-16" }: IllustrationProp
 
 export function ClipboardIllustration({ className = "h-16 w-16" }: IllustrationProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect
         x="16"
         y="12"
@@ -108,12 +93,7 @@ export function ClipboardIllustration({ className = "h-16 w-16" }: IllustrationP
 
 export function SparkleIllustration({ className = "h-16 w-16" }: IllustrationProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M32 8v48M16 32h32M22 16l20 32M42 16L22 48"
         stroke="currentColor"
@@ -128,12 +108,7 @@ export function SparkleIllustration({ className = "h-16 w-16" }: IllustrationPro
 
 export function WifiOffIllustration({ className = "h-16 w-16" }: IllustrationProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M10 20c12-12 32-12 44 0M18 28c8-8 20-8 28 0M26 36c4-4 8-4 12 0"
         stroke="currentColor"
@@ -142,25 +117,14 @@ export function WifiOffIllustration({ className = "h-16 w-16" }: IllustrationPro
         className="text-muted-foreground opacity-40"
       />
       <circle cx="32" cy="44" r="3" fill="currentColor" className="text-muted-foreground" />
-      <path
-        d="M10 10l44 44"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        className="text-destructive"
-      />
+      <path d="M10 10l44 44" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-destructive" />
     </svg>
   );
 }
 
 export function MapCursorIllustration({ className = "h-16 w-16" }: IllustrationProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect
         x="8"
         y="8"
@@ -179,23 +143,14 @@ export function MapCursorIllustration({ className = "h-16 w-16" }: IllustrationP
         strokeLinecap="round"
         className="text-muted-foreground opacity-40"
       />
-      <path
-        d="M32 32l8 16 3-3 3 3 2-16-16 0z"
-        fill="currentColor"
-        className="text-muted-foreground"
-      />
+      <path d="M32 32l8 16 3-3 3 3 2-16-16 0z" fill="currentColor" className="text-muted-foreground" />
     </svg>
   );
 }
 
 export function QuestionMapPinIllustration({ className = "h-16 w-16" }: IllustrationProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M32 8C23.716 8 17 14.716 17 23c0 11.25 15 29 15 29s15-17.75 15-29c0-8.284-6.716-15-15-15z"
         stroke="currentColor"
@@ -216,4 +171,3 @@ export function QuestionMapPinIllustration({ className = "h-16 w-16" }: Illustra
     </svg>
   );
 }
-

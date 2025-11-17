@@ -35,9 +35,7 @@ export function useScreenReaderAnnouncement({
     if (typeof window === "undefined") return;
 
     // Check if live region already exists
-    let liveRegion = document.getElementById(
-      `sr-announcement-${politeness}`
-    ) as HTMLDivElement;
+    let liveRegion = document.getElementById(`sr-announcement-${politeness}`) as HTMLDivElement;
 
     if (!liveRegion) {
       liveRegion = document.createElement("div");
@@ -46,7 +44,7 @@ export function useScreenReaderAnnouncement({
       liveRegion.setAttribute("aria-live", politeness);
       liveRegion.setAttribute("aria-atomic", "true");
       liveRegion.className = "sr-only";
-      
+
       // Visually hidden but accessible to screen readers
       liveRegion.style.position = "absolute";
       liveRegion.style.left = "-10000px";
@@ -74,7 +72,7 @@ export function useScreenReaderAnnouncement({
 
     // Clear and re-set to ensure announcement
     liveRegionRef.current.textContent = "";
-    
+
     // Use setTimeout to ensure the change is announced
     setTimeout(() => {
       if (liveRegionRef.current) {
@@ -85,5 +83,3 @@ export function useScreenReaderAnnouncement({
 
   return announce;
 }
-
-

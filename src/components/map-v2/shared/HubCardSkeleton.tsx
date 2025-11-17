@@ -18,25 +18,25 @@ export function HubCardSkeleton({ className = "" }: HubCardSkeletonProps) {
       <div className="space-y-4 p-4">
         {/* Hub name and count */}
         <div className="space-y-2">
-          <SkeletonText width={['60%']} />
-          <SkeletonText width={['45%']} />
+          <SkeletonText width={["60%"]} />
+          <SkeletonText width={["45%"]} />
         </div>
 
         {/* Section 1 header */}
         <div className="flex items-center gap-2">
           <Skeleton width="16px" height="16px" variant="rectangular" />
-          <SkeletonText width={['40%']} />
+          <SkeletonText width={["40%"]} />
         </div>
 
         {/* Section 1 items */}
         <div className="space-y-2 pl-6">
-          <SkeletonText width={['90%', '85%', '80%']} />
+          <SkeletonText width={["90%", "85%", "80%"]} />
         </div>
 
         {/* Section 2 header */}
         <div className="flex items-center gap-2">
           <Skeleton width="16px" height="16px" variant="rectangular" />
-          <SkeletonText width={['40%']} />
+          <SkeletonText width={["40%"]} />
         </div>
 
         {/* Action button */}
@@ -45,4 +45,3 @@ export function HubCardSkeleton({ className = "" }: HubCardSkeletonProps) {
     </div>
   );
 }
-

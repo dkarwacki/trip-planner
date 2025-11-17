@@ -30,7 +30,7 @@ interface LazyImageProps {
 
 /**
  * Optimized image component with lazy loading, blur-up, and responsive srcset
- * 
+ *
  * Features:
  * - Lazy loading using IntersectionObserver
  * - Blur-up placeholder while loading
@@ -41,7 +41,7 @@ interface LazyImageProps {
 export function LazyImage({
   photoReference,
   alt,
-  size = 'medium',
+  size = "medium",
   width,
   className = "",
   onError,
@@ -84,12 +84,7 @@ export function LazyImage({
         className={`flex items-center justify-center bg-muted ${className}`}
         aria-label="Image failed to load"
       >
-        <svg
-          className="h-8 w-8 text-muted-foreground"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
+        <svg className="h-8 w-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -114,12 +109,7 @@ export function LazyImage({
       )}
 
       {/* Loading skeleton */}
-      {!shouldLoad && (
-        <div
-          className="h-full w-full animate-pulse bg-muted"
-          aria-label="Loading image"
-        />
-      )}
+      {!shouldLoad && <div className="h-full w-full animate-pulse bg-muted" aria-label="Loading image" />}
 
       {/* Main image */}
       {shouldLoad && (
@@ -139,4 +129,3 @@ export function LazyImage({
     </div>
   );
 }
-

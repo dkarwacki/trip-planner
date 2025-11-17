@@ -14,12 +14,7 @@ import type { ItineraryPanelProps } from "../types";
  * - Export button at bottom
  * - Safe area insets
  */
-export function ItineraryDrawer({
-  places,
-  onReorder,
-  onRemove,
-  onExportToMap,
-}: ItineraryPanelProps) {
+export function ItineraryDrawer({ places, onReorder, onRemove, onExportToMap }: ItineraryPanelProps) {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
@@ -46,11 +41,7 @@ export function ItineraryDrawer({
       {/* Export button */}
       {places.length > 0 && (
         <div className="border-t p-4 pb-safe">
-          <ExportButton
-            onClick={onExportToMap}
-            disabled={places.length === 0}
-            placeCount={places.length}
-          />
+          <ExportButton onClick={onExportToMap} disabled={places.length === 0} placeCount={places.length} />
         </div>
       )}
     </div>

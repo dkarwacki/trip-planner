@@ -1,6 +1,6 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import { MapPlannerV2 } from '../components/map-v2';
+import Layout from "../layouts/Layout.astro";
+import { MapPlannerV2 } from "../components/map-v2";
 
 // Disable SSR for this fully interactive page
 export const prerender = false;
@@ -21,17 +21,10 @@ const mapId = import.meta.env.GOOGLE_MAPS_MAP_ID;
 
 // Extract URL parameters
 const { searchParams } = Astro.url;
-const tripId = searchParams.get('tripId') || undefined;
-const conversationId = searchParams.get('conversationId') || undefined;
+const tripId = searchParams.get("tripId") || undefined;
+const conversationId = searchParams.get("conversationId") || undefined;
 ---
 
 <Layout title="Trip Planner - Map v2">
-  <MapPlannerV2 
-    client:only="react" 
-    apiKey={apiKey}
-    mapId={mapId}
-    tripId={tripId}
-    conversationId={conversationId}
-  />
+  <MapPlannerV2 client:only="react" apiKey={apiKey} mapId={mapId} tripId={tripId} conversationId={conversationId} />
 </Layout>
-

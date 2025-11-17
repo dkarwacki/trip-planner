@@ -2,6 +2,5 @@
  * Filters components barrel exports
  */
 
-export { FilterPanel } from './FilterPanel';
-export { FilterBottomSheet } from './FilterBottomSheet';
-
+export { FilterPanel } from "./FilterPanel";
+export { FilterBottomSheet } from "./FilterBottomSheet";

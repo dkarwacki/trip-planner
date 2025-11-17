@@ -12,40 +12,35 @@ interface ScoreBadgeProps {
   /** Show tooltip on hover (desktop only) */
   showTooltip?: boolean;
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   /** Additional CSS classes */
   className?: string;
 }
 
 /**
  * Color-coded score badge with optional tooltip breakdown
- * 
+ *
  * Colors:
  * - Green (9.0-10.0): "Exceptional" - Must-see
  * - Blue (8.0-8.9): "Excellent" - Highly recommended
  * - Gray (7.0-7.9): "Good" - Worth visiting
  * - Hidden (<7.0): Don't show
  */
-export function ScoreBadge({
-  score,
-  showTooltip = true,
-  size = 'md',
-  className = "",
-}: ScoreBadgeProps) {
+export function ScoreBadge({ score, showTooltip = true, size = "md", className = "" }: ScoreBadgeProps) {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const level = getScoreLevel(score.total);
   const colors = getScoreColors(level);
   const label = getScoreLabel(level);
 
   // Don't render if score is too low
-  if (level === 'hidden') {
+  if (level === "hidden") {
     return null;
   }
 
   const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-1 text-sm',
-    lg: 'px-3 py-1.5 text-base',
+    sm: "px-2 py-0.5 text-xs",
+    md: "px-2.5 py-1 text-sm",
+    lg: "px-3 py-1.5 text-base",
   };
 
   return (
@@ -77,9 +72,7 @@ export function ScoreBadge({
         >
           <div className="mb-2 flex items-center justify-between border-b border-border pb-2">
             <span className="font-semibold">Score: {formatScore(score.total)}</span>
-            <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${colors.bg} ${colors.text}`}>
-              {label}
-            </span>
+            <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${colors.bg} ${colors.text}`}>{label}</span>
           </div>
 
           <div className="space-y-1.5">
@@ -107,9 +100,7 @@ export function ScoreBadge({
             {score.personaBoost !== undefined && score.personaBoost > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Persona:</span>
-                <span className="font-medium text-green-600">
-                  +{formatScore(score.personaBoost)}
-                </span>
+                <span className="font-medium text-green-600">+{formatScore(score.personaBoost)}</span>
               </div>
             )}
           </div>
@@ -122,4 +113,3 @@ export function ScoreBadge({
     </div>
   );
 }
-

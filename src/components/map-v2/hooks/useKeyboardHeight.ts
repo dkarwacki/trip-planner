@@ -1,7 +1,7 @@
 /**
  * useKeyboardHeight hook
  * Detects virtual keyboard appearance and height on mobile devices
- * 
+ *
  * Features:
  * - Uses visualViewport API for accurate keyboard detection
  * - Fallback to window.innerHeight changes for older browsers
@@ -9,7 +9,7 @@
  * - Handles iOS and Android differences
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export function useKeyboardHeight() {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -17,7 +17,7 @@ export function useKeyboardHeight() {
 
   useEffect(() => {
     // Only run on client-side
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // Modern browsers: use visualViewport API
     if (window.visualViewport) {
@@ -41,15 +41,15 @@ export function useKeyboardHeight() {
         }
       };
 
-      window.visualViewport.addEventListener('resize', handleViewportResize);
-      window.visualViewport.addEventListener('scroll', handleViewportResize);
+      window.visualViewport.addEventListener("resize", handleViewportResize);
+      window.visualViewport.addEventListener("scroll", handleViewportResize);
 
       // Initial check
       handleViewportResize();
 
       return () => {
-        window.visualViewport?.removeEventListener('resize', handleViewportResize);
-        window.visualViewport?.removeEventListener('scroll', handleViewportResize);
+        window.visualViewport?.removeEventListener("resize", handleViewportResize);
+        window.visualViewport?.removeEventListener("scroll", handleViewportResize);
       };
     } else {
       // Fallback for older browsers
@@ -69,10 +69,10 @@ export function useKeyboardHeight() {
         }
       };
 
-      window.addEventListener('resize', handleResize);
+      window.addEventListener("resize", handleResize);
 
       return () => {
-        window.removeEventListener('resize', handleResize);
+        window.removeEventListener("resize", handleResize);
       };
     }
   }, []);
@@ -82,4 +82,3 @@ export function useKeyboardHeight() {
     isKeyboardVisible,
   };
 }
-

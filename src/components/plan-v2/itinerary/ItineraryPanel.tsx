@@ -53,11 +53,7 @@ export function ItineraryPanel({
       {/* Export button */}
       {places.length > 0 && !isCollapsed && (
         <div className="border-t p-4">
-          <ExportButton
-            onClick={onExportToMap}
-            disabled={places.length === 0}
-            placeCount={places.length}
-          />
+          <ExportButton onClick={onExportToMap} disabled={places.length === 0} placeCount={places.length} />
         </div>
       )}
 

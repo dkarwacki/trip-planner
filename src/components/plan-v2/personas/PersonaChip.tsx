@@ -1,15 +1,5 @@
 import React from "react";
-import {
-  MapPin,
-  TreePine,
-  Palette,
-  Utensils,
-  Mountain,
-  Laptop,
-  Landmark,
-  Camera,
-  type LucideIcon,
-} from "lucide-react";
+import { MapPin, TreePine, Palette, Utensils, Mountain, Laptop, Landmark, Camera, type LucideIcon } from "lucide-react";
 import type { PersonaType } from "@/domain/plan/models/Persona";
 import { getPersonaMetadata } from "@/domain/plan/models/Persona";
 
@@ -42,13 +32,7 @@ const iconMap: Record<string, LucideIcon> = {
  * - Supports different sizes (sm, md)
  * - Accessible with proper ARIA attributes
  */
-export function PersonaChip({
-  persona,
-  isSelected,
-  onToggle,
-  showLabel = true,
-  size = "md",
-}: PersonaChipProps) {
+export function PersonaChip({ persona, isSelected, onToggle, showLabel = true, size = "md" }: PersonaChipProps) {
   const metadata = getPersonaMetadata(persona);
 
   if (!metadata) {

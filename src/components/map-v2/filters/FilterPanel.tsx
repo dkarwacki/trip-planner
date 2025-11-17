@@ -3,10 +3,10 @@
  * Category, quality, and price range filters
  */
 
-import React from 'react';
-import { X } from 'lucide-react';
-import { cn } from '@/lib/common/utils';
-import type { FilterState } from '../types';
+import React from "react";
+import { X } from "lucide-react";
+import { cn } from "@/lib/common/utils";
+import type { FilterState } from "../types";
 
 interface FilterPanelProps {
   filters: FilterState;
@@ -17,21 +17,14 @@ interface FilterPanelProps {
   className?: string;
 }
 
-export function FilterPanel({
-  filters,
-  onChange,
-  onClear,
-  resultCount,
-  totalCount,
-  className,
-}: FilterPanelProps) {
-  const categories: Array<{ id: FilterState['category']; label: string }> = [
-    { id: 'all', label: 'All' },
-    { id: 'attractions', label: 'Attractions' },
-    { id: 'restaurants', label: 'Restaurants' },
+export function FilterPanel({ filters, onChange, onClear, resultCount, totalCount, className }: FilterPanelProps) {
+  const categories: { id: FilterState["category"]; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "attractions", label: "Attractions" },
+    { id: "restaurants", label: "Restaurants" },
   ];
 
-  const handleCategoryChange = (category: FilterState['category']) => {
+  const handleCategoryChange = (category: FilterState["category"]) => {
     onChange({ category });
   };
 
@@ -39,21 +32,17 @@ export function FilterPanel({
     onChange({ showHighQualityOnly: !filters.showHighQualityOnly });
   };
 
-  const handleScoreThresholdChange = (minScore: FilterState['minScore']) => {
+  const handleScoreThresholdChange = (minScore: FilterState["minScore"]) => {
     onChange({ minScore });
   };
 
   // Check if filters are active (not default)
-  const hasActiveFilters =
-    filters.category !== 'all' || filters.showHighQualityOnly;
+  const hasActiveFilters = filters.category !== "all" || filters.showHighQualityOnly;
 
-  const activeFilterCount = [
-    filters.category !== 'all',
-    filters.showHighQualityOnly,
-  ].filter(Boolean).length;
+  const activeFilterCount = [filters.category !== "all", filters.showHighQualityOnly].filter(Boolean).length;
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Filter Controls */}
       <div className="flex items-center gap-4 flex-wrap">
         {/* Category chips */}
@@ -63,10 +52,10 @@ export function FilterPanel({
               key={cat.id}
               onClick={() => handleCategoryChange(cat.id)}
               className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                "px-4 py-2 rounded-full text-sm font-medium transition-all",
                 filters.category === cat.id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
               )}
               aria-pressed={filters.category === cat.id}
             >
@@ -90,11 +79,11 @@ export function FilterPanel({
           {filters.showHighQualityOnly && (
             <select
               value={filters.minScore}
-              onChange={(e) => handleScoreThresholdChange(Number(e.target.value) as FilterState['minScore'])}
+              onChange={(e) => handleScoreThresholdChange(Number(e.target.value) as FilterState["minScore"])}
               className={cn(
-                'text-sm px-3 py-1.5 border border-gray-300 rounded-md',
-                'focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-                'bg-white'
+                "text-sm px-3 py-1.5 border border-gray-300 rounded-md",
+                "focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                "bg-white"
               )}
               aria-label="Minimum score threshold"
             >
@@ -110,10 +99,10 @@ export function FilterPanel({
           <button
             onClick={onClear}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md',
-              'text-sm font-medium text-blue-600 hover:text-blue-700',
-              'hover:bg-blue-50 transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md",
+              "text-sm font-medium text-blue-600 hover:text-blue-700",
+              "hover:bg-blue-50 transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             )}
           >
             <X className="h-4 w-4" />
@@ -130,10 +119,9 @@ export function FilterPanel({
       {/* Result count */}
       {resultCount !== undefined && totalCount !== undefined && (
         <div className="text-sm text-gray-600">
-          Showing {resultCount} of {totalCount} {filters.category === 'all' ? 'places' : filters.category}
+          Showing {resultCount} of {totalCount} {filters.category === "all" ? "places" : filters.category}
         </div>
       )}
     </div>
   );
 }
-

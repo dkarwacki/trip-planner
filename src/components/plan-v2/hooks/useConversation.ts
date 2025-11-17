@@ -89,70 +89,75 @@ export function useConversation(): UseConversationReturn {
     }
   }, []);
 
-  const createNew = useCallback(async (
-    messages: ChatMessage[],
-    personas: PersonaType[],
-    title?: string
-  ): Promise<ConversationId | null> => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  const createNew = useCallback(
+    async (messages: ChatMessage[], personas: PersonaType[], title?: string): Promise<ConversationId | null> => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-      // Create conversation with messages and personas
-      const conversationId = await createConversation(messages, personas, title);
+        // Create conversation with messages and personas
+        const conversationId = await createConversation(messages, personas, title);
 
-      setActiveConversationId(conversationId);
+        setActiveConversationId(conversationId);
 
-      // Reload conversations list
-      await loadConversations();
+        // Reload conversations list
+        await loadConversations();
 
-      return conversationId;
-    } catch (err) {
-      console.error("Failed to create conversation:", err);
-      setError("Failed to create conversation");
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadConversations]);
-
-  const saveMessages = useCallback(async (conversationId: ConversationId, messages: ChatMessage[]) => {
-    try {
-      setError(null);
-
-      await updateConversationMessages(conversationId, messages);
-
-      // Optionally reload conversations to update message count
-      await loadConversations();
-    } catch (err) {
-      console.error("Failed to save messages:", err);
-      setError("Failed to save messages");
-      throw err;
-    }
-  }, [loadConversations]);
-
-  const deleteConv = useCallback(async (id: ConversationId) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      await deleteConversationApi(id);
-
-      // If deleted conversation was active, clear active state
-      if (activeConversationId === id) {
-        setActiveConversationId(undefined);
+        return conversationId;
+      } catch (err) {
+        console.error("Failed to create conversation:", err);
+        setError("Failed to create conversation");
+        return null;
+      } finally {
+        setIsLoading(false);
       }
+    },
+    [loadConversations]
+  );
 
-      // Reload conversations list
-      await loadConversations();
-    } catch (err) {
-      console.error("Failed to delete conversation:", err);
-      setError("Failed to delete conversation");
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeConversationId, loadConversations]);
+  const saveMessages = useCallback(
+    async (conversationId: ConversationId, messages: ChatMessage[]) => {
+      try {
+        setError(null);
+
+        await updateConversationMessages(conversationId, messages);
+
+        // Optionally reload conversations to update message count
+        await loadConversations();
+      } catch (err) {
+        console.error("Failed to save messages:", err);
+        setError("Failed to save messages");
+        throw err;
+      }
+    },
+    [loadConversations]
+  );
+
+  const deleteConv = useCallback(
+    async (id: ConversationId) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        await deleteConversationApi(id);
+
+        // If deleted conversation was active, clear active state
+        if (activeConversationId === id) {
+          setActiveConversationId(undefined);
+        }
+
+        // Reload conversations list
+        await loadConversations();
+      } catch (err) {
+        console.error("Failed to delete conversation:", err);
+        setError("Failed to delete conversation");
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [activeConversationId, loadConversations]
+  );
 
   return {
     conversations,

@@ -70,15 +70,12 @@ export function PlaceSuggestionCard({
   };
 
   // Format coordinates for display
-  const coordinates =
-    place.lat && place.lng ? `${place.lat.toFixed(4)}, ${place.lng.toFixed(4)}` : null;
+  const coordinates = place.lat && place.lng ? `${place.lat.toFixed(4)}, ${place.lng.toFixed(4)}` : null;
 
   return (
     <div
       ref={scrollRef}
-      className={`rounded-lg border bg-card transition-all ${
-        isHighlighted ? "ring-2 ring-primary" : ""
-      }`}
+      className={`rounded-lg border bg-card transition-all ${isHighlighted ? "ring-2 ring-primary" : ""}`}
       onTransitionEnd={() => setIsHighlighted(false)}
     >
       {/* Photo */}
@@ -108,9 +105,7 @@ export function PlaceSuggestionCard({
         </div>
 
         {/* Description */}
-        {place.description && (
-          <p className="text-sm text-muted-foreground">{parseBoldText(place.description)}</p>
-        )}
+        {place.description && <p className="text-sm text-muted-foreground">{parseBoldText(place.description)}</p>}
 
         {/* Reasoning (collapsible) */}
         <ReasoningSection reasoning={place.reasoning} />
@@ -118,22 +113,12 @@ export function PlaceSuggestionCard({
         {/* Action button */}
         <div className="pt-2">
           {isAdded ? (
-            <Button
-              variant="outline"
-              className="w-full"
-              disabled
-              aria-label="Already added to plan"
-            >
+            <Button variant="outline" className="w-full" disabled aria-label="Already added to plan">
               <Check size={16} className="mr-2" />
               Added to Plan
             </Button>
           ) : (
-            <Button
-              onClick={handleAdd}
-              disabled={!canAdd}
-              className="w-full"
-              aria-label={`Add ${place.name} to plan`}
-            >
+            <Button onClick={handleAdd} disabled={!canAdd} className="w-full" aria-label={`Add ${place.name} to plan`}>
               {isAdding ? (
                 <>Adding...</>
               ) : (
@@ -146,9 +131,7 @@ export function PlaceSuggestionCard({
           )}
 
           {place.validationStatus === "not_found" && (
-            <p className="mt-2 text-xs text-destructive">
-              This place could not be verified. Please check the details.
-            </p>
+            <p className="mt-2 text-xs text-destructive">This place could not be verified. Please check the details.</p>
           )}
 
           {place.validationStatus === "partial" && (

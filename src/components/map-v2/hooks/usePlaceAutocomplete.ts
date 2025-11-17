@@ -3,9 +3,9 @@
  * Provides debounced place search with suggestions
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useMapsLibrary } from '@vis.gl/react-google-maps';
-import { useDebouncedCallback } from '@/components/hooks/useDebouncedCallback';
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useMapsLibrary } from "@vis.gl/react-google-maps";
+import { useDebouncedCallback } from "@/components/hooks/useDebouncedCallback";
 
 export interface PlaceSuggestion {
   placeId: string;
@@ -31,12 +31,12 @@ interface UsePlaceAutocompleteOptions {
 
 export function usePlaceAutocomplete(options: UsePlaceAutocompleteOptions = {}) {
   const { debounceMs = 300, types } = options;
-  
+
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const placesLibrary = useMapsLibrary('places');
+
+  const placesLibrary = useMapsLibrary("places");
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Fetch predictions from Google Places Autocomplete API
@@ -84,7 +84,7 @@ export function usePlaceAutocomplete(options: UsePlaceAutocompleteOptions = {}) 
                 placeId: prediction.placeId,
                 description: prediction.text.text,
                 mainText: prediction.mainText?.text || prediction.text.text,
-                secondaryText: prediction.secondaryText?.text || '',
+                secondaryText: prediction.secondaryText?.text || "",
               };
             })
             .filter((suggestion): suggestion is PlaceSuggestion => suggestion !== null);
@@ -94,11 +94,11 @@ export function usePlaceAutocomplete(options: UsePlaceAutocompleteOptions = {}) 
           setSuggestions([]);
         }
       } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') {
+        if (err instanceof Error && err.name === "AbortError") {
           return;
         }
-        console.error('[usePlaceAutocomplete] Error fetching predictions:', err);
-        setError('Failed to fetch suggestions');
+        console.error("[usePlaceAutocomplete] Error fetching predictions:", err);
+        setError("Failed to fetch suggestions");
         setSuggestions([]);
       } finally {
         setIsLoading(false);
@@ -116,7 +116,7 @@ export function usePlaceAutocomplete(options: UsePlaceAutocompleteOptions = {}) 
   const fetchPlaceDetails = useCallback(
     async (placeId: string): Promise<PlaceDetails | null> => {
       if (!placesLibrary) {
-        setError('Places library not loaded');
+        setError("Places library not loaded");
         return null;
       }
 
@@ -130,34 +130,30 @@ export function usePlaceAutocomplete(options: UsePlaceAutocompleteOptions = {}) 
 
         // Fetch the fields we need
         await place.fetchFields({
-          fields: ['id', 'displayName', 'formattedAddress', 'location'],
+          fields: ["id", "displayName", "formattedAddress", "location"],
         });
 
         if (!place.id || !place.location) {
-          setError('Incomplete place data');
+          setError("Incomplete place data");
           return null;
         }
 
         // Extract lat/lng from LatLng object (methods, not properties)
-        const lat = typeof place.location.lat === 'function' 
-          ? place.location.lat() 
-          : place.location.lat;
-        const lng = typeof place.location.lng === 'function' 
-          ? place.location.lng() 
-          : place.location.lng;
+        const lat = typeof place.location.lat === "function" ? place.location.lat() : place.location.lat;
+        const lng = typeof place.location.lng === "function" ? place.location.lng() : place.location.lng;
 
         return {
           placeId: place.id,
-          name: place.displayName || 'Unknown',
-          formattedAddress: place.formattedAddress || '',
+          name: place.displayName || "Unknown",
+          formattedAddress: place.formattedAddress || "",
           location: {
             lat,
             lng,
           },
         };
       } catch (err) {
-        console.error('[usePlaceAutocomplete] Error fetching place details:', err);
-        setError('Failed to fetch place details');
+        console.error("[usePlaceAutocomplete] Error fetching place details:", err);
+        setError("Failed to fetch place details");
         return null;
       }
     },
@@ -192,4 +188,3 @@ export function usePlaceAutocomplete(options: UsePlaceAutocompleteOptions = {}) 
     clearError,
   };
 }
-

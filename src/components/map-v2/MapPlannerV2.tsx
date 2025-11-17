@@ -3,12 +3,12 @@
  * Detects platform and renders appropriate layout
  */
 
-import React from 'react';
-import { APIProvider } from '@vis.gl/react-google-maps';
-import { MapStateProvider } from './context';
-import { useResponsive } from './hooks';
-import { DesktopLayout } from './layouts/DesktopLayout';
-import { MobileLayout } from './mobile/MobileLayout';
+import React from "react";
+import { APIProvider } from "@vis.gl/react-google-maps";
+import { MapStateProvider } from "./context";
+import { useResponsive } from "./hooks";
+import { DesktopLayout } from "./layouts/DesktopLayout";
+import { MobileLayout } from "./mobile/MobileLayout";
 
 interface MapPlannerV2Props {
   apiKey: string;
@@ -20,12 +20,7 @@ interface MapPlannerV2Props {
 export function MapPlannerV2({ apiKey, mapId, tripId, conversationId }: MapPlannerV2Props) {
   return (
     <MapStateProvider tripId={tripId} conversationId={conversationId}>
-      <MapPlannerV2Inner 
-        apiKey={apiKey} 
-        mapId={mapId}
-        tripId={tripId}
-        conversationId={conversationId}
-      />
+      <MapPlannerV2Inner apiKey={apiKey} mapId={mapId} tripId={tripId} conversationId={conversationId} />
     </MapStateProvider>
   );
 }
@@ -39,19 +34,11 @@ function MapPlannerV2Inner({ apiKey, mapId, tripId, conversationId }: MapPlanner
 
   // Wrap both layouts in a single APIProvider to avoid duplicate API loading
   return (
-    <APIProvider apiKey={apiKey} libraries={['geometry', 'places', 'marker']}>
+    <APIProvider apiKey={apiKey} libraries={["geometry", "places", "marker"]}>
       {shouldShowDesktop ? (
-        <DesktopLayout 
-          mapId={mapId}
-          tripId={tripId}
-          conversationId={conversationId}
-        />
+        <DesktopLayout mapId={mapId} tripId={tripId} conversationId={conversationId} />
       ) : (
-        <MobileLayout 
-          mapId={mapId}
-          tripId={tripId}
-          conversationId={conversationId}
-        />
+        <MobileLayout mapId={mapId} tripId={tripId} conversationId={conversationId} />
       )}
     </APIProvider>
   );

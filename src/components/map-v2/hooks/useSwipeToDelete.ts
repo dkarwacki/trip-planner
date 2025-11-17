@@ -3,7 +3,7 @@
  * Implements native iOS/Android pattern
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from "react";
 
 interface UseSwipeToDeleteOptions {
   onDelete: () => void;
@@ -36,34 +36,37 @@ export function useSwipeToDelete({
     touchStartX.current = e.touches[0].clientX;
   }, []);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (touchStartX.current === null) return;
 
-    const currentX = e.touches[0].clientX;
-    const deltaX = currentX - touchStartX.current;
+      const currentX = e.touches[0].clientX;
+      const deltaX = currentX - touchStartX.current;
 
-    // Only allow left swipe (negative deltaX)
-    if (deltaX < 0) {
-      const newOffset = Math.max(deltaX, -maxSwipe);
-      setSwipeOffset(newOffset);
-      currentOffset.current = newOffset;
+      // Only allow left swipe (negative deltaX)
+      if (deltaX < 0) {
+        const newOffset = Math.max(deltaX, -maxSwipe);
+        setSwipeOffset(newOffset);
+        currentOffset.current = newOffset;
 
-      // Reveal delete if past threshold
-      if (Math.abs(newOffset) >= deleteThreshold) {
-        setIsDeleteRevealed(true);
-        
-        // Haptic feedback when delete is revealed
-        if ('vibrate' in navigator) {
-          navigator.vibrate(10);
+        // Reveal delete if past threshold
+        if (Math.abs(newOffset) >= deleteThreshold) {
+          setIsDeleteRevealed(true);
+
+          // Haptic feedback when delete is revealed
+          if ("vibrate" in navigator) {
+            navigator.vibrate(10);
+          }
         }
+      } else {
+        // Swipe right - close delete if revealed
+        setSwipeOffset(0);
+        setIsDeleteRevealed(false);
+        currentOffset.current = 0;
       }
-    } else {
-      // Swipe right - close delete if revealed
-      setSwipeOffset(0);
-      setIsDeleteRevealed(false);
-      currentOffset.current = 0;
-    }
-  }, [deleteThreshold, maxSwipe]);
+    },
+    [deleteThreshold, maxSwipe]
+  );
 
   const handleTouchEnd = useCallback(() => {
     touchStartX.current = null;
@@ -82,18 +85,21 @@ export function useSwipeToDelete({
 
   const handleDelete = useCallback(() => {
     // Haptic feedback
-    if ('vibrate' in navigator) {
+    if ("vibrate" in navigator) {
       navigator.vibrate(20);
     }
-    
+
     onDelete();
   }, [onDelete]);
 
-  const bind = useCallback(() => ({
-    onTouchStart: handleTouchStart,
-    onTouchMove: handleTouchMove,
-    onTouchEnd: handleTouchEnd,
-  }), [handleTouchStart, handleTouchMove, handleTouchEnd]);
+  const bind = useCallback(
+    () => ({
+      onTouchStart: handleTouchStart,
+      onTouchMove: handleTouchMove,
+      onTouchEnd: handleTouchEnd,
+    }),
+    [handleTouchStart, handleTouchMove, handleTouchEnd]
+  );
 
   return {
     swipeOffset,
@@ -102,4 +108,3 @@ export function useSwipeToDelete({
     handleDelete,
   };
 }
-

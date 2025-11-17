@@ -24,7 +24,6 @@ export function ChatInterface({
   onRetry,
   addedPlaceIds,
 }: ChatInterfaceProps) {
-
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Messages or empty state - scrollable area */}
@@ -50,11 +49,7 @@ export function ChatInterface({
 
       {/* Message input - fixed at bottom */}
       <div className="flex-shrink-0 border-t p-4 bg-background">
-        <MessageInput
-          onSend={onSendMessage}
-          isLoading={isLoading}
-          disabled={selectedPersonas.length === 0}
-        />
+        <MessageInput onSend={onSendMessage} isLoading={isLoading} disabled={selectedPersonas.length === 0} />
         {selectedPersonas.length === 0 && (
           <p className="mt-2 text-xs text-muted-foreground">
             Please select at least one travel style to start chatting

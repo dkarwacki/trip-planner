@@ -20,12 +20,7 @@ interface MessageListProps {
  * - Shows loading indicator when AI is responding
  * - Smooth scroll behavior
  */
-export function MessageList({
-  messages,
-  isLoading = false,
-  onAddPlace,
-  addedPlaceIds = new Set(),
-}: MessageListProps) {
+export function MessageList({ messages, isLoading = false, onAddPlace, addedPlaceIds = new Set() }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom on new messages

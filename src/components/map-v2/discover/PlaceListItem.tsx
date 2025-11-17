@@ -2,10 +2,10 @@
  * Place list item - compact view with thumbnail
  */
 
-import React from 'react';
-import type { Attraction } from '@/domain/map/models';
-import { MapPin, Star, Plus, CheckCircle2 } from 'lucide-react';
-import { getPhotoUrl } from '@/lib/map-v2/imageOptimization';
+import React from "react";
+import type { Attraction } from "@/domain/map/models";
+import { MapPin, Star, Plus, CheckCircle2 } from "lucide-react";
+import { LazyImage } from "../shared/LazyImage";
 
 interface PlaceListItemProps {
   place: Attraction;
@@ -17,20 +17,26 @@ interface PlaceListItemProps {
   onAddClick?: (placeId: string) => void;
 }
 
-export const PlaceListItem = React.memo(function PlaceListItem({ place, score, isAdded = false, isHighlighted, onHover, onExpandCard, onAddClick }: PlaceListItemProps) {
-  const photoUrl = place.photos?.[0]?.photoReference
-    ? getPhotoUrl(place.photos[0].photoReference, 200)
-    : undefined;
+export const PlaceListItem = React.memo(function PlaceListItem({
+  place,
+  score,
+  isAdded = false,
+  isHighlighted,
+  onHover,
+  onExpandCard,
+  onAddClick,
+}: PlaceListItemProps) {
+  const photoReference = place.photos?.[0]?.photoReference;
 
   const rating = place.rating || 0;
   const totalRatings = place.userRatingsTotal || 0;
-  const category = place.types?.[0]?.replace(/_/g, ' ') || 'Place';
-  const priceLevel = place.priceLevel ? '💰'.repeat(place.priceLevel) : '';
+  const category = place.types?.[0]?.replace(/_/g, " ") || "Place";
+  const priceLevel = place.priceLevel ? "💰".repeat(place.priceLevel) : "";
 
   const getScoreBadgeColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 80) return 'text-blue-600';
-    return 'text-gray-600';
+    if (score >= 90) return "text-green-600";
+    if (score >= 80) return "text-blue-600";
+    return "text-gray-600";
   };
 
   const handleMouseEnter = () => {
@@ -56,17 +62,17 @@ export const PlaceListItem = React.memo(function PlaceListItem({ place, score, i
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={`flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-        isHighlighted ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+        isHighlighted ? "bg-blue-50 border-l-4 border-blue-600" : ""
       }`}
     >
       {/* Thumbnail Photo */}
       <div className="flex-shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden bg-gray-100">
-        {photoUrl ? (
-          <img
-            src={photoUrl}
+        {photoReference ? (
+          <LazyImage
+            photoReference={photoReference}
             alt={place.name}
+            size="thumbnail"
             className="w-full h-full object-cover"
-            loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -78,9 +84,7 @@ export const PlaceListItem = React.memo(function PlaceListItem({ place, score, i
       {/* Details */}
       <div className="flex-1 min-w-0">
         {/* Place name */}
-        <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
-          {place.name}
-        </h3>
+        <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">{place.name}</h3>
 
         {/* Meta info */}
         <div className="flex items-center gap-1.5 text-xs text-gray-600 mt-0.5">
@@ -116,11 +120,7 @@ export const PlaceListItem = React.memo(function PlaceListItem({ place, score, i
         disabled={isAdded}
         className={`
           flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors
-          ${
-            isAdded
-              ? "bg-green-600 text-white cursor-default"
-              : "bg-blue-600 hover:bg-blue-700 text-white"
-          }
+          ${isAdded ? "bg-green-600 text-white cursor-default" : "bg-blue-600 hover:bg-blue-700 text-white"}
         `}
         aria-label={isAdded ? `${place.name} added to plan` : `Add ${place.name} to plan`}
       >
@@ -129,4 +129,3 @@ export const PlaceListItem = React.memo(function PlaceListItem({ place, score, i
     </div>
   );
 });
-

@@ -19,7 +19,6 @@ import { PhotoLightbox } from "../shared/PhotoLightbox";
 
 export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, onAddClick }: SuggestionCardProps) {
   const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Truncate reasoning to 2 lines on mobile (~120 chars)
@@ -50,27 +49,26 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
     }
   };
 
+  // Photo optimization: Keep img tag with native lazy loading since photoUrl is a full URL
+  const hasPhoto = !!suggestion.photoUrl;
+
   return (
     <>
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         {/* Photo with priority badge - taller on mobile (or tip header for general tips) */}
         {!isGeneralTip && (
           <div className="relative aspect-[16/10] bg-gray-200">
-            {suggestion.photoUrl ? (
+            {hasPhoto ? (
               <button
                 onClick={handlePhotoClick}
                 className="w-full h-full relative focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
                 aria-label="View photo in fullscreen"
               >
-                {!imageLoaded && <div className="absolute inset-0 bg-gray-200 animate-pulse" />}
                 <img
                   src={suggestion.photoUrl}
                   alt={suggestion.placeName || "Place photo"}
                   loading="lazy"
-                  onLoad={() => setImageLoaded(true)}
-                  className={`w-full h-full object-cover transition-opacity duration-300 active:opacity-90 ${
-                    imageLoaded ? "opacity-100" : "opacity-0"
-                  }`}
+                  className="w-full h-full object-cover transition-opacity duration-300 active:opacity-90"
                 />
               </button>
             ) : (
@@ -138,16 +136,16 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
               onClick={handleAddClick}
               disabled={isAdded || isAdding}
               className={`
-                w-full h-11 px-4 rounded-xl font-semibold text-base
-                transition-all active:scale-[0.98] flex items-center justify-center gap-2
-                ${
-                  isAdded
-                    ? "bg-green-50 text-green-700 cursor-default"
-                    : isAdding
-                      ? "bg-blue-50 text-blue-600 cursor-wait"
-                      : "bg-blue-600 text-white active:bg-blue-700 shadow-sm active:shadow"
-                }
-              `}
+              w-full h-11 px-4 rounded-xl font-semibold text-base
+              transition-all active:scale-[0.98] flex items-center justify-center gap-2
+              ${
+                isAdded
+                  ? "bg-green-50 text-green-700 cursor-default"
+                  : isAdding
+                    ? "bg-blue-50 text-blue-600 cursor-wait"
+                    : "bg-blue-600 text-white active:bg-blue-700 shadow-sm active:shadow"
+              }
+            `}
             >
               {isAdding ? (
                 <>

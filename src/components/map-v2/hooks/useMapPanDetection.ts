@@ -3,7 +3,7 @@
  * Shows "Search This Area" button when user pans >2km from selected place
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 interface Location {
   lat: number;
@@ -23,17 +23,14 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   const R = 6371; // Earth's radius in kilometers
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
-  
+
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
-  
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
-  
+
   return distance;
 }
 
@@ -47,7 +44,7 @@ export function useMapPanDetection(
   options: UseMapPanDetectionOptions = {}
 ) {
   const { thresholdKm = 2, debounceMs = 100 } = options;
-  
+
   const [shouldShowButton, setShouldShowButton] = useState(false);
   const [distanceFromReference, setDistanceFromReference] = useState<number>(0);
 
@@ -88,4 +85,3 @@ export function useMapPanDetection(
     hideButton,
   };
 }
-

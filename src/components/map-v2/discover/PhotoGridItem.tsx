@@ -2,10 +2,10 @@
  * Photo grid item - individual photo with overlay information
  */
 
-import React, { useState } from 'react';
-import type { Attraction } from '@/domain/map/models';
-import { Plus, CheckCircle2 } from 'lucide-react';
-import { getPhotoUrl } from '@/lib/map-v2/imageOptimization';
+import React, { useState } from "react";
+import type { Attraction } from "@/domain/map/models";
+import { Plus, CheckCircle2 } from "lucide-react";
+import { LazyImage } from "../shared/LazyImage";
 
 interface PhotoGridItemProps {
   place: Attraction;
@@ -28,14 +28,12 @@ export const PhotoGridItem = React.memo(function PhotoGridItem({
 }: PhotoGridItemProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const photoUrl = place.photos?.[0]?.photoReference
-    ? getPhotoUrl(place.photos[0].photoReference, 600)
-    : undefined;
+  const photoReference = place.photos?.[0]?.photoReference;
 
   const getScoreBadgeColor = (score: number) => {
-    if (score >= 90) return 'bg-green-600/90';
-    if (score >= 80) return 'bg-blue-600/90';
-    return 'bg-gray-600/90';
+    if (score >= 90) return "bg-green-600/90";
+    if (score >= 80) return "bg-blue-600/90";
+    return "bg-gray-600/90";
   };
 
   const handleMouseEnter = () => {
@@ -57,25 +55,25 @@ export const PhotoGridItem = React.memo(function PhotoGridItem({
     onAddClick?.(place.id);
   };
 
-  if (!photoUrl) {
+  if (!photoReference) {
     return null;
   }
 
   return (
     <div
       className={`relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer group ${
-        isHighlighted ? 'ring-4 ring-blue-600 ring-offset-2' : ''
+        isHighlighted ? "ring-4 ring-blue-600 ring-offset-2" : ""
       }`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
       {/* Photo */}
-      <img
-        src={photoUrl}
+      <LazyImage
+        photoReference={photoReference}
         alt={place.name}
+        size="medium"
         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        loading="lazy"
       />
 
       {/* Gradient overlay */}
@@ -91,16 +89,16 @@ export const PhotoGridItem = React.memo(function PhotoGridItem({
 
       {/* Score badge */}
       {score > 0 && (
-        <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold text-white ${getScoreBadgeColor(score)}`}>
+        <div
+          className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold text-white ${getScoreBadgeColor(score)}`}
+        >
           {(score / 10).toFixed(1)}
         </div>
       )}
 
       {/* Place name overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-3">
-        <h3 className="text-white font-semibold text-sm line-clamp-2">
-          {place.name}
-        </h3>
+        <h3 className="text-white font-semibold text-sm line-clamp-2">{place.name}</h3>
       </div>
 
       {/* Quick add button (visible on hover, hidden if already added) */}
@@ -116,4 +114,3 @@ export const PhotoGridItem = React.memo(function PhotoGridItem({
     </div>
   );
 });
-

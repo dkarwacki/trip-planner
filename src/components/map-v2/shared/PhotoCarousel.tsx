@@ -20,7 +20,7 @@ interface PhotoCarouselProps {
 
 /**
  * Photo carousel with swipe support and keyboard navigation
- * 
+ *
  * Features:
  * - Swipe navigation on mobile
  * - Arrow buttons on desktop
@@ -51,7 +51,7 @@ export function PhotoCarousel({
 
   const goToPrev = useCallback(() => {
     if (!canGoPrev) return;
-    
+
     const newIndex = currentIndex === 0 ? photos.length - 1 : currentIndex - 1;
     setCurrentIndex(newIndex);
     onChange?.(newIndex);
@@ -59,16 +59,19 @@ export function PhotoCarousel({
 
   const goToNext = useCallback(() => {
     if (!canGoNext) return;
-    
+
     const newIndex = currentIndex === photos.length - 1 ? 0 : currentIndex + 1;
     setCurrentIndex(newIndex);
     onChange?.(newIndex);
   }, [currentIndex, photos.length, loop, canGoNext, onChange]);
 
-  const goToIndex = useCallback((index: number) => {
-    setCurrentIndex(index);
-    onChange?.(index);
-  }, [onChange]);
+  const goToIndex = useCallback(
+    (index: number) => {
+      setCurrentIndex(index);
+      onChange?.(index);
+    },
+    [onChange]
+  );
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -135,11 +138,7 @@ export function PhotoCarousel({
   if (photos.length === 1) {
     return (
       <div className={className}>
-        <LazyImage
-          photoReference={photos[0]}
-          alt={alt}
-          className="h-full w-full"
-        />
+        <LazyImage photoReference={photos[0]} alt={alt} className="h-full w-full" />
       </div>
     );
   }
@@ -196,9 +195,7 @@ export function PhotoCarousel({
               key={index}
               onClick={() => goToIndex(index)}
               className={`h-2 w-2 rounded-full transition-all ${
-                index === currentIndex
-                  ? "w-4 bg-white"
-                  : "bg-white/60 hover:bg-white/80"
+                index === currentIndex ? "w-4 bg-white" : "bg-white/60 hover:bg-white/80"
               }`}
               aria-label={`Go to photo ${index + 1}`}
               aria-current={index === currentIndex}
@@ -209,4 +206,3 @@ export function PhotoCarousel({
     </div>
   );
 }
-

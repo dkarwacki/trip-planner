@@ -1,7 +1,7 @@
 /**
  * Mobile Chat Header
  * Fixed header for AI chat modal with close button and context indicator
- * 
+ *
  * Features:
  * - Close button (×) on left
  * - Title in center
@@ -9,8 +9,8 @@
  * - Context indicator showing selected place
  */
 
-import React from 'react';
-import { X, MapPin } from 'lucide-react';
+import React from "react";
+import { X, MapPin } from "lucide-react";
 
 interface MobileChatHeaderProps {
   onClose: () => void;
@@ -29,11 +29,9 @@ export function MobileChatHeader({ onClose, selectedPlace }: MobileChatHeaderPro
         >
           <X className="w-6 h-6" />
         </button>
-        
-        <h2 className="text-base font-semibold text-gray-900">
-          AI Assistant
-        </h2>
-        
+
+        <h2 className="text-base font-semibold text-gray-900">AI Assistant</h2>
+
         <button
           onClick={onClose}
           className="text-sm font-medium text-blue-600 hover:text-blue-700 active:text-blue-800 px-2 py-1 rounded transition-colors"
@@ -41,7 +39,7 @@ export function MobileChatHeader({ onClose, selectedPlace }: MobileChatHeaderPro
           Done
         </button>
       </div>
-      
+
       {/* Context indicator */}
       {selectedPlace && (
         <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border-t border-blue-100">
@@ -51,16 +49,13 @@ export function MobileChatHeader({ onClose, selectedPlace }: MobileChatHeaderPro
           </span>
         </div>
       )}
-      
+
       {!selectedPlace && (
         <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-t border-amber-100">
           <MapPin className="w-4 h-4 text-amber-600 flex-shrink-0" />
-          <span className="text-sm text-amber-900">
-            Select a place to get AI suggestions
-          </span>
+          <span className="text-sm text-amber-900">Select a place to get AI suggestions</span>
         </div>
       )}
     </div>
   );
 }
-

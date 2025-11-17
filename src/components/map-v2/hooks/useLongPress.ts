@@ -3,7 +3,7 @@
  * Used for entering reorder mode
  */
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef } from "react";
 
 interface UseLongPressOptions {
   onLongPress: () => void;
@@ -35,39 +35,45 @@ export function useLongPress({
     startPosRef.current = null;
   }, []);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    startPosRef.current = { x: touch.clientX, y: touch.clientY };
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      const touch = e.touches[0];
+      startPosRef.current = { x: touch.clientX, y: touch.clientY };
 
-    onStart?.();
+      onStart?.();
 
-    timerRef.current = setTimeout(() => {
-      // Trigger long-press
-      onLongPress();
-      
-      // Haptic feedback
-      if ('vibrate' in navigator) {
-        navigator.vibrate(50); // Medium vibration for long-press
+      timerRef.current = setTimeout(() => {
+        // Trigger long-press
+        onLongPress();
+
+        // Haptic feedback
+        if ("vibrate" in navigator) {
+          navigator.vibrate(50); // Medium vibration for long-press
+        }
+
+        clear();
+      }, threshold);
+    },
+    [onLongPress, threshold, onStart, clear]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      // Cancel if user moves finger too much (they're scrolling)
+      if (!startPosRef.current || !timerRef.current) return;
+
+      const touch = e.touches[0];
+      const deltaX = Math.abs(touch.clientX - startPosRef.current.x);
+      const deltaY = Math.abs(touch.clientY - startPosRef.current.y);
+
+      // Cancel if moved more than 10px in any direction
+      if (deltaX > 10 || deltaY > 10) {
+        onCancel?.();
+        clear();
       }
-      
-      clear();
-    }, threshold);
-  }, [onLongPress, threshold, onStart, clear]);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    // Cancel if user moves finger too much (they're scrolling)
-    if (!startPosRef.current || !timerRef.current) return;
-
-    const touch = e.touches[0];
-    const deltaX = Math.abs(touch.clientX - startPosRef.current.x);
-    const deltaY = Math.abs(touch.clientY - startPosRef.current.y);
-
-    // Cancel if moved more than 10px in any direction
-    if (deltaX > 10 || deltaY > 10) {
-      onCancel?.();
-      clear();
-    }
-  }, [onCancel, clear]);
+    },
+    [onCancel, clear]
+  );
 
   const handleTouchEnd = useCallback(() => {
     // Cancel if released before threshold
@@ -83,4 +89,3 @@ export function useLongPress({
     onTouchEnd: handleTouchEnd,
   };
 }
-

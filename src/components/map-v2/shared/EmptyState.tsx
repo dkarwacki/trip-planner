@@ -9,14 +9,7 @@ import {
   QuestionMapPinIllustration,
 } from "./EmptyStateIllustrations";
 
-type IllustrationType =
-  | "map-pin"
-  | "search"
-  | "clipboard"
-  | "sparkle"
-  | "wifi-off"
-  | "map-cursor"
-  | "question-map-pin";
+type IllustrationType = "map-pin" | "search" | "clipboard" | "sparkle" | "wifi-off" | "map-cursor" | "question-map-pin";
 
 interface EmptyStateProps {
   illustration: IllustrationType;
@@ -28,9 +21,9 @@ interface EmptyStateProps {
 
 const illustrations: Record<IllustrationType, React.ComponentType<{ className?: string }>> = {
   "map-pin": MapPinIllustration,
-  "search": SearchIllustration,
-  "clipboard": ClipboardIllustration,
-  "sparkle": SparkleIllustration,
+  search: SearchIllustration,
+  clipboard: ClipboardIllustration,
+  sparkle: SparkleIllustration,
   "wifi-off": WifiOffIllustration,
   "map-cursor": MapCursorIllustration,
   "question-map-pin": QuestionMapPinIllustration,
@@ -38,7 +31,7 @@ const illustrations: Record<IllustrationType, React.ComponentType<{ className?: 
 
 /**
  * Reusable empty state component
- * 
+ *
  * Design principles:
  * - Simple and minimal
  * - Helpful messaging
@@ -46,13 +39,7 @@ const illustrations: Record<IllustrationType, React.ComponentType<{ className?: 
  * - Friendly tone
  * - Actionable when possible
  */
-export function EmptyState({
-  illustration,
-  heading,
-  message,
-  action,
-  className = "",
-}: EmptyStateProps) {
+export function EmptyState({ illustration, heading, message, action, className = "" }: EmptyStateProps) {
   const Illustration = illustrations[illustration];
 
   return (
@@ -67,14 +54,10 @@ export function EmptyState({
       </div>
 
       {/* Heading */}
-      <h3 className="mb-2 text-lg font-semibold text-foreground md:text-xl">
-        {heading}
-      </h3>
+      <h3 className="mb-2 text-lg font-semibold text-foreground md:text-xl">{heading}</h3>
 
       {/* Message */}
-      <p className="mb-6 max-w-md text-sm text-muted-foreground md:text-base">
-        {message}
-      </p>
+      <p className="mb-6 max-w-md text-sm text-muted-foreground md:text-base">{message}</p>
 
       {/* Optional action */}
       {action && <div className="mt-2">{action}</div>}
@@ -174,4 +157,3 @@ export function NoMarkerSelected({ action, className }: EmptyStateVariantProps) 
     />
   );
 }
-

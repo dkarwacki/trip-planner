@@ -3,7 +3,7 @@
  * Safely handles SSR and provides reactive media query matching
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export function useMediaQuery(query: string): boolean {
   // Initialize with false for SSR safety
@@ -11,13 +11,13 @@ export function useMediaQuery(query: string): boolean {
 
   useEffect(() => {
     // Only run on client
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return;
     }
 
     // Create media query list
     const mediaQuery = window.matchMedia(query);
-    
+
     // Set initial value
     setMatches(mediaQuery.matches);
 
@@ -28,7 +28,7 @@ export function useMediaQuery(query: string): boolean {
 
     // Add listener (using deprecated method for broader compatibility)
     if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handler);
+      mediaQuery.addEventListener("change", handler);
     } else {
       // Fallback for older browsers
       mediaQuery.addListener(handler);
@@ -37,7 +37,7 @@ export function useMediaQuery(query: string): boolean {
     // Cleanup
     return () => {
       if (mediaQuery.removeEventListener) {
-        mediaQuery.removeEventListener('change', handler);
+        mediaQuery.removeEventListener("change", handler);
       } else {
         // Fallback for older browsers
         mediaQuery.removeListener(handler);
@@ -47,4 +47,3 @@ export function useMediaQuery(query: string): boolean {
 
   return matches;
 }
-

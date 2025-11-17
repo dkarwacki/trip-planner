@@ -3,40 +3,32 @@
  * Manages layout with sticky header and footer
  */
 
-import React from 'react';
-import { useMapState } from '../../context';
-import { ChatHeader } from './ChatHeader';
-import { ChatMessages } from './ChatMessages';
-import { ChatInput } from './ChatInput';
-import { useAIChat } from '../../hooks/useAIChat';
+import React from "react";
+import { useMapState } from "../../context";
+import { ChatHeader } from "./ChatHeader";
+import { ChatMessages } from "./ChatMessages";
+import { ChatInput } from "./ChatInput";
+import { useAIChat } from "../../hooks/useAIChat";
 
 export function AIChatPanel() {
   const { state, dispatch } = useMapState();
-  const { 
-    sendMessage, 
-    isLoading, 
-    addSuggestionToPlan,
-    addingPlaceIds,
-    addedPlaceIds
-  } = useAIChat();
+  const { sendMessage, isLoading, addSuggestionToPlan, addingPlaceIds, addedPlaceIds } = useAIChat();
 
   // Get selected place for context
-  const selectedPlace = state.selectedPlaceId
-    ? state.places.find(p => p.id === state.selectedPlaceId)
-    : null;
+  const selectedPlace = state.selectedPlaceId ? state.places.find((p) => p.id === state.selectedPlaceId) : null;
 
   // Handle message send
   const handleSendMessage = async (message: string) => {
     if (!selectedPlace) {
-      console.error('No place selected for AI assistant');
+      console.error("No place selected for AI assistant");
       // TODO: Show error toast to user
       return;
     }
-    
+
     try {
       await sendMessage(message);
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error("Failed to send message:", error);
       // TODO: Show error toast to user
     }
   };
@@ -49,39 +41,30 @@ export function AIChatPanel() {
   // Suggested prompts based on context
   // Only show before the first message
   const hasMessages = state.aiConversation.length > 0;
-  const suggestedPrompts = selectedPlace && !hasMessages
-    ? [
-        'Must-see highlights',
-        'Best local restaurants',
-        'Hidden gems nearby',
-        'Family-friendly activities',
-      ]
-    : [];
+  const suggestedPrompts =
+    selectedPlace && !hasMessages
+      ? ["Must-see highlights", "Best local restaurants", "Hidden gems nearby", "Family-friendly activities"]
+      : [];
 
   return (
     <div className="flex flex-col h-full bg-white">
       <ChatHeader selectedPlace={selectedPlace} />
-      
-      <ChatMessages 
+
+      <ChatMessages
         messages={state.aiConversation}
         isLoading={isLoading}
         onAddSuggestion={handleAddSuggestion}
         addedPlaceIds={addedPlaceIds}
         addingPlaceIds={addingPlaceIds}
       />
-      
-      <ChatInput 
+
+      <ChatInput
         onSend={handleSendMessage}
         disabled={!selectedPlace || isLoading}
-        placeholder={
-          selectedPlace 
-            ? `Ask anything about ${selectedPlace.name}...`
-            : 'Select a place to get started...'
-        }
+        placeholder={selectedPlace ? `Ask anything about ${selectedPlace.name}...` : "Select a place to get started..."}
         suggestedPrompts={suggestedPrompts}
         showSuggestedPrompts={!hasMessages}
       />
     </div>
   );
 }
-

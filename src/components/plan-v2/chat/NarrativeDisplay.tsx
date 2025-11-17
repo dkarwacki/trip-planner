@@ -24,7 +24,7 @@ function findPlaceId(placeName: string, places: PlaceSuggestion[]): string | nul
       placeName.toLowerCase().includes(p.name.split(",")[0].trim().toLowerCase())
   );
 
-  return partialMatch ? (partialMatch.id || partialMatch.name) : null;
+  return partialMatch ? partialMatch.id || partialMatch.name : null;
 }
 
 /**
@@ -83,19 +83,13 @@ function renderNarrative(
  * - Fallback to plain text if no bold markers
  * - Only used for first message in conversation
  */
-export function NarrativeDisplay({
-  content,
-  suggestedPlaces = [],
-  onPlaceClick,
-}: NarrativeDisplayProps) {
+export function NarrativeDisplay({ content, suggestedPlaces = [], onPlaceClick }: NarrativeDisplayProps) {
   // If content doesn't contain bold markers, render as plain text
   if (!content.includes("**")) {
     return <p className="whitespace-pre-wrap break-words text-sm">{content}</p>;
   }
 
   return (
-    <p className="whitespace-pre-wrap break-words text-sm">
-      {renderNarrative(content, suggestedPlaces, onPlaceClick)}
-    </p>
+    <p className="whitespace-pre-wrap break-words text-sm">{renderNarrative(content, suggestedPlaces, onPlaceClick)}</p>
   );
 }

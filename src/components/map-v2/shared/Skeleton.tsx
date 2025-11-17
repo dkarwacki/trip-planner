@@ -6,14 +6,14 @@ interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
   /** Height of the skeleton (CSS value) */
   height?: string;
   /** Shape variant */
-  variant?: 'rectangular' | 'circular' | 'text';
+  variant?: "rectangular" | "circular" | "text";
   /** Disable animation */
   noAnimation?: boolean;
 }
 
 /**
  * Base skeleton component with shimmer animation
- * 
+ *
  * Features:
  * - Shimmer animation (left-to-right gradient sweep)
  * - Configurable shape and size
@@ -22,35 +22,35 @@ interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
 export function Skeleton({
   width,
   height,
-  variant = 'rectangular',
+  variant = "rectangular",
   noAnimation = false,
   className = "",
   style,
   ...props
 }: SkeletonProps) {
   const variantClasses = {
-    rectangular: 'rounded-md',
-    circular: 'rounded-full',
-    text: 'rounded',
+    rectangular: "rounded-md",
+    circular: "rounded-full",
+    text: "rounded",
   };
 
-  const defaultHeight = variant === 'text' ? '1em' : undefined;
+  const defaultHeight = variant === "text" ? "1em" : undefined;
 
   return (
     <div
       className={`
         bg-muted
         ${variantClasses[variant]}
-        ${!noAnimation ? 'animate-shimmer' : ''}
+        ${!noAnimation ? "animate-shimmer" : ""}
         ${className}
       `}
       style={{
         width,
         height: height || defaultHeight,
         backgroundImage: !noAnimation
-          ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)'
+          ? "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)"
           : undefined,
-        backgroundSize: !noAnimation ? '200% 100%' : undefined,
+        backgroundSize: !noAnimation ? "200% 100%" : undefined,
         ...style,
       }}
       aria-hidden="true"
@@ -64,7 +64,7 @@ export function Skeleton({
  */
 export function SkeletonText({
   lines = 1,
-  width = '100%',
+  width = "100%",
   className = "",
 }: {
   lines?: number;
@@ -76,14 +76,8 @@ export function SkeletonText({
   return (
     <div className={`space-y-2 ${className}`}>
       {widths.map((w, i) => (
-        <Skeleton
-          key={i}
-          variant="text"
-          width={w}
-          height="1em"
-        />
+        <Skeleton key={i} variant="text" width={w} height="1em" />
       ))}
     </div>
   );
 }
-

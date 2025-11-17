@@ -17,13 +17,7 @@ interface NewConversationButtonProps {
  */
 export function NewConversationButton({ onClick, disabled = false }: NewConversationButtonProps) {
   return (
-    <Button
-      onClick={onClick}
-      disabled={disabled}
-      className="w-full"
-      size="lg"
-      aria-label="Start new conversation"
-    >
+    <Button onClick={onClick} disabled={disabled} className="w-full" size="lg" aria-label="Start new conversation">
       <Plus className="mr-2 h-5 w-5" />
       New Conversation
     </Button>

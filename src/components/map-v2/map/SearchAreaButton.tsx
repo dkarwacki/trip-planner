@@ -4,9 +4,9 @@
  * Triggers new search for current map viewport
  */
 
-import React from 'react';
-import { Search } from 'lucide-react';
-import { cn } from '@/lib/common/utils';
+import React from "react";
+import { Search } from "lucide-react";
+import { cn } from "@/lib/common/utils";
 
 interface SearchAreaButtonProps {
   isVisible: boolean;
@@ -15,19 +15,14 @@ interface SearchAreaButtonProps {
   className?: string;
 }
 
-export function SearchAreaButton({
-  isVisible,
-  isLoading = false,
-  onClick,
-  className,
-}: SearchAreaButtonProps) {
+export function SearchAreaButton({ isVisible, isLoading = false, onClick, className }: SearchAreaButtonProps) {
   if (!isVisible) return null;
 
   return (
     <div
       className={cn(
-        'fixed top-20 left-1/2 -translate-x-1/2 z-30',
-        'animate-in slide-in-from-top duration-200',
+        "fixed top-20 left-1/2 -translate-x-1/2 z-30",
+        "animate-in slide-in-from-top duration-200",
         className
       )}
     >
@@ -35,17 +30,17 @@ export function SearchAreaButton({
         onClick={onClick}
         disabled={isLoading}
         className={cn(
-          'flex items-center gap-2 px-4 py-2.5 rounded-full',
-          'bg-blue-600 text-white font-medium text-sm',
-          'shadow-lg hover:shadow-xl',
-          'hover:bg-blue-700 active:bg-blue-800',
-          'transition-all duration-200',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
+          "flex items-center gap-2 px-4 py-2.5 rounded-full",
+          "bg-blue-600 text-white font-medium text-sm",
+          "shadow-lg hover:shadow-xl",
+          "hover:bg-blue-700 active:bg-blue-800",
+          "transition-all duration-200",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
+          "disabled:opacity-50 disabled:cursor-not-allowed",
           // Mobile responsive
-          'md:px-5 md:py-3 md:text-base'
+          "md:px-5 md:py-3 md:text-base"
         )}
-        aria-label={isLoading ? 'Searching this area...' : 'Search this area'}
+        aria-label={isLoading ? "Searching this area..." : "Search this area"}
       >
         {isLoading ? (
           <>
@@ -62,4 +57,3 @@ export function SearchAreaButton({
     </div>
   );
 }
-

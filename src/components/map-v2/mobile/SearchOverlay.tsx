@@ -3,19 +3,19 @@
  * Full-screen search overlay for mobile with autocomplete and recent searches
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowLeft, Search, X } from 'lucide-react';
-import { cn } from '@/lib/common/utils';
-import { usePlaceAutocomplete } from '../hooks/usePlaceAutocomplete';
-import { SearchResults } from '../search/SearchResults';
-import { RecentSearches } from '../search/RecentSearches';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { ArrowLeft, Search, X } from "lucide-react";
+import { cn } from "@/lib/common/utils";
+import { usePlaceAutocomplete } from "../hooks/usePlaceAutocomplete";
+import { SearchResults } from "../search/SearchResults";
+import { RecentSearches } from "../search/RecentSearches";
 import {
   getRecentSearches,
   addRecentSearch,
   removeRecentSearch,
   clearRecentSearches,
   type RecentSearch,
-} from '@/lib/map-v2/recentSearches';
+} from "@/lib/map-v2/recentSearches";
 
 interface SearchOverlayProps {
   isOpen: boolean;
@@ -29,16 +29,15 @@ interface SearchOverlayProps {
 }
 
 export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayProps) {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { suggestions, isLoading, searchPlaces, fetchPlaceDetails, clearSuggestions } =
-    usePlaceAutocomplete({
-      debounceMs: 300,
-    });
+  const { suggestions, isLoading, searchPlaces, fetchPlaceDetails, clearSuggestions } = usePlaceAutocomplete({
+    debounceMs: 300,
+  });
 
   // Load recent searches and auto-focus input when opened
   useEffect(() => {
@@ -50,7 +49,7 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
       }, 100);
     } else {
       // Reset state when closed
-      setInputValue('');
+      setInputValue("");
       clearSuggestions();
       setSelectedIndex(-1);
     }
@@ -65,8 +64,8 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
       onClose();
     };
 
-    window.addEventListener('popstate', handleBackButton);
-    return () => window.removeEventListener('popstate', handleBackButton);
+    window.addEventListener("popstate", handleBackButton);
+    return () => window.removeEventListener("popstate", handleBackButton);
   }, [isOpen, onClose]);
 
   // Handle input change
@@ -84,7 +83,7 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
 
   // Handle clear button
   const handleClear = () => {
-    setInputValue('');
+    setInputValue("");
     clearSuggestions();
     inputRef.current?.focus();
   };
@@ -111,7 +110,7 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
   );
 
   // Handle suggestion selection
-  const handleSelectSuggestion = (suggestion: typeof suggestions[0]) => {
+  const handleSelectSuggestion = (suggestion: (typeof suggestions)[0]) => {
     handleSelectPlace(suggestion.placeId, suggestion.mainText, suggestion.secondaryText);
   };
 
@@ -135,27 +134,22 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
   if (!isOpen) return null;
 
   return (
-    <div
-      className={cn(
-        'fixed inset-0 z-50 bg-white',
-        'animate-in slide-in-from-bottom duration-200'
-      )}
-    >
+    <div className={cn("fixed inset-0 z-50 bg-white", "animate-in slide-in-from-bottom duration-200")}>
       <div className="flex h-full flex-col">
         {/* Header */}
         <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 bg-white">
           <button
             onClick={onClose}
             className={cn(
-              'rounded-lg p-2 text-gray-700 transition-colors',
-              'hover:bg-gray-100 active:bg-gray-200',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500'
+              "rounded-lg p-2 text-gray-700 transition-colors",
+              "hover:bg-gray-100 active:bg-gray-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             )}
             aria-label="Close search"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          
+
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
@@ -165,10 +159,10 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
               onChange={handleInputChange}
               placeholder="Search for a place..."
               className={cn(
-                'w-full pl-10 pr-10 py-2 rounded-lg',
-                'border border-gray-300 bg-white',
-                'text-base text-gray-900 placeholder:text-gray-500',
-                'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                "w-full pl-10 pr-10 py-2 rounded-lg",
+                "border border-gray-300 bg-white",
+                "text-base text-gray-900 placeholder:text-gray-500",
+                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               )}
               aria-label="Search for a place"
               autoComplete="off"
@@ -177,10 +171,10 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
               <button
                 onClick={handleClear}
                 className={cn(
-                  'absolute right-3 top-1/2 -translate-y-1/2',
-                  'p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-200',
-                  'text-gray-400 hover:text-gray-600',
-                  'transition-colors'
+                  "absolute right-3 top-1/2 -translate-y-1/2",
+                  "p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-200",
+                  "text-gray-400 hover:text-gray-600",
+                  "transition-colors"
                 )}
                 aria-label="Clear search"
               >
@@ -241,9 +235,7 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
             <div className="px-4 py-8 text-center">
               <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
               <p className="text-base text-gray-500">Search for a place</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Try searching for a city, landmark, or address
-              </p>
+              <p className="text-sm text-gray-400 mt-1">Try searching for a city, landmark, or address</p>
             </div>
           )}
         </div>
@@ -251,4 +243,3 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
     </div>
   );
 }
-

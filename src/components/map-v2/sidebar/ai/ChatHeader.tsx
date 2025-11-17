@@ -3,8 +3,8 @@
  * Sticky at top of chat panel
  */
 
-import React from 'react';
-import { MapPin } from 'lucide-react';
+import React from "react";
+import { MapPin } from "lucide-react";
 
 interface ChatHeaderProps {
   selectedPlace: { name: string; id: string } | null;
@@ -18,17 +18,12 @@ export function ChatHeader({ selectedPlace }: ChatHeaderProps) {
         <div className="flex-1 min-w-0">
           <p className="text-xs text-gray-500 mb-0.5">Getting suggestions for:</p>
           {selectedPlace ? (
-            <p className="text-sm font-semibold text-gray-900 truncate">
-              {selectedPlace.name}
-            </p>
+            <p className="text-sm font-semibold text-gray-900 truncate">{selectedPlace.name}</p>
           ) : (
-            <p className="text-sm text-gray-500 italic">
-              Select a place to get AI suggestions
-            </p>
+            <p className="text-sm text-gray-500 italic">Select a place to get AI suggestions</p>
           )}
         </div>
       </div>
     </div>
   );
 }
-
