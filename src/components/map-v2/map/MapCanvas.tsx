@@ -447,10 +447,10 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   );
 
   // Get hovered and expanded attractions for cards
-  // In discover mode, get from discoveryResults
+  // In discover & AI mode, get from discoveryResults
   // In plan mode, get from places' planned items
   const hoveredAttraction = hoveredMarkerId
-    ? activeMode === "discover"
+    ? activeMode === "discover" || activeMode === "ai"
       ? discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === hoveredMarkerId)
       : (() => {
           // Find in planned items
@@ -465,7 +465,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     : null;
 
   const expandedAttraction = expandedCardPlaceId
-    ? activeMode === "discover"
+    ? activeMode === "discover" || activeMode === "ai"
       ? discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === expandedCardPlaceId)
       : (() => {
           // Find in planned items
@@ -548,9 +548,9 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   return (
     <>
       {/* Conditional rendering based on active mode */}
-      {activeMode === "discover" ? (
+      {activeMode === "discover" || activeMode === "ai" ? (
         <>
-          {/* Discover Mode: Show hub markers + discovery markers */}
+          {/* Discover & AI Mode: Show hub markers + discovery markers */}
           <PlaceMarkers places={places} selectedPlaceId={selectedPlaceId} onPlaceClick={handlePlaceClick} />
           <DiscoveryMarkersLayer />
         </>
@@ -567,9 +567,9 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
         </>
       )}
 
-      {/* Search Area Button (Discover mode only) */}
+      {/* Search Area Button (Discover & AI mode) */}
       <SearchAreaButton
-        isVisible={shouldShowButton && activeMode === "discover"}
+        isVisible={shouldShowButton && (activeMode === "discover" || activeMode === "ai")}
         isLoading={isSearching}
         onClick={handleSearchArea}
       />

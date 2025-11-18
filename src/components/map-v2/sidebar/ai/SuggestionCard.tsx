@@ -8,11 +8,13 @@ import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark } from
 import type { SuggestionCardProps } from "../../types";
 import { PriorityBadge } from "./PriorityBadge";
 import PhotoLightbox from "@/components/PhotoLightbox";
+import { useMapState } from "../../context";
 
 export const SuggestionCard = React.memo(
   function SuggestionCard({ suggestion, isAdded, isAdding = false, onAddClick }: SuggestionCardProps) {
     const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    const { setExpandedCard, setHighlightedPlace } = useMapState();
 
     // Truncate reasoning to 2-3 lines (~150 chars)
     const reasoningExcerpt =
@@ -22,15 +24,33 @@ export const SuggestionCard = React.memo(
 
     const isGeneralTip = suggestion.type === "general_tip";
 
-    const handleAddClick = () => {
+    const handleAddClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent card click when clicking add button
       if (!isAdded && !isAdding && suggestion.placeId) {
         onAddClick(suggestion.placeId);
       }
     };
 
-    const handlePhotoClick = () => {
+    const handlePhotoClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent card click when clicking photo
       if (suggestion.photoUrl) {
         setIsLightboxOpen(true);
+      }
+    };
+
+    const handleCardClick = () => {
+      // Only handle click for place suggestions (not general tips)
+      if (!isGeneralTip && suggestion.placeId) {
+        setExpandedCard(suggestion.placeId);
+        setHighlightedPlace(suggestion.placeId);
+      }
+    };
+
+    const handleCardKeyDown = (e: React.KeyboardEvent) => {
+      // Handle Enter or Space key for accessibility
+      if ((e.key === "Enter" || e.key === " ") && !isGeneralTip) {
+        e.preventDefault();
+        handleCardClick();
       }
     };
 
@@ -41,21 +61,28 @@ export const SuggestionCard = React.memo(
 
     return (
       <>
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div 
+          onClick={handleCardClick}
+          onKeyDown={handleCardKeyDown}
+          className={`bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all ${!isGeneralTip ? 'cursor-pointer hover:scale-[1.01]' : ''}`}
+          role={!isGeneralTip ? "button" : undefined}
+          tabIndex={!isGeneralTip ? 0 : undefined}
+          aria-label={!isGeneralTip && suggestion.placeName ? `View ${suggestion.placeName} on map` : undefined}
+        >
           {/* Photo with priority badge (or tip icon for general tips) */}
           {!isGeneralTip && (
-            <div className="relative aspect-video bg-gray-200">
+            <div className="relative aspect-video bg-gray-100">
               {hasPhoto ? (
                 <button
                   onClick={handlePhotoClick}
-                  className="w-full h-full relative focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                  className="w-full h-full absolute inset-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
                   aria-label="View photo in fullscreen"
                 >
                   <img
                     src={suggestion.photoUrl}
                     alt={suggestion.placeName || "Place photo"}
                     loading="lazy"
-                    className="w-full h-full object-cover transition-opacity duration-300 hover:opacity-90"
+                    className="w-full h-full object-cover transition-opacity duration-300 hover:opacity-90 block"
                   />
                 </button>
               ) : (
@@ -117,7 +144,10 @@ export const SuggestionCard = React.memo(
 
               {shouldShowReadMore && (
                 <button
-                  onClick={() => setIsReasoningExpanded(!isReasoningExpanded)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click when toggling reasoning
+                    setIsReasoningExpanded(!isReasoningExpanded);
+                  }}
                   className="mt-1 text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 text-xs"
                 >
                   {isReasoningExpanded ? "Show less" : "Read more"}

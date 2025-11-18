@@ -20,7 +20,7 @@ interface UseAIChatReturn {
 }
 
 export function useAIChat(): UseAIChatReturn {
-  const { state, dispatch, addAttractionToPlace, addRestaurantToPlace } = useMapState();
+  const { state, dispatch, addAttractionToPlace, addRestaurantToPlace, addDiscoveryResults } = useMapState();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addingPlaceIds, setAddingPlaceIds] = useState<Set<string>>(new Set());
@@ -239,6 +239,24 @@ export function useAIChat(): UseAIChatReturn {
           return undefined;
         })();
 
+        // Transform valid suggestions to discovery results format
+        // Filter out general tips (they don't have place data)
+        const validSuggestions = suggestions.filter(s => s.type !== "general_tip" && s.attractionData);
+        const discoveryItems = validSuggestions.map(s => ({
+          attraction: {
+            id: s.attractionData.id,
+            name: s.attractionData.name,
+            rating: s.attractionData.rating,
+            userRatingsTotal: s.attractionData.userRatingsTotal,
+            types: s.attractionData.types,
+            vicinity: s.attractionData.vicinity,
+            priceLevel: s.attractionData.priceLevel,
+            location: s.attractionData.location,
+            photos: s.attractionData.photos,
+          },
+          score: s.attractionData.rating || 0,
+        }));
+
         // Add AI response message with the summary
         const assistantMessage: AIMessage = {
           id: `assistant-${Date.now()}`,
@@ -249,6 +267,12 @@ export function useAIChat(): UseAIChatReturn {
           thinkingSteps,
         };
         dispatch({ type: "ADD_AI_MESSAGE", payload: assistantMessage });
+
+        // Add AI suggestions to discovery results (if any valid attractions/restaurants)
+        // This makes them appear on the map and in the discovery list alongside nearby places
+        if (discoveryItems.length > 0) {
+          addDiscoveryResults(discoveryItems);
+        }
       } catch (err) {
         console.error("Failed to send message:", err);
         setError("Failed to get AI response. Please try again.");
@@ -265,7 +289,7 @@ export function useAIChat(): UseAIChatReturn {
         setIsLoading(false);
       }
     },
-    [state.aiContext, state.aiConversation, dispatch]
+    [state.aiContext, state.aiConversation, dispatch, addDiscoveryResults]
   );
 
   // Add suggestion to plan (optimistic update)
