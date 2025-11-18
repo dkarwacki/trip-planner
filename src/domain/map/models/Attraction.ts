@@ -11,4 +11,7 @@ export interface Attraction {
   location: { lat: Latitude; lng: Longitude };
   photos?: PlacePhoto[];
   editorialSummary?: string;
+  qualityScore?: number;
+  diversityScore?: number;
+  confidenceScore?: number;
 }

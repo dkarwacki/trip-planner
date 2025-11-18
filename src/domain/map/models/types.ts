@@ -38,6 +38,9 @@ export interface PlannedAttraction {
   };
   photos?: PlacePhoto[];
   editorialSummary?: string;
+  qualityScore?: number;
+  diversityScore?: number;
+  confidenceScore?: number;
 }
 
 /**
@@ -57,6 +60,8 @@ export interface PlannedRestaurant {
   };
   photos?: PlacePhoto[];
   editorialSummary?: string;
+  qualityScore?: number;
+  confidenceScore?: number;
 }
 
 /**

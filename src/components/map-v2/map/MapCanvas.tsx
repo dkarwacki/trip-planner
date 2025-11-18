@@ -512,10 +512,41 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
       : (() => {
           // Find in planned items
           for (const place of places) {
-            const found =
-              place.plannedAttractions?.find((a: { id: string }) => a.id === expandedCardPlaceId) ||
-              place.plannedRestaurants?.find((r: { id: string }) => r.id === expandedCardPlaceId);
-            if (found) return { attraction: found, score: 0 }; // Score not needed for plan mode
+            const foundAttraction = place.plannedAttractions?.find((a: { id: string }) => a.id === expandedCardPlaceId);
+            if (foundAttraction) {
+              // Calculate score from stored metrics (attractions have diversityScore)
+              const score =
+                foundAttraction.qualityScore && foundAttraction.diversityScore && foundAttraction.confidenceScore
+                  ? (foundAttraction.qualityScore + foundAttraction.diversityScore + foundAttraction.confidenceScore) /
+                    3
+                  : 0;
+              return {
+                attraction: foundAttraction,
+                score: Math.round(score),
+                breakdown: {
+                  qualityScore: foundAttraction.qualityScore || 0,
+                  diversityScore: foundAttraction.diversityScore || 0,
+                  confidenceScore: foundAttraction.confidenceScore || 0,
+                },
+              };
+            }
+
+            const foundRestaurant = place.plannedRestaurants?.find((r: { id: string }) => r.id === expandedCardPlaceId);
+            if (foundRestaurant) {
+              // Calculate score from stored metrics (restaurants don't have diversityScore)
+              const score =
+                foundRestaurant.qualityScore && foundRestaurant.confidenceScore
+                  ? (foundRestaurant.qualityScore + foundRestaurant.confidenceScore) / 2
+                  : 0;
+              return {
+                attraction: foundRestaurant,
+                score: Math.round(score),
+                breakdown: {
+                  qualityScore: foundRestaurant.qualityScore || 0,
+                  confidenceScore: foundRestaurant.confidenceScore || 0,
+                },
+              };
+            }
           }
           return null;
         })()

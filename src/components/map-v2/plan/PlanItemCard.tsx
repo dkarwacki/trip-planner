@@ -148,8 +148,13 @@ const PlanItemCard = React.memo(
 
           {/* Stats */}
           <div className="mt-2 text-sm text-muted-foreground">
-            {attractions.length} {attractions.length === 1 ? "attraction" : "attractions"} • {restaurants.length}{" "}
-            {restaurants.length === 1 ? "restaurant" : "restaurants"}
+            <span className="text-blue-600 font-medium">
+              {attractions.length} {attractions.length === 1 ? "attraction" : "attractions"}
+            </span>{" "}
+            •{" "}
+            <span className="text-red-600 font-medium">
+              {restaurants.length} {restaurants.length === 1 ? "restaurant" : "restaurants"}
+            </span>
           </div>
 
           {/* Collapsible sections */}
@@ -162,7 +167,7 @@ const PlanItemCard = React.memo(
                     e.stopPropagation();
                     toggleSection("attractions");
                   }}
-                  className="flex w-full items-center gap-2 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
+                  className="flex w-full items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   {expandedSections.attractions ? (
                     <ChevronDown className="h-4 w-4" />
@@ -190,7 +195,7 @@ const PlanItemCard = React.memo(
                     e.stopPropagation();
                     toggleSection("restaurants");
                   }}
-                  className="flex w-full items-center gap-2 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
+                  className="flex w-full items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
                 >
                   {expandedSections.restaurants ? (
                     <ChevronDown className="h-4 w-4" />
@@ -220,7 +225,7 @@ const PlanItemCard = React.memo(
                 e.stopPropagation();
                 handleDiscoverMore();
               }}
-              className="mt-4 w-full rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-2"
+              className="mt-4 w-full rounded-md border border-blue-200 bg-blue-50/50 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
             >
               <Search className="h-4 w-4" />
               Discover more

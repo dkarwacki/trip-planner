@@ -180,7 +180,7 @@ export const ExpandedPlaceCard = React.memo(
               {/* Close Button */}
               <button
                 onClick={onClose}
-                className="absolute top-2 left-2 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors z-10"
+                className="absolute top-2 left-2 w-8 h-8 bg-white hover:bg-gray-100 rounded-full flex items-center justify-center transition-all z-10 shadow-md hover:shadow-lg hover:scale-105"
                 aria-label="Close"
               >
                 <X className="h-4 w-4 text-gray-700" />
@@ -189,7 +189,7 @@ export const ExpandedPlaceCard = React.memo(
               {/* Google Maps Button */}
               <button
                 onClick={handleGoogleMapsClick}
-                className="absolute top-2 left-12 h-8 px-3 bg-white/90 hover:bg-white rounded-full flex items-center justify-center gap-2 transition-colors z-10 text-xs font-medium text-gray-700 shadow-sm"
+                className="absolute top-2 left-12 h-8 px-3 bg-white hover:bg-gray-100 rounded-full flex items-center justify-center gap-2 transition-all z-10 text-xs font-medium text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
                 aria-label="Open in Google Maps"
               >
                 <MapPinned className="h-3.5 w-3.5" />
@@ -306,7 +306,7 @@ export const ExpandedPlaceCard = React.memo(
 
           {/* Score Badge - Outside overflow-hidden container so tooltip can overflow */}
           {score && score >= 70 && (
-            <div className="absolute top-2 right-2 pointer-events-auto">
+            <div className="absolute top-2 right-2 pointer-events-auto transition-all hover:scale-105">
               <ScoreBadge
                 score={score}
                 breakdown={breakdown}

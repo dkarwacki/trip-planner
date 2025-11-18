@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { X, Landmark, UtensilsCrossed } from "lucide-react";
+import { X, Landmark, UtensilsCrossed, Star } from "lucide-react";
 import { LazyImage } from "../shared/LazyImage";
 
 interface PlannedItemProps {
@@ -72,9 +72,12 @@ const PlannedItem = React.memo(
           {/* Rating and score */}
           <div className="flex items-center gap-2 text-xs">
             {rating > 0 && (
-              <span className="text-muted-foreground">
-                ★ {rating.toFixed(1)} {reviewCount > 0 && `(${reviewCount})`}
-              </span>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                <span>
+                  {rating.toFixed(1)} {reviewCount > 0 && `(${reviewCount})`}
+                </span>
+              </div>
             )}
             {score > 0 && <span className="font-medium text-foreground">Score: {score.toFixed(1)}</span>}
           </div>

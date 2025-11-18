@@ -67,6 +67,9 @@ export interface AttractionDAO {
   };
   photos?: PlacePhotoDAO[];
   editorialSummary?: string;
+  qualityScore?: number;
+  diversityScore?: number;
+  confidenceScore?: number;
 }
 
 export interface PlaceDAO {
@@ -218,6 +221,9 @@ const toAttraction = (dao: AttractionDAO): Place["plannedAttractions"][number] =
   },
   photos: dao.photos?.map(toPlacePhoto),
   editorialSummary: dao.editorialSummary,
+  qualityScore: dao.qualityScore,
+  diversityScore: dao.diversityScore,
+  confidenceScore: dao.confidenceScore,
 });
 
 const toPlace = (dao: PlaceDAO): Place => ({

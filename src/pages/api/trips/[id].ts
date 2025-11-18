@@ -35,6 +35,9 @@ function placesToPlaceDAOs(places: Place[]) {
       },
       photos: attr.photos,
       editorialSummary: attr.editorialSummary,
+      qualityScore: attr.qualityScore,
+      diversityScore: attr.diversityScore,
+      confidenceScore: attr.confidenceScore,
     })),
     plannedRestaurants: (place.plannedRestaurants ?? []).map((rest) => ({
       id: rest.id,
@@ -50,6 +53,8 @@ function placesToPlaceDAOs(places: Place[]) {
       },
       photos: rest.photos,
       editorialSummary: rest.editorialSummary,
+      qualityScore: rest.qualityScore,
+      confidenceScore: rest.confidenceScore,
     })),
     photos: place.photos?.map((photo) => ({
       photoReference: photo.photoReference,
