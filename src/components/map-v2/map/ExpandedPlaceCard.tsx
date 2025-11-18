@@ -4,8 +4,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { X, Loader2, Check } from "lucide-react";
+import { X, Loader2, Check, Plus } from "lucide-react";
 import type { Attraction } from "@/domain/map/models";
 import { calculateCardPosition } from "./CardPositioning";
 import { LazyImage } from "../shared/LazyImage";
@@ -215,25 +214,38 @@ export const ExpandedPlaceCard = React.memo(
 
               {/* Action Buttons */}
               <div className="flex gap-2 pt-2">
-                <Button
+                <button
                   onClick={() => onAddToPlan(attraction.id)}
                   disabled={isAddedToPlan || isAddingToPlan}
-                  className="flex-1 h-11"
+                  className={`
+                    flex-1 h-11 py-2.5 px-4 rounded-lg font-medium text-sm
+                    transition-colors flex items-center justify-center gap-2
+                    ${
+                      isAddedToPlan
+                        ? "bg-green-50 text-green-700 cursor-default"
+                        : isAddingToPlan
+                          ? "bg-blue-50 text-blue-600 cursor-wait"
+                          : "bg-blue-600 text-white hover:bg-blue-700"
+                    }
+                  `}
                 >
                   {isAddingToPlan ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       Adding...
                     </>
                   ) : isAddedToPlan ? (
                     <>
-                      <Check className="h-4 w-4 mr-2" />
-                      In Plan
+                      <Check className="h-4 w-4" />
+                      Added to Plan
                     </>
                   ) : (
-                    "Add to Plan"
+                    <>
+                      <Plus className="h-4 w-4" />
+                      Add to Plan
+                    </>
                   )}
-                </Button>
+                </button>
               </div>
             </div>
           </div>

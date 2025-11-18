@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import type { Attraction } from "@/domain/map/models";
-import { MapPin, Star, CheckCircle2, Utensils, Landmark } from "lucide-react";
+import { MapPin, Star, CheckCircle2, Utensils, Landmark, Plus, Check } from "lucide-react";
 import { LazyImage } from "../shared/LazyImage";
 import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
 import PhotoLightbox from "@/components/PhotoLightbox";
@@ -86,12 +86,10 @@ export const PlaceCard = React.memo(function PlaceCard({
       role="button"
       tabIndex={0}
       aria-label={`View details for ${place.name}`}
-      className={`bg-white rounded-lg border overflow-hidden cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all duration-200 ${
+      className={`bg-white rounded-xl border overflow-hidden cursor-pointer shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-200 ${
         isHighlighted
           ? "border-blue-600 border-2 ring-2 ring-blue-200"
-          : isAdded
-            ? "border-green-500 border-2"
-            : "border-gray-200"
+          : "border-gray-200"
       }`}
     >
       {/* Hero Photo */}
@@ -184,15 +182,26 @@ export const PlaceCard = React.memo(function PlaceCard({
           onClick={handleAddButtonClick}
           disabled={isAdded}
           className={`
-            w-full py-2.5 rounded-lg font-medium transition-colors
+            w-full py-2.5 px-4 rounded-lg font-medium text-sm
+            transition-colors flex items-center justify-center gap-2
             ${
               isAdded
-                ? "bg-green-100 text-green-700 cursor-default"
-                : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
+                ? "bg-green-50 text-green-700 cursor-default"
+                : "bg-blue-600 text-white hover:bg-blue-700"
             }
           `}
         >
-          {isAdded ? "✓ Added" : "+ Add to Plan"}
+          {isAdded ? (
+            <>
+              <Check className="h-4 w-4" />
+              Added to Plan
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4" />
+              Add to Plan
+            </>
+          )}
         </button>
       </div>
 

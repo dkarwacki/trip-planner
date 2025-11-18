@@ -100,10 +100,25 @@ export const SuggestionCard = React.memo(
                 )}
               </div>
 
-              {/* Priority badge */}
-              <div className="absolute top-2 right-2 pointer-events-none">
+              {/* Priority badge (right side, next to score badge horizontally) */}
+              <div className="absolute top-2 right-14 pointer-events-none">
                 <PriorityBadge priority={suggestion.priority} />
               </div>
+
+              {/* Score Badge (top-right) */}
+              {suggestion.score !== null && suggestion.score > 0 && (
+                <div
+                  className={`absolute top-2 right-2 px-2 py-1 rounded-md text-sm font-bold shadow-lg ${
+                    suggestion.score >= 90
+                      ? "bg-green-600 text-white"
+                      : suggestion.score >= 80
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-600 text-white"
+                  }`}
+                >
+                  {(suggestion.score / 10).toFixed(1)}
+                </div>
+              )}
             </div>
           )}
 
@@ -126,12 +141,6 @@ export const SuggestionCard = React.memo(
                 <h4 className="font-bold text-gray-900 mb-1 line-clamp-1">{suggestion.placeName}</h4>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <span className="capitalize">{suggestion.category}</span>
-                  {suggestion.score !== null && (
-                    <>
-                      <span className="text-gray-400">•</span>
-                      <span className="font-semibold text-blue-600">Score: {suggestion.score.toFixed(1)}</span>
-                    </>
-                  )}
                 </div>
               </div>
             )}

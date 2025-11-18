@@ -194,7 +194,7 @@ export function useAIChat(): UseAIChatReturn {
             placeName: s.attractionData.name,
             priority: normalizePriority(s.priority),
             reasoning: s.reasoning,
-            score: s.attractionData.rating || 0,
+            score: (s.attractionData.rating || 0) * 20, // Convert to 0-100 scale
             category: s.type === "add_restaurant" ? "restaurant" : "attraction",
             photoUrl: photoReference
               ? getPhotoUrl(
@@ -254,7 +254,8 @@ export function useAIChat(): UseAIChatReturn {
             location: s.attractionData.location,
             photos: s.attractionData.photos,
           },
-          score: s.attractionData.rating || 0,
+          // Convert rating (0-5) to score (0-100) to match discovery results format
+          score: (s.attractionData.rating || 0) * 20,
         }));
 
         // Add AI response message with the summary
