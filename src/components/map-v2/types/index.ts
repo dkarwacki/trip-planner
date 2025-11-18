@@ -31,6 +31,7 @@ export interface AIMessage {
   content: string;
   timestamp: Date;
   suggestions?: AISuggestion[];
+  thinkingSteps?: string[]; // AI's reasoning process
 }
 
 // AI suggestion card

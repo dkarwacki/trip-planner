@@ -5,6 +5,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 interface PhotoCarouselProps {
   photos: string[];
   alt: string;
+  lat: number;
+  lng: number;
+  placeName: string;
   className?: string;
   /** Enable infinite loop */
   loop?: boolean;
@@ -33,6 +36,9 @@ interface PhotoCarouselProps {
 export function PhotoCarousel({
   photos,
   alt,
+  lat,
+  lng,
+  placeName,
   className = "",
   loop = false,
   showDots = true,
@@ -138,7 +144,7 @@ export function PhotoCarousel({
   if (photos.length === 1) {
     return (
       <div className={className}>
-        <LazyImage photoReference={photos[0]} alt={alt} className="h-full w-full" />
+        <LazyImage photoReference={photos[0]} alt={alt} lat={lat} lng={lng} placeName={placeName} className="h-full w-full" />
       </div>
     );
   }
@@ -155,6 +161,9 @@ export function PhotoCarousel({
       <LazyImage
         photoReference={photos[currentIndex]}
         alt={`${alt} - Photo ${currentIndex + 1} of ${photos.length}`}
+        lat={lat}
+        lng={lng}
+        placeName={placeName}
         className="h-full w-full"
         eager={currentIndex === 0}
       />

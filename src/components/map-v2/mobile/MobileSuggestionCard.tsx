@@ -12,10 +12,10 @@
  */
 
 import React, { useState } from "react";
-import { Plus, Check, ChevronDown, Lightbulb, Loader2 } from "lucide-react";
+import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark } from "lucide-react";
 import type { SuggestionCardProps } from "../types";
 import { PriorityBadge } from "../sidebar/ai/PriorityBadge";
-import { PhotoLightbox } from "../shared/PhotoLightbox";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, onAddClick }: SuggestionCardProps) {
   const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
@@ -76,6 +76,15 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
                 <span className="text-5xl">📍</span>
               </div>
             )}
+
+            {/* Type indicator - top left */}
+            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm p-1.5 rounded-md shadow-lg">
+              {suggestion.type === "add_restaurant" ? (
+                <Utensils className="w-4 h-4 text-orange-600" aria-label="Restaurant" />
+              ) : (
+                <Landmark className="w-4 h-4 text-blue-600" aria-label="Attraction" />
+              )}
+            </div>
 
             {/* Priority badge - slightly larger on mobile */}
             <div className="absolute top-3 right-3 pointer-events-none">
@@ -169,13 +178,16 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
       </div>
 
       {/* Photo Lightbox */}
-      {suggestion.photoUrl && (
+      {suggestion.attractionData && suggestion.attractionData.photos && suggestion.attractionData.photos.length > 0 && (
         <PhotoLightbox
-          photos={[suggestion.photoUrl]}
+          photos={suggestion.attractionData.photos}
           initialIndex={0}
-          alt={suggestion.placeName || "Place photo"}
           isOpen={isLightboxOpen}
           onClose={() => setIsLightboxOpen(false)}
+          placeName={suggestion.placeName || "Place"}
+          lat={suggestion.attractionData.location.lat}
+          lng={suggestion.attractionData.location.lng}
+          size="large"
         />
       )}
     </>

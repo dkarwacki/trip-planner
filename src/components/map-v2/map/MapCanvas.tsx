@@ -3,7 +3,7 @@
  * Wrapper for Google Maps with markers and controls
  */
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { Map, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { PlaceMarkers } from "./PlaceMarkers";
 import { DiscoveryMarkers } from "./DiscoveryMarkers";
@@ -82,9 +82,18 @@ function DiscoveryMarkersLayer() {
     return item.attraction?.types?.some((t: string) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
   };
 
+  // Apply quality filter first
+  let results = discoveryResults;
+  if (filters.showHighQualityOnly) {
+    results = results.filter((item: any) => {
+      const score = item.score || 0;
+      return score >= filters.minScore * 10; // Convert 7/8/9 to 70/80/90
+    });
+  }
+
   // Split into attractions and restaurants based on types
-  const attractions = discoveryResults.filter((r: { attraction?: { types?: string[] } }) => !isRestaurant(r));
-  const restaurants = discoveryResults.filter((r: { attraction?: { types?: string[] } }) => isRestaurant(r));
+  const attractions = results.filter((r: { attraction?: { types?: string[] } }) => !isRestaurant(r));
+  const restaurants = results.filter((r: { attraction?: { types?: string[] } }) => isRestaurant(r));
 
   // Apply category filter
   let filteredAttractions = attractions;
@@ -142,6 +151,8 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     activeMode,
     setActiveMode,
     dispatch,
+    searchCenters,
+    addSearchCenter,
   } = useMapState();
   const map = useMap();
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
@@ -149,6 +160,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [isDesktop, setIsDesktop] = useState(false);
   const [expandedPlaceId, setExpandedPlaceId] = useState<string | null>(null); // Track which place the expanded item belongs to
+  const hasInitializedRef = useRef(false); // Track if we've set initial search center (use ref to avoid re-renders)
 
   // Close card handler using dispatch
   const closeCard = useCallback(() => {
@@ -185,6 +197,10 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   // Get nearby places hook
   const { fetchNearbyPlaces } = useNearbyPlaces();
 
+  // Search configuration
+  const SEARCH_RADIUS_METERS = 5000; // 5km radius for nearby search
+  const SEARCH_THRESHOLD_KM = SEARCH_RADIUS_METERS / 2 / 1000; // Show button when >half radius away (2.5km)
+
   // Notify parent when map is loaded
   useEffect(() => {
     if (map && onMapLoad) {
@@ -209,7 +225,9 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   useEffect(() => {
     if (!map) return;
 
-    const centerChangedListener = map.addListener("center_changed", () => {
+    // Use 'idle' event instead of 'center_changed' to only update after map stops moving
+    // This prevents button from flickering during programmatic pans and better matches Google Maps behavior
+    const idleListener = map.addListener("idle", () => {
       const center = map.getCenter();
       if (center) {
         setMapCenter({ lat: center.lat(), lng: center.lng() });
@@ -221,24 +239,35 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
       closeCard();
     });
 
-    // Initialize center
+    // Initialize center immediately
     const center = map.getCenter();
     if (center) {
-      setMapCenter({ lat: center.lat(), lng: center.lng() });
+      const centerCoords = { lat: center.lat(), lng: center.lng() };
+      setMapCenter(centerCoords);
+
+      // Set as initial reference location only once on first load
+      // This allows "search this area" button to appear on first pan
+      if (!hasInitializedRef.current) {
+        addSearchCenter(centerCoords);
+        hasInitializedRef.current = true;
+      }
     }
 
     return () => {
-      google.maps.event.removeListener(centerChangedListener);
+      google.maps.event.removeListener(idleListener);
       google.maps.event.removeListener(clickListener);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, closeCard]);
 
-  // Get selected place location for pan detection
+  // For "search this area" button, we check if current location is far enough from ALL search centers
+  // We'll pass the searchCenters array to the pan detection hook
+  // Falls back to selected place location only if no search has been performed yet
   const selectedPlace = selectedPlaceId
     ? places.find((p: { id: string; lat: number; lng: number }) => p.id === selectedPlaceId)
     : null;
 
-  const referenceLocation = selectedPlace ? { lat: selectedPlace.lat, lng: selectedPlace.lng } : null;
+  const fallbackLocation = selectedPlace ? { lat: selectedPlace.lat, lng: selectedPlace.lng } : null;
 
   // Center map on selected place (hub places in itinerary)
   useEffect(() => {
@@ -295,9 +324,9 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     }
   }, [map, expandedCardPlaceId, discoveryResults, places]);
 
-  // Use pan detection hook
-  const { shouldShowButton, hideButton } = useMapPanDetection(referenceLocation, mapCenter, {
-    thresholdKm: 2,
+  // Use pan detection hook - checks if current location is far enough from ALL search centers
+  const { shouldShowButton } = useMapPanDetection(searchCenters, mapCenter, fallbackLocation, {
+    thresholdKm: SEARCH_THRESHOLD_KM,
     debounceMs: 100,
   });
 
@@ -306,21 +335,24 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     if (!mapCenter) return;
 
     setIsSearching(true);
-    hideButton();
 
     try {
       // Fetch nearby places for the current map center
+      // Note: append=true adds to existing results instead of replacing them
+      // After search completes, this center is added to searchCenters array,
+      // which will automatically hide the button (distance becomes 0)
       await fetchNearbyPlaces({
         lat: mapCenter.lat,
         lng: mapCenter.lng,
-        radius: 5000, // 5km radius
+        radius: SEARCH_RADIUS_METERS,
+        append: true, // Add to existing results
       });
     } catch {
       // Failed to fetch nearby places, user will see no results
     } finally {
       setIsSearching(false);
     }
-  }, [mapCenter, hideButton, fetchNearbyPlaces]);
+  }, [mapCenter, fetchNearbyPlaces]);
 
   const handlePlaceClick = useCallback(
     (place: { id: string }) => {
@@ -567,6 +599,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
         <ExpandedPlaceCard
           attraction={expandedAttraction.attraction}
           score={expandedAttraction.score}
+          breakdown={expandedAttraction.breakdown}
           markerPosition={
             getMarkerScreenPosition(
               expandedAttraction.attraction.location.lat,

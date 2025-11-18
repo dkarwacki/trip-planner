@@ -11,6 +11,7 @@ import { MapCanvas } from "../map/MapCanvas";
 import { DiscoverMode } from "../modes/DiscoverMode";
 import { PlanMode } from "../modes/PlanMode";
 import { AIMode } from "../modes/AIMode";
+import { FloatingPlaceSearch } from "../map/FloatingPlaceSearch";
 
 interface DesktopLayoutProps {
   mapId?: string;
@@ -52,12 +53,7 @@ export function DesktopLayout({ mapId, tripId, conversationId }: DesktopLayoutPr
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50">
       {/* Header */}
-      <DesktopHeader
-        conversationId={conversationId}
-        saveStatus={saveStatus}
-        onRetrySync={handleRetrySync}
-        mapInstance={mapInstance}
-      />
+      <DesktopHeader conversationId={conversationId} saveStatus={saveStatus} onRetrySync={handleRetrySync} />
 
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
@@ -74,6 +70,7 @@ export function DesktopLayout({ mapId, tripId, conversationId }: DesktopLayoutPr
         {/* Map Canvas */}
         <div className="flex-1 relative">
           <MapCanvas mapId={mapId} onMapLoad={setMapInstance} />
+          <FloatingPlaceSearch mapInstance={mapInstance} />
         </div>
       </div>
     </div>

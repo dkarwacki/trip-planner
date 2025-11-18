@@ -11,7 +11,7 @@ interface ApiCallStats {
 
 export function DevStats() {
   const [stats, setStats] = useState<ApiCallStats | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

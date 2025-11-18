@@ -9,7 +9,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMapState } from "../context/MapStateContext";
 import { GripVertical, ChevronRight, ChevronDown, Search, X } from "lucide-react";
 import PlannedItemList from "./PlannedItemList";
-import PhotoImage from "@/components/common/PhotoImage";
+import { LazyImage } from "../shared/LazyImage";
 
 interface HubCardProps {
   place: any; // Will be typed with domain types
@@ -97,12 +97,15 @@ const HubCard = React.memo(
         {/* Banner with drag handle and photo */}
         <div className="relative h-24 bg-gradient-to-br from-primary/20 to-primary/5 overflow-hidden">
           {/* Background photo if available */}
-          {bannerPhoto && (
+          {bannerPhoto && attractions[0] && (
             <div className="absolute inset-0">
-              <PhotoImage
+              <LazyImage
                 photoReference={bannerPhoto.photoReference}
                 alt={attractions[0]?.name || "Place photo"}
-                maxWidth={400}
+                lat={attractions[0].location.lat}
+                lng={attractions[0].location.lng}
+                placeName={attractions[0].name}
+                size="small"
                 className="w-full h-full object-cover opacity-70"
               />
               {/* Overlay gradient for better contrast */}

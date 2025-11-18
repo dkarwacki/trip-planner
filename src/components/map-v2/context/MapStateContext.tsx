@@ -2,6 +2,7 @@
  * Map state management with Context API and reducer
  */
 
+// @refresh reset
 import React, { createContext, useContext, useReducer, useEffect, type ReactNode } from "react";
 import type { MapStateV2, MapAction } from "./types";
 import { initialMapState } from "./types";
@@ -108,6 +109,19 @@ function mapStateReducer(state: MapStateV2, action: MapAction): MapStateV2 {
     // Discovery
     case "SET_DISCOVERY_RESULTS":
       return { ...state, discoveryResults: action.payload };
+
+    case "ADD_DISCOVERY_RESULTS": {
+      // Merge new results with existing ones, avoiding duplicates by ID
+      const existingIds = new Set(state.discoveryResults.map((r: any) => r.attraction?.id));
+      const newResults = action.payload.filter((r: any) => !existingIds.has(r.attraction?.id));
+      return { ...state, discoveryResults: [...state.discoveryResults, ...newResults] };
+    }
+
+    case "ADD_SEARCH_CENTER":
+      return { ...state, searchCenters: [...state.searchCenters, action.payload] };
+
+    case "CLEAR_SEARCH_CENTERS":
+      return { ...state, searchCenters: [] };
 
     // UI modes
     case "SET_ACTIVE_MODE":
@@ -319,6 +333,15 @@ export function useMapState() {
     // Discovery
     setDiscoveryResults: (results: any[]) => {
       dispatch({ type: "SET_DISCOVERY_RESULTS", payload: results });
+    },
+    addDiscoveryResults: (results: any[]) => {
+      dispatch({ type: "ADD_DISCOVERY_RESULTS", payload: results });
+    },
+    addSearchCenter: (center: { lat: number; lng: number }) => {
+      dispatch({ type: "ADD_SEARCH_CENTER", payload: center });
+    },
+    clearSearchCenters: () => {
+      dispatch({ type: "CLEAR_SEARCH_CENTERS" });
     },
 
     // UI modes

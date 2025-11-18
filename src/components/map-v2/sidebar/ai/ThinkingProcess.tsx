@@ -15,6 +15,11 @@ export function ThinkingProcess({ steps }: ThinkingProcessProps) {
 
   const thinkingSteps = steps || [];
 
+  // Don't render if there are no steps
+  if (thinkingSteps.length === 0) {
+    return null;
+  }
+
   return (
     <div className="w-full mt-2 bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
       <button

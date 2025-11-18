@@ -26,12 +26,14 @@ interface PlaceSearchBarProps {
   }) => void;
   placeholder?: string;
   className?: string;
+  size?: "md" | "lg";
 }
 
 export function PlaceSearchBar({
   onPlaceSelect,
   placeholder = "Search for a place...",
   className,
+  size = "md",
 }: PlaceSearchBarProps) {
   const [inputValue, setInputValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -184,6 +186,7 @@ export function PlaceSearchBar({
   };
 
   const showDropdown = isOpen && (suggestions.length > 0 || recentSearches.length > 0 || isLoading);
+  const sizeClasses = size === "lg" ? "py-3.5 text-base" : "py-2.5 text-sm";
 
   return (
     <div className={cn("relative", className)}>
@@ -199,9 +202,10 @@ export function PlaceSearchBar({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className={cn(
-            "w-full pl-10 pr-10 py-2.5 rounded-lg",
+            "w-full pl-10 pr-10 rounded-lg",
+            sizeClasses,
             "border border-gray-300 bg-white",
-            "text-sm text-gray-900 placeholder:text-gray-500",
+            "text-gray-900 placeholder:text-gray-500",
             "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
             "transition-shadow"
           )}

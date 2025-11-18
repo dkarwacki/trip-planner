@@ -1,6 +1,7 @@
 import { Effect, Layer } from "effect";
 import { ConfigServiceLive } from "./config";
 import { GoogleMapsClientLive } from "./google-maps";
+import { WikimediaClientLive } from "./wikimedia";
 import {
   AttractionsCacheLayer,
   RestaurantsCacheLayer,
@@ -33,7 +34,9 @@ const AttractionsWithDeps = AttractionsCacheLayer.pipe(Layer.provide(GoogleMapsW
 
 const RestaurantsWithDeps = RestaurantsCacheLayer.pipe(Layer.provide(GoogleMapsWithConfig));
 
-const PhotoCacheWithConfig = PhotoCacheLayer.pipe(Layer.provide(ConfigServiceLive));
+const PhotoCacheWithDeps = PhotoCacheLayer.pipe(
+  Layer.provide(Layer.mergeAll(ConfigServiceLive, WikimediaClientLive))
+);
 
 const TextSearchWithDeps = TextSearchCacheLayer.pipe(Layer.provide(GoogleMapsWithConfig));
 
@@ -52,11 +55,12 @@ const AttractionRepoWithDeps = AttractionRepositoryLive.pipe(Layer.provide(Supab
 export const AppLayer = Layer.mergeAll(
   ConfigServiceLive,
   GoogleMapsWithConfig,
+  WikimediaClientLive,
   OpenAIWithConfig,
   SupabaseWithConfig,
   AttractionsWithDeps,
   RestaurantsWithDeps,
-  PhotoCacheWithConfig,
+  PhotoCacheWithDeps,
   TextSearchWithDeps,
   ConversationRepoWithDeps,
   TripRepoWithDeps,

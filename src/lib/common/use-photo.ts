@@ -5,9 +5,12 @@ import { fetchPhoto } from "./photo-utils";
  * Hook to load a photo from the backend proxy endpoint
  * @param photoReference - The Google Places photo reference
  * @param maxWidth - Maximum width of the photo (default: 800)
+ * @param lat - Latitude of the location
+ * @param lng - Longitude of the location
+ * @param placeName - Name of the place
  * @returns Object with photo URL and loading state
  */
-export const usePhoto = (photoReference: string | undefined, maxWidth = 800) => {
+export const usePhoto = (photoReference: string | undefined, maxWidth: number, lat: number, lng: number, placeName: string) => {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -25,7 +28,7 @@ export const usePhoto = (photoReference: string | undefined, maxWidth = 800) => 
       setError(null);
 
       try {
-        const url = await fetchPhoto(photoReference, maxWidth);
+        const url = await fetchPhoto(photoReference, maxWidth, lat, lng, placeName);
         if (!cancelled) {
           setPhotoUrl(url);
           setIsLoading(false);
@@ -47,7 +50,7 @@ export const usePhoto = (photoReference: string | undefined, maxWidth = 800) => 
         URL.revokeObjectURL(photoUrl);
       }
     };
-  }, [photoReference, maxWidth]);
+  }, [photoReference, maxWidth, lat, lng, placeName]);
 
   return { photoUrl, isLoading, error };
 };

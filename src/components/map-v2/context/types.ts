@@ -10,6 +10,7 @@ export interface MapStateV2 {
   places: any[]; // Will be typed with domain Place type
   selectedPlaceId: string | null;
   discoveryResults: any[]; // Will be typed with domain Attraction/Restaurant types
+  searchCenters: Array<{ lat: number; lng: number }>; // Track all search locations for "search this area" button
 
   // Desktop UI state
   activeMode: DesktopMode;
@@ -63,6 +64,9 @@ export type MapAction =
 
   // Discovery
   | { type: "SET_DISCOVERY_RESULTS"; payload: any[] }
+  | { type: "ADD_DISCOVERY_RESULTS"; payload: any[] }
+  | { type: "ADD_SEARCH_CENTER"; payload: { lat: number; lng: number } }
+  | { type: "CLEAR_SEARCH_CENTERS" }
 
   // UI modes
   | { type: "SET_ACTIVE_MODE"; payload: DesktopMode }
@@ -104,6 +108,7 @@ export const initialMapState: MapStateV2 = {
   places: [],
   selectedPlaceId: null,
   discoveryResults: [],
+  searchCenters: [],
 
   // Desktop UI state
   activeMode: "discover",

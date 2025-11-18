@@ -196,11 +196,48 @@ export function useAIChat(): UseAIChatReturn {
             reasoning: s.reasoning,
             score: s.attractionData.rating || 0,
             category: s.type === "add_restaurant" ? "restaurant" : "attraction",
-            photoUrl: photoReference ? getPhotoUrl(photoReference, 800) : undefined,
+            photoUrl: photoReference
+              ? getPhotoUrl(
+                  photoReference,
+                  800,
+                  s.attractionData.location.lat,
+                  s.attractionData.location.lng,
+                  s.attractionData.name
+                )
+              : undefined,
             type: s.type as "add_attraction" | "add_restaurant",
             attractionData: s.attractionData, // Store full data for adding to plan
           };
         });
+
+        // Extract thinking steps from the API response
+        // _thinking can be a string, array of strings, or undefined
+        const thinkingSteps = (() => {
+          const thinking = agentResponse._thinking;
+          if (!thinking) return undefined;
+
+          // If it's already an array, use it
+          if (Array.isArray(thinking)) {
+            return thinking.filter((step: any) => typeof step === "string" && step.trim().length > 0);
+          }
+
+          // If it's a string, try to split by newlines or numbered steps
+          if (typeof thinking === "string") {
+            const trimmed = thinking.trim();
+            if (!trimmed) return undefined;
+
+            // Try to split by newlines first
+            const lines = trimmed.split(/\n+/).filter((line) => line.trim().length > 0);
+            if (lines.length > 1) {
+              return lines;
+            }
+
+            // If no newlines, return as single step
+            return [trimmed];
+          }
+
+          return undefined;
+        })();
 
         // Add AI response message with the summary
         const assistantMessage: AIMessage = {
@@ -209,6 +246,7 @@ export function useAIChat(): UseAIChatReturn {
           content: agentResponse.summary || "Here are my recommendations:",
           timestamp: new Date(),
           suggestions,
+          thinkingSteps,
         };
         dispatch({ type: "ADD_AI_MESSAGE", payload: assistantMessage });
       } catch (err) {

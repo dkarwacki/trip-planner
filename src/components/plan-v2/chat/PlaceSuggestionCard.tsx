@@ -82,6 +82,9 @@ export function PlaceSuggestionCard({
       <PhotoBlock
         photos={place.photos}
         alt={place.name}
+        lat={place.lat || 0}
+        lng={place.lng || 0}
+        placeName={place.name}
         className="h-48 w-full rounded-t-lg"
         onClick={place.photos && place.photos.length > 0 ? () => setIsLightboxOpen(true) : undefined}
       />
@@ -150,6 +153,8 @@ export function PlaceSuggestionCard({
           isOpen={isLightboxOpen}
           onClose={() => setIsLightboxOpen(false)}
           placeName={place.name}
+          lat={place.lat || 0}
+          lng={place.lng || 0}
         />
       )}
     </div>

@@ -121,5 +121,8 @@ export const toDomain = {
   getPhoto: (dto: GetPhotoCommandDTO): GetPhotoQuery => ({
     photoReference: dto.photoReference,
     maxWidth: dto.maxWidth,
+    lat: Latitude(dto.lat),
+    lng: Longitude(dto.lng),
+    placeName: dto.placeName,
   }),
 };

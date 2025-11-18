@@ -6,10 +6,10 @@
 // Photo components
 export { LazyImage } from "./LazyImage";
 export { PhotoCarousel } from "./PhotoCarousel";
-export { PhotoLightbox } from "./PhotoLightbox";
 
 // Score components
 export { ScoreBadge } from "./ScoreBadge";
+export { ScoreExplanation } from "./ScoreExplanation";
 
 // Empty states
 export {

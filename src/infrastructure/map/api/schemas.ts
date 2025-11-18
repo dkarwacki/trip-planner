@@ -274,6 +274,9 @@ export const SearchPlaceCommandSchema = z.object({
 export const GetPhotoCommandSchema = z.object({
   photoReference: z.string().min(1, "Photo reference is required"),
   maxWidth: z.number().int().positive().max(1600).default(800),
+  lat: LatitudeSchema,
+  lng: LongitudeSchema,
+  placeName: z.string().min(1, "Place name is required"),
 });
 
 /**

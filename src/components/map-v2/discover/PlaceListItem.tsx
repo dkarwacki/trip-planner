@@ -4,8 +4,9 @@
 
 import React from "react";
 import type { Attraction } from "@/domain/map/models";
-import { MapPin, Star, Plus, CheckCircle2 } from "lucide-react";
+import { MapPin, Star, Plus, CheckCircle2, Utensils, Landmark } from "lucide-react";
 import { LazyImage } from "../shared/LazyImage";
+import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
 
 interface PlaceListItemProps {
   place: Attraction;
@@ -27,6 +28,7 @@ export const PlaceListItem = React.memo(function PlaceListItem({
   onAddClick,
 }: PlaceListItemProps) {
   const photoReference = place.photos?.[0]?.photoReference;
+  const placeType = getPlaceTypeCategory(place.types);
 
   const rating = place.rating || 0;
   const totalRatings = place.userRatingsTotal || 0;
@@ -66,11 +68,14 @@ export const PlaceListItem = React.memo(function PlaceListItem({
       }`}
     >
       {/* Thumbnail Photo */}
-      <div className="flex-shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden bg-gray-100">
+      <div className="flex-shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden bg-gray-100 relative">
         {photoReference ? (
           <LazyImage
             photoReference={photoReference}
             alt={place.name}
+            lat={place.location.lat}
+            lng={place.location.lng}
+            placeName={place.name}
             size="thumbnail"
             className="w-full h-full object-cover"
           />
@@ -79,6 +84,23 @@ export const PlaceListItem = React.memo(function PlaceListItem({
             <MapPin className="w-6 h-6" />
           </div>
         )}
+        {/* Type indicator and Added badge - top of thumbnail */}
+        <div className="absolute top-1 left-1 right-1 flex items-center gap-1">
+          {/* Type indicator */}
+          <div className="bg-white/90 backdrop-blur-sm p-0.5 rounded shadow-md">
+            {placeType === "restaurant" ? (
+              <Utensils className="w-2.5 h-2.5 text-orange-600" aria-label="Restaurant" />
+            ) : (
+              <Landmark className="w-2.5 h-2.5 text-blue-600" aria-label="Attraction" />
+            )}
+          </div>
+          {/* Added indicator - next to type */}
+          {isAdded && (
+            <div className="bg-green-600 text-white p-0.5 rounded shadow-md">
+              <CheckCircle2 className="w-2.5 h-2.5" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Details */}

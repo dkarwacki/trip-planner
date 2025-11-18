@@ -75,6 +75,9 @@ export const HoverMiniCard = React.memo(
             <LazyImage
               photoReference={photoReference}
               alt={attraction.name}
+              lat={attraction.location.lat}
+              lng={attraction.location.lng}
+              placeName={attraction.name}
               size="small"
               eager={true}
               className="w-full h-full object-cover"

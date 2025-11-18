@@ -131,9 +131,9 @@ export const GoogleMapsClientLive = Layer.effect(
         },
       };
 
-      // Add up to 5 photo references (metadata is cheap, actual images loaded lazily)
+      // Add only 1 photo reference (single photo per place)
       if (place.photos && place.photos.length > 0) {
-        attraction.photos = place.photos.slice(0, 5).map(
+        attraction.photos = place.photos.slice(0, 1).map(
           (photo): PlacePhoto => ({
             // Use full photo name as reference: "places/{place_id}/photos/{photo_reference}"
             photoReference: photo.name,
@@ -569,7 +569,7 @@ export const GoogleMapsClientLive = Layer.effect(
         };
 
         if (includePhotos && place.photos && place.photos.length > 0) {
-          attraction.photos = place.photos.slice(0, 5).map(
+          attraction.photos = place.photos.slice(0, 1).map(
             (photo): PlacePhoto => ({
               // Use full photo name as reference: "places/{place_id}/photos/{photo_reference}"
               photoReference: photo.name,

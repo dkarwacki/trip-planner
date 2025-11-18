@@ -9,13 +9,19 @@ import { X, Loader2, Check } from "lucide-react";
 import type { Attraction } from "@/domain/map/models";
 import { calculateCardPosition } from "./CardPositioning";
 import { LazyImage } from "../shared/LazyImage";
-import { PhotoLightbox } from "../shared/PhotoLightbox";
+import { ScoreBadge } from "../shared/ScoreBadge";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 interface ExpandedPlaceCardProps {
   attraction: Attraction;
   markerPosition: { x: number; y: number };
   viewportSize: { width: number; height: number };
   score?: number;
+  breakdown?: {
+    qualityScore: number;
+    diversityScore?: number;
+    confidenceScore: number;
+  };
   isAddedToPlan: boolean;
   isAddingToPlan?: boolean;
   onClose: () => void;
@@ -31,6 +37,7 @@ export const ExpandedPlaceCard = React.memo(
     markerPosition,
     viewportSize,
     score,
+    breakdown,
     isAddedToPlan,
     isAddingToPlan,
     onClose,
@@ -102,14 +109,8 @@ export const ExpandedPlaceCard = React.memo(
           return calculated;
         })();
 
-    // Get hero photo reference
+    // Get single photo reference
     const photoReference = attraction.photos?.[0]?.photoReference;
-
-    // Get all photo URLs for lightbox (still use getPhotoUrl for lightbox as it's not using LazyImage)
-    const allPhotoUrls =
-      attraction.photos
-        ?.filter((photo) => photo.photoReference)
-        .map((photo) => `/api/photos?ref=${encodeURIComponent(photo.photoReference)}&width=800`) || [];
 
     const handlePhotoClick = () => {
       if (photoReference) {
@@ -123,139 +124,145 @@ export const ExpandedPlaceCard = React.memo(
     const hasHalfStar = rating % 1 >= 0.5;
     const reviewCount = attraction.userRatingsTotal || 0;
 
-    // Score badge color
-    const scoreColor = score
-      ? score >= 9.0
-        ? "bg-green-500"
-        : score >= 8.0
-          ? "bg-blue-500"
-          : "bg-gray-500"
-      : "bg-gray-500";
-
     return (
       <>
+        {/* Container wrapper for card and score badge tooltip */}
         <div
-          className={`fixed bg-white rounded-xl shadow-2xl overflow-hidden transition-opacity duration-200 pointer-events-auto ${
-            isVisible ? "opacity-100" : "opacity-0"
-          }`}
+          className="fixed pointer-events-none"
           style={{
             left: `${position.x}px`,
             top: `${position.y}px`,
             width: `${CARD_WIDTH}px`,
             zIndex: 100,
-            pointerEvents: "auto",
           }}
         >
-          {/* Hero Photo with Score Badge */}
-          <div className="relative w-full h-32 md:h-44 bg-gray-200">
-            {photoReference ? (
-              <button
-                onClick={handlePhotoClick}
-                className="w-full h-full relative focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset group"
-                aria-label="View photo in fullscreen"
-              >
-                <LazyImage
-                  photoReference={photoReference}
-                  alt={attraction.name}
-                  size="medium"
-                  eager={true}
-                  className="w-full h-full object-cover transition-opacity group-hover:opacity-90 group-active:opacity-90"
-                />
-              </button>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-gray-400">No photo</span>
-              </div>
-            )}
-
-            {/* Score Badge */}
-            {score && (
-              <div
-                className={`absolute top-2 right-2 ${scoreColor} text-white px-3 py-1 rounded-md font-bold text-sm pointer-events-none`}
-              >
-                {score.toFixed(1)}
-              </div>
-            )}
-
-            {/* Close Button */}
-            <button
-              onClick={onClose}
-              className="absolute top-2 left-2 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors z-10"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4 text-gray-700" />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-4 space-y-3">
-            {/* Place Name */}
-            <h2 className="text-lg font-bold text-gray-900 leading-tight">{attraction.name}</h2>
-
-            {/* Metadata */}
-            <div className="text-sm text-gray-600">
-              {attraction.types && attraction.types[0] && (
-                <>
-                  <span className="capitalize">{attraction.types[0].replace(/_/g, " ")}</span>
-                  {attraction.priceLevel && <span> • {"$".repeat(attraction.priceLevel)}</span>}
-                </>
+          {/* Main Card */}
+          <div
+            className={`bg-white rounded-xl shadow-2xl overflow-hidden transition-opacity duration-200 pointer-events-auto ${
+              isVisible ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {/* Hero Photo with Score Badge */}
+            <div className="relative w-full h-32 md:h-44 bg-gray-200">
+              {photoReference ? (
+                <button
+                  onClick={handlePhotoClick}
+                  className="w-full h-full relative focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset group"
+                  aria-label="View photo in fullscreen"
+                >
+                  <LazyImage
+                    photoReference={photoReference}
+                    alt={attraction.name}
+                    lat={attraction.location.lat}
+                    lng={attraction.location.lng}
+                    placeName={attraction.name}
+                    size="medium"
+                    eager={true}
+                    className="w-full h-full object-cover transition-opacity group-hover:opacity-90 group-active:opacity-90"
+                  />
+                </button>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-gray-400">No photo</span>
+                </div>
               )}
-            </div>
 
-            {/* Rating */}
-            <div className="flex items-center gap-2 text-sm">
-              <div className="flex items-center text-yellow-500">
-                {Array.from({ length: 5 }).map((_, i) => {
-                  if (i < fullStars) {
-                    return <span key={i}>★</span>;
-                  }
-                  if (i === fullStars && hasHalfStar) {
-                    return <span key={i}>☆</span>;
-                  }
-                  return (
-                    <span key={i} className="text-gray-300">
-                      ☆
-                    </span>
-                  );
-                })}
-              </div>
-              <span className="text-gray-700 font-medium">{rating.toFixed(1)}</span>
-              {reviewCount > 0 && <span className="text-gray-500">({reviewCount} reviews)</span>}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 pt-2">
-              <Button
-                onClick={() => onAddToPlan(attraction.id)}
-                disabled={isAddedToPlan || isAddingToPlan}
-                className="flex-1 h-11"
+              {/* Close Button */}
+              <button
+                onClick={onClose}
+                className="absolute top-2 left-2 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors z-10"
+                aria-label="Close"
               >
-                {isAddingToPlan ? (
+                <X className="h-4 w-4 text-gray-700" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 space-y-3">
+              {/* Place Name */}
+              <h2 className="text-lg font-bold text-gray-900 leading-tight">{attraction.name}</h2>
+
+              {/* Metadata */}
+              <div className="text-sm text-gray-600">
+                {attraction.types && attraction.types[0] && (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Adding...
+                    <span className="capitalize">{attraction.types[0].replace(/_/g, " ")}</span>
+                    {attraction.priceLevel && <span> • {"$".repeat(attraction.priceLevel)}</span>}
                   </>
-                ) : isAddedToPlan ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    In Plan
-                  </>
-                ) : (
-                  "Add to Plan"
                 )}
-              </Button>
+              </div>
+
+              {/* Rating */}
+              <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center text-yellow-500">
+                  {Array.from({ length: 5 }).map((_, i) => {
+                    if (i < fullStars) {
+                      return <span key={i}>★</span>;
+                    }
+                    if (i === fullStars && hasHalfStar) {
+                      return <span key={i}>☆</span>;
+                    }
+                    return (
+                      <span key={i} className="text-gray-300">
+                        ☆
+                      </span>
+                    );
+                  })}
+                </div>
+                <span className="text-gray-700 font-medium">{rating.toFixed(1)}</span>
+                {reviewCount > 0 && <span className="text-gray-500">({reviewCount} reviews)</span>}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  onClick={() => onAddToPlan(attraction.id)}
+                  disabled={isAddedToPlan || isAddingToPlan}
+                  className="flex-1 h-11"
+                >
+                  {isAddingToPlan ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Adding...
+                    </>
+                  ) : isAddedToPlan ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      In Plan
+                    </>
+                  ) : (
+                    "Add to Plan"
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
+
+          {/* Score Badge - Outside overflow-hidden container so tooltip can overflow */}
+          {score && score >= 70 && (
+            <div className="absolute top-2 right-2 pointer-events-auto">
+              <ScoreBadge
+                score={score}
+                breakdown={breakdown}
+                size="md"
+                showTooltip={true}
+                isAttraction={!!breakdown?.diversityScore}
+              />
+            </div>
+          )}
         </div>
 
         {/* Photo Lightbox */}
-        {allPhotoUrls.length > 0 && (
+        {photoReference && attraction.photos && attraction.photos.length > 0 && (
           <PhotoLightbox
-            photos={allPhotoUrls}
+            photos={attraction.photos}
             initialIndex={0}
-            alt={attraction.name}
             isOpen={isLightboxOpen}
             onClose={() => setIsLightboxOpen(false)}
+            placeName={attraction.name}
+            lat={attraction.location.lat}
+            lng={attraction.location.lng}
+            size="large"
           />
         )}
       </>

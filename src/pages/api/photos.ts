@@ -7,14 +7,22 @@ import { AppRuntime } from "@/infrastructure/common/runtime";
 
 export const prerender = false;
 
+// Always fetch photos at max size and let browser scale down
+const MAX_PHOTO_WIDTH = 1600;
+
 const validateRequest = (params: URLSearchParams) =>
   Effect.gen(function* () {
     const photoReference = params.get("ref");
-    const maxWidth = params.get("width");
+    const lat = params.get("lat");
+    const lng = params.get("lng");
+    const placeName = params.get("name");
 
     const result = GetPhotoCommandSchema.safeParse({
       photoReference,
-      maxWidth: maxWidth ? parseInt(maxWidth, 10) : 800,
+      maxWidth: MAX_PHOTO_WIDTH, // Always use max width
+      lat: lat ? parseFloat(lat) : undefined,
+      lng: lng ? parseFloat(lng) : undefined,
+      placeName: placeName || undefined,
     });
 
     if (!result.success) {

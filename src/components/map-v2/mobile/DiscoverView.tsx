@@ -79,6 +79,16 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
   const attractions = discoveryResults.filter((r) => !isRestaurant(r));
   const restaurants = discoveryResults.filter((r) => isRestaurant(r));
 
+  // Sort each group by score (descending - highest first)
+  const sortByScore = (a: any, b: any) => {
+    const scoreA = a.score || 0;
+    const scoreB = b.score || 0;
+    return scoreB - scoreA;
+  };
+
+  attractions.sort(sortByScore);
+  restaurants.sort(sortByScore);
+
   // Apply category filter
   let filteredAttractions = attractions;
   let filteredRestaurants = restaurants;
@@ -89,7 +99,7 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
     filteredAttractions = [];
   }
 
-  // Combine filtered results
+  // Combine filtered results (attractions first, then restaurants, both sorted by score)
   const filteredResults = [...filteredAttractions, ...filteredRestaurants];
 
   const handleFilterChange = (newFilters: Partial<typeof filters>) => {

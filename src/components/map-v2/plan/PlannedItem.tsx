@@ -44,6 +44,9 @@ const PlannedItem = React.memo(
               <LazyImage
                 photoReference={photoReference}
                 alt={name}
+                lat={item.location.lat}
+                lng={item.location.lng}
+                placeName={name}
                 size="thumbnail"
                 className="h-full w-full object-cover"
               />

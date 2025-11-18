@@ -111,7 +111,9 @@ function MessageBubble({ message, onAddSuggestion, addedPlaceIds, addingPlaceIds
         )}
 
         {/* Thinking process (collapsible, for assistant messages) */}
-        {!isUser && message.suggestions && message.suggestions.length > 0 && <ThinkingProcess />}
+        {!isUser && message.suggestions && message.suggestions.length > 0 && message.thinkingSteps && (
+          <ThinkingProcess steps={message.thinkingSteps} />
+        )}
       </div>
     </div>
   );

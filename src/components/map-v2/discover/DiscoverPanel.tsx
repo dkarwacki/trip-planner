@@ -7,8 +7,8 @@ import React, { useEffect, useRef, useLayoutEffect, useCallback, useMemo } from 
 import { useMapState } from "../context";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
 import { DiscoverHeader } from "./DiscoverHeader";
-import { FilterPanel } from "../filters/FilterPanel";
-import { ViewToggle } from "./ViewToggle";
+import { DiscoverToolbar } from "./DiscoverToolbar";
+import { ContentHeader } from "./ContentHeader";
 import { PlaceCardGrid } from "./PlaceCardGrid";
 import { PhotoGrid } from "./PhotoGrid";
 import { PlaceList } from "./PlaceList";
@@ -106,7 +106,7 @@ export function DiscoverPanel() {
     }
   }, []);
 
-  // Filter results based on active filters
+  // Filter and sort results based on active filters
   const filteredResults = useMemo(() => {
     let results = [...discoveryResults];
 
@@ -129,6 +129,26 @@ export function DiscoverPanel() {
         return score >= filters.minScore * 10; // Convert 7/8/9 to 70/80/90
       });
     }
+
+    // Sort results: attractions first, then restaurants, both sorted by score (descending)
+    results.sort((a: any, b: any) => {
+      const isRestaurantA = a.attraction?.types?.some((t: string) =>
+        ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
+      );
+      const isRestaurantB = b.attraction?.types?.some((t: string) =>
+        ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
+      );
+
+      // Group by type: attractions (false) before restaurants (true)
+      if (isRestaurantA !== isRestaurantB) {
+        return isRestaurantA ? 1 : -1;
+      }
+
+      // Within same type, sort by score (descending - highest first)
+      const scoreA = a.score || 0;
+      const scoreB = b.score || 0;
+      return scoreB - scoreA;
+    });
 
     return results;
   }, [discoveryResults, filters]);
@@ -320,19 +340,23 @@ export function DiscoverPanel() {
         filteredCount={filteredResults.length}
       />
 
-      {/* View toggle */}
-      <div className="px-4 py-3 border-b border-gray-200">
-        <ViewToggle activeMode={viewMode} onChange={handleViewModeChange} />
+      {/* Compact toolbar with filters only */}
+      <div className="px-4 py-2 border-b border-gray-200">
+        <DiscoverToolbar
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+        />
       </div>
 
-      {/* Filter panel */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-        <FilterPanel
-          filters={filters}
-          onChange={handleFilterChange}
-          onClear={handleClearFilters}
+      {/* Content header with result count and view toggle */}
+      <div className="px-4 py-2.5 border-b border-gray-200 bg-gray-50">
+        <ContentHeader
+          viewMode={viewMode}
+          onViewModeChange={handleViewModeChange}
           resultCount={filteredResults.length}
           totalCount={discoveryResults.length}
+          filters={filters}
         />
       </div>
 

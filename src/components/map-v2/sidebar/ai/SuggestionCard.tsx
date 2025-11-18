@@ -4,10 +4,10 @@
  */
 
 import React, { useState } from "react";
-import { Plus, Check, ChevronDown, Lightbulb, Loader2 } from "lucide-react";
+import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark } from "lucide-react";
 import type { SuggestionCardProps } from "../../types";
 import { PriorityBadge } from "./PriorityBadge";
-import { PhotoLightbox } from "../../shared/PhotoLightbox";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 export const SuggestionCard = React.memo(
   function SuggestionCard({ suggestion, isAdded, isAdding = false, onAddClick }: SuggestionCardProps) {
@@ -63,6 +63,15 @@ export const SuggestionCard = React.memo(
                   <span className="text-4xl">📍</span>
                 </div>
               )}
+
+              {/* Type indicator - top left */}
+              <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm p-1.5 rounded-md shadow-lg">
+                {suggestion.type === "add_restaurant" ? (
+                  <Utensils className="w-3.5 h-3.5 text-orange-600" aria-label="Restaurant" />
+                ) : (
+                  <Landmark className="w-3.5 h-3.5 text-blue-600" aria-label="Attraction" />
+                )}
+              </div>
 
               {/* Priority badge */}
               <div className="absolute top-2 right-2 pointer-events-none">
@@ -156,13 +165,16 @@ export const SuggestionCard = React.memo(
         </div>
 
         {/* Photo Lightbox */}
-        {suggestion.photoUrl && (
+        {suggestion.attractionData && suggestion.attractionData.photos && suggestion.attractionData.photos.length > 0 && (
           <PhotoLightbox
-            photos={[suggestion.photoUrl]}
+            photos={suggestion.attractionData.photos}
             initialIndex={0}
-            alt={suggestion.placeName || "Place photo"}
             isOpen={isLightboxOpen}
             onClose={() => setIsLightboxOpen(false)}
+            placeName={suggestion.placeName || "Place"}
+            lat={suggestion.attractionData.location.lat}
+            lng={suggestion.attractionData.location.lng}
+            size="large"
           />
         )}
       </>

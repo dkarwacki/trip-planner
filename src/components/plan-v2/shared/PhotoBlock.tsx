@@ -7,6 +7,9 @@ import type { PlacePhoto } from "@/domain/common/models";
 interface PhotoBlockProps {
   photos?: PlacePhoto[];
   alt: string;
+  lat: number;
+  lng: number;
+  placeName: string;
   className?: string;
   eager?: boolean;
   onClick?: () => void;
@@ -22,7 +25,7 @@ interface PhotoBlockProps {
  * - Responsive sizing with lazy loading
  * - Optional click handler for lightbox
  */
-export function PhotoBlock({ photos, alt, className = "", eager = false, onClick }: PhotoBlockProps) {
+export function PhotoBlock({ photos, alt, lat, lng, placeName, className = "", eager = false, onClick }: PhotoBlockProps) {
   const [imageError, setImageError] = useState(false);
   const photo = photos?.[0];
 
@@ -42,6 +45,9 @@ export function PhotoBlock({ photos, alt, className = "", eager = false, onClick
     <PhotoImage
       photoReference={photo.photoReference}
       alt={alt}
+      lat={lat}
+      lng={lng}
+      placeName={placeName}
       maxWidth={800}
       className={className}
       onError={() => setImageError(true)}
@@ -58,7 +64,7 @@ export function PhotoBlock({ photos, alt, className = "", eager = false, onClick
         aria-label={`View ${alt} photos`}
       >
         <img
-          src={getPhotoUrl(photo.photoReference, 800)}
+          src={getPhotoUrl(photo.photoReference, 800, lat, lng, placeName)}
           alt={alt}
           className="h-full w-full object-cover"
           onError={() => setImageError(true)}

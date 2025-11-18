@@ -12,10 +12,11 @@ interface FetchNearbyOptions {
   lat: number;
   lng: number;
   radius?: number; // in meters, default 5000
+  append?: boolean; // if true, add to existing results instead of replacing
 }
 
 export function useNearbyPlaces() {
-  const { state, dispatch } = useMapState();
+  const { state, dispatch, addSearchCenter, addDiscoveryResults } = useMapState();
 
   /**
    * Fetch nearby places for a given location
@@ -23,7 +24,7 @@ export function useNearbyPlaces() {
    */
   const fetchNearbyPlaces = useCallback(
     async (options: FetchNearbyOptions) => {
-      const { lat, lng, radius = 5000 } = options;
+      const { lat, lng, radius = 5000, append = false } = options;
 
       dispatch({ type: "SET_LOADING_DISCOVERY", payload: true });
 
@@ -67,15 +68,28 @@ export function useNearbyPlaces() {
         const attractions = attractionsData.attractions || [];
         const restaurants = restaurantsData.restaurants || [];
 
-        // Combine and store results
+        // Combine results
         const allResults = [...attractions, ...restaurants];
-        dispatch({ type: "SET_DISCOVERY_RESULTS", payload: allResults });
+        
+        // Either append to existing results or replace them
+        if (append) {
+          addDiscoveryResults(allResults);
+        } else {
+          dispatch({ type: "SET_DISCOVERY_RESULTS", payload: allResults });
+        }
+
+        // Add this search center to the list of searched areas
+        addSearchCenter({ lat, lng });
       } catch {
-        dispatch({ type: "SET_DISCOVERY_RESULTS", payload: [] });
+        // On error, only clear results if we're replacing (not appending)
+        if (!append) {
+          dispatch({ type: "SET_DISCOVERY_RESULTS", payload: [] });
+        }
       } finally {
         dispatch({ type: "SET_LOADING_DISCOVERY", payload: false });
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [dispatch]
   );
 

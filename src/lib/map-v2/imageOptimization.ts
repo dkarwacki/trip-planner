@@ -15,27 +15,39 @@ export const IMAGE_SIZES: Record<ImageSize, number> = {
 
 /**
  * Generate photo URL for our proxy endpoint
+ * Note: Photos are always fetched at max size (1600px) and scaled by browser for performance
  * @param photoReference - The Google Places photo reference
- * @param width - Desired width in pixels
+ * @param width - Ignored, kept for API compatibility
+ * @param lat - Latitude of the location
+ * @param lng - Longitude of the location
+ * @param placeName - Name of the place
  * @returns URL pointing to our photo proxy
  */
-export function getPhotoUrl(photoReference: string, width: number): string {
-  return `/api/photos?ref=${encodeURIComponent(photoReference)}&width=${width}`;
+export function getPhotoUrl(
+  photoReference: string,
+  width: number,
+  lat: number,
+  lng: number,
+  placeName: string
+): string {
+  // Width parameter is ignored - we always fetch at max size and let browser scale
+  return `/api/photos?ref=${encodeURIComponent(photoReference)}&lat=${lat}&lng=${lng}&name=${encodeURIComponent(placeName)}`;
 }
 
 /**
  * Generate srcset string for responsive images
+ * Note: Since we fetch all photos at max size, srcset is not needed anymore
+ * This function is kept for API compatibility but returns empty string
  * @param photoReference - The Google Places photo reference
- * @param sizes - Array of image sizes to include in srcset
- * @returns srcset string for img element
+ * @param lat - Latitude of the location
+ * @param lng - Longitude of the location
+ * @param placeName - Name of the place
+ * @param sizes - Ignored, kept for API compatibility
+ * @returns Empty string (srcset disabled - using single max-size image)
  */
-export function generateSrcSet(photoReference: string, sizes: ImageSize[] = ["small", "medium", "large"]): string {
-  return sizes
-    .map((size) => {
-      const width = IMAGE_SIZES[size];
-      return `${getPhotoUrl(photoReference, width)} ${width}w`;
-    })
-    .join(", ");
+export function generateSrcSet(): string {
+  // Disabled: We now fetch all photos at max size and let browser scale
+  return "";
 }
 
 /**

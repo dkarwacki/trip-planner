@@ -13,11 +13,11 @@ interface PriorityBadgeProps {
 
 const priorityConfig: Record<
   PriorityLevel,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" | "gold" }
 > = {
   "must-see": {
     label: "Must-See",
-    variant: "destructive",
+    variant: "gold",
   },
   "highly-recommended": {
     label: "Recommended",

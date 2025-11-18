@@ -1,17 +1,16 @@
 import { useState, useEffect } from "react";
 import { useIntersectionObserver } from "@/lib/common/use-intersection-observer";
-import {
-  getPhotoUrl,
-  generateSrcSet,
-  generateSizes,
-  getPlaceholderUrl,
-  type ImageSize,
-  IMAGE_SIZES,
-} from "@/lib/map-v2/imageOptimization";
+import { getPhotoUrl, type ImageSize, IMAGE_SIZES } from "@/lib/map-v2/imageOptimization";
 
 interface LazyImageProps {
   photoReference: string;
   alt: string;
+  /** Latitude of the location */
+  lat: number;
+  /** Longitude of the location */
+  lng: number;
+  /** Name of the place */
+  placeName: string;
   /** Default size for the image */
   size?: ImageSize;
   /** Custom width (overrides size) */
@@ -22,32 +21,29 @@ interface LazyImageProps {
   onError?: () => void;
   /** Disable lazy loading for critical images */
   eager?: boolean;
-  /** Enable responsive srcset */
-  responsive?: boolean;
-  /** Show blur-up placeholder */
-  blurUp?: boolean;
 }
 
 /**
- * Optimized image component with lazy loading, blur-up, and responsive srcset
+ * Optimized image component with lazy loading and smooth fade-in
  *
  * Features:
  * - Lazy loading using IntersectionObserver
- * - Blur-up placeholder while loading
- * - Responsive srcset for different screen sizes
+ * - Shimmer loading animation
  * - Smooth fade-in animation
  * - Error handling with fallback
+ * - Photos always fetched at max size for optimal caching
  */
 export function LazyImage({
   photoReference,
   alt,
+  lat,
+  lng,
+  placeName,
   size = "medium",
   width,
   className = "",
   onError,
   eager = false,
-  responsive = true,
-  blurUp = true,
 }: LazyImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -60,6 +56,12 @@ export function LazyImage({
 
   const shouldLoad = eager || isIntersecting;
   const imageWidth = width ?? IMAGE_SIZES[size];
+
+  // Check if photoReference is already a full URL
+  const isFullUrl = photoReference.startsWith("http") || photoReference.startsWith("/api/");
+
+  // Construct image URL - use as-is if already a full URL, otherwise construct it
+  const imageUrl = isFullUrl ? photoReference : getPhotoUrl(photoReference, imageWidth, lat, lng, placeName);
 
   // Reset loaded state when photo reference changes
   useEffect(() => {
@@ -98,30 +100,29 @@ export function LazyImage({
 
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`}>
-      {/* Blur-up placeholder */}
-      {blurUp && !isLoaded && shouldLoad && (
-        <img
-          src={getPlaceholderUrl()}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full scale-110 object-cover blur-sm"
+      {/* Loading skeleton - always show when not loaded */}
+      {!isLoaded && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 50%, #e2e8f0 100%)",
+            backgroundSize: "200% 100%",
+            animation: "shimmer 2.5s ease-in-out infinite",
+          }}
+          aria-label="Loading image"
         />
       )}
-
-      {/* Loading skeleton */}
-      {!shouldLoad && <div className="h-full w-full animate-pulse bg-muted" aria-label="Loading image" />}
 
       {/* Main image */}
       {shouldLoad && (
         <img
-          src={getPhotoUrl(photoReference, imageWidth)}
-          srcSet={responsive ? generateSrcSet(photoReference) : undefined}
-          sizes={responsive ? generateSizes(size) : undefined}
+          key={photoReference}
+          src={imageUrl}
           alt={alt}
           loading={eager ? "eager" : "lazy"}
           onLoad={handleLoad}
           onError={handleError}
-          className={`h-full w-full object-cover transition-opacity duration-200 ${
+          className={`relative h-full w-full object-cover transition-opacity duration-300 ${
             isLoaded ? "opacity-100" : "opacity-0"
           }`}
         />

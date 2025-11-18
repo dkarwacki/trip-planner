@@ -34,9 +34,18 @@ function DiscoveryMarkersLayer() {
     return item.attraction?.types?.some((t: string) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
   };
 
+  // Apply quality filter first
+  let results = discoveryResults;
+  if (filters.showHighQualityOnly) {
+    results = results.filter((item: any) => {
+      const score = item.score || 0;
+      return score >= filters.minScore * 10; // Convert 7/8/9 to 70/80/90
+    });
+  }
+
   // Split into attractions and restaurants based on types
-  const attractions = discoveryResults.filter((r: { attraction?: { types?: string[] } }) => !isRestaurant(r));
-  const restaurants = discoveryResults.filter((r: { attraction?: { types?: string[] } }) => isRestaurant(r));
+  const attractions = results.filter((r: { attraction?: { types?: string[] } }) => !isRestaurant(r));
+  const restaurants = results.filter((r: { attraction?: { types?: string[] } }) => isRestaurant(r));
 
   // Apply category filter
   let filteredAttractions = attractions;

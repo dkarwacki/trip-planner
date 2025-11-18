@@ -135,4 +135,7 @@ export interface SearchPlaceQuery {
 export interface GetPhotoQuery {
   photoReference: string;
   maxWidth: number;
+  lat: Latitude;
+  lng: Longitude;
+  placeName: string;
 }

@@ -41,16 +41,13 @@ export function DiscoveryMarkers({
   // Create marker element
   const createMarkerElement = useCallback(
     (score: number) => {
-      const isHighScore = score >= 8.0;
       const element = document.createElement("div");
       element.className = "cursor-pointer transition-all duration-200";
       element.style.width = "20px";
       element.style.height = "20px";
 
       element.innerHTML = `
-        <div class="w-full h-full rounded-full border-2 border-white shadow-md ${
-          isHighScore ? "ring-1 ring-yellow-400" : ""
-        }" style="background-color: ${markerColor};"></div>
+        <div class="w-full h-full rounded-full border-2 border-white shadow-md" style="background-color: ${markerColor};"></div>
       `;
 
       return element;

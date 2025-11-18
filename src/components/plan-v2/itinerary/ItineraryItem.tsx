@@ -82,6 +82,9 @@ export function ItineraryItem({ place, onRemove }: ItineraryItemProps) {
           <PhotoBlock
             photos={place.photos}
             alt={place.name}
+            lat={place.coordinates.lat}
+            lng={place.coordinates.lng}
+            placeName={place.name}
             className="h-16 w-16 rounded-md"
             onClick={place.photos && place.photos.length > 0 ? () => setIsLightboxOpen(true) : undefined}
           />
@@ -121,6 +124,8 @@ export function ItineraryItem({ place, onRemove }: ItineraryItemProps) {
           isOpen={isLightboxOpen}
           onClose={() => setIsLightboxOpen(false)}
           placeName={place.name}
+          lat={place.coordinates.lat}
+          lng={place.coordinates.lng}
         />
       )}
     </>

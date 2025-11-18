@@ -5,8 +5,9 @@
 
 import React from "react";
 import type { Attraction } from "@/domain/map/models";
-import { MapPin, Star, CheckCircle2 } from "lucide-react";
+import { MapPin, Star, CheckCircle2, Utensils, Landmark } from "lucide-react";
 import { LazyImage } from "../shared/LazyImage";
+import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
 
 interface PlaceCardProps {
   place: Attraction;
@@ -29,6 +30,7 @@ export const PlaceCard = React.memo(function PlaceCard({
 }: PlaceCardProps) {
   // Get photo reference from place photos
   const photoReference = place.photos?.[0]?.photoReference;
+  const placeType = getPlaceTypeCategory(place.types);
 
   // Format rating
   const rating = place.rating || 0;
@@ -88,6 +90,9 @@ export const PlaceCard = React.memo(function PlaceCard({
           <LazyImage
             photoReference={photoReference}
             alt={place.name}
+            lat={place.location.lat}
+            lng={place.location.lng}
+            placeName={place.name}
             size="medium"
             className={`w-full h-full object-cover ${isAdded ? "opacity-90" : ""}`}
           />
@@ -97,13 +102,25 @@ export const PlaceCard = React.memo(function PlaceCard({
           </div>
         )}
 
-        {/* Added Badge - top left */}
-        {isAdded && (
-          <div className="absolute top-2 left-2 bg-green-600 text-white px-2.5 py-1 rounded-md text-xs font-semibold shadow-lg flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Added</span>
+        {/* Type indicator and Added badge - top left */}
+        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+          {/* Type indicator */}
+          <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-md shadow-lg">
+            {placeType === "restaurant" ? (
+              <Utensils className="w-3.5 h-3.5 text-orange-600" aria-label="Restaurant" />
+            ) : (
+              <Landmark className="w-3.5 h-3.5 text-blue-600" aria-label="Attraction" />
+            )}
           </div>
-        )}
+
+          {/* Added Badge - next to type indicator */}
+          {isAdded && (
+            <div className="bg-green-600 text-white px-2.5 py-1 rounded-md text-xs font-semibold shadow-lg flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Added</span>
+            </div>
+          )}
+        </div>
 
         {/* Score Badge */}
         {score > 0 && (

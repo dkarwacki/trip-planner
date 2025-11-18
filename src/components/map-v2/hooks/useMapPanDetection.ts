@@ -1,6 +1,6 @@
 /**
  * Hook to detect when map has panned away from a reference location
- * Shows "Search This Area" button when user pans >2km from selected place
+ * Shows "Search This Area" button when user pans beyond threshold distance from last search
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -16,55 +16,66 @@ interface UseMapPanDetectionOptions {
 }
 
 /**
- * Calculate distance between two coordinates using Haversine formula
- * Returns distance in kilometers
+ * Calculate distance between two coordinates using Google Maps geometry library
+ * Returns distance in meters (converted from km threshold in the comparison)
  */
-function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
+function calculateDistance(point1: Location, point2: Location): number {
+  if (!google?.maps?.geometry?.spherical) {
+    // eslint-disable-next-line no-console
+    console.warn("Google Maps geometry library not loaded yet");
+    return 0;
+  }
 
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const latLng1 = new google.maps.LatLng(point1.lat, point1.lng);
+  const latLng2 = new google.maps.LatLng(point2.lat, point2.lng);
 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-
-  return distance;
-}
-
-function toRad(degrees: number): number {
-  return degrees * (Math.PI / 180);
+  return google.maps.geometry.spherical.computeDistanceBetween(latLng1, latLng2);
 }
 
 export function useMapPanDetection(
-  referenceLocation: Location | null,
+  searchCenters: Location[],
   currentMapCenter: Location | null,
+  fallbackLocation: Location | null,
   options: UseMapPanDetectionOptions = {}
 ) {
   const { thresholdKm = 2, debounceMs = 100 } = options;
 
   const [shouldShowButton, setShouldShowButton] = useState(false);
-  const [distanceFromReference, setDistanceFromReference] = useState<number>(0);
+  const [minDistanceFromSearches, setMinDistanceFromSearches] = useState<number>(0);
 
   const checkDistance = useCallback(() => {
-    if (!referenceLocation || !currentMapCenter) {
+    if (!currentMapCenter) {
       setShouldShowButton(false);
-      setDistanceFromReference(0);
+      setMinDistanceFromSearches(0);
       return;
     }
 
-    const distance = haversineDistance(
-      referenceLocation.lat,
-      referenceLocation.lng,
-      currentMapCenter.lat,
-      currentMapCenter.lng
-    );
+    // If there are search centers, check distance from all of them
+    if (searchCenters.length > 0) {
+      // Calculate distance to each search center and find the minimum
+      const distances = searchCenters.map((center) => {
+        const distanceInMeters = calculateDistance(center, currentMapCenter);
+        return distanceInMeters / 1000; // Convert to km
+      });
 
-    setDistanceFromReference(distance);
-    setShouldShowButton(distance > thresholdKm);
-  }, [referenceLocation, currentMapCenter, thresholdKm]);
+      const minDistance = Math.min(...distances);
+      setMinDistanceFromSearches(minDistance);
+
+      // Show button only if we're far enough from ALL search centers
+      setShouldShowButton(minDistance > thresholdKm);
+    } else if (fallbackLocation) {
+      // No searches yet, check distance from fallback (selected place)
+      const distanceInMeters = calculateDistance(fallbackLocation, currentMapCenter);
+      const distanceInKm = distanceInMeters / 1000;
+
+      setMinDistanceFromSearches(distanceInKm);
+      setShouldShowButton(distanceInKm > thresholdKm);
+    } else {
+      // No reference point at all
+      setShouldShowButton(false);
+      setMinDistanceFromSearches(0);
+    }
+  }, [searchCenters, currentMapCenter, fallbackLocation, thresholdKm]);
 
   // Debounce the distance check to avoid excessive calculations
   useEffect(() => {
@@ -75,13 +86,8 @@ export function useMapPanDetection(
     return () => clearTimeout(timeoutId);
   }, [checkDistance, debounceMs]);
 
-  const hideButton = useCallback(() => {
-    setShouldShowButton(false);
-  }, []);
-
   return {
     shouldShowButton,
-    distanceFromReference,
-    hideButton,
+    minDistanceFromSearches,
   };
 }
