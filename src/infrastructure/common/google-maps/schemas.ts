@@ -39,10 +39,17 @@ const GeometrySchema = z.object({
   location: LocationSchema,
 });
 
+const AddressComponentSchema = z.object({
+  long_name: z.string(),
+  short_name: z.string(),
+  types: z.array(z.string()),
+});
+
 const GeocodeResultSchema = z.object({
   formatted_address: z.string(),
   place_id: z.string(),
   geometry: GeometrySchema,
+  address_components: z.array(AddressComponentSchema).optional(),
 });
 
 export const GeocodeResponseSchema = z.object({

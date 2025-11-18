@@ -9,13 +9,19 @@ import { PlaceMarkers } from "./PlaceMarkers";
 import { DiscoveryMarkers } from "./DiscoveryMarkers";
 import { PlannedItemMarkers } from "./PlannedItemMarkers";
 import { SearchAreaButton } from "./SearchAreaButton";
+import { DraftMarker } from "./DraftMarker";
+import { PlacePreviewCard } from "./PlacePreviewCard";
+import { AdjustLocationCard } from "./AdjustLocationCard";
+import { PinModeUI } from "./PinModeUI";
 import { MapBackdrop } from "./MapBackdrop";
 import { HoverMiniCard } from "./HoverMiniCard";
 import { ExpandedPlaceCard } from "./ExpandedPlaceCard";
 import { useMapState } from "../context";
 import { useMapPanDetection } from "../hooks/useMapPanDetection";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
+import { useReverseGeocoding } from "../hooks/useReverseGeocoding";
 import { calculateDistance } from "@/lib/map/map-utils";
+import type { Place } from "@/domain/common/models";
 
 interface MapCanvasProps {
   mapId?: string;
@@ -156,6 +162,10 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [mapZoom, setMapZoom] = useState<number>(0);
   const [isSearching, setIsSearching] = useState(false);
+  const [draftPlace, setDraftPlace] = useState<{ place: Place; lat: number; lng: number; country?: string } | null>(
+    null
+  );
+  const [isAdjustingLocation, setIsAdjustingLocation] = useState(false);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [isDesktop, setIsDesktop] = useState(false);
   const hasInitializedRef = useRef(false); // Track if we've set initial search center (use ref to avoid re-renders)
@@ -194,6 +204,8 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
 
   // Get nearby places hook
   const { fetchNearbyPlaces } = useNearbyPlaces();
+  // Get reverse geocoding hook
+  const { findPlace } = useReverseGeocoding();
 
   // Search configuration
   const SEARCH_RADIUS_METERS = 5000; // 5km radius for nearby search
@@ -340,27 +352,37 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   const handleSearchArea = useCallback(async () => {
     if (!mapCenter) return;
 
-    // Check if we are too far from the selected place
-    if (selectedPlace) {
-      const distance = calculateDistance(
-        { lat: mapCenter.lat, lng: mapCenter.lng },
-        { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
-      );
-
-      // If distance is greater than 50km (50000 meters), we don't search
-      // The button UI will handle the warning state based on this prop
-      if (distance > 50000) {
-        return;
-      }
-    }
-
     setIsSearching(true);
 
     try {
-      // Fetch nearby places for the current map center
-      // Note: append=true adds to existing results instead of replacing them
-      // After search completes, this center is added to searchCenters array,
-      // which will automatically hide the button (distance becomes 0)
+      // Check if we are far from the selected place - if so, start new point flow
+      let isFar = false;
+
+      if (selectedPlace) {
+        const distance = calculateDistance(
+          { lat: mapCenter.lat, lng: mapCenter.lng },
+          { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
+        );
+        isFar = distance > 30000;
+      }
+
+      if (isFar) {
+        // Start "New Point" flow
+        const newPlace = await findPlace(mapCenter.lat, mapCenter.lng);
+        if (newPlace) {
+          // Parse country from name if present (format: "City||Country")
+          const [cityName, countryName] = newPlace.name.split("||");
+          setDraftPlace({
+            place: { ...newPlace, name: cityName }, // Store only city name
+            lat: mapCenter.lat,
+            lng: mapCenter.lng,
+            country: countryName,
+          });
+        }
+        return;
+      }
+
+      // Normal search flow
       await fetchNearbyPlaces({
         lat: mapCenter.lat,
         lng: mapCenter.lng,
@@ -368,11 +390,52 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
         append: true, // Add to existing results
       });
     } catch {
-      // Failed to fetch nearby places, user will see no results
+      // Failed to fetch nearby places or find place
     } finally {
       setIsSearching(false);
     }
-  }, [mapCenter, fetchNearbyPlaces, selectedPlace, SEARCH_RADIUS_METERS]);
+  }, [mapCenter, fetchNearbyPlaces, selectedPlace, SEARCH_RADIUS_METERS, findPlace]);
+
+  // Draft handlers
+  const handleConfirmDraft = useCallback(() => {
+    if (!draftPlace) return;
+    dispatch({ type: "ADD_PLACE", payload: draftPlace.place });
+    setSelectedPlace(draftPlace.place.id);
+    setDraftPlace(null);
+  }, [draftPlace, dispatch, setSelectedPlace]);
+
+  const handleAdjustDraft = useCallback(() => {
+    setIsAdjustingLocation(true);
+    // Keep draftPlace but hide it visually (handled in render)
+  }, []);
+
+  const handleCancelDraft = useCallback(() => {
+    setDraftPlace(null);
+    setIsAdjustingLocation(false);
+  }, []);
+
+  const handleFinishAdjustment = useCallback(async () => {
+    if (!mapCenter) return;
+    setIsSearching(true);
+    try {
+      const newPlace = await findPlace(mapCenter.lat, mapCenter.lng);
+      if (newPlace) {
+        // Parse country from name if present
+        const [cityName, countryName] = newPlace.name.split("||");
+        setDraftPlace({
+          place: { ...newPlace, name: cityName },
+          lat: mapCenter.lat,
+          lng: mapCenter.lng,
+          country: countryName,
+        });
+        setIsAdjustingLocation(false);
+      }
+    } catch {
+      // Failed to find place
+    } finally {
+      setIsSearching(false);
+    }
+  }, [mapCenter, findPlace]);
 
   const handlePlaceClick = useCallback(
     (place: { id: string }) => {
@@ -542,19 +605,42 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
       )}
 
       {/* Search Area Button (Discover & AI mode) */}
-      <SearchAreaButton
-        isVisible={shouldShowButton && mapZoom >= 10 && (activeMode === "discover" || activeMode === "ai")}
-        isLoading={isSearching}
-        onClick={handleSearchArea}
-        isTooFar={
-          !!selectedPlace &&
-          !!mapCenter &&
-          calculateDistance(
-            { lat: mapCenter.lat, lng: mapCenter.lng },
-            { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
-          ) > 50000
-        }
-      />
+      {/* Hides when draft is active or adjusting */}
+      {!draftPlace && !isAdjustingLocation && (
+        <SearchAreaButton
+          isVisible={shouldShowButton && mapZoom >= 10 && (activeMode === "discover" || activeMode === "ai")}
+          isTooFar={
+            !!selectedPlace &&
+            !!mapCenter &&
+            calculateDistance(
+              { lat: mapCenter.lat, lng: mapCenter.lng },
+              { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
+            ) > 30000
+          }
+          isLoading={isSearching}
+          onClick={handleSearchArea}
+        />
+      )}
+
+      {/* Draft Marker (when draft is active but not adjusting) */}
+      {draftPlace && !isAdjustingLocation && <DraftMarker position={{ lat: draftPlace.lat, lng: draftPlace.lng }} />}
+
+      {/* Place Preview Card (when draft is active and NOT adjusting) */}
+      {draftPlace && !isAdjustingLocation && (
+        <PlacePreviewCard
+          place={draftPlace.place}
+          country={draftPlace.country}
+          onConfirm={handleConfirmDraft}
+          onAdjust={handleAdjustDraft}
+          onCancel={handleCancelDraft}
+        />
+      )}
+
+      {/* Pin Mode UI (when adjusting) */}
+      {isAdjustingLocation && <PinModeUI onConfirm={handleFinishAdjustment} onCancel={handleCancelDraft} />}
+
+      {/* Adjust Location Card (when adjusting) */}
+      {isAdjustingLocation && <AdjustLocationCard onConfirm={handleFinishAdjustment} onCancel={handleCancelDraft} />}
 
       {/* Map Backdrop (when card is expanded) */}
       <MapBackdrop isVisible={!!expandedCardPlaceId} onClick={closeCard} />

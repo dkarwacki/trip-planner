@@ -408,9 +408,46 @@ export const GoogleMapsClientLive = Layer.effect(
 
         const result = data.results[0];
 
+        // Extract city/locality from address components
+        // Priority: locality (city/town) > administrative_area_level_3 (village) > administrative_area_level_2 (district) > administrative_area_level_1 (state) > country
+        const addressComponents = result.address_components || [];
+
+        const locality = addressComponents.find((c) => c.types.includes("locality"));
+        const sublocality = addressComponents.find((c) => c.types.includes("sublocality"));
+        const adminLevel3 = addressComponents.find((c) => c.types.includes("administrative_area_level_3"));
+        const adminLevel2 = addressComponents.find((c) => c.types.includes("administrative_area_level_2"));
+        const adminLevel1 = addressComponents.find((c) => c.types.includes("administrative_area_level_1"));
+        const country = addressComponents.find((c) => c.types.includes("country"));
+
+        // Use just the city name for Place.name
+        // Store country info temporarily in the name using delimiter: "City||Country"
+        // MapCanvas will parse this and extract country for preview, then store only city in final place
+        let locationName = "";
+        if (locality) {
+          locationName = locality.long_name;
+        } else if (sublocality) {
+          locationName = sublocality.long_name;
+        } else if (adminLevel3) {
+          locationName = adminLevel3.long_name;
+        } else if (adminLevel2) {
+          locationName = adminLevel2.long_name;
+        } else if (adminLevel1) {
+          locationName = adminLevel1.long_name;
+        } else if (country) {
+          locationName = country.long_name;
+        } else {
+          // Fallback to formatted address if we couldn't extract city
+          locationName = result.formatted_address;
+        }
+
+        // Append country using delimiter if available and different from location
+        if (country && locationName !== country.long_name) {
+          locationName = `${locationName}||${country.long_name}`;
+        }
+
         const place: Place = {
           id: PlaceId(result.place_id),
-          name: result.formatted_address,
+          name: locationName,
           lat: Latitude(lat),
           lng: Longitude(lng),
           plannedAttractions: [],

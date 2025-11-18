@@ -1,11 +1,5 @@
-/**
- * Search Area Button
- * Appears when map is panned away from selected location
- * Triggers new search for current map viewport
- */
-
 import React from "react";
-import { Search } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import { cn } from "@/lib/common/utils";
 
 interface SearchAreaButtonProps {
@@ -35,7 +29,7 @@ export function SearchAreaButton({
     >
       <button
         onClick={onClick}
-        disabled={isLoading || isTooFar}
+        disabled={isLoading}
         className={cn(
           "flex items-center gap-1.5 px-3 py-1.5 rounded-full pointer-events-auto",
           "bg-white text-gray-700 font-medium text-sm",
@@ -44,25 +38,26 @@ export function SearchAreaButton({
           "hover:bg-gray-50 active:bg-gray-100",
           "transition-all duration-200",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2",
-          "disabled:opacity-90 disabled:cursor-not-allowed",
-          isTooFar && "bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-50"
+          "disabled:opacity-90 disabled:cursor-not-allowed select-none",
+          isTooFar && "bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100"
         )}
         aria-label={
           isLoading
-            ? "Searching this area..."
+            ? "Searching..."
             : isTooFar
-              ? "Area is too far from trip point"
+              ? "Start new trip point here"
               : "Search this area"
         }
       >
         {isLoading ? (
           <>
             <div className="animate-spin h-3.5 w-3.5 border-2 border-gray-400 border-t-transparent rounded-full" />
-            <span>Searching...</span>
+            <span>{isTooFar ? "Preparing..." : "Searching..."}</span>
           </>
         ) : isTooFar ? (
           <>
-            <span className="text-xs">📍 Start new trip point here</span>
+            <MapPin className="h-3.5 w-3.5" />
+            <span>Start new trip point here</span>
           </>
         ) : (
           <>
