@@ -26,5 +26,5 @@ export {
 // Skeleton components
 export { Skeleton, SkeletonText } from "./Skeleton";
 export { PlaceCardSkeleton } from "./PlaceCardSkeleton";
-export { HubCardSkeleton } from "./HubCardSkeleton";
+export { PlanItemCardSkeleton } from "./PlanItemCardSkeleton";
 export { MessageSkeleton } from "./MessageSkeleton";

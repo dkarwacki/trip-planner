@@ -1,5 +1,5 @@
 /**
- * Mobile-optimized hub card with touch-friendly interactions
+ * Mobile-optimized plan item card with touch-friendly interactions
  * Larger touch targets, more padding, simplified layout
  */
 
@@ -10,7 +10,7 @@ import { useMapState } from "../context/MapStateContext";
 import { GripVertical, ChevronRight, ChevronDown, Search } from "lucide-react";
 import { MobilePlannedItemList } from "./MobilePlannedItemList";
 
-interface MobileHubCardProps {
+interface MobilePlanItemCardProps {
   place: any; // Will be typed with domain types
   order: number;
   isExpanded: boolean;
@@ -18,14 +18,14 @@ interface MobileHubCardProps {
   showDragHandle?: boolean; // Only show in reorder mode
 }
 
-export function MobileHubCard({
+export function MobilePlanItemCard({
   place,
   order,
   isExpanded,
   onToggleExpand,
   showDragHandle = false,
-}: MobileHubCardProps) {
-  const { dispatch } = useMapState();
+}: MobilePlanItemCardProps) {
+  const { dispatch, centerOnPlace } = useMapState();
 
   // Setup sortable
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -53,8 +53,8 @@ export function MobileHubCard({
   const placeLocation = place.location || place.vicinity || "";
 
   const handleBannerTap = () => {
-    // Pan map to hub location and switch to Map tab
-    dispatch({ type: "SELECT_PLACE", payload: place.id });
+    // Pan map to place location and switch to Map tab
+    centerOnPlace(place.id);
     dispatch({ type: "SET_MOBILE_TAB", payload: "map" });
   };
 
@@ -103,7 +103,7 @@ export function MobileHubCard({
 
       {/* Card content with more padding for mobile */}
       <div className="p-4">
-        {/* Hub name and location - tap to toggle expand */}
+        {/* Place name and location - tap to toggle expand */}
         <button onClick={() => onToggleExpand(place.id)} className="w-full text-left">
           <h3 className="text-lg font-semibold text-foreground mb-1">{placeName}</h3>
           {placeLocation && <p className="text-sm text-muted-foreground">{placeLocation}</p>}

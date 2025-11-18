@@ -1,6 +1,6 @@
 /**
- * Individual hub card with banner, stats, collapsible sections
- * Shows attractions and restaurants grouped for a hub location
+ * Individual plan item card with banner, stats, collapsible sections
+ * Shows attractions and restaurants grouped for a place (city/location)
  */
 
 import React, { useState, useMemo } from "react";
@@ -11,16 +11,16 @@ import { GripVertical, ChevronRight, ChevronDown, Search, X } from "lucide-react
 import PlannedItemList from "./PlannedItemList";
 import { LazyImage } from "../shared/LazyImage";
 
-interface HubCardProps {
+interface PlanItemCardProps {
   place: any; // Will be typed with domain types
   order: number;
   isExpanded: boolean;
   onToggleExpand: (placeId: string) => void;
 }
 
-const HubCard = React.memo(
-  function HubCard({ place, order, isExpanded, onToggleExpand }: HubCardProps) {
-    const { dispatch, setSelectedPlace, removeFromPlanning } = useMapState();
+const PlanItemCard = React.memo(
+  function PlanItemCard({ place, order, isExpanded, onToggleExpand }: PlanItemCardProps) {
+    const { dispatch, centerOnPlace, removeFromPlanning } = useMapState();
 
     // Setup sortable
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -76,7 +76,7 @@ const HubCard = React.memo(
 
       if (!isInteractiveElement) {
         onToggleExpand(place.id);
-        setSelectedPlace(place.id);
+        centerOnPlace(place.id);
       }
     };
 
@@ -140,7 +140,7 @@ const HubCard = React.memo(
             <button
               onClick={handleRemove}
               className="absolute top-0 right-0 flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
-              aria-label="Remove hub from itinerary"
+              aria-label="Remove place from itinerary"
             >
               <X className="h-4 w-4" />
             </button>
@@ -243,4 +243,4 @@ const HubCard = React.memo(
   }
 );
 
-export default HubCard;
+export default PlanItemCard;

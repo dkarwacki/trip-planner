@@ -1,5 +1,5 @@
 /**
- * Sortable list of hub cards with drag-drop support
+ * Sortable list of plan item cards with drag-drop support
  */
 
 import React, { useState } from "react";
@@ -7,18 +7,18 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import type { DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useMapState } from "../context/MapStateContext";
-import HubCard from "./HubCard";
+import PlanItemCard from "./PlanItemCard";
 
-interface HubCardListProps {
+interface PlanItemCardListProps {
   places: { id?: string | number; [key: string]: unknown }[]; // Will be typed with domain Place type
 }
 
-export default function HubCardList({ places }: HubCardListProps) {
+export default function PlanItemCardList({ places }: PlanItemCardListProps) {
   const { dispatch } = useMapState();
 
-  // Track expanded state for each hub (placeId -> boolean)
-  const [expandedHubs, setExpandedHubs] = useState<Record<string, boolean>>(() => {
-    // Expand first hub by default
+  // Track expanded state for each place (placeId -> boolean)
+  const [expandedPlaces, setExpandedPlaces] = useState<Record<string, boolean>>(() => {
+    // Expand first place by default
     if (places.length > 0) {
       return { [places[0].id || "0"]: true };
     }
@@ -38,7 +38,7 @@ export default function HubCardList({ places }: HubCardListProps) {
   );
 
   const toggleExpand = (placeId: string) => {
-    setExpandedHubs((prev) => ({
+    setExpandedPlaces((prev) => ({
       ...prev,
       [placeId]: !prev[placeId],
     }));
@@ -69,11 +69,11 @@ export default function HubCardList({ places }: HubCardListProps) {
       <SortableContext items={placeIds} strategy={verticalListSortingStrategy}>
         <div className="space-y-4 p-4">
           {places.map((place, index) => (
-            <HubCard
+            <PlanItemCard
               key={place.id || index}
               place={place}
               order={index + 1}
-              isExpanded={expandedHubs[place.id || index] || false}
+              isExpanded={expandedPlaces[place.id || index] || false}
               onToggleExpand={toggleExpand}
             />
           ))}

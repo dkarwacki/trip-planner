@@ -1,12 +1,12 @@
 /**
  * Main container for Plan mode panel (desktop)
- * Shows itinerary with hubs, stats, and view options
+ * Shows itinerary with places, stats, and view options
  */
 
 import React from "react";
 import { useMapState } from "../context/MapStateContext";
 import ItineraryStats from "./ItineraryStats";
-import HubCardList from "./HubCardList";
+import PlanItemCardList from "./PlanItemCardList";
 import { MapPin } from "lucide-react";
 
 export default function PlanPanel() {
@@ -47,9 +47,9 @@ export default function PlanPanel() {
         <ItineraryStats places={places} />
       </div>
 
-      {/* Scrollable hub cards area */}
+      {/* Scrollable place cards area */}
       <div className="flex-1 overflow-y-auto">
-        <HubCardList places={places} />
+        <PlanItemCardList places={places} />
       </div>
     </div>
   );

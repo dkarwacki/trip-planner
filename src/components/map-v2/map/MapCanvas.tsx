@@ -157,6 +157,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     dispatch,
     searchCenters,
     addSearchCenter,
+    centerRequestTimestamp,
   } = useMapState();
   const map = useMap();
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
@@ -287,9 +288,10 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
 
   const fallbackLocation = selectedPlace ? { lat: selectedPlace.lat, lng: selectedPlace.lng } : null;
 
-  // Center map on selected place (hub places in itinerary)
+  // Center map on selected place when centerRequestTimestamp changes
+  // This ensures clicking on the same place again will still trigger centering
   useEffect(() => {
-    if (map && selectedPlace) {
+    if (map && selectedPlace && centerRequestTimestamp) {
       const lat = Number(selectedPlace.lat);
       const lng = Number(selectedPlace.lng);
 
@@ -301,7 +303,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
         map.setZoom(12);
       }
     }
-  }, [map, selectedPlaceId, selectedPlace]);
+  }, [map, selectedPlace, centerRequestTimestamp]);
 
   // Center map on expanded attraction (clicked from discover panel or plan sidebar)
   useEffect(() => {
@@ -593,7 +595,8 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
         </>
       ) : (
         <>
-          {/* Plan Mode: Show only planned item markers */}
+          {/* Plan Mode: Show hub place markers + planned item markers */}
+          <PlaceMarkers places={places} selectedPlaceId={selectedPlaceId} onPlaceClick={handlePlaceClick} />
           <PlannedItemMarkers
             places={places}
             onMarkerClick={handlePlannedItemClick}

@@ -215,6 +215,14 @@ function mapStateReducer(state: MapStateV2, action: MapAction): MapStateV2 {
     case "SET_HIGHLIGHTED_PLACE":
       return { ...state, highlightedPlaceId: action.payload };
 
+    // Map centering
+    case "REQUEST_CENTER_ON_PLACE":
+      return {
+        ...state,
+        selectedPlaceId: action.payload,
+        centerRequestTimestamp: Date.now(),
+      };
+
     default:
       return state;
   }
@@ -319,6 +327,9 @@ export function useMapState() {
     // Selection
     setSelectedPlace: (placeId: string | null) => {
       dispatch({ type: "SELECT_PLACE", payload: placeId });
+    },
+    centerOnPlace: (placeId: string) => {
+      dispatch({ type: "REQUEST_CENTER_ON_PLACE", payload: placeId });
     },
     getSelectedPlace: () => {
       if (!state.selectedPlaceId) return null;

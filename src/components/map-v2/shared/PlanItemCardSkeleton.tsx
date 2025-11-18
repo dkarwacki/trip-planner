@@ -1,14 +1,14 @@
 import { Skeleton, SkeletonText } from "./Skeleton";
 
-interface HubCardSkeletonProps {
+interface PlanItemCardSkeletonProps {
   className?: string;
 }
 
 /**
- * Skeleton for HubCard component
- * Matches the hub card layout with banner and collapsible sections
+ * Skeleton for PlanItemCard component
+ * Matches the plan item card layout with banner and collapsible sections
  */
-export function HubCardSkeleton({ className = "" }: HubCardSkeletonProps) {
+export function PlanItemCardSkeleton({ className = "" }: PlanItemCardSkeletonProps) {
   return (
     <div className={`overflow-hidden rounded-lg border border-border bg-card ${className}`}>
       {/* Banner photo (16:3 aspect ratio) */}
@@ -16,7 +16,7 @@ export function HubCardSkeleton({ className = "" }: HubCardSkeletonProps) {
 
       {/* Content */}
       <div className="space-y-4 p-4">
-        {/* Hub name and count */}
+        {/* Place name and count */}
         <div className="space-y-2">
           <SkeletonText width={["60%"]} />
           <SkeletonText width={["45%"]} />

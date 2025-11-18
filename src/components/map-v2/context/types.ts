@@ -45,6 +45,9 @@ export interface MapStateV2 {
   hoveredMarkerId: string | null;
   expandedCardPlaceId: string | null;
   highlightedPlaceId: string | null;
+
+  // Map centering
+  centerRequestTimestamp: number | null;
 }
 
 // Action types
@@ -100,7 +103,10 @@ export type MapAction =
   | { type: "SET_HOVERED_MARKER"; payload: string | null }
   | { type: "SET_EXPANDED_CARD"; payload: string | null }
   | { type: "CLOSE_CARD" }
-  | { type: "SET_HIGHLIGHTED_PLACE"; payload: string | null };
+  | { type: "SET_HIGHLIGHTED_PLACE"; payload: string | null }
+
+  // Map centering
+  | { type: "REQUEST_CENTER_ON_PLACE"; payload: string };
 
 // Initial state
 export const initialMapState: MapStateV2 = {
@@ -147,4 +153,7 @@ export const initialMapState: MapStateV2 = {
   hoveredMarkerId: null,
   expandedCardPlaceId: null,
   highlightedPlaceId: null,
+
+  // Map centering
+  centerRequestTimestamp: null,
 };

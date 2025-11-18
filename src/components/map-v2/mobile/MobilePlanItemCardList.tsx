@@ -1,5 +1,5 @@
 /**
- * Mobile hub card list with touch-optimized drag-and-drop
+ * Mobile plan item card list with touch-optimized drag-and-drop
  * Supports long-press to enter reorder mode
  */
 
@@ -8,21 +8,21 @@ import { DndContext, closestCenter, TouchSensor, useSensor, useSensors } from "@
 import type { DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useMapState } from "../context/MapStateContext";
-import { MobileHubCard } from "./MobileHubCard";
+import { MobilePlanItemCard } from "./MobilePlanItemCard";
 import { X } from "lucide-react";
 
-interface MobileHubCardListProps {
+interface MobilePlanItemCardListProps {
   places: any[]; // Will be typed with domain types
 }
 
-export function MobileHubCardList({ places }: MobileHubCardListProps) {
+export function MobilePlanItemCardList({ places }: MobilePlanItemCardListProps) {
   const { dispatch } = useMapState();
   const [isReorderMode, setIsReorderMode] = useState(false);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Track expanded state for each hub (placeId -> boolean)
-  const [expandedHubs, setExpandedHubs] = useState<Record<string, boolean>>(() => {
-    // Expand first hub by default
+  // Track expanded state for each place (placeId -> boolean)
+  const [expandedPlaces, setExpandedPlaces] = useState<Record<string, boolean>>(() => {
+    // Expand first place by default
     if (places.length > 0) {
       return { [places[0].id || "0"]: true };
     }
@@ -40,7 +40,7 @@ export function MobileHubCardList({ places }: MobileHubCardListProps) {
   );
 
   const toggleExpand = (placeId: string) => {
-    setExpandedHubs((prev) => ({
+    setExpandedPlaces((prev) => ({
       ...prev,
       [placeId]: !prev[placeId],
     }));
@@ -119,7 +119,7 @@ export function MobileHubCardList({ places }: MobileHubCardListProps) {
       {/* Reorder mode header */}
       {isReorderMode && (
         <div className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3 flex items-center justify-between shadow-sm">
-          <h3 className="text-base font-semibold text-foreground">Reorder Hubs</h3>
+          <h3 className="text-base font-semibold text-foreground">Reorder Places</h3>
           <button
             onClick={exitReorderMode}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium min-h-[44px] active:opacity-80 transition-opacity"
@@ -130,16 +130,16 @@ export function MobileHubCardList({ places }: MobileHubCardListProps) {
         </div>
       )}
 
-      {/* Hub cards list */}
+      {/* Place cards list */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={placeIds} strategy={verticalListSortingStrategy}>
           <div className="space-y-4 px-4">
             {places.map((place, index) => (
-              <MobileHubCard
+              <MobilePlanItemCard
                 key={place.id || index}
                 place={place}
                 order={index + 1}
-                isExpanded={expandedHubs[place.id || index] || false}
+                isExpanded={expandedPlaces[place.id || index] || false}
                 onToggleExpand={toggleExpand}
                 showDragHandle={isReorderMode}
               />
@@ -151,7 +151,7 @@ export function MobileHubCardList({ places }: MobileHubCardListProps) {
       {/* Helper text when not in reorder mode */}
       {!isReorderMode && places.length > 1 && (
         <div className="px-4 py-2 text-center">
-          <p className="text-xs text-muted-foreground">Long-press a hub card to reorder</p>
+          <p className="text-xs text-muted-foreground">Long-press a place card to reorder</p>
         </div>
       )}
     </div>

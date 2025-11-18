@@ -57,7 +57,7 @@ export interface PlaceCardProps {
   onCardClick: (placeId: string) => void;
 }
 
-export interface HubCardProps {
+export interface PlanItemCardProps {
   place: any; // Will be typed with domain Place type
   order: number;
   isExpanded: boolean;

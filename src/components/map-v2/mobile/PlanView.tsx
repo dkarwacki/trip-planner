@@ -7,7 +7,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useMapState } from "../context/MapStateContext";
 import { MobileItineraryStats } from "./MobileItineraryStats";
-import { MobileHubCardList } from "./MobileHubCardList";
+import { MobilePlanItemCardList } from "./MobilePlanItemCardList";
 import { MapPin } from "lucide-react";
 
 export function PlanView() {
@@ -66,7 +66,7 @@ export function PlanView() {
         </div>
       </div>
 
-      {/* Scrollable hub cards area */}
+      {/* Scrollable place cards area */}
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto pb-safe"
@@ -75,7 +75,7 @@ export function PlanView() {
         }}
       >
         <div className="py-4">
-          <MobileHubCardList places={planItems} />
+          <MobilePlanItemCardList places={planItems} />
         </div>
       </div>
     </div>
