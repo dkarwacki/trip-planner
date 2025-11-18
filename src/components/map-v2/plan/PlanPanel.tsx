@@ -7,7 +7,7 @@ import React from "react";
 import { useMapState } from "../context/MapStateContext";
 import ItineraryStats from "./ItineraryStats";
 import PlanItemCardList from "./PlanItemCardList";
-import { MapPin } from "lucide-react";
+import { Backpack } from "lucide-react";
 
 export default function PlanPanel() {
   const { state, dispatch } = useMapState();
@@ -20,7 +20,7 @@ export default function PlanPanel() {
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
         <div className="mb-4 rounded-full bg-muted p-6">
-          <MapPin className="h-12 w-12 text-muted-foreground" />
+          <Backpack className="h-12 w-12 text-muted-foreground" />
         </div>
 
         <h3 className="mb-2 text-lg font-semibold text-foreground">Your itinerary is empty</h3>

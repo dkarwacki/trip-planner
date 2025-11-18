@@ -25,6 +25,7 @@ import {
   LatitudeSchema,
   LongitudeSchema,
 } from "@/infrastructure/common/api/schemas";
+import { NEARBY_SEARCH_RADIUS_METERS } from "@/lib/map-v2/search-constants";
 
 // ============================================================================
 // Place Schemas
@@ -153,7 +154,7 @@ export const AttractionsQueryParamsSchema = z.object({
     .int()
     .min(100, "Radius must be at least 100 meters")
     .max(50000, "Radius must be at most 50km")
-    .default(5000),
+    .default(NEARBY_SEARCH_RADIUS_METERS),
   limit: z.number().int().min(1, "Limit must be at least 1").max(50, "Limit must be at most 50").default(20),
 });
 
@@ -214,8 +215,8 @@ export const RestaurantsQueryParamsSchema = z.object({
     .number()
     .int()
     .min(100, "Radius must be at least 100 meters")
-    .max(10000, "Radius must be at most 10km")
-    .default(2000),
+    .max(10000, "Radius must be at most 10km (Google Places API limitation for restaurants)")
+    .default(NEARBY_SEARCH_RADIUS_METERS),
   limit: z.number().int().min(1, "Limit must be at least 1").max(50, "Limit must be at most 50").default(20),
   price_level: z
     .string()

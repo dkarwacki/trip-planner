@@ -8,7 +8,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useMapState } from "../context/MapStateContext";
 import { MobileItineraryStats } from "./MobileItineraryStats";
 import { MobilePlanItemCardList } from "./MobilePlanItemCardList";
-import { MapPin } from "lucide-react";
+import { Backpack } from "lucide-react";
 
 export function PlanView() {
   const { planItems, dispatch } = useMapState();
@@ -35,7 +35,7 @@ export function PlanView() {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center px-6 text-center bg-background">
         <div className="mb-6 rounded-full bg-muted p-8">
-          <MapPin className="h-16 w-16 text-muted-foreground" />
+          <Backpack className="h-16 w-16 text-muted-foreground" />
         </div>
 
         <h3 className="mb-3 text-xl font-bold text-foreground">Your itinerary is empty</h3>

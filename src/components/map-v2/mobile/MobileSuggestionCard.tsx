@@ -12,7 +12,7 @@
  */
 
 import React, { useState } from "react";
-import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark } from "lucide-react";
+import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark, MapPin } from "lucide-react";
 import type { SuggestionCardProps } from "../types";
 import { PriorityBadge } from "../sidebar/ai/PriorityBadge";
 import PhotoLightbox from "@/components/PhotoLightbox";
@@ -101,7 +101,7 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
               </button>
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                <span className="text-5xl">📍</span>
+                <MapPin className="w-16 h-16" />
               </div>
             )}
 

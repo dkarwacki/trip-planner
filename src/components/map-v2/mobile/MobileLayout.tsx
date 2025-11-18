@@ -74,17 +74,18 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
 
     // Add to state
     dispatch({ type: "ADD_PLACE", payload: newPlace });
-    dispatch({ type: "SELECT_PLACE", payload: newPlace.id });
 
     // Switch to map tab if not already there
     if (activeTab !== "map") {
       setActiveTab("map");
     }
 
-    // Pan map to new location
+    // Zoom in if needed
     if (mapInstance) {
-      mapInstance.panTo({ lat, lng });
-      mapInstance.setZoom(13);
+      const currentZoom = mapInstance.getZoom() || 0;
+      if (currentZoom < 13) {
+        mapInstance.setZoom(13);
+      }
     }
   };
 

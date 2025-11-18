@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from "react";
-import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark } from "lucide-react";
+import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark, MapPin } from "lucide-react";
 import type { SuggestionCardProps } from "../../types";
 import { PriorityBadge } from "./PriorityBadge";
 import PhotoLightbox from "@/components/PhotoLightbox";
@@ -87,7 +87,7 @@ export const SuggestionCard = React.memo(
                 </button>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                  <span className="text-4xl">📍</span>
+                  <MapPin className="w-12 h-12" />
                 </div>
               )}
 

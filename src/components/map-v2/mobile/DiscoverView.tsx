@@ -13,6 +13,7 @@ import { PlaceCardGrid } from "../discover/PlaceCardGrid";
 import { PhotoGrid } from "../discover/PhotoGrid";
 import { PlaceList } from "../discover/PlaceList";
 import { getPersistedFilters, persistFilters } from "@/lib/map-v2/filterPersistence";
+import { NEARBY_SEARCH_RADIUS_METERS } from "@/lib/map-v2/search-constants";
 
 interface DiscoverViewProps {
   mapId?: string;
@@ -25,7 +26,7 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
     selectedPlaceId,
     discoveryResults = [],
     viewMode: cardViewMode,
-    filters = { category: "all", radius: 5000, sortBy: "relevance", priceLevel: [] as number[], openNow: false },
+    filters = { category: "all", radius: NEARBY_SEARCH_RADIUS_METERS, sortBy: "relevance", priceLevel: [] as number[], openNow: false },
     isLoadingDiscovery,
     dispatch,
     places: plannedPlaces = [],

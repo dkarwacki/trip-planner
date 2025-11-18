@@ -24,7 +24,12 @@ function mapStateReducer(state: MapStateV2, action: MapAction): MapStateV2 {
       return { ...state, places: action.payload };
 
     case "ADD_PLACE":
-      return { ...state, places: [...state.places, action.payload] };
+      return {
+        ...state,
+        places: [...state.places, action.payload],
+        selectedPlaceId: action.payload.id,
+        centerRequestTimestamp: Date.now(),
+      };
 
     case "REMOVE_PLACE":
       return {

@@ -21,6 +21,11 @@ import { useMapPanDetection } from "../hooks/useMapPanDetection";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
 import { useReverseGeocoding } from "../hooks/useReverseGeocoding";
 import { calculateDistance } from "@/lib/map/map-utils";
+import {
+  NEARBY_SEARCH_RADIUS_METERS,
+  SEARCH_AREA_BUTTON_SHOW_THRESHOLD_METERS,
+  NEW_TRIP_POINT_THRESHOLD_METERS,
+} from "@/lib/map-v2/search-constants";
 import type { Place } from "@/domain/common/models";
 
 interface MapCanvasProps {
@@ -208,9 +213,8 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   // Get reverse geocoding hook
   const { findPlace } = useReverseGeocoding();
 
-  // Search configuration
-  const SEARCH_RADIUS_METERS = 5000; // 5km radius for nearby search
-  const SEARCH_THRESHOLD_KM = SEARCH_RADIUS_METERS / 2 / 1000; // Show button when >half radius away (2.5km)
+  // Search configuration (using shared constants)
+  const SEARCH_BUTTON_SHOW_THRESHOLD_KM = SEARCH_AREA_BUTTON_SHOW_THRESHOLD_METERS / 1000; // Convert meters to km
 
   // Notify parent when map is loaded
   useEffect(() => {
@@ -346,7 +350,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
 
   // Use pan detection hook - checks if current location is far enough from ALL search centers
   const { shouldShowButton } = useMapPanDetection(searchCenters, mapCenter, fallbackLocation, {
-    thresholdKm: SEARCH_THRESHOLD_KM,
+    thresholdKm: SEARCH_BUTTON_SHOW_THRESHOLD_KM,
     debounceMs: 100,
   });
 
@@ -365,7 +369,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
           { lat: mapCenter.lat, lng: mapCenter.lng },
           { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
         );
-        isFar = distance > 30000;
+        isFar = distance > NEW_TRIP_POINT_THRESHOLD_METERS;
       }
 
       if (isFar) {
@@ -388,7 +392,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
       await fetchNearbyPlaces({
         lat: mapCenter.lat,
         lng: mapCenter.lng,
-        radius: SEARCH_RADIUS_METERS,
+        radius: NEARBY_SEARCH_RADIUS_METERS,
         append: true, // Add to existing results
       });
     } catch {
@@ -396,15 +400,14 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     } finally {
       setIsSearching(false);
     }
-  }, [mapCenter, fetchNearbyPlaces, selectedPlace, SEARCH_RADIUS_METERS, findPlace]);
+  }, [mapCenter, fetchNearbyPlaces, selectedPlace, findPlace]);
 
   // Draft handlers
   const handleConfirmDraft = useCallback(() => {
     if (!draftPlace) return;
     dispatch({ type: "ADD_PLACE", payload: draftPlace.place });
-    setSelectedPlace(draftPlace.place.id);
     setDraftPlace(null);
-  }, [draftPlace, dispatch, setSelectedPlace]);
+  }, [draftPlace, dispatch]);
 
   const handleAdjustDraft = useCallback(() => {
     setIsAdjustingLocation(true);
@@ -618,7 +621,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
             calculateDistance(
               { lat: mapCenter.lat, lng: mapCenter.lng },
               { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
-            ) > 30000
+            ) > NEW_TRIP_POINT_THRESHOLD_METERS
           }
           isLoading={isSearching}
           onClick={handleSearchArea}

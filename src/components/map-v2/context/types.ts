@@ -10,7 +10,7 @@ export interface MapStateV2 {
   places: any[]; // Will be typed with domain Place type
   selectedPlaceId: string | null;
   discoveryResults: any[]; // Will be typed with domain Attraction/Restaurant types
-  searchCenters: Array<{ lat: number; lng: number }>; // Track all search locations for "search this area" button
+  searchCenters: { lat: number; lng: number }[]; // Track all search locations for "search this area" button
 
   // Desktop UI state
   activeMode: DesktopMode;

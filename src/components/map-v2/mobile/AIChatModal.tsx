@@ -12,6 +12,7 @@
  */
 
 import React, { useEffect, useRef } from "react";
+import { MessageCircle } from "lucide-react";
 import { MobileChatHeader } from "./MobileChatHeader";
 import { MobileChatInput } from "./MobileChatInput";
 import { MobileSuggestionCard } from "./MobileSuggestionCard";
@@ -143,7 +144,7 @@ function EmptyState() {
   return (
     <div className="flex items-center justify-center h-full p-8 text-center">
       <div className="max-w-sm space-y-4">
-        <div className="text-6xl">💬</div>
+        <MessageCircle className="w-16 h-16 mx-auto text-gray-400" />
         <div className="space-y-3">
           <h3 className="text-xl font-semibold text-gray-900">AI Travel Assistant</h3>
           <p className="text-base text-gray-600">

@@ -7,11 +7,12 @@
 
 import { useCallback, useEffect } from "react";
 import { useMapState } from "../context";
+import { NEARBY_SEARCH_RADIUS_METERS } from "@/lib/map-v2/search-constants";
 
 interface FetchNearbyOptions {
   lat: number;
   lng: number;
-  radius?: number; // in meters, default 5000
+  radius?: number; // in meters, defaults to NEARBY_SEARCH_RADIUS_METERS
   append?: boolean; // if true, add to existing results instead of replacing
 }
 
@@ -24,7 +25,7 @@ export function useNearbyPlaces() {
    */
   const fetchNearbyPlaces = useCallback(
     async (options: FetchNearbyOptions) => {
-      const { lat, lng, radius = 5000, append = false } = options;
+      const { lat, lng, radius = NEARBY_SEARCH_RADIUS_METERS, append = false } = options;
 
       dispatch({ type: "SET_LOADING_DISCOVERY", payload: true });
 

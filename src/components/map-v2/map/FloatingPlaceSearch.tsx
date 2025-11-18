@@ -41,12 +41,14 @@ export function FloatingPlaceSearch({ mapInstance }: FloatingPlaceSearchProps) {
       };
 
       dispatch({ type: "ADD_PLACE", payload: newPlace });
-      dispatch({ type: "SELECT_PLACE", payload: newPlace.id });
       dispatch({ type: "SET_ACTIVE_MODE", payload: "discover" });
 
+      // Zoom in if needed
       if (mapInstance) {
-        mapInstance.panTo({ lat, lng });
-        mapInstance.setZoom(13);
+        const currentZoom = mapInstance.getZoom() || 0;
+        if (currentZoom < 13) {
+          mapInstance.setZoom(13);
+        }
       }
     },
     [dispatch, mapInstance]

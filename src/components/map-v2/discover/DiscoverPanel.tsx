@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useRef, useLayoutEffect, useCallback, useMemo } from "react";
+import { Search } from "lucide-react";
 import { useMapState } from "../context";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
 import { DiscoverHeader } from "./DiscoverHeader";
@@ -177,7 +178,7 @@ export function DiscoverPanel() {
       return (
         <div className="flex items-center justify-center h-full p-8 text-center">
           <div>
-            <div className="text-4xl mb-4">📍</div>
+            <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a place to explore</h3>
             <p className="text-sm text-gray-600">
               Tap any location on the map to discover nearby attractions and restaurants
