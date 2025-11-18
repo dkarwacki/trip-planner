@@ -26,3 +26,5 @@ export const SearchWikimediaPhotos = (query: SearchWikimediaPhotosQuery) =>
 
     return photos;
   });
+
+

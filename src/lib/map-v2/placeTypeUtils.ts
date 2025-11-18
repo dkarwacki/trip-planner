@@ -43,3 +43,5 @@ export function getPlaceTypeCategory(types: string[]): "restaurant" | "attractio
   return isRestaurant(types) ? "restaurant" : "attraction";
 }
 
+
+

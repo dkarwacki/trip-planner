@@ -51,3 +51,5 @@ export function PlaceCardSkeleton({ variant = "grid", className = "" }: PlaceCar
     </div>
   );
 }
+
+

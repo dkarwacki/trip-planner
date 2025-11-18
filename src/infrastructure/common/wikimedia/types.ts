@@ -12,3 +12,5 @@ export type WikimediaImageInfo = z.infer<typeof WikimediaImageInfoSchema>;
 export type WikimediaPage = z.infer<typeof WikimediaPageSchema>;
 export type WikimediaExtMetadata = z.infer<typeof WikimediaExtMetadataSchema>;
 
+
+

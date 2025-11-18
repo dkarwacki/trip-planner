@@ -45,3 +45,5 @@ export function HubCardSkeleton({ className = "" }: HubCardSkeletonProps) {
     </div>
   );
 }
+
+

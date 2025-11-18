@@ -157,3 +157,5 @@ export function MobileHubCardList({ places }: MobileHubCardListProps) {
     </div>
   );
 }
+
+

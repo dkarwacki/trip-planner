@@ -27,3 +27,5 @@ export function ChatHeader({ selectedPlace }: ChatHeaderProps) {
     </div>
   );
 }
+
+

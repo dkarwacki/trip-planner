@@ -125,3 +125,5 @@ export function FilterPanel({ filters, onChange, onClear, resultCount, totalCoun
     </div>
   );
 }
+
+

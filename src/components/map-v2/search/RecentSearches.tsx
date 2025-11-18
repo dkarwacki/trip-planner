@@ -77,3 +77,5 @@ export function RecentSearches({ searches, onSelect, onRemove, onClearAll, class
     </div>
   );
 }
+
+
