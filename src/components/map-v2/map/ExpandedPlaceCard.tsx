@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { X, Loader2, Check, Plus } from "lucide-react";
+import { X, Loader2, Check, Plus, Map } from "lucide-react";
 import type { Attraction } from "@/domain/map/models";
 import { calculateCardPosition } from "./CardPositioning";
 import { LazyImage } from "../shared/LazyImage";
@@ -117,6 +117,15 @@ export const ExpandedPlaceCard = React.memo(
       }
     };
 
+    const handleGoogleMapsClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const query = encodeURIComponent(attraction.name);
+      // Google Maps search URL with query and place_id
+      // Note: query_place_id parameter helps Google Maps find the exact place
+      const url = `https://www.google.com/maps/search/?api=1&query=${query}&query_place_id=${attraction.id}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    };
+
     // Format rating
     const rating = attraction.rating || 0;
     const fullStars = Math.floor(rating);
@@ -174,6 +183,16 @@ export const ExpandedPlaceCard = React.memo(
               >
                 <X className="h-4 w-4 text-gray-700" />
               </button>
+
+              {/* Google Maps Button */}
+              <button
+                onClick={handleGoogleMapsClick}
+                className="absolute top-2 left-12 h-8 px-3 bg-white/90 hover:bg-white rounded-full flex items-center justify-center gap-2 transition-colors z-10 text-xs font-medium text-gray-700 shadow-sm"
+                aria-label="Open in Google Maps"
+              >
+                <Map className="h-3.5 w-3.5" />
+                <span>Google Maps</span>
+              </button>
             </div>
 
             {/* Content */}
@@ -209,7 +228,11 @@ export const ExpandedPlaceCard = React.memo(
                   })}
                 </div>
                 <span className="text-gray-700 font-medium">{rating.toFixed(1)}</span>
-                {reviewCount > 0 && <span className="text-gray-500">({reviewCount} reviews)</span>}
+                {reviewCount > 0 && (
+                  <span className="text-gray-500">
+                    ({reviewCount.toLocaleString("pl-PL").replace(/,/g, " ")} reviews)
+                  </span>
+                )}
               </div>
 
               {/* Action Buttons */}

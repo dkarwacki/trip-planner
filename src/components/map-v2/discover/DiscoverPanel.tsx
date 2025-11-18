@@ -342,11 +342,7 @@ export function DiscoverPanel() {
 
       {/* Compact toolbar with filters only */}
       <div className="px-4 py-2 border-b border-gray-200">
-        <DiscoverToolbar
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onClearFilters={handleClearFilters}
-        />
+        <DiscoverToolbar filters={filters} onFilterChange={handleFilterChange} onClearFilters={handleClearFilters} />
       </div>
 
       {/* Content header with result count and view toggle */}
