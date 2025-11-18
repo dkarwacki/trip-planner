@@ -66,6 +66,7 @@ export interface AttractionDAO {
     lng: number;
   };
   photos?: PlacePhotoDAO[];
+  editorialSummary?: string;
 }
 
 export interface PlaceDAO {
@@ -216,6 +217,7 @@ const toAttraction = (dao: AttractionDAO): Place["plannedAttractions"][number] =
     lng: Longitude(dao.location.lng),
   },
   photos: dao.photos?.map(toPlacePhoto),
+  editorialSummary: dao.editorialSummary,
 });
 
 const toPlace = (dao: PlaceDAO): Place => ({

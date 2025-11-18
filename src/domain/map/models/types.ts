@@ -11,7 +11,7 @@
  * - Queries: Read operations (searches, lookups)
  */
 
-import type { Latitude, Longitude } from "@/domain/common/models";
+import type { Latitude, Longitude, PlacePhoto } from "@/domain/common/models";
 
 /**
  * Conversation message for AI context
@@ -36,6 +36,8 @@ export interface PlannedAttraction {
     lat: number;
     lng: number;
   };
+  photos?: PlacePhoto[];
+  editorialSummary?: string;
 }
 
 /**
@@ -53,6 +55,8 @@ export interface PlannedRestaurant {
     lat: number;
     lng: number;
   };
+  photos?: PlacePhoto[];
+  editorialSummary?: string;
 }
 
 /**

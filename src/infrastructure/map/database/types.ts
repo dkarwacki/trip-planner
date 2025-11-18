@@ -62,6 +62,7 @@ export interface AttractionDAO {
   latitude: number;
   longitude: number;
   photos: PlacePhotoDAO[] | null;
+  editorialSummary: string | null;
   qualityScore: number | null;
   diversityScore: number | null;
   confidenceScore: number | null;
@@ -95,6 +96,7 @@ export interface AttractionInsertDAO {
   latitude: number;
   longitude: number;
   photos?: PlacePhotoDAO[];
+  editorialSummary?: string;
   qualityScore?: number;
   diversityScore?: number;
   confidenceScore?: number;
@@ -122,6 +124,7 @@ export const toAttractionInsert = (data: AttractionInsertDAO): TablesInsert<"att
   latitude: data.latitude,
   longitude: data.longitude,
   photos: (data.photos ?? null) as never,
+  editorial_summary: data.editorialSummary ?? null,
   quality_score: data.qualityScore ?? null,
   diversity_score: data.diversityScore ?? null,
   confidence_score: data.confidenceScore ?? null,
@@ -158,6 +161,7 @@ export const rowToAttractionDAO = (row: AttractionRow): AttractionDAO => ({
   latitude: row.latitude,
   longitude: row.longitude,
   photos: row.photos as unknown as PlacePhotoDAO[] | null,
+  editorialSummary: row.editorial_summary,
   qualityScore: row.quality_score,
   diversityScore: row.diversity_score,
   confidenceScore: row.confidence_score,
@@ -198,4 +202,5 @@ export const toAttraction = (dao: AttractionDAO): Attraction => ({
     lng: Longitude(dao.longitude),
   },
   photos: dao.photos?.map(toPlacePhoto),
+  editorialSummary: dao.editorialSummary ?? undefined,
 });
