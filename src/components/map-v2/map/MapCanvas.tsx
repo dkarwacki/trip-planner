@@ -15,6 +15,7 @@ import { ExpandedPlaceCard } from "./ExpandedPlaceCard";
 import { useMapState } from "../context";
 import { useMapPanDetection } from "../hooks/useMapPanDetection";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
+import { calculateDistance } from "@/lib/map/map-utils";
 
 interface MapCanvasProps {
   mapId?: string;
@@ -144,22 +145,19 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     discoveryResults,
     addAttractionToPlace,
     addRestaurantToPlace,
-    removeAttractionFromPlace,
-    removeRestaurantFromPlace,
     setExpandedCard,
     setHighlightedPlace,
     activeMode,
-    setActiveMode,
     dispatch,
     searchCenters,
     addSearchCenter,
   } = useMapState();
   const map = useMap();
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapZoom, setMapZoom] = useState<number>(0);
   const [isSearching, setIsSearching] = useState(false);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [isDesktop, setIsDesktop] = useState(false);
-  const [expandedPlaceId, setExpandedPlaceId] = useState<string | null>(null); // Track which place the expanded item belongs to
   const hasInitializedRef = useRef(false); // Track if we've set initial search center (use ref to avoid re-renders)
 
   // Close card handler using dispatch
@@ -229,8 +227,12 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     // This prevents button from flickering during programmatic pans and better matches Google Maps behavior
     const idleListener = map.addListener("idle", () => {
       const center = map.getCenter();
+      const zoom = map.getZoom();
       if (center) {
         setMapCenter({ lat: center.lat(), lng: center.lng() });
+      }
+      if (zoom !== undefined) {
+        setMapZoom(zoom);
       }
     });
 
@@ -239,8 +241,12 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
       closeCard();
     });
 
-    // Initialize center immediately
+    // Initialize center and zoom immediately
     const center = map.getCenter();
+    const zoom = map.getZoom();
+    if (zoom !== undefined) {
+      setMapZoom(zoom);
+    }
     if (center) {
       const centerCoords = { lat: center.lat(), lng: center.lng() };
       setMapCenter(centerCoords);
@@ -334,6 +340,20 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   const handleSearchArea = useCallback(async () => {
     if (!mapCenter) return;
 
+    // Check if we are too far from the selected place
+    if (selectedPlace) {
+      const distance = calculateDistance(
+        { lat: mapCenter.lat, lng: mapCenter.lng },
+        { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
+      );
+
+      // If distance is greater than 50km (50000 meters), we don't search
+      // The button UI will handle the warning state based on this prop
+      if (distance > 50000) {
+        return;
+      }
+    }
+
     setIsSearching(true);
 
     try {
@@ -352,7 +372,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     } finally {
       setIsSearching(false);
     }
-  }, [mapCenter, fetchNearbyPlaces]);
+  }, [mapCenter, fetchNearbyPlaces, selectedPlace, SEARCH_RADIUS_METERS]);
 
   const handlePlaceClick = useCallback(
     (place: { id: string }) => {
@@ -391,55 +411,9 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     [discoveryResults, selectedPlaceId, addAttractionToPlace, addRestaurantToPlace]
   );
 
-  // Handle "Remove from Plan" from expanded card (Plan mode)
-  const handleRemoveFromPlan = useCallback(
-    (attractionId: string) => {
-      // Find which place this attraction belongs to
-      let targetPlaceId = expandedPlaceId;
-
-      if (!targetPlaceId) {
-        // If not set (e.g., clicked from sidebar), find it by searching through places
-        for (const place of places) {
-          const isInAttractions = place.plannedAttractions?.some((a: { id: string }) => a.id === attractionId);
-          const isInRestaurants = place.plannedRestaurants?.some((r: { id: string }) => r.id === attractionId);
-          if (isInAttractions || isInRestaurants) {
-            targetPlaceId = place.id;
-            break;
-          }
-        }
-      }
-
-      if (!targetPlaceId) {
-        return;
-      }
-
-      // Find the place
-      const place = places.find((p: { id: string }) => p.id === targetPlaceId);
-      if (!place) {
-        return;
-      }
-
-      // Check if it's in attractions or restaurants
-      const isInAttractions = place.plannedAttractions?.some((a: { id: string }) => a.id === attractionId);
-      const isInRestaurants = place.plannedRestaurants?.some((r: { id: string }) => r.id === attractionId);
-
-      if (isInAttractions) {
-        removeAttractionFromPlace(targetPlaceId, attractionId);
-      } else if (isInRestaurants) {
-        removeRestaurantFromPlace(targetPlaceId, attractionId);
-      }
-
-      // Close the card after removal
-      closeCard();
-      setExpandedPlaceId(null);
-    },
-    [places, expandedPlaceId, removeAttractionFromPlace, removeRestaurantFromPlace, closeCard]
-  );
-
   // Handle planned item marker click (Plan mode)
   const handlePlannedItemClick = useCallback(
-    (attractionId: string, placeId: string) => {
-      setExpandedPlaceId(placeId);
+    (attractionId: string) => {
       setHighlightedPlace(attractionId);
       setExpandedCard(attractionId);
     },
@@ -569,9 +543,17 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
 
       {/* Search Area Button (Discover & AI mode) */}
       <SearchAreaButton
-        isVisible={shouldShowButton && (activeMode === "discover" || activeMode === "ai")}
+        isVisible={shouldShowButton && mapZoom >= 10 && (activeMode === "discover" || activeMode === "ai")}
         isLoading={isSearching}
         onClick={handleSearchArea}
+        isTooFar={
+          !!selectedPlace &&
+          !!mapCenter &&
+          calculateDistance(
+            { lat: mapCenter.lat, lng: mapCenter.lng },
+            { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
+          ) > 50000
+        }
       />
 
       {/* Map Backdrop (when card is expanded) */}

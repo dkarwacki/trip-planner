@@ -11,11 +11,18 @@ import { cn } from "@/lib/common/utils";
 interface SearchAreaButtonProps {
   isVisible: boolean;
   isLoading?: boolean;
+  isTooFar?: boolean;
   onClick: () => void;
   className?: string;
 }
 
-export function SearchAreaButton({ isVisible, isLoading = false, onClick, className }: SearchAreaButtonProps) {
+export function SearchAreaButton({
+  isVisible,
+  isLoading = false,
+  isTooFar = false,
+  onClick,
+  className,
+}: SearchAreaButtonProps) {
   if (!isVisible) return null;
 
   return (
@@ -28,7 +35,7 @@ export function SearchAreaButton({ isVisible, isLoading = false, onClick, classN
     >
       <button
         onClick={onClick}
-        disabled={isLoading}
+        disabled={isLoading || isTooFar}
         className={cn(
           "flex items-center gap-1.5 px-3 py-1.5 rounded-full pointer-events-auto",
           "bg-white text-gray-700 font-medium text-sm",
@@ -37,14 +44,25 @@ export function SearchAreaButton({ isVisible, isLoading = false, onClick, classN
           "hover:bg-gray-50 active:bg-gray-100",
           "transition-all duration-200",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2",
-          "disabled:opacity-50 disabled:cursor-not-allowed"
+          "disabled:opacity-90 disabled:cursor-not-allowed",
+          isTooFar && "bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-50"
         )}
-        aria-label={isLoading ? "Searching this area..." : "Search this area"}
+        aria-label={
+          isLoading
+            ? "Searching this area..."
+            : isTooFar
+              ? "Area is too far from trip point"
+              : "Search this area"
+        }
       >
         {isLoading ? (
           <>
             <div className="animate-spin h-3.5 w-3.5 border-2 border-gray-400 border-t-transparent rounded-full" />
             <span>Searching...</span>
+          </>
+        ) : isTooFar ? (
+          <>
+            <span className="text-xs">📍 Start new trip point here</span>
           </>
         ) : (
           <>
