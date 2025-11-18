@@ -50,11 +50,11 @@ export function ScoreBadge({
 
   // Determine badge color and label based on score (0-100 scale)
   const getScoreColor = (s: number) => {
-    if (s >= 90) return { bg: "bg-green-500", text: "text-white", border: "border-green-600", label: "Exceptional" };
-    return { bg: "bg-blue-500", text: "text-white", border: "border-blue-600", label: "Recommended" };
+    if (s >= 90) return { bg: "bg-green-600", text: "text-white", label: "Exceptional" };
+    return { bg: "bg-blue-600", text: "text-white", label: "Recommended" };
   };
 
-  const { bg, text, border, label } = getScoreColor(score);
+  const { bg, text, label } = getScoreColor(score);
 
   // Don't render if score is too low
   if (score < 70) {
@@ -80,9 +80,8 @@ export function ScoreBadge({
         className={`
           ${bg} ${text}
           ${sizeClasses[size]}
-          inline-flex items-center gap-1 rounded border
-          ${border} bg-opacity-90 font-bold
-          backdrop-blur-sm
+          inline-flex items-center gap-1 rounded-md
+          font-bold shadow-md
         `}
         role="status"
         aria-label={`Score: ${formatScore(score)} - ${label}`}

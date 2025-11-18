@@ -273,13 +273,13 @@ export const ExpandedPlaceCard = React.memo(
                   disabled={isAddedToPlan || isAddingToPlan}
                   className={`
                     flex-1 h-11 py-2.5 px-4 rounded-lg font-medium text-sm
-                    transition-colors flex items-center justify-center gap-2
+                    transition-all flex items-center justify-center gap-2
                     ${
                       isAddedToPlan
                         ? "bg-green-50 text-green-700 cursor-default"
                         : isAddingToPlan
                           ? "bg-blue-50 text-blue-600 cursor-wait"
-                          : "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105"
                     }
                   `}
                 >
