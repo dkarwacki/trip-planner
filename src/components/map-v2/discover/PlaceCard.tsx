@@ -3,11 +3,12 @@
  * Stage 3.2: Large Photo Card View
  */
 
-import React from "react";
+import React, { useState } from "react";
 import type { Attraction } from "@/domain/map/models";
 import { MapPin, Star, CheckCircle2, Utensils, Landmark } from "lucide-react";
 import { LazyImage } from "../shared/LazyImage";
 import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 interface PlaceCardProps {
   place: Attraction;
@@ -28,6 +29,8 @@ export const PlaceCard = React.memo(function PlaceCard({
   isHighlighted,
   onHover,
 }: PlaceCardProps) {
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  
   // Get photo reference from place photos
   const photoReference = place.photos?.[0]?.photoReference;
   const placeType = getPlaceTypeCategory(place.types);
@@ -60,6 +63,13 @@ export const PlaceCard = React.memo(function PlaceCard({
     onAddClick(place.id);
   };
 
+  const handlePhotoClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (photoReference) {
+      setIsLightboxOpen(true);
+    }
+  };
+
   const handleCardKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -85,7 +95,10 @@ export const PlaceCard = React.memo(function PlaceCard({
       }`}
     >
       {/* Hero Photo */}
-      <div className="relative aspect-video bg-gray-100">
+      <div
+        className={`relative aspect-video bg-gray-100 ${photoReference ? "cursor-pointer" : ""}`}
+        onClick={handlePhotoClick}
+      >
         {photoReference ? (
           <LazyImage
             photoReference={photoReference}
@@ -182,6 +195,19 @@ export const PlaceCard = React.memo(function PlaceCard({
           {isAdded ? "✓ Added" : "+ Add to Plan"}
         </button>
       </div>
+
+      {/* Photo Lightbox */}
+      {place.photos && place.photos.length > 0 && (
+        <PhotoLightbox
+          photos={place.photos}
+          initialIndex={0}
+          isOpen={isLightboxOpen}
+          onClose={() => setIsLightboxOpen(false)}
+          placeName={place.name}
+          lat={place.location.lat}
+          lng={place.location.lng}
+        />
+      )}
     </div>
   );
 });

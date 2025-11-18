@@ -2,11 +2,12 @@
  * Place list item - compact view with thumbnail
  */
 
-import React from "react";
+import React, { useState } from "react";
 import type { Attraction } from "@/domain/map/models";
 import { MapPin, Star, Plus, CheckCircle2, Utensils, Landmark } from "lucide-react";
 import { LazyImage } from "../shared/LazyImage";
 import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 interface PlaceListItemProps {
   place: Attraction;
@@ -27,6 +28,8 @@ export const PlaceListItem = React.memo(function PlaceListItem({
   onExpandCard,
   onAddClick,
 }: PlaceListItemProps) {
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  
   const photoReference = place.photos?.[0]?.photoReference;
   const placeType = getPlaceTypeCategory(place.types);
 
@@ -53,6 +56,13 @@ export const PlaceListItem = React.memo(function PlaceListItem({
     onExpandCard?.(place.id);
   };
 
+  const handlePhotoClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (photoReference) {
+      setIsLightboxOpen(true);
+    }
+  };
+
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onAddClick?.(place.id);
@@ -68,7 +78,10 @@ export const PlaceListItem = React.memo(function PlaceListItem({
       }`}
     >
       {/* Thumbnail Photo */}
-      <div className="flex-shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden bg-gray-100 relative">
+      <div
+        className={`flex-shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden bg-gray-100 relative ${photoReference ? "cursor-pointer" : ""}`}
+        onClick={handlePhotoClick}
+      >
         {photoReference ? (
           <LazyImage
             photoReference={photoReference}
@@ -148,6 +161,19 @@ export const PlaceListItem = React.memo(function PlaceListItem({
       >
         {isAdded ? <CheckCircle2 className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
       </button>
+
+      {/* Photo Lightbox */}
+      {place.photos && place.photos.length > 0 && (
+        <PhotoLightbox
+          photos={place.photos}
+          initialIndex={0}
+          isOpen={isLightboxOpen}
+          onClose={() => setIsLightboxOpen(false)}
+          placeName={place.name}
+          lat={place.location.lat}
+          lng={place.location.lng}
+        />
+      )}
     </div>
   );
 });
