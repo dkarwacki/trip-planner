@@ -10,4 +10,5 @@ export interface Attraction {
   priceLevel?: number;
   location: { lat: Latitude; lng: Longitude };
   photos?: PlacePhoto[];
+  editorialSummary?: string;
 }

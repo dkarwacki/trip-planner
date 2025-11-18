@@ -86,6 +86,7 @@ export const PlaceSchema = z.object({
   userRatingCount: z.number().int().optional(),
   priceLevel: z.string().optional(), // "PRICE_LEVEL_FREE", "PRICE_LEVEL_INEXPENSIVE", etc.
   photos: z.array(PlacePhotoSchema).optional(),
+  editorialSummary: z.object({ text: z.string() }).optional(),
 });
 
 // Shared response schema for Places API (New) endpoints

@@ -129,6 +129,7 @@ export const GoogleMapsClientLive = Layer.effect(
           lat: Latitude(place.location.latitude),
           lng: Longitude(place.location.longitude),
         },
+        editorialSummary: place.editorialSummary?.text,
       };
 
       // Add only 1 photo reference (single photo per place)
@@ -204,7 +205,7 @@ export const GoogleMapsClientLive = Layer.effect(
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": apiKey,
                 "X-Goog-FieldMask":
-                  "places.id,places.displayName,places.types,places.location,places.rating,places.userRatingCount,places.priceLevel,places.photos",
+                  "places.id,places.displayName,places.types,places.location,places.rating,places.userRatingCount,places.priceLevel,places.photos,places.editorialSummary",
               },
               body: JSON.stringify(requestBody),
             }),
@@ -444,7 +445,7 @@ export const GoogleMapsClientLive = Layer.effect(
         };
 
         let fieldMask =
-          "places.id,places.displayName,places.types,places.location,places.rating,places.userRatingCount,places.priceLevel";
+          "places.id,places.displayName,places.types,places.location,places.rating,places.userRatingCount,places.priceLevel,places.editorialSummary";
         if (includePhotos) {
           fieldMask += ",places.photos";
         }
@@ -566,6 +567,7 @@ export const GoogleMapsClientLive = Layer.effect(
             lat: Latitude(place.location.latitude),
             lng: Longitude(place.location.longitude),
           },
+          editorialSummary: place.editorialSummary?.text,
         };
 
         if (includePhotos && place.photos && place.photos.length > 0) {

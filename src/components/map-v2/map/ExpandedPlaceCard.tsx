@@ -4,12 +4,13 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { X, Loader2, Check, Plus, Map } from "lucide-react";
+import { X, Loader2, Check, Plus, MapPinned, ChevronDown, ChevronUp } from "lucide-react";
 import type { Attraction } from "@/domain/map/models";
 import { calculateCardPosition } from "./CardPositioning";
 import { LazyImage } from "../shared/LazyImage";
 import { ScoreBadge } from "../shared/ScoreBadge";
 import PhotoLightbox from "@/components/PhotoLightbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface ExpandedPlaceCardProps {
   attraction: Attraction;
@@ -45,6 +46,7 @@ export const ExpandedPlaceCard = React.memo(
     const [isVisible, setIsVisible] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
 
     // Detect mobile viewport
     useEffect(() => {
@@ -190,7 +192,7 @@ export const ExpandedPlaceCard = React.memo(
                 className="absolute top-2 left-12 h-8 px-3 bg-white/90 hover:bg-white rounded-full flex items-center justify-center gap-2 transition-colors z-10 text-xs font-medium text-gray-700 shadow-sm"
                 aria-label="Open in Google Maps"
               >
-                <Map className="h-3.5 w-3.5" />
+                <MapPinned className="h-3.5 w-3.5" />
                 <span>Google Maps</span>
               </button>
             </div>
@@ -234,6 +236,35 @@ export const ExpandedPlaceCard = React.memo(
                   </span>
                 )}
               </div>
+
+              {/* Description */}
+              {attraction.editorialSummary && (
+                <Collapsible open={isDescriptionOpen} onOpenChange={setIsDescriptionOpen} className="w-full">
+                  <div className="text-sm text-gray-600">
+                    {!isDescriptionOpen && (
+                      <p className="line-clamp-3 leading-relaxed">{attraction.editorialSummary}</p>
+                    )}
+                    <CollapsibleContent>
+                      <p className="leading-relaxed">{attraction.editorialSummary}</p>
+                    </CollapsibleContent>
+                    {attraction.editorialSummary.length > 150 && (
+                      <CollapsibleTrigger asChild>
+                        <button className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 mt-1 focus:outline-none">
+                          {isDescriptionOpen ? (
+                            <>
+                              Show less <ChevronUp className="h-3 w-3" />
+                            </>
+                          ) : (
+                            <>
+                              Read more <ChevronDown className="h-3 w-3" />
+                            </>
+                          )}
+                        </button>
+                      </CollapsibleTrigger>
+                    )}
+                  </div>
+                </Collapsible>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-2 pt-2">
