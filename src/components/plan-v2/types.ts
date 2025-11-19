@@ -94,6 +94,7 @@ export interface ConversationLibraryProps {
   onSelect: (conversationId: ConversationId) => void;
   onDelete: (conversationId: ConversationId) => void;
   onNewConversation: () => void;
+  onOpenMap?: (conversationId: ConversationId) => void;
   isLoading?: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;

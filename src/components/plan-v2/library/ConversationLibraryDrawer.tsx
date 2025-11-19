@@ -18,6 +18,7 @@ export function ConversationLibraryDrawer({
   onSelect,
   onDelete,
   onNewConversation,
+  onOpenMap,
   isLoading = false,
 }: ConversationLibraryProps) {
   return (
@@ -35,6 +36,7 @@ export function ConversationLibraryDrawer({
           activeConversationId={activeConversationId}
           onSelect={onSelect}
           onDelete={onDelete}
+          onOpenMap={onOpenMap}
           isLoading={isLoading}
         />
       </div>

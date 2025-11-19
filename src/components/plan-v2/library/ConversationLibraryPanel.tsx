@@ -21,6 +21,7 @@ export function ConversationLibraryPanel({
   onSelect,
   onDelete,
   onNewConversation,
+  onOpenMap,
   isLoading = false,
   isCollapsed = false,
   onToggleCollapse,
@@ -102,6 +103,7 @@ export function ConversationLibraryPanel({
           activeConversationId={activeConversationId}
           onSelect={onSelect}
           onDelete={onDelete}
+          onOpenMap={onOpenMap}
           isLoading={isLoading}
         />
       </div>

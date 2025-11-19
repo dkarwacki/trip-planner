@@ -12,8 +12,8 @@ interface PlanHeaderProps {
 export function PlanHeader({ saveStatus, onRetrySync, conversationId }: PlanHeaderProps) {
   const handleMapClick = () => {
     const url = conversationId 
-      ? `/map?conversationId=${conversationId}` 
-      : '/map';
+      ? `/map-v2?conversationId=${conversationId}` 
+      : '/map-v2';
     window.location.href = url;
   };
 

@@ -273,9 +273,9 @@ export function MobileLayout({ conversationId }: LayoutProps) {
 
       // Navigate to map with trip ID (and conversation ID if available)
       if (activeConversationId) {
-        window.location.href = `/map?tripId=${tripId}&conversationId=${activeConversationId}`;
+        window.location.href = `/map-v2?tripId=${tripId}&conversationId=${activeConversationId}`;
       } else {
-        window.location.href = `/map?tripId=${tripId}`;
+        window.location.href = `/map-v2?tripId=${tripId}`;
       }
     } catch (error) {
       console.error("Failed to export to map:", error);
@@ -395,6 +395,10 @@ export function MobileLayout({ conversationId }: LayoutProps) {
     }
   };
 
+  const handleOpenMap = (id: ConversationId) => {
+    window.location.href = `/map-v2?conversationId=${id}`;
+  };
+
   return (
     <div className="flex h-screen flex-col bg-background">
       {/* Header */}
@@ -447,6 +451,7 @@ export function MobileLayout({ conversationId }: LayoutProps) {
               onSelect={handleSelectConversation}
               onDelete={handleDeleteConversation}
               onNewConversation={handleNewConversation}
+              onOpenMap={handleOpenMap}
               isLoading={conversationsLoading}
             />
           </div>
