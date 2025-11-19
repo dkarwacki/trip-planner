@@ -361,18 +361,20 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     setIsSearching(true);
 
     try {
-      // Check if we are far from the selected place - if so, start new point flow
-      let isFar = false;
+      // Check if we should start new point flow:
+      // 1. No places exist yet, OR
+      // 2. Far from the selected place
+      let shouldStartNewPoint = places.length === 0;
 
-      if (selectedPlace) {
+      if (!shouldStartNewPoint && selectedPlace) {
         const distance = calculateDistance(
           { lat: mapCenter.lat, lng: mapCenter.lng },
           { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
         );
-        isFar = distance > NEW_TRIP_POINT_THRESHOLD_METERS;
+        shouldStartNewPoint = distance > NEW_TRIP_POINT_THRESHOLD_METERS;
       }
 
-      if (isFar) {
+      if (shouldStartNewPoint) {
         // Start "New Point" flow
         const newPlace = await findPlace(mapCenter.lat, mapCenter.lng);
         if (newPlace) {
@@ -400,7 +402,7 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     } finally {
       setIsSearching(false);
     }
-  }, [mapCenter, fetchNearbyPlaces, selectedPlace, findPlace]);
+  }, [mapCenter, fetchNearbyPlaces, selectedPlace, findPlace, places.length]);
 
   // Draft handlers
   const handleConfirmDraft = useCallback(() => {
@@ -647,12 +649,14 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
         <SearchAreaButton
           isVisible={shouldShowButton && mapZoom >= 10 && (activeMode === "discover" || activeMode === "ai")}
           isTooFar={
-            !!selectedPlace &&
-            !!mapCenter &&
-            calculateDistance(
-              { lat: mapCenter.lat, lng: mapCenter.lng },
-              { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
-            ) > NEW_TRIP_POINT_THRESHOLD_METERS
+            // Show "Start new trip point here" if no places exist OR if far from selected place
+            places.length === 0 ||
+            (!!selectedPlace &&
+              !!mapCenter &&
+              calculateDistance(
+                { lat: mapCenter.lat, lng: mapCenter.lng },
+                { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
+              ) > NEW_TRIP_POINT_THRESHOLD_METERS)
           }
           isLoading={isSearching}
           onClick={handleSearchArea}
