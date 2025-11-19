@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useMapState } from "../context/MapStateContext";
+import { useMapStore } from "../stores/mapStore";
 import { GripVertical, ChevronRight, ChevronDown, Search, X } from "lucide-react";
 import PlannedItemList from "./PlannedItemList";
 import { LazyImage } from "../shared/LazyImage";
@@ -20,7 +20,11 @@ interface PlanItemCardProps {
 
 const PlanItemCard = React.memo(
   function PlanItemCard({ place, order, isExpanded, onToggleExpand }: PlanItemCardProps) {
-    const { dispatch, centerOnPlace, removeFromPlanning } = useMapState();
+    // Actions
+    const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
+    const setActiveMode = useMapStore((state) => state.setActiveMode);
+    const centerOnPlace = useMapStore((state) => state.centerOnPlace);
+    const removePlace = useMapStore((state) => state.removePlace);
 
     // Setup sortable
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -51,13 +55,13 @@ const PlanItemCard = React.memo(
     const placeLocation = place.location || place.vicinity || "";
 
     const handleDiscoverMore = () => {
-      dispatch({ type: "SELECT_PLACE", payload: place.id });
-      dispatch({ type: "SET_ACTIVE_MODE", payload: "discover" });
+      setSelectedPlace(place.id);
+      setActiveMode("discover");
     };
 
     const handleRemove = (e: React.MouseEvent) => {
       e.stopPropagation();
-      removeFromPlanning(place.id);
+      removePlace(place.id);
     };
 
     const handleCardClick = (e: React.MouseEvent) => {

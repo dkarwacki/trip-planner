@@ -7,7 +7,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { DndContext, closestCenter, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useMapState } from "../context/MapStateContext";
+import { useMapStore } from "../stores/mapStore";
 import { MobilePlanItemCard } from "./MobilePlanItemCard";
 import { X } from "lucide-react";
 
@@ -16,7 +16,7 @@ interface MobilePlanItemCardListProps {
 }
 
 export function MobilePlanItemCardList({ places }: MobilePlanItemCardListProps) {
-  const { dispatch } = useMapState();
+  const reorderPlaces = useMapStore((state) => state.reorderPlaces);
   const [isReorderMode, setIsReorderMode] = useState(false);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -53,10 +53,7 @@ export function MobilePlanItemCardList({ places }: MobilePlanItemCardListProps) 
       const oldIndex = places.findIndex((p) => (p.id || p) === active.id);
       const newIndex = places.findIndex((p) => (p.id || p) === over.id);
 
-      dispatch({
-        type: "REORDER_PLACES",
-        payload: { sourceIndex: oldIndex, destinationIndex: newIndex },
-      });
+      reorderPlaces(oldIndex, newIndex);
 
       // Haptic feedback on drop
       if ("vibrate" in navigator) {
@@ -157,5 +154,3 @@ export function MobilePlanItemCardList({ places }: MobilePlanItemCardListProps) 
     </div>
   );
 }
-
-

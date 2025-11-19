@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from "react";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 import type { AIMessage, AISuggestion } from "../types";
 import { getPhotoUrl } from "@/lib/common/photo-utils";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
@@ -20,16 +20,26 @@ interface UseAIChatReturn {
 }
 
 export function useAIChat(): UseAIChatReturn {
-  const { state, dispatch, addAttractionToPlace, addRestaurantToPlace, addDiscoveryResults } = useMapState();
+  // Selectors
+  const context = useMapStore((state) => state.context);
+  const places = useMapStore((state) => state.places);
+  const conversation = useMapStore((state) => state.conversation);
+
+  // Actions
+  const addAIMessage = useMapStore((state) => state.addAIMessage);
+  const addAttractionToPlace = useMapStore((state) => state.addAttractionToPlace);
+  const addRestaurantToPlace = useMapStore((state) => state.addRestaurantToPlace);
+  const addDiscoveryResults = useMapStore((state) => state.addDiscoveryResults);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addingPlaceIds, setAddingPlaceIds] = useState<Set<string>>(new Set());
 
   // Compute which attractions/restaurants are already in the selected place's plan
   const addedPlaceIds = (() => {
-    if (!state.aiContext) return new Set<string>();
+    if (!context) return new Set<string>();
 
-    const selectedPlace = state.places.find((p: any) => p.id === state.aiContext);
+    const selectedPlace = places.find((p: any) => p.id === context);
     if (!selectedPlace) return new Set<string>();
 
     const ids = new Set<string>();
@@ -50,13 +60,13 @@ export function useAIChat(): UseAIChatReturn {
   // Send message to AI
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!state.aiContext) {
+      if (!context) {
         console.warn("No AI context set");
         return;
       }
 
       // Find the selected place to get context
-      const selectedPlace = state.places.find((p: any) => p.id === state.aiContext);
+      const selectedPlace = places.find((p: any) => p.id === context);
       if (!selectedPlace) {
         console.warn("Selected place not found");
         setError("Place not found. Please select a place first.");
@@ -70,7 +80,7 @@ export function useAIChat(): UseAIChatReturn {
         content,
         timestamp: new Date(),
       };
-      dispatch({ type: "ADD_AI_MESSAGE", payload: userMessage });
+      addAIMessage(userMessage);
 
       // Set loading state
       setIsLoading(true);
@@ -104,7 +114,7 @@ export function useAIChat(): UseAIChatReturn {
         };
 
         // Build conversation history in the correct format
-        const conversationHistory = state.aiConversation.slice(-10).map((msg: AIMessage) => ({
+        const conversationHistory = conversation.slice(-10).map((msg: AIMessage) => ({
           role: msg.role,
           content: msg.content,
         }));
@@ -272,7 +282,7 @@ export function useAIChat(): UseAIChatReturn {
           suggestions,
           thinkingSteps,
         };
-        dispatch({ type: "ADD_AI_MESSAGE", payload: assistantMessage });
+        addAIMessage(assistantMessage);
 
         // Add AI suggestions to discovery results (if any valid attractions/restaurants)
         // This makes them appear on the map and in the discovery list alongside nearby places
@@ -290,19 +300,19 @@ export function useAIChat(): UseAIChatReturn {
           content: "Sorry, I encountered an error. Please try again.",
           timestamp: new Date(),
         };
-        dispatch({ type: "ADD_AI_MESSAGE", payload: errorMessage });
+        addAIMessage(errorMessage);
       } finally {
         setIsLoading(false);
       }
     },
-    [state.aiContext, state.aiConversation, dispatch, addDiscoveryResults]
+    [context, conversation, addAIMessage, addDiscoveryResults, places]
   );
 
   // Add suggestion to plan (optimistic update)
   const addSuggestionToPlan = useCallback(
     (placeId: string) => {
       // Check if already in AI context
-      if (!state.aiContext) {
+      if (!context) {
         console.warn("No AI context set - cannot add suggestion");
         return;
       }
@@ -315,7 +325,7 @@ export function useAIChat(): UseAIChatReturn {
       // Find the suggestion in the conversation messages
       let foundSuggestion: AISuggestion | null = null;
 
-      for (const message of state.aiConversation) {
+      for (const message of conversation) {
         if (message.suggestions) {
           const suggestion = message.suggestions.find((s) => s.placeId === placeId);
           if (suggestion) {
@@ -342,7 +352,7 @@ export function useAIChat(): UseAIChatReturn {
       }
 
       // Check if already in current place's attractions/restaurants
-      const contextPlace = state.places.find((p: any) => p.id === state.aiContext);
+      const contextPlace = places.find((p: any) => p.id === context);
       if (!contextPlace) {
         console.warn("Context place not found");
         return;
@@ -383,9 +393,9 @@ export function useAIChat(): UseAIChatReturn {
 
         // Add to appropriate array (this will update state and addedPlaceIds will be recomputed)
         if (isRestaurant) {
-          addRestaurantToPlace(state.aiContext, attraction);
+          addRestaurantToPlace(context, attraction);
         } else {
-          addAttractionToPlace(state.aiContext, attraction);
+          addAttractionToPlace(context, attraction);
         }
       } catch (error) {
         console.error("Failed to add suggestion:", error);
@@ -398,7 +408,7 @@ export function useAIChat(): UseAIChatReturn {
         });
       }
     },
-    [state.aiContext, state.aiConversation, state.places, addingPlaceIds, addAttractionToPlace, addRestaurantToPlace]
+    [context, conversation, places, addingPlaceIds, addedPlaceIds, addAttractionToPlace, addRestaurantToPlace]
   );
 
   return {

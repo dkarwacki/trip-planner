@@ -4,14 +4,17 @@
  */
 
 import React from "react";
-import { useMapState } from "../context/MapStateContext";
+import { useMapStore } from "../stores/mapStore";
 import ItineraryStats from "./ItineraryStats";
 import PlanItemCardList from "./PlanItemCardList";
 import { Backpack } from "lucide-react";
 
 export default function PlanPanel() {
-  const { state, dispatch } = useMapState();
-  const { places } = state;
+  // Selectors
+  const places = useMapStore((state) => state.places);
+
+  // Actions
+  const setActiveMode = useMapStore((state) => state.setActiveMode);
 
   const hasPlaces = places.length > 0;
 
@@ -31,7 +34,7 @@ export default function PlanPanel() {
         </p>
 
         <button
-          onClick={() => dispatch({ type: "SET_ACTIVE_MODE", payload: "discover" })}
+          onClick={() => setActiveMode("discover")}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           Go to Discover

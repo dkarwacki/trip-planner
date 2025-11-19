@@ -4,7 +4,8 @@
  */
 
 import React, { useEffect, useRef } from "react";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
+import { useShallow } from "zustand/react/shallow";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
 import { DiscoverHeader } from "../discover/DiscoverHeader";
 import { FilterPanel } from "../filters/FilterPanel";
@@ -13,7 +14,6 @@ import { PlaceCardGrid } from "../discover/PlaceCardGrid";
 import { PhotoGrid } from "../discover/PhotoGrid";
 import { PlaceList } from "../discover/PlaceList";
 import { getPersistedFilters, persistFilters } from "@/lib/map-v2/filterPersistence";
-import { NEARBY_SEARCH_RADIUS_METERS } from "@/lib/map-v2/search-constants";
 
 interface DiscoverViewProps {
   mapId?: string;
@@ -21,16 +21,21 @@ interface DiscoverViewProps {
   onNavigateToMap?: (attractionId: string, lat: number, lng: number) => void;
 }
 
-export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverViewProps) {
-  const {
-    selectedPlaceId,
-    discoveryResults = [],
-    viewMode: cardViewMode,
-    filters = { category: "all", radius: NEARBY_SEARCH_RADIUS_METERS, sortBy: "relevance", priceLevel: [] as number[], openNow: false },
-    isLoadingDiscovery,
-    dispatch,
-    places: plannedPlaces = [],
-  } = useMapState();
+export function DiscoverView({ onNavigateToMap }: DiscoverViewProps) {
+  const { selectedPlaceId, discoveryResults, viewMode, filters, isLoadingDiscovery, places } = useMapStore(
+    useShallow((state) => ({
+      selectedPlaceId: state.selectedPlaceId,
+      discoveryResults: state.discoveryResults,
+      viewMode: state.viewMode,
+      filters: state.filters,
+      isLoadingDiscovery: state.isLoadingDiscovery,
+      places: state.places,
+    }))
+  );
+  const updateFilters = useMapStore((state) => state.updateFilters);
+  const clearFilters = useMapStore((state) => state.clearFilters);
+  const setViewMode = useMapStore((state) => state.setViewMode);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollPositionRef = useRef<number>(0);
 
@@ -42,12 +47,13 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
     if (selectedPlaceId) {
       const persistedFilters = getPersistedFilters(selectedPlaceId);
       if (persistedFilters) {
-        dispatch({ type: "UPDATE_FILTERS", payload: persistedFilters });
+        updateFilters(persistedFilters);
       } else {
-        dispatch({ type: "CLEAR_FILTERS" });
+        clearFilters();
       }
     }
-  }, [selectedPlaceId, dispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPlaceId]);
 
   // Save filters when they change
   useEffect(() => {
@@ -69,7 +75,7 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const selectedPlace = plannedPlaces.find((p) => p.id === selectedPlaceId);
+  const selectedPlace = places.find((p) => p.id === selectedPlaceId);
 
   // Helper to check if attraction is a restaurant
   const isRestaurant = (item: { attraction?: { types?: string[] } }) => {
@@ -104,15 +110,15 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
   const filteredResults = [...filteredAttractions, ...filteredRestaurants];
 
   const handleFilterChange = (newFilters: Partial<typeof filters>) => {
-    dispatch({ type: "UPDATE_FILTERS", payload: newFilters });
+    updateFilters(newFilters);
   };
 
   const handleClearFilters = () => {
-    dispatch({ type: "CLEAR_FILTERS" });
+    clearFilters();
   };
 
-  const handleViewModeChange = (mode: typeof cardViewMode) => {
-    dispatch({ type: "SET_VIEW_MODE", payload: mode });
+  const handleViewModeChange = (mode: typeof viewMode) => {
+    setViewMode(mode);
   };
 
   return (
@@ -138,7 +144,7 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
 
           {/* View Mode Toggle */}
           <div className="border-b border-gray-200 bg-white px-4 py-3">
-            <ViewToggle activeMode={cardViewMode} onChange={handleViewModeChange} />
+            <ViewToggle activeMode={viewMode} onChange={handleViewModeChange} />
           </div>
 
           {/* Content Area */}
@@ -165,11 +171,9 @@ export function DiscoverView({ mapId, onMapLoad, onNavigateToMap }: DiscoverView
               </div>
             ) : (
               <>
-                {cardViewMode === "cards" && (
-                  <PlaceCardGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />
-                )}
-                {cardViewMode === "photos" && <PhotoGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />}
-                {cardViewMode === "list" && <PlaceList places={filteredResults} onNavigateToMap={onNavigateToMap} />}
+                {viewMode === "cards" && <PlaceCardGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />}
+                {viewMode === "photos" && <PhotoGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />}
+                {viewMode === "list" && <PlaceList places={filteredResults} onNavigateToMap={onNavigateToMap} />}
               </>
             )}
           </div>

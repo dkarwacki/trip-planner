@@ -6,28 +6,28 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useMapInstance } from "./MapCanvas";
-import type { Place } from "@/domain/common/models";
+import type { PlannedPlace } from "../types";
 
 interface PlaceMarkersProps {
-  places: Place[];
+  places: PlannedPlace[];
   selectedPlaceId: string | null;
-  onPlaceClick: (place: Place) => void;
+  onPlaceClick: (place: PlannedPlace) => void;
 }
 
 interface MarkerData {
   marker: google.maps.marker.AdvancedMarkerElement;
   element: HTMLDivElement;
-  place: Place;
+  place: PlannedPlace;
 }
 
 export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMarkersProps) {
   const { map, markerLibrary, isReady } = useMapInstance();
   const markersRef = useRef<Map<string, MarkerData>>(new Map());
-  const previousPlacesRef = useRef<Place[]>([]);
+  const previousPlacesRef = useRef<PlannedPlace[]>([]);
   const hasFitBoundsRef = useRef(false);
 
   // Create marker element with proper styling
-  const createMarkerElement = useCallback((place: Place, index: number, isSelected: boolean) => {
+  const createMarkerElement = useCallback((place: PlannedPlace, index: number, isSelected: boolean) => {
     const element = document.createElement("div");
     element.className = "relative cursor-pointer transition-all duration-200";
     element.style.width = isSelected ? "40px" : "32px";

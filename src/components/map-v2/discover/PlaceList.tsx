@@ -3,10 +3,11 @@
  * Implements Stage 3.4 of the UX implementation plan
  */
 
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { PlaceListItem } from "./PlaceListItem";
 import type { Attraction, AttractionScore } from "@/domain/map/models";
-import { useMapState } from "../context";
+import { useMapStore, selectPlannedIds } from "../stores/mapStore";
 import { useScrollPreservation } from "./DiscoverPanel";
 
 interface PlaceListProps {
@@ -15,22 +16,25 @@ interface PlaceListProps {
 }
 
 export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
-  const {
-    highlightedPlaceId,
-    setHoveredMarker,
-    setExpandedCard,
-    setHighlightedPlace,
-    selectedPlaceId,
-    addAttractionToPlace,
-    addRestaurantToPlace,
-    places: plannedPlaces,
-  } = useMapState();
+  // Fine-grained selectors to prevent re-renders
+  const highlightedPlaceId = useMapStore((state) => state.highlightedPlaceId);
+  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
+
+  // Actions (stable references)
+  const setHoveredMarker = useMapStore((state) => state.setHoveredMarker);
+  const setExpandedCard = useMapStore((state) => state.setExpandedCard);
+  const setHighlightedPlace = useMapStore((state) => state.setHighlightedPlace);
+  const addAttractionToPlace = useMapStore((state) => state.addAttractionToPlace);
+  const addRestaurantToPlace = useMapStore((state) => state.addRestaurantToPlace);
+
+  // Derived state with shallow comparison
+  const plannedIds = useMapStore(useShallow(selectPlannedIds));
+
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const scrolledIdRef = useRef<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Local state to track added items optimistically (for immediate UI update)
-  const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
+  const scrollPreservation = useScrollPreservation();
 
   // Scroll to highlighted place (only once per highlight)
   useEffect(() => {
@@ -87,17 +91,8 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
     return 0;
   };
 
-  // Check if attraction is already in plan (from context or local optimistic state)
-  const isInPlan = useMemo(() => {
-    const plannedSet = new Set<string>();
-    plannedPlaces.forEach((p: any) => {
-      p.plannedAttractions?.forEach((a: { id: string }) => plannedSet.add(a.id));
-      p.plannedRestaurants?.forEach((r: { id: string }) => plannedSet.add(r.id));
-    });
-    return (attractionId: string) => plannedSet.has(attractionId) || addedItems.has(attractionId);
-  }, [plannedPlaces, addedItems]);
-
-  const scrollPreservation = useScrollPreservation();
+  // Check if attraction is already in plan
+  const isInPlan = (attractionId: string) => plannedIds.has(attractionId);
 
   const handleAddClick = React.useCallback(
     (attractionId: string) => {
@@ -108,9 +103,6 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
       // Save scroll position BEFORE state update
       scrollPreservation?.saveScrollPosition();
 
-      // Optimistically update UI immediately
-      setAddedItems((prev) => new Set(prev).add(attractionId));
-
       // Find the attraction in the places array
       const place = places.find((p) => {
         const attraction = getAttraction(p);
@@ -118,12 +110,6 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
       });
 
       if (!place) {
-        // Revert optimistic update if attraction not found
-        setAddedItems((prev) => {
-          const next = new Set(prev);
-          next.delete(attractionId);
-          return next;
-        });
         return;
       }
 

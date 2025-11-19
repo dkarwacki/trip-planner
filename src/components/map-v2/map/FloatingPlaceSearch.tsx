@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { PlaceSearchBar } from "../search/PlaceSearchBar";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 
 interface FloatingPlaceSearchProps {
   mapInstance?: google.maps.Map | null;
@@ -10,7 +10,9 @@ interface FloatingPlaceSearchProps {
  * Floating search bar that sits on top of the map (similar to Google Maps)
  */
 export function FloatingPlaceSearch({ mapInstance }: FloatingPlaceSearchProps) {
-  const { dispatch } = useMapState();
+  // Actions
+  const addPlace = useMapStore((state) => state.addPlace);
+  const setActiveMode = useMapStore((state) => state.setActiveMode);
 
   const handlePlaceSelect = useCallback(
     (placeDetails: {
@@ -40,8 +42,8 @@ export function FloatingPlaceSearch({ mapInstance }: FloatingPlaceSearchProps) {
         plannedRestaurants: [],
       };
 
-      dispatch({ type: "ADD_PLACE", payload: newPlace });
-      dispatch({ type: "SET_ACTIVE_MODE", payload: "discover" });
+      addPlace(newPlace);
+      setActiveMode("discover");
 
       // Zoom in if needed
       if (mapInstance) {
@@ -51,7 +53,7 @@ export function FloatingPlaceSearch({ mapInstance }: FloatingPlaceSearchProps) {
         }
       }
     },
-    [dispatch, mapInstance]
+    [addPlace, setActiveMode, mapInstance]
   );
 
   return (
@@ -65,5 +67,3 @@ export function FloatingPlaceSearch({ mapInstance }: FloatingPlaceSearchProps) {
     </div>
   );
 }
-
-

@@ -4,7 +4,7 @@
  */
 
 import React, { useRef } from "react";
-import { useMapState } from "../context/MapStateContext";
+import { useMapStore } from "../stores/mapStore";
 import { Star, Trash2 } from "lucide-react";
 import { useSwipeToDelete } from "../hooks/useSwipeToDelete";
 
@@ -14,13 +14,15 @@ interface MobilePlannedItemProps {
 }
 
 export function MobilePlannedItem({ item, category }: MobilePlannedItemProps) {
-  const { dispatch } = useMapState();
+  const removePlace = useMapStore((state) => state.removePlace);
+  const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
+  const setMobileTab = useMapStore((state) => state.setMobileTab);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Swipe-to-delete hook
   const { swipeOffset, isDeleteRevealed, bind, handleDelete } = useSwipeToDelete({
     onDelete: () => {
-      dispatch({ type: "REMOVE_PLACE", payload: item.id });
+      removePlace(item.id);
     },
     deleteThreshold: 80, // Reveal delete button after 80px swipe
   });
@@ -31,8 +33,8 @@ export function MobilePlannedItem({ item, category }: MobilePlannedItemProps) {
       return;
     }
     // Pan map to location and switch to Map tab
-    dispatch({ type: "SELECT_PLACE", payload: item.id });
-    dispatch({ type: "SET_MOBILE_TAB", payload: "map" });
+    setSelectedPlace(item.id);
+    setMobileTab("map");
   };
 
   // Mock data - replace with real data structure
@@ -95,5 +97,3 @@ export function MobilePlannedItem({ item, category }: MobilePlannedItemProps) {
     </div>
   );
 }
-
-

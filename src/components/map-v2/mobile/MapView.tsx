@@ -10,7 +10,7 @@ import { PlaceMarkers } from "../map/PlaceMarkers";
 import { MapBackdrop } from "../map/MapBackdrop";
 import { FilterButton } from "./FilterButton";
 import { FilterBottomSheet } from "../filters/FilterBottomSheet";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 import { getPersistedFilters, persistFilters } from "@/lib/map-v2/filterPersistence";
 
 interface MapViewProps {
@@ -23,7 +23,9 @@ interface MapViewProps {
  * Gets data from context
  */
 function DiscoveryMarkersLayer() {
-  const { discoveryResults, filters, setExpandedCard } = useMapState();
+  const discoveryResults = useMapStore((state) => state.discoveryResults);
+  const filters = useMapStore((state) => state.filters);
+  const setExpandedCard = useMapStore((state) => state.setExpandedCard);
 
   const handleMarkerClick = (attractionId: string) => {
     setExpandedCard(attractionId);
@@ -84,7 +86,9 @@ function DiscoveryMarkersLayer() {
  * Gets data from context
  */
 function PlaceMarkersLayer() {
-  const { places, selectedPlaceId, setSelectedPlace } = useMapState();
+  const places = useMapStore((state) => state.places);
+  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
+  const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
 
   const handlePlaceClick = (place: { id: string }) => {
     setSelectedPlace(place.id);
@@ -98,26 +102,32 @@ function PlaceMarkersLayer() {
  * Gets state from context
  */
 function MapBackdropLayer() {
-  const { expandedCardPlaceId, closeCard } = useMapState();
+  const expandedCardPlaceId = useMapStore((state) => state.expandedCardPlaceId);
+  const closeCard = useMapStore((state) => state.closeCard);
 
   return <MapBackdrop isVisible={!!expandedCardPlaceId} onClick={closeCard} />;
 }
 
 export function MapView({ mapId, onMapLoad }: MapViewProps) {
-  const { filters, filterSheetOpen, setFilterSheetOpen, selectedPlaceId, dispatch } = useMapState();
+  const filters = useMapStore((state) => state.filters);
+  const filterSheetOpen = useMapStore((state) => state.filterSheetOpen);
+  const setFilterSheetOpen = useMapStore((state) => state.setFilterSheetOpen);
+  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
+  const updateFilters = useMapStore((state) => state.updateFilters);
+  const clearFilters = useMapStore((state) => state.clearFilters);
 
   // Load persisted filters when place is selected
   useEffect(() => {
     if (selectedPlaceId) {
       const persistedFilters = getPersistedFilters(selectedPlaceId);
       if (persistedFilters) {
-        dispatch({ type: "UPDATE_FILTERS", payload: persistedFilters });
+        updateFilters(persistedFilters);
       } else {
         // Reset to defaults for new place
-        dispatch({ type: "CLEAR_FILTERS" });
+        clearFilters();
       }
     }
-  }, [selectedPlaceId, dispatch]);
+  }, [selectedPlaceId, updateFilters, clearFilters]);
 
   // Save filters when they change
   useEffect(() => {
@@ -127,7 +137,7 @@ export function MapView({ mapId, onMapLoad }: MapViewProps) {
   }, [filters, selectedPlaceId]);
 
   const handleApplyFilters = (newFilters: typeof filters) => {
-    dispatch({ type: "UPDATE_FILTERS", payload: newFilters });
+    updateFilters(newFilters);
   };
 
   return (

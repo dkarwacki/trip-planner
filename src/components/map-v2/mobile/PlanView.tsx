@@ -5,13 +5,14 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import { useMapState } from "../context/MapStateContext";
+import { useMapStore } from "../stores/mapStore";
 import { MobileItineraryStats } from "./MobileItineraryStats";
 import { MobilePlanItemCardList } from "./MobilePlanItemCardList";
 import { Backpack } from "lucide-react";
 
 export function PlanView() {
-  const { planItems, dispatch } = useMapState();
+  const planItems = useMapStore((state) => state.places);
+  const setMobileTab = useMapStore((state) => state.setMobileTab);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -43,7 +44,7 @@ export function PlanView() {
         <p className="mb-8 max-w-sm text-base text-muted-foreground">Switch to Map to add places to your trip</p>
 
         <button
-          onClick={() => dispatch({ type: "SET_MOBILE_TAB", payload: "map" })}
+          onClick={() => setMobileTab("map")}
           className="rounded-lg bg-primary px-6 py-3 text-base font-medium text-primary-foreground active:opacity-90 transition-opacity min-h-[48px]"
         >
           Switch to Map

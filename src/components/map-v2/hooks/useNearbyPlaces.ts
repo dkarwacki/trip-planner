@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect } from "react";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 import { NEARBY_SEARCH_RADIUS_METERS } from "@/lib/map-v2/search-constants";
 
 interface FetchNearbyOptions {
@@ -17,7 +17,17 @@ interface FetchNearbyOptions {
 }
 
 export function useNearbyPlaces() {
-  const { state, dispatch, addSearchCenter, addDiscoveryResults } = useMapState();
+  // Selectors
+  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
+  const places = useMapStore((state) => state.places);
+  const isLoadingDiscovery = useMapStore((state) => state.isLoadingDiscovery);
+  const discoveryResults = useMapStore((state) => state.discoveryResults);
+
+  // Actions
+  const setLoadingDiscovery = useMapStore((state) => state.setLoadingDiscovery);
+  const setDiscoveryResults = useMapStore((state) => state.setDiscoveryResults);
+  const addDiscoveryResults = useMapStore((state) => state.addDiscoveryResults);
+  const addSearchCenter = useMapStore((state) => state.addSearchCenter);
 
   /**
    * Fetch nearby places for a given location
@@ -27,7 +37,7 @@ export function useNearbyPlaces() {
     async (options: FetchNearbyOptions) => {
       const { lat, lng, radius = NEARBY_SEARCH_RADIUS_METERS, append = false } = options;
 
-      dispatch({ type: "SET_LOADING_DISCOVERY", payload: true });
+      setLoadingDiscovery(true);
 
       try {
         // Parallel POST requests for attractions and restaurants
@@ -82,7 +92,7 @@ export function useNearbyPlaces() {
         if (append) {
           addDiscoveryResults(allResults);
         } else {
-          dispatch({ type: "SET_DISCOVERY_RESULTS", payload: allResults });
+          setDiscoveryResults(allResults);
         }
 
         // Add this search center to the list of searched areas
@@ -90,30 +100,29 @@ export function useNearbyPlaces() {
       } catch {
         // On error, only clear results if we're replacing (not appending)
         if (!append) {
-          dispatch({ type: "SET_DISCOVERY_RESULTS", payload: [] });
+          setDiscoveryResults([]);
         }
       } finally {
-        dispatch({ type: "SET_LOADING_DISCOVERY", payload: false });
+        setLoadingDiscovery(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch]
+    [setLoadingDiscovery, setDiscoveryResults, addDiscoveryResults, addSearchCenter]
   );
 
   /**
    * Clear discovery results
    */
   const clearResults = useCallback(() => {
-    dispatch({ type: "SET_DISCOVERY_RESULTS", payload: [] });
-  }, [dispatch]);
+    setDiscoveryResults([]);
+  }, [setDiscoveryResults]);
 
   /**
    * Refresh current results (refetch for selected place)
    */
   const refresh = useCallback(() => {
-    if (state.selectedPlaceId && state.places.length > 0) {
+    if (selectedPlaceId && places.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const selectedPlace = state.places.find((p: any) => p.id === state.selectedPlaceId);
+      const selectedPlace = places.find((p: any) => p.id === selectedPlaceId);
       if (selectedPlace?.lat !== undefined && selectedPlace?.lng !== undefined) {
         fetchNearbyPlaces({
           lat: Number(selectedPlace.lat),
@@ -121,13 +130,13 @@ export function useNearbyPlaces() {
         });
       }
     }
-  }, [state.selectedPlaceId, state.places, fetchNearbyPlaces]);
+  }, [selectedPlaceId, places, fetchNearbyPlaces]);
 
   // Auto-fetch when a place is selected
   useEffect(() => {
-    if (state.selectedPlaceId && state.places.length > 0) {
+    if (selectedPlaceId && places.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const selectedPlace = state.places.find((p: any) => p.id === state.selectedPlaceId);
+      const selectedPlace = places.find((p: any) => p.id === selectedPlaceId);
       if (selectedPlace?.lat !== undefined && selectedPlace?.lng !== undefined) {
         fetchNearbyPlaces({
           lat: Number(selectedPlace.lat),
@@ -135,11 +144,11 @@ export function useNearbyPlaces() {
         });
       }
     }
-  }, [state.selectedPlaceId, state.places, fetchNearbyPlaces]);
+  }, [selectedPlaceId, places, fetchNearbyPlaces]);
 
   return {
-    isLoading: state.isLoadingDiscovery,
-    results: state.discoveryResults,
+    isLoading: isLoadingDiscovery,
+    results: discoveryResults,
     fetchNearbyPlaces,
     clearResults,
     refresh,

@@ -11,7 +11,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
-import { useMapState } from "../context";
 import { cn } from "@/lib/common/utils";
 
 interface FloatingAIButtonProps {

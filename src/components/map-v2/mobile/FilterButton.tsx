@@ -5,11 +5,12 @@
 
 import React from "react";
 import { SlidersHorizontal } from "lucide-react";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 import { cn } from "@/lib/common/utils";
 
 export function FilterButton() {
-  const { filters, setFilterSheetOpen } = useMapState();
+  const filters = useMapStore((state) => state.filters);
+  const setFilterSheetOpen = useMapStore((state) => state.setFilterSheetOpen);
 
   // Count active filters
   const activeFilterCount = [filters.category !== "all", filters.showHighQualityOnly].filter(Boolean).length;

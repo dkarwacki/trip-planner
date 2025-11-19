@@ -16,7 +16,7 @@ import { PinModeUI } from "./PinModeUI";
 import { MapBackdrop } from "./MapBackdrop";
 import { HoverMiniCard } from "./HoverMiniCard";
 import { ExpandedPlaceCard } from "./ExpandedPlaceCard";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 import { useMapPanDetection } from "../hooks/useMapPanDetection";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
 import { useReverseGeocoding } from "../hooks/useReverseGeocoding";
@@ -60,15 +60,16 @@ export function MapCanvas({ mapId, defaultCenter = { lat: 0, lng: 0 }, defaultZo
  * Gets data from context and renders attraction/restaurant markers
  */
 function DiscoveryMarkersLayer() {
-  const {
-    discoveryResults,
-    filters,
-    hoveredMarkerId,
-    setHoveredMarker,
-    setExpandedCard,
-    setActiveMode,
-    setHighlightedPlace,
-  } = useMapState();
+  // Selectors
+  const discoveryResults = useMapStore((state) => state.discoveryResults);
+  const filters = useMapStore((state) => state.filters);
+  const hoveredMarkerId = useMapStore((state) => state.hoveredMarkerId);
+
+  // Actions
+  const setHoveredMarker = useMapStore((state) => state.setHoveredMarker);
+  const setExpandedCard = useMapStore((state) => state.setExpandedCard);
+  const setActiveMode = useMapStore((state) => state.setActiveMode);
+  const setHighlightedPlace = useMapStore((state) => state.setHighlightedPlace);
 
   const handleMarkerClick = useCallback(
     (attractionId: string) => {
@@ -146,24 +147,26 @@ function DiscoveryMarkersLayer() {
  * Separated to use context hooks
  */
 function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map) => void }) {
-  const {
-    places,
-    selectedPlaceId,
-    setSelectedPlace,
-    hoveredMarkerId,
-    setHoveredMarker,
-    expandedCardPlaceId,
-    discoveryResults,
-    addAttractionToPlace,
-    addRestaurantToPlace,
-    setExpandedCard,
-    setHighlightedPlace,
-    activeMode,
-    dispatch,
-    searchCenters,
-    addSearchCenter,
-    centerRequestTimestamp,
-  } = useMapState();
+  // Selectors
+  const places = useMapStore((state) => state.places);
+  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
+  const hoveredMarkerId = useMapStore((state) => state.hoveredMarkerId);
+  const expandedCardPlaceId = useMapStore((state) => state.expandedCardPlaceId);
+  const discoveryResults = useMapStore((state) => state.discoveryResults);
+  const activeMode = useMapStore((state) => state.activeMode);
+  const searchCenters = useMapStore((state) => state.searchCenters);
+  const centerRequestTimestamp = useMapStore((state) => state.centerRequestTimestamp);
+
+  // Actions
+  const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
+  const setHoveredMarker = useMapStore((state) => state.setHoveredMarker);
+  const setExpandedCard = useMapStore((state) => state.setExpandedCard);
+  const setHighlightedPlace = useMapStore((state) => state.setHighlightedPlace);
+  const addAttractionToPlace = useMapStore((state) => state.addAttractionToPlace);
+  const addRestaurantToPlace = useMapStore((state) => state.addRestaurantToPlace);
+  const addSearchCenter = useMapStore((state) => state.addSearchCenter);
+  const addPlace = useMapStore((state) => state.addPlace);
+  const closeCard = useMapStore((state) => state.closeCard);
   const map = useMap();
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [mapZoom, setMapZoom] = useState<number>(0);
@@ -175,11 +178,6 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [isDesktop, setIsDesktop] = useState(false);
   const hasInitializedRef = useRef(false); // Track if we've set initial search center (use ref to avoid re-renders)
-
-  // Close card handler using dispatch
-  const closeCard = useCallback(() => {
-    dispatch({ type: "CLOSE_CARD" });
-  }, [dispatch]);
 
   // Detect desktop (hover capability)
   useEffect(() => {
@@ -283,17 +281,11 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, closeCard]);
 
-  // For "search this area" button, we check if current location is far enough from ALL search centers
-  // We'll pass the searchCenters array to the pan detection hook
   // Falls back to selected place location only if no search has been performed yet
-  const selectedPlace = selectedPlaceId
-    ? places.find((p: { id: string; lat: number; lng: number }) => p.id === selectedPlaceId)
-    : null;
+  const selectedPlace = selectedPlaceId ? places.find((p) => p.id === selectedPlaceId) : null;
 
-  const fallbackLocation = selectedPlace ? { lat: selectedPlace.lat, lng: selectedPlace.lng } : null;
+  const fallbackLocation = selectedPlace ? { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) } : null;
 
-  // Center map on selected place when centerRequestTimestamp changes
-  // This ensures clicking on the same place again will still trigger centering
   useEffect(() => {
     if (map && selectedPlace && centerRequestTimestamp) {
       const lat = Number(selectedPlace.lat);
@@ -407,9 +399,9 @@ function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map)
   // Draft handlers
   const handleConfirmDraft = useCallback(() => {
     if (!draftPlace) return;
-    dispatch({ type: "ADD_PLACE", payload: draftPlace.place });
+    addPlace(draftPlace.place);
     setDraftPlace(null);
-  }, [draftPlace, dispatch]);
+  }, [draftPlace, addPlace]);
 
   const handleAdjustDraft = useCallback(() => {
     setIsAdjustingLocation(true);

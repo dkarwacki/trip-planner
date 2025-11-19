@@ -6,7 +6,7 @@
 import React, { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useMapState } from "../context/MapStateContext";
+import { useMapStore } from "../stores/mapStore";
 import { GripVertical, ChevronRight, ChevronDown, Search } from "lucide-react";
 import { MobilePlannedItemList } from "./MobilePlannedItemList";
 
@@ -25,7 +25,9 @@ export function MobilePlanItemCard({
   onToggleExpand,
   showDragHandle = false,
 }: MobilePlanItemCardProps) {
-  const { dispatch, centerOnPlace } = useMapState();
+  const centerOnPlace = useMapStore((state) => state.centerOnPlace);
+  const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
+  const setMobileTab = useMapStore((state) => state.setMobileTab);
 
   // Setup sortable
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -55,12 +57,12 @@ export function MobilePlanItemCard({
   const handleBannerTap = () => {
     // Pan map to place location and switch to Map tab
     centerOnPlace(place.id);
-    dispatch({ type: "SET_MOBILE_TAB", payload: "map" });
+    setMobileTab("map");
   };
 
   const handleDiscoverMore = () => {
-    dispatch({ type: "SELECT_PLACE", payload: place.id });
-    dispatch({ type: "SET_MOBILE_TAB", payload: "discover" });
+    setSelectedPlace(place.id);
+    setMobileTab("discover");
   };
 
   const style = {

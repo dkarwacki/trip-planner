@@ -4,14 +4,14 @@
  */
 
 import React, { useState } from "react";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 import { DesktopHeader } from "./DesktopHeader";
 import { DynamicSidebar } from "./DynamicSidebar";
 import { MapCanvas } from "../map/MapCanvas";
+import { FloatingPlaceSearch } from "../map/FloatingPlaceSearch";
 import { DiscoverMode } from "../modes/DiscoverMode";
 import { PlanMode } from "../modes/PlanMode";
 import { AIMode } from "../modes/AIMode";
-import { FloatingPlaceSearch } from "../map/FloatingPlaceSearch";
 
 interface DesktopLayoutProps {
   mapId?: string;
@@ -20,7 +20,14 @@ interface DesktopLayoutProps {
 }
 
 export function DesktopLayout({ mapId, tripId, conversationId }: DesktopLayoutProps) {
-  const { activeMode, sidebarCollapsed, saveStatus, dispatch, setActiveMode, toggleSidebar } = useMapState();
+  // Selectors
+  const activeMode = useMapStore((state) => state.activeMode);
+  const sidebarCollapsed = useMapStore((state) => state.sidebarCollapsed);
+  const saveStatus = useMapStore((state) => state.saveStatus);
+
+  // Actions
+  const setActiveMode = useMapStore((state) => state.setActiveMode);
+  const toggleSidebar = useMapStore((state) => state.toggleSidebar);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
   const handleModeChange = (mode: typeof activeMode) => {

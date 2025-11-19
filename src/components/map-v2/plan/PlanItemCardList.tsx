@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useMapState } from "../context/MapStateContext";
+import { useMapStore } from "../stores/mapStore";
 import PlanItemCard from "./PlanItemCard";
 
 interface PlanItemCardListProps {
@@ -14,7 +14,8 @@ interface PlanItemCardListProps {
 }
 
 export default function PlanItemCardList({ places }: PlanItemCardListProps) {
-  const { dispatch } = useMapState();
+  // Actions
+  const reorderPlaces = useMapStore((state) => state.reorderPlaces);
 
   // Track expanded state for each place (placeId -> boolean)
   const [expandedPlaces, setExpandedPlaces] = useState<Record<string, boolean>>(() => {
@@ -51,10 +52,7 @@ export default function PlanItemCardList({ places }: PlanItemCardListProps) {
       const oldIndex = places.findIndex((p) => (p.id || p) === active.id);
       const newIndex = places.findIndex((p) => (p.id || p) === over.id);
 
-      dispatch({
-        type: "REORDER_PLACES",
-        payload: { sourceIndex: oldIndex, destinationIndex: newIndex },
-      });
+      reorderPlaces(oldIndex, newIndex);
     }
   };
 

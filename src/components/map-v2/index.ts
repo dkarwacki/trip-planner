@@ -3,9 +3,9 @@
  */
 
 export { MapPlannerV2 } from "./MapPlannerV2";
-export { MapStateProvider, useMapState } from "./context";
+export { MapStateProvider } from "./context";
+export type { MapStateProviderProps } from "./context";
+
 export type { MapStateV2, MapAction } from "./context";
 export * from "./types";
 export * from "./hooks";
-
-

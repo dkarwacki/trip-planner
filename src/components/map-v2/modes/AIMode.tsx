@@ -5,25 +5,28 @@
 
 import React, { useEffect } from "react";
 import { AIChatPanel } from "../sidebar/ai";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 
 export function AIMode() {
-  const { state, dispatch } = useMapState();
+  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
+  const context = useMapStore((state) => state.context);
+  const setAIContext = useMapStore((state) => state.setAIContext);
+  const clearConversation = useMapStore((state) => state.clearAIConversation);
 
   // Set AI context when entering AI mode
   useEffect(() => {
-    if (state.selectedPlaceId && state.aiContext !== state.selectedPlaceId) {
-      dispatch({ type: "SET_AI_CONTEXT", payload: state.selectedPlaceId });
+    if (selectedPlaceId && context !== selectedPlaceId) {
+      setAIContext(selectedPlaceId);
     }
-  }, [state.selectedPlaceId, state.aiContext, dispatch]);
+  }, [selectedPlaceId, context, setAIContext]);
 
   // Clear conversation when switching places
   useEffect(() => {
-    if (state.aiContext && state.aiContext !== state.selectedPlaceId) {
-      dispatch({ type: "CLEAR_AI_CONVERSATION" });
-      dispatch({ type: "SET_AI_CONTEXT", payload: state.selectedPlaceId });
+    if (context && context !== selectedPlaceId) {
+      clearConversation();
+      setAIContext(selectedPlaceId);
     }
-  }, [state.selectedPlaceId, state.aiContext, dispatch]);
+  }, [selectedPlaceId, context, clearConversation, setAIContext]);
 
   return <AIChatPanel />;
 }

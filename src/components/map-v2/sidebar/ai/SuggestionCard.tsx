@@ -8,13 +8,16 @@ import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark, MapPi
 import type { SuggestionCardProps } from "../../types";
 import { PriorityBadge } from "./PriorityBadge";
 import PhotoLightbox from "@/components/PhotoLightbox";
-import { useMapState } from "../../context";
+import { useMapStore } from "../../stores/mapStore";
 
 export const SuggestionCard = React.memo(
   function SuggestionCard({ suggestion, isAdded, isAdding = false, onAddClick }: SuggestionCardProps) {
     const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-    const { setExpandedCard, setHighlightedPlace } = useMapState();
+
+    // Actions
+    const setExpandedCard = useMapStore((state) => state.setExpandedCard);
+    const setHighlightedPlace = useMapStore((state) => state.setHighlightedPlace);
 
     // Truncate reasoning to 2-3 lines (~150 chars)
     const reasoningExcerpt =
@@ -61,10 +64,10 @@ export const SuggestionCard = React.memo(
 
     return (
       <>
-        <div 
+        <div
           onClick={handleCardClick}
           onKeyDown={handleCardKeyDown}
-          className={`bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all ${!isGeneralTip ? 'cursor-pointer hover:scale-[1.01]' : ''}`}
+          className={`bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all ${!isGeneralTip ? "cursor-pointer hover:scale-[1.01]" : ""}`}
           role={!isGeneralTip ? "button" : undefined}
           tabIndex={!isGeneralTip ? 0 : undefined}
           aria-label={!isGeneralTip && suggestion.placeName ? `View ${suggestion.placeName} on map` : undefined}
@@ -204,18 +207,20 @@ export const SuggestionCard = React.memo(
         </div>
 
         {/* Photo Lightbox */}
-        {suggestion.attractionData && suggestion.attractionData.photos && suggestion.attractionData.photos.length > 0 && (
-          <PhotoLightbox
-            photos={suggestion.attractionData.photos}
-            initialIndex={0}
-            isOpen={isLightboxOpen}
-            onClose={() => setIsLightboxOpen(false)}
-            placeName={suggestion.placeName || "Place"}
-            lat={suggestion.attractionData.location.lat}
-            lng={suggestion.attractionData.location.lng}
-            size="large"
-          />
-        )}
+        {suggestion.attractionData &&
+          suggestion.attractionData.photos &&
+          suggestion.attractionData.photos.length > 0 && (
+            <PhotoLightbox
+              photos={suggestion.attractionData.photos}
+              initialIndex={0}
+              isOpen={isLightboxOpen}
+              onClose={() => setIsLightboxOpen(false)}
+              placeName={suggestion.placeName || "Place"}
+              lat={suggestion.attractionData.location.lat}
+              lng={suggestion.attractionData.location.lng}
+              size="large"
+            />
+          )}
       </>
     );
   },

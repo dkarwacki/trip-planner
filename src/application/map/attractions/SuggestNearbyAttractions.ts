@@ -165,7 +165,10 @@ export const suggestNearbyAttractions = (cmd: SuggestNearbyAttractionsCommand) =
     const messages = buildInitialMessages(cmd, planContext);
 
     // Store scored results from tool calls to preserve domain scores
-    const scoredAttractions = new Map<string, { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }>();
+    const scoredAttractions = new Map<
+      string,
+      { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }
+    >();
 
     // First call: use tools to gather data (no JSON mode yet - let model choose to call tools)
     let response = yield* openai.chatCompletion({
@@ -259,7 +262,10 @@ const handleToolCallIteration = (
   response: ChatCompletionResponse,
   openai: IOpenAIClient,
   mapCoordinates: { lat: Latitude; lng: Longitude },
-  scoredAttractions: Map<string, { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }>
+  scoredAttractions: Map<
+    string,
+    { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }
+  >
 ) =>
   Effect.gen(function* () {
     if (!response.toolCalls || response.toolCalls.length === 0) {
@@ -306,7 +312,10 @@ const handleToolCallIteration = (
 
 const enrichSuggestionsWithAttractionData = (
   validated: AgentResponseDTO,
-  scoredAttractions: Map<string, { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }>
+  scoredAttractions: Map<
+    string,
+    { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }
+  >
 ): Effect.Effect<AgentResponseDTO["suggestions"], never, TextSearchCache> =>
   Effect.gen(function* () {
     const textSearchCache = yield* TextSearchCache;
@@ -358,7 +367,10 @@ const enrichSuggestionsWithAttractionData = (
 const executeToolCall = (
   toolCall: ToolCall,
   mapCoordinates: { lat: Latitude; lng: Longitude },
-  scoredAttractions: Map<string, { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }>
+  scoredAttractions: Map<
+    string,
+    { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }
+  >
 ) =>
   Effect.gen(function* () {
     try {

@@ -59,3 +59,4 @@ export function MessageSkeleton({ type = "ai", className = "" }: MessageSkeleton
 }
 
 
+

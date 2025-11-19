@@ -16,12 +16,13 @@ import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark, MapPi
 import type { SuggestionCardProps } from "../types";
 import { PriorityBadge } from "../sidebar/ai/PriorityBadge";
 import PhotoLightbox from "@/components/PhotoLightbox";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 
 export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, onAddClick }: SuggestionCardProps) {
   const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const { setExpandedCard, setHighlightedPlace } = useMapState();
+  const setExpandedCard = useMapStore((state) => state.setExpandedCard);
+  const setHighlightedPlace = useMapStore((state) => state.setHighlightedPlace);
 
   // Truncate reasoning to 2 lines on mobile (~120 chars)
   const reasoningExcerpt =
@@ -75,10 +76,10 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
 
   return (
     <>
-      <div 
+      <div
         onClick={handleCardClick}
         onKeyDown={handleCardKeyDown}
-        className={`bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-[0.99] transition-transform ${!isGeneralTip ? 'active:bg-gray-50' : ''}`}
+        className={`bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm active:scale-[0.99] transition-transform ${!isGeneralTip ? "active:bg-gray-50" : ""}`}
         role={!isGeneralTip ? "button" : undefined}
         tabIndex={!isGeneralTip ? 0 : undefined}
         aria-label={!isGeneralTip && suggestion.placeName ? `View ${suggestion.placeName} on map` : undefined}

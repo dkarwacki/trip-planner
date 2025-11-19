@@ -12,7 +12,7 @@ import { PlanView } from "./PlanView";
 import { SearchOverlay } from "./SearchOverlay";
 import { FloatingAIButton } from "./FloatingAIButton";
 import { AIChatModal } from "./AIChatModal";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 import { useAIChat } from "../hooks/useAIChat";
 
 interface MobileLayoutProps {
@@ -24,7 +24,23 @@ interface MobileLayoutProps {
 const TAB_STORAGE_KEY = "map-v2-mobile-active-tab";
 
 export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProps) {
-  const { planItems, aiChatModalOpen, setAIChatModalOpen, state, dispatch } = useMapState();
+  // Selectors
+  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
+  const places = useMapStore((state) => state.places);
+  const conversation = useMapStore((state) => state.conversation);
+  const context = useMapStore((state) => state.context);
+  const activeMobileTab = useMapStore((state) => state.activeMobileTab);
+  const bottomSheetOpen = useMapStore((state) => state.bottomSheetOpen);
+  const isLoadingAI = useMapStore((state) => state.isLoading);
+
+  // Actions
+  const addPlace = useMapStore((state) => state.addPlace);
+  const setMobileTab = useMapStore((state) => state.setMobileTab);
+  const setAIContext = useMapStore((state) => state.setAIContext);
+  const setAIChatModalOpen = useMapStore((state) => state.setAIChatModalOpen);
+  const aiChatModalOpen = useMapStore((state) => state.aiChatModalOpen);
+
+  const planItems = places;
   const [activeTab, setActiveTab] = useState<MobileTab>("map");
   const [showSearch, setShowSearch] = useState(false);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
@@ -33,10 +49,10 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
   const { sendMessage, isLoading, addSuggestionToPlan, addingPlaceIds, addedPlaceIds } = useAIChat();
 
   // Get selected place for AI context
-  const selectedPlace = state.selectedPlaceId ? state.places.find((p) => p.id === state.selectedPlaceId) : null;
+  const selectedPlace = selectedPlaceId ? places.find((p) => p.id === selectedPlaceId) : null;
 
   // Suggested prompts based on context - only show when there are no messages
-  const hasMessages = state.aiConversation.length > 0;
+  const hasMessages = conversation.length > 0;
   const suggestedPrompts =
     selectedPlace && !hasMessages
       ? ["Must-see highlights", "Best local restaurants", "Hidden gems nearby", "Family-friendly activities"]
@@ -73,7 +89,7 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
     };
 
     // Add to state
-    dispatch({ type: "ADD_PLACE", payload: newPlace });
+    addPlace(newPlace);
 
     // Switch to map tab if not already there
     if (activeTab !== "map") {
@@ -113,14 +129,14 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
 
   // Sync with global state when activeMobileTab changes (e.g., from PlanView)
   useEffect(() => {
-    if (state.activeMobileTab && state.activeMobileTab !== activeTab) {
-      setActiveTab(state.activeMobileTab);
+    if (activeMobileTab && activeMobileTab !== activeTab) {
+      setActiveTab(activeMobileTab);
     }
-  }, [state.activeMobileTab, activeTab]);
+  }, [activeMobileTab, activeTab]);
 
   const handleTabChange = (tab: MobileTab) => {
     setActiveTab(tab);
-    dispatch({ type: "SET_MOBILE_TAB", payload: tab });
+    setMobileTab(tab);
   };
 
   const handleBackClick = () => {
@@ -133,8 +149,8 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
   // AI chat handlers
   const handleOpenAIChat = () => {
     // Set AI context if place is selected
-    if (selectedPlace && state.aiContext !== selectedPlace.id) {
-      dispatch({ type: "SET_AI_CONTEXT", payload: selectedPlace.id });
+    if (selectedPlace && context !== selectedPlace.id) {
+      setAIContext(selectedPlace.id);
     }
     setAIChatModalOpen(true);
   };
@@ -160,13 +176,13 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
   const handleNavigateToMapWithAttraction = (attractionId: string, _lat: number, _lng: number) => {
     // Switch to map tab first
     setActiveTab("map");
-    dispatch({ type: "SET_MOBILE_TAB", payload: "map" });
+    setMobileTab("map");
 
     // Set the expanded card after a brief delay to ensure MapCanvas is mounted
     // This allows MapCanvas's useEffect to properly center the map
     // (reuses desktop logic from MapCanvas.tsx lines 260-296)
     setTimeout(() => {
-      dispatch({ type: "SET_EXPANDED_CARD", payload: attractionId });
+      useMapStore.getState().setExpandedCard(attractionId);
     }, 100);
   };
 
@@ -219,15 +235,15 @@ export function MobileLayout({ mapId, tripId, conversationId }: MobileLayoutProp
       {/* Floating AI Button - hidden when modal is open or bottom sheet is expanded */}
       <FloatingAIButton
         onOpenChat={handleOpenAIChat}
-        isLoading={state.isLoadingAI}
-        hidden={aiChatModalOpen || state.bottomSheetOpen}
+        isLoading={isLoadingAI}
+        hidden={aiChatModalOpen || bottomSheetOpen}
       />
 
       {/* AI Chat Modal */}
       <AIChatModal
         isOpen={aiChatModalOpen}
         onClose={handleCloseAIChat}
-        messages={state.aiConversation}
+        messages={conversation}
         isLoading={isLoading}
         onSendMessage={handleSendMessage}
         onAddSuggestion={handleAddSuggestion}

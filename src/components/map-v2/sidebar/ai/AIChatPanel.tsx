@@ -4,18 +4,22 @@
  */
 
 import React from "react";
-import { useMapState } from "../../context";
+import { useMapStore } from "../../stores/mapStore";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
 import { useAIChat } from "../../hooks/useAIChat";
 
 export function AIChatPanel() {
-  const { state, dispatch } = useMapState();
+  // Selectors
+  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
+  const places = useMapStore((state) => state.places);
+  const conversation = useMapStore((state) => state.conversation);
+
   const { sendMessage, isLoading, addSuggestionToPlan, addingPlaceIds, addedPlaceIds } = useAIChat();
 
   // Get selected place for context
-  const selectedPlace = state.selectedPlaceId ? state.places.find((p) => p.id === state.selectedPlaceId) : null;
+  const selectedPlace = selectedPlaceId ? places.find((p) => p.id === selectedPlaceId) : null;
 
   // Handle message send
   const handleSendMessage = async (message: string) => {
@@ -40,7 +44,7 @@ export function AIChatPanel() {
 
   // Suggested prompts based on context
   // Only show before the first message
-  const hasMessages = state.aiConversation.length > 0;
+  const hasMessages = conversation.length > 0;
   const suggestedPrompts =
     selectedPlace && !hasMessages
       ? ["Must-see highlights", "Best local restaurants", "Hidden gems nearby", "Family-friendly activities"]
@@ -51,7 +55,7 @@ export function AIChatPanel() {
       <ChatHeader selectedPlace={selectedPlace} />
 
       <ChatMessages
-        messages={state.aiConversation}
+        messages={conversation}
         isLoading={isLoading}
         onAddSuggestion={handleAddSuggestion}
         addedPlaceIds={addedPlaceIds}

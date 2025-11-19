@@ -5,7 +5,7 @@
 
 import React from "react";
 import PlannedItem from "./PlannedItem";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 
 interface PlannedItemListProps {
   items: any[]; // Will be typed with domain types
@@ -14,7 +14,11 @@ interface PlannedItemListProps {
 }
 
 export default function PlannedItemList({ items, category, placeId }: PlannedItemListProps) {
-  const { removeAttractionFromPlace, removeRestaurantFromPlace, setExpandedCard, setHighlightedPlace } = useMapState();
+  // Actions
+  const removeAttractionFromPlace = useMapStore((state) => state.removeAttractionFromPlace);
+  const removeRestaurantFromPlace = useMapStore((state) => state.removeRestaurantFromPlace);
+  const setExpandedCard = useMapStore((state) => state.setExpandedCard);
+  const setHighlightedPlace = useMapStore((state) => state.setHighlightedPlace);
 
   const handleRemove = (itemId: string) => {
     if (category === "attractions") {

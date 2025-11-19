@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 
 interface DiscoverHeaderProps {
   selectedPlaceId: string | null;
@@ -12,20 +12,21 @@ interface DiscoverHeaderProps {
 }
 
 export function DiscoverHeader({ selectedPlaceId, totalCount, filteredCount }: DiscoverHeaderProps) {
-  const { places, discoveryResults } = useMapState();
+  const places = useMapStore((state) => state.places);
+  const discoveryResults = useMapStore((state) => state.discoveryResults);
 
   // Look up the place name from the places array
-  const selectedPlace = selectedPlaceId ? places.find((p: any) => p.id === selectedPlaceId) : null;
+  const selectedPlace = selectedPlaceId ? places.find((p) => p.id === selectedPlaceId) : null;
   const placeName = selectedPlace?.name || selectedPlaceId || "Unknown";
 
   // Count actual attractions vs restaurants from results
-  const attractionsCount = discoveryResults.filter((item: any) => {
+  const attractionsCount = discoveryResults.filter((item) => {
     const isRestaurant = item.attraction?.types?.some((t: string) =>
       ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
     );
     return !isRestaurant;
   }).length;
-  const restaurantsCount = discoveryResults.filter((item: any) => {
+  const restaurantsCount = discoveryResults.filter((item) => {
     const isRestaurant = item.attraction?.types?.some((t: string) =>
       ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
     );

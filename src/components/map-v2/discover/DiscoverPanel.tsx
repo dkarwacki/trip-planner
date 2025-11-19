@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useLayoutEffect, useCallback, useMemo } from "react";
 import { Search } from "lucide-react";
-import { useMapState } from "../context";
+import { useMapStore } from "../stores/mapStore";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
 import { DiscoverHeader } from "./DiscoverHeader";
 import { DiscoverToolbar } from "./DiscoverToolbar";
@@ -22,15 +22,19 @@ const ScrollPreservationContext = React.createContext<{
 } | null>(null);
 
 export function DiscoverPanel() {
-  const {
-    selectedPlaceId,
-    discoveryResults,
-    viewMode,
-    filters,
-    isLoadingDiscovery,
-    dispatch,
-    places: plannedPlaces,
-  } = useMapState();
+  // Selectors
+  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
+  const discoveryResults = useMapStore((state) => state.discoveryResults);
+  const viewMode = useMapStore((state) => state.viewMode);
+  const filters = useMapStore((state) => state.filters);
+  const isLoadingDiscovery = useMapStore((state) => state.isLoadingDiscovery);
+  const plannedPlaces = useMapStore((state) => state.places);
+
+  // Actions
+  const updateFilters = useMapStore((state) => state.updateFilters);
+  const clearFilters = useMapStore((state) => state.clearFilters);
+  const setViewMode = useMapStore((state) => state.setViewMode);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollPositionRef = useRef<number>(0);
   const shouldRestoreScrollRef = useRef<boolean>(false);
@@ -44,13 +48,13 @@ export function DiscoverPanel() {
     if (selectedPlaceId) {
       const persistedFilters = getPersistedFilters(selectedPlaceId);
       if (persistedFilters) {
-        dispatch({ type: "UPDATE_FILTERS", payload: persistedFilters });
+        updateFilters(persistedFilters);
       } else {
         // Reset to defaults for new place
-        dispatch({ type: "CLEAR_FILTERS" });
+        clearFilters();
       }
     }
-  }, [selectedPlaceId, dispatch]);
+  }, [selectedPlaceId, updateFilters, clearFilters]);
 
   // Save filters when they change
   useEffect(() => {
@@ -113,7 +117,7 @@ export function DiscoverPanel() {
 
     // Category filter
     if (filters.category !== "all") {
-      results = results.filter((item: any) => {
+      results = results.filter((item) => {
         // Simple type detection based on Google Place types
         // Note: data structure has types nested under attraction object
         const isRestaurant = item.attraction?.types?.some((t: string) =>
@@ -125,14 +129,14 @@ export function DiscoverPanel() {
 
     // High quality filter
     if (filters.showHighQualityOnly) {
-      results = results.filter((item: any) => {
+      results = results.filter((item) => {
         const score = item.score || 0;
         return score >= filters.minScore * 10; // Convert 7/8/9 to 70/80/90
       });
     }
 
     // Sort results: attractions first, then restaurants, both sorted by score (descending)
-    results.sort((a: any, b: any) => {
+    results.sort((a, b) => {
       const isRestaurantA = a.attraction?.types?.some((t: string) =>
         ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
       );
@@ -156,21 +160,21 @@ export function DiscoverPanel() {
 
   const handleViewModeChange = useCallback(
     (mode: typeof viewMode) => {
-      dispatch({ type: "SET_VIEW_MODE", payload: mode });
+      setViewMode(mode);
     },
-    [dispatch]
+    [setViewMode]
   );
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<typeof filters>) => {
-      dispatch({ type: "UPDATE_FILTERS", payload: newFilters });
+      updateFilters(newFilters);
     },
-    [dispatch]
+    [updateFilters]
   );
 
   const handleClearFilters = useCallback(() => {
-    dispatch({ type: "CLEAR_FILTERS" });
-  }, [dispatch]);
+    clearFilters();
+  }, [clearFilters]);
 
   // Render appropriate view based on viewMode
   const renderContent = React.useCallback(() => {

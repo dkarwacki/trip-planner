@@ -71,3 +71,14 @@ export interface SuggestionCardProps {
   isAdding?: boolean;
   onAddClick: (placeId: string) => void;
 }
+
+export interface PlannedPlace {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  plannedAttractions?: any[];
+  plannedRestaurants?: any[];
+  photos?: any[];
+  [key: string]: any;
+}
