@@ -16,10 +16,9 @@ import type { Place } from "@/domain/common/models";
 interface MobileLayoutProps {
   mapId?: string;
   tripId?: string;
-  conversationId?: string;
 }
 
-export function MobileLayout({ mapId, conversationId }: MobileLayoutProps) {
+export function MobileLayout({ mapId }: MobileLayoutProps) {
   // Selectors
   const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
   const places = useMapStore((state) => state.places);
@@ -38,7 +37,7 @@ export function MobileLayout({ mapId, conversationId }: MobileLayoutProps) {
     handleBackClick,
     handlePlaceSelect,
     handleNavigateToMapWithAttraction,
-  } = useMobileNavigation({ conversationId });
+  } = useMobileNavigation();
 
   const {
     aiChatModalOpen,
@@ -57,12 +56,7 @@ export function MobileLayout({ mapId, conversationId }: MobileLayoutProps) {
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-gray-50">
       {/* Header */}
-      <MobileHeader
-        onSearchClick={() => setShowSearch(true)}
-        showBackButton={!!conversationId}
-        onBackClick={handleBackClick}
-        conversationId={conversationId}
-      />
+      <MobileHeader onSearchClick={() => setShowSearch(true)} showBackButton={false} onBackClick={handleBackClick} />
 
       {/* Main Content Area */}
       <main

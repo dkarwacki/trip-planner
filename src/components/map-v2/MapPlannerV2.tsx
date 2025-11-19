@@ -36,9 +36,9 @@ function MapPlannerV2Inner({ apiKey, mapId, tripId, conversationId }: MapPlanner
   return (
     <APIProvider apiKey={apiKey} libraries={["geometry", "places", "marker"]}>
       {shouldShowDesktop ? (
-        <DesktopLayout mapId={mapId} tripId={tripId} conversationId={conversationId} />
+        <DesktopLayout mapId={mapId} tripId={tripId} />
       ) : (
-        <MobileLayout mapId={mapId} tripId={tripId} conversationId={conversationId} />
+        <MobileLayout mapId={mapId} tripId={tripId} />
       )}
     </APIProvider>
   );

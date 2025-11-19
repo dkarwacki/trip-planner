@@ -4,11 +4,7 @@ import type { MobileTab } from "../MobileBottomNav";
 
 const TAB_STORAGE_KEY = "map-v2-mobile-active-tab";
 
-interface UseMobileNavigationProps {
-  conversationId?: string;
-}
-
-export function useMobileNavigation({ conversationId }: UseMobileNavigationProps) {
+export function useMobileNavigation() {
   const activeMobileTab = useMapStore((state) => state.activeMobileTab);
   const setMobileTab = useMapStore((state) => state.setMobileTab);
   const addPlace = useMapStore((state) => state.addPlace);
@@ -50,9 +46,8 @@ export function useMobileNavigation({ conversationId }: UseMobileNavigationProps
   };
 
   const handleBackClick = () => {
-    if (conversationId) {
-      window.location.assign(`/plan-v2/${conversationId}`);
-    }
+    // This function is kept for potential future use
+    // Currently not used as showBackButton is set to false
   };
 
   const handlePlaceSelect = (placeDetails: {

@@ -87,6 +87,7 @@ export function TripSelector({ children }: TripSelectorProps) {
   const markSynced = useMapStore((state) => state.markSynced);
   const setActiveMode = useMapStore((state) => state.setActiveMode);
   const requestFitBounds = useMapStore((state) => state.requestFitBounds);
+  const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
 
   // Load recent trips when popover opens
   useEffect(() => {
@@ -176,6 +177,11 @@ export function TripSelector({ children }: TripSelectorProps) {
       const places = plannedPlacesFromDAOs(placeDAOs);
       setPlaces(places);
       markSynced(places);
+
+      // Select first place if available
+      if (places.length > 0) {
+        setSelectedPlace(places[0].id);
+      }
 
       // Switch to plan tab
       setActiveMode("plan");
