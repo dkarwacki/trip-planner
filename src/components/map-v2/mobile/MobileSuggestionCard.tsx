@@ -12,11 +12,12 @@
  */
 
 import React, { useState } from "react";
-import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark, MapPin } from "lucide-react";
+import { ChevronDown, Lightbulb } from "lucide-react";
 import type { SuggestionCardProps } from "../types";
 import { PriorityBadge } from "../sidebar/ai/PriorityBadge";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { useMapStore } from "../stores/mapStore";
+import { BasePlaceCard } from "../shared/BasePlaceCard";
 
 export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, onAddClick }: SuggestionCardProps) {
   const [isReasoningExpanded, setIsReasoningExpanded] = useState(false);
@@ -71,8 +72,15 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
     }
   };
 
-  // Photo optimization: Keep img tag with native lazy loading since photoUrl is a full URL
-  const hasPhoto = !!suggestion.photoUrl;
+  // Construct place object for BasePlaceCard
+  const placeForBaseCard = {
+    id: suggestion.placeId || "",
+    name: suggestion.placeName || "",
+    location: suggestion.attractionData?.location || { lat: 0, lng: 0 },
+    photos: suggestion.photoUrl ? [{ photoReference: suggestion.photoUrl }] : [],
+    types: suggestion.type === "add_restaurant" ? ["restaurant"] : ["tourist_attraction"],
+    // Add other fields if available in suggestion
+  };
 
   return (
     <>
@@ -84,59 +92,6 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
         tabIndex={!isGeneralTip ? 0 : undefined}
         aria-label={!isGeneralTip && suggestion.placeName ? `View ${suggestion.placeName} on map` : undefined}
       >
-        {/* Photo with priority badge - taller on mobile (or tip header for general tips) */}
-        {!isGeneralTip && (
-          <div className="relative aspect-[16/10] bg-gray-100">
-            {hasPhoto ? (
-              <button
-                onClick={handlePhotoClick}
-                className="w-full h-full absolute inset-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
-                aria-label="View photo in fullscreen"
-              >
-                <img
-                  src={suggestion.photoUrl}
-                  alt={suggestion.placeName || "Place photo"}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-opacity duration-300 active:opacity-90 block"
-                />
-              </button>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                <MapPin className="w-16 h-16" />
-              </div>
-            )}
-
-            {/* Type indicator - top left */}
-            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm p-1.5 rounded-md shadow-lg">
-              {suggestion.type === "add_restaurant" ? (
-                <Utensils className="w-4 h-4 text-orange-600" aria-label="Restaurant" />
-              ) : (
-                <Landmark className="w-4 h-4 text-blue-600" aria-label="Attraction" />
-              )}
-            </div>
-
-            {/* Priority badge (right side, next to score badge horizontally) - slightly larger on mobile */}
-            <div className="absolute top-3 right-16 pointer-events-none">
-              <PriorityBadge priority={suggestion.priority} />
-            </div>
-
-            {/* Score Badge (top-right) */}
-            {suggestion.score !== null && suggestion.score > 0 && (
-              <div
-                className={`absolute top-3 right-3 px-2.5 py-1.5 rounded-md text-base font-bold shadow-lg ${
-                  suggestion.score >= 90
-                    ? "bg-green-600 text-white"
-                    : suggestion.score >= 80
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-600 text-white"
-                }`}
-              >
-                {(suggestion.score / 10).toFixed(1)}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* General tip header */}
         {isGeneralTip && (
           <div className="bg-gradient-to-r from-amber-50 to-yellow-50 px-5 py-4 flex items-center gap-3 border-b border-amber-100">
@@ -148,71 +103,61 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
           </div>
         )}
 
-        {/* Content - more padding on mobile */}
-        <div className="p-5 space-y-4">
-          {/* Name and metadata - larger text (skip for general tips) */}
-          {!isGeneralTip && (
-            <div>
-              <h4 className="text-lg font-bold text-gray-900 mb-1.5 line-clamp-1">{suggestion.placeName}</h4>
-              <div className="flex items-center gap-2 text-base text-gray-600">
-                <span className="capitalize">{suggestion.category}</span>
-              </div>
+        {!isGeneralTip ? (
+          <BasePlaceCard
+            place={placeForBaseCard}
+            score={suggestion.score || 0}
+            isAdded={isAdded}
+            isAdding={isAdding}
+            onAddClick={handleAddClick}
+            onPhotoClick={handlePhotoClick}
+            className="border-0 shadow-none rounded-none"
+            photoAspectRatio="aspect-[16/10]"
+            actionButtonLabel="Add to Plan"
+            showActions={true}
+          >
+            {/* Priority badge overlay */}
+            <div className="absolute top-3 right-16 pointer-events-none z-10">
+              <PriorityBadge priority={suggestion.priority} />
             </div>
-          )}
 
-          {/* AI reasoning - base text size for readability */}
-          <div className="text-base text-gray-700">
-            <p className={isReasoningExpanded ? "" : "line-clamp-2"}>
-              {isReasoningExpanded ? suggestion.reasoning : reasoningExcerpt}
-            </p>
+            {/* AI Reasoning Content */}
+            <div className="text-base text-gray-700 mt-2">
+              <p className={isReasoningExpanded ? "" : "line-clamp-2"}>
+                {isReasoningExpanded ? suggestion.reasoning : reasoningExcerpt}
+              </p>
 
-            {shouldShowReadMore && (
-              <button
-                onClick={toggleReasoning}
-                className="mt-2 text-blue-600 active:text-blue-700 font-medium flex items-center gap-1 text-sm min-h-[44px] -ml-2 pl-2 pr-4"
-              >
-                {isReasoningExpanded ? "Show less" : "Read more"}
-                <ChevronDown className={`h-4 w-4 transition-transform ${isReasoningExpanded ? "rotate-180" : ""}`} />
-              </button>
-            )}
-          </div>
-
-          {/* Action button - 44px height for touch (only for places, not general tips) */}
-          {!isGeneralTip && (
-            <button
-              onClick={handleAddClick}
-              disabled={isAdded || isAdding}
-              className={`
-              w-full h-11 px-4 rounded-xl font-semibold text-base
-              transition-all active:scale-[0.98] flex items-center justify-center gap-2
-              ${
-                isAdded
-                  ? "bg-green-50 text-green-700 cursor-default"
-                  : isAdding
-                    ? "bg-blue-50 text-blue-600 cursor-wait"
-                    : "bg-blue-600 text-white active:bg-blue-700 shadow-sm active:shadow"
-              }
-            `}
-            >
-              {isAdding ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Adding...
-                </>
-              ) : isAdded ? (
-                <>
-                  <Check className="h-5 w-5" />
-                  Added to Plan
-                </>
-              ) : (
-                <>
-                  <Plus className="h-5 w-5" />
-                  Add to Plan
-                </>
+              {shouldShowReadMore && (
+                <button
+                  onClick={toggleReasoning}
+                  className="mt-2 text-blue-600 active:text-blue-700 font-medium flex items-center gap-1 text-sm min-h-[44px] -ml-2 pl-2 pr-4"
+                >
+                  {isReasoningExpanded ? "Show less" : "Read more"}
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isReasoningExpanded ? "rotate-180" : ""}`} />
+                </button>
               )}
-            </button>
-          )}
-        </div>
+            </div>
+          </BasePlaceCard>
+        ) : (
+          // Content for General Tips (no BasePlaceCard)
+          <div className="p-5 space-y-4">
+            <div className="text-base text-gray-700">
+              <p className={isReasoningExpanded ? "" : "line-clamp-2"}>
+                {isReasoningExpanded ? suggestion.reasoning : reasoningExcerpt}
+              </p>
+
+              {shouldShowReadMore && (
+                <button
+                  onClick={toggleReasoning}
+                  className="mt-2 text-blue-600 active:text-blue-700 font-medium flex items-center gap-1 text-sm min-h-[44px] -ml-2 pl-2 pr-4"
+                >
+                  {isReasoningExpanded ? "Show less" : "Read more"}
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isReasoningExpanded ? "rotate-180" : ""}`} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Photo Lightbox */}

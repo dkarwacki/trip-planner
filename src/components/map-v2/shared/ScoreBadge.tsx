@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { HelpCircle } from "lucide-react";
 import { ScoreExplanation } from "./ScoreExplanation";
 
@@ -39,6 +40,8 @@ export function ScoreBadge({
 }: ScoreBadgeProps) {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const badgeRef = useRef<HTMLDivElement>(null);
 
   // Reset explanation when breakdown is hidden
   const handleBreakdownChange = (show: boolean) => {
@@ -47,6 +50,17 @@ export function ScoreBadge({
       setShowExplanation(false);
     }
   };
+
+  // Calculate tooltip position when shown
+  useEffect(() => {
+    if (showBreakdown && badgeRef.current) {
+      const rect = badgeRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        top: rect.bottom + 8, // 8px below badge
+        left: rect.left + rect.width / 2, // centered on badge
+      });
+    }
+  }, [showBreakdown]);
 
   // Determine badge color and label based on score (0-100 scale)
   const getScoreColor = (s: number) => {
@@ -69,8 +83,88 @@ export function ScoreBadge({
 
   const formatScore = (s: number) => (s / 10).toFixed(1);
 
+  const tooltipContent = showTooltip && showBreakdown && (
+    <>
+      {/* Transparent bridge to prevent tooltip from closing when moving mouse to it */}
+      <div
+        className="absolute left-0 top-full w-full h-2"
+        onMouseEnter={() => handleBreakdownChange(true)}
+        onMouseLeave={() => handleBreakdownChange(false)}
+      />
+      <div
+        className="fixed w-64 rounded-lg border border-border bg-popover p-3 text-xs text-popover-foreground shadow-lg"
+        style={{
+          top: `${tooltipPosition.top}px`,
+          left: `${tooltipPosition.left}px`,
+          transform: "translateX(-50%)",
+          zIndex: 9999,
+        }}
+        role="tooltip"
+        onMouseEnter={() => handleBreakdownChange(true)}
+        onMouseLeave={() => handleBreakdownChange(false)}
+      >
+        {showExplanation ? (
+          <ScoreExplanation isAttraction={isAttraction} />
+        ) : (
+          <>
+            <div className="mb-2 flex items-center justify-between border-b border-border pb-2">
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold">Score: {formatScore(score)}</span>
+                <button
+                  type="button"
+                  onMouseEnter={() => setShowExplanation(true)}
+                  onMouseLeave={() => setShowExplanation(false)}
+                  className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Show score calculation help"
+                >
+                  <HelpCircle className="h-[14px] w-[14px]" />
+                </button>
+              </div>
+              <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${bg} ${text}`}>{label}</span>
+            </div>
+
+            {breakdown ? (
+              <div className="space-y-1.5">
+                {/* Quality */}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Quality:</span>
+                  <span className="font-medium">
+                    {breakdown.qualityScore !== undefined ? formatScore(breakdown.qualityScore) : "N/A"}
+                  </span>
+                </div>
+
+                {/* Diversity */}
+                {breakdown.diversityScore !== undefined && isAttraction && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Diversity:</span>
+                    <span className="font-medium">{formatScore(breakdown.diversityScore)}</span>
+                  </div>
+                )}
+
+                {/* Confidence */}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Confidence:</span>
+                  <span className="font-medium">
+                    {breakdown.confidenceScore !== undefined ? formatScore(breakdown.confidenceScore) : "N/A"}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-muted-foreground">Breakdown not available</div>
+            )}
+
+            <div className="mt-2 border-t border-border pt-2 text-[10px] text-muted-foreground">
+              Hover over the ? icon for details
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div
+      ref={badgeRef}
       className={`relative inline-block ${className}`}
       onMouseEnter={() => handleBreakdownChange(true)}
       onMouseLeave={() => handleBreakdownChange(false)}
@@ -89,79 +183,8 @@ export function ScoreBadge({
         {formatScore(score)}
       </div>
 
-      {/* Tooltip (desktop only) */}
-      {showTooltip && showBreakdown && (
-        <>
-          {/* Transparent bridge to prevent tooltip from closing when moving mouse to it */}
-          <div
-            className="absolute left-0 top-full w-full h-2"
-            onMouseEnter={() => handleBreakdownChange(true)}
-            onMouseLeave={() => handleBreakdownChange(false)}
-          />
-          <div
-            className="absolute left-1/2 top-full z-[1001] mt-2 w-64 -translate-x-1/2 rounded-lg border border-border bg-popover p-3 text-xs text-popover-foreground shadow-lg"
-            role="tooltip"
-            onMouseEnter={() => handleBreakdownChange(true)}
-            onMouseLeave={() => handleBreakdownChange(false)}
-          >
-            {showExplanation ? (
-              <ScoreExplanation isAttraction={isAttraction} />
-            ) : (
-              <>
-                <div className="mb-2 flex items-center justify-between border-b border-border pb-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold">Score: {formatScore(score)}</span>
-                    <button
-                      type="button"
-                      onMouseEnter={() => setShowExplanation(true)}
-                      onMouseLeave={() => setShowExplanation(false)}
-                      className="inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      aria-label="Show score calculation help"
-                    >
-                      <HelpCircle className="h-[14px] w-[14px]" />
-                    </button>
-                  </div>
-                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${bg} ${text}`}>{label}</span>
-                </div>
-
-                {breakdown ? (
-                  <div className="space-y-1.5">
-                    {/* Quality */}
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Quality:</span>
-                      <span className="font-medium">
-                        {breakdown.qualityScore !== undefined ? formatScore(breakdown.qualityScore) : "N/A"}
-                      </span>
-                    </div>
-
-                    {/* Diversity */}
-                    {breakdown.diversityScore !== undefined && isAttraction && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Diversity:</span>
-                        <span className="font-medium">{formatScore(breakdown.diversityScore)}</span>
-                      </div>
-                    )}
-
-                    {/* Confidence */}
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Confidence:</span>
-                      <span className="font-medium">
-                        {breakdown.confidenceScore !== undefined ? formatScore(breakdown.confidenceScore) : "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-muted-foreground">Breakdown not available</div>
-                )}
-
-                <div className="mt-2 border-t border-border pt-2 text-[10px] text-muted-foreground">
-                  Hover over the ? icon for details
-                </div>
-              </>
-            )}
-          </div>
-        </>
-      )}
+      {/* Tooltip rendered via portal */}
+      {typeof document !== "undefined" && tooltipContent && createPortal(tooltipContent, document.body)}
     </div>
   );
 }

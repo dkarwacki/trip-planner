@@ -1,7 +1,5 @@
 import { Effect } from "effect";
 import { WikimediaClient } from "@/infrastructure/common/wikimedia";
-import type { PlacePhoto } from "@/domain/common/models";
-import type { WikimediaAPIError, NoWikimediaPhotosFoundError } from "@/domain/common/errors";
 
 export interface SearchWikimediaPhotosQuery {
   lat: number;
@@ -26,6 +24,3 @@ export const SearchWikimediaPhotos = (query: SearchWikimediaPhotosQuery) =>
 
     return photos;
   });
-
-
-

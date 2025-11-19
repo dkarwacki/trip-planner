@@ -5,10 +5,8 @@
 
 import React, { useState } from "react";
 import type { Attraction } from "@/domain/map/models";
-import { MapPin, Star, CheckCircle2, Utensils, Landmark, Plus, Check } from "lucide-react";
-import { LazyImage } from "../shared/LazyImage";
-import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
 import PhotoLightbox from "@/components/PhotoLightbox";
+import { BasePlaceCard } from "../shared/BasePlaceCard";
 
 interface PlaceCardProps {
   place: Attraction;
@@ -30,25 +28,6 @@ export const PlaceCard = React.memo(function PlaceCard({
   onHover,
 }: PlaceCardProps) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  
-  // Get photo reference from place photos
-  const photoReference = place.photos?.[0]?.photoReference;
-  const placeType = getPlaceTypeCategory(place.types);
-
-  // Format rating
-  const rating = place.rating || 0;
-  const totalRatings = place.userRatingsTotal || 0;
-
-  // Get category from types (simplified)
-  const category = place.types?.[0]?.replace(/_/g, " ") || "Place";
-  const priceLevel = place.priceLevel ? "💰".repeat(place.priceLevel) : "";
-
-  // Score badge color
-  const getScoreBadgeColor = (score: number) => {
-    if (score >= 90) return "bg-green-600 text-white";
-    if (score >= 80) return "bg-blue-600 text-white";
-    return "bg-gray-600 text-white";
-  };
 
   const handleMouseEnter = () => {
     onHover?.(place.id);
@@ -65,7 +44,7 @@ export const PlaceCard = React.memo(function PlaceCard({
 
   const handlePhotoClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (photoReference) {
+    if (place.photos && place.photos.length > 0) {
       setIsLightboxOpen(true);
     }
   };
@@ -78,131 +57,28 @@ export const PlaceCard = React.memo(function PlaceCard({
   };
 
   return (
-    <div
-      onClick={() => onCardClick(place.id)}
-      onKeyDown={handleCardKeyDown}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      role="button"
-      tabIndex={0}
-      aria-label={`View details for ${place.name}`}
-      className={`bg-white rounded-xl border overflow-hidden cursor-pointer shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-200 ${
-        isHighlighted
-          ? "border-blue-600 border-2 ring-2 ring-blue-200"
-          : "border-gray-200"
-      }`}
-    >
-      {/* Hero Photo */}
+    <>
       <div
-        className={`relative aspect-video bg-gray-100 ${photoReference ? "cursor-pointer" : ""}`}
-        onClick={handlePhotoClick}
+        onClick={() => onCardClick(place.id)}
+        onKeyDown={handleCardKeyDown}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        role="button"
+        tabIndex={0}
+        aria-label={`View details for ${place.name}`}
+        className={`transition-all duration-200 hover:scale-[1.01] ${
+          isHighlighted ? "ring-2 ring-blue-200 rounded-xl" : ""
+        }`}
       >
-        {photoReference ? (
-          <LazyImage
-            photoReference={photoReference}
-            alt={place.name}
-            lat={place.location.lat}
-            lng={place.location.lng}
-            placeName={place.name}
-            size="medium"
-            className={`w-full h-full object-cover ${isAdded ? "opacity-90" : ""}`}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            <MapPin className="w-12 h-12" />
-          </div>
-        )}
-
-        {/* Type indicator and Added badge - top left */}
-        <div className="absolute top-2 left-2 flex items-center gap-1.5">
-          {/* Type indicator */}
-          <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-md shadow-lg">
-            {placeType === "restaurant" ? (
-              <Utensils className="w-3.5 h-3.5 text-orange-600" aria-label="Restaurant" />
-            ) : (
-              <Landmark className="w-3.5 h-3.5 text-blue-600" aria-label="Attraction" />
-            )}
-          </div>
-
-          {/* Added Badge - next to type indicator */}
-          {isAdded && (
-            <div className="bg-green-600 text-white px-2.5 py-1 rounded-md text-xs font-semibold shadow-lg flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Added</span>
-            </div>
-          )}
-        </div>
-
-        {/* Score Badge */}
-        {score > 0 && (
-          <div
-            className={`absolute top-2 right-2 px-2 py-1 rounded-md text-sm font-bold shadow-lg ${getScoreBadgeColor(score)}`}
-          >
-            {(score / 10).toFixed(1)}
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4 space-y-2">
-        {/* Place Name */}
-        <h3 className="font-semibold text-gray-900 text-base line-clamp-1">{place.name}</h3>
-
-        {/* Meta Info */}
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="capitalize">{category}</span>
-          {priceLevel && (
-            <>
-              <span>•</span>
-              <span>{priceLevel}</span>
-            </>
-          )}
-          {place.vicinity && (
-            <>
-              <span>•</span>
-              <span className="line-clamp-1">{place.vicinity}</span>
-            </>
-          )}
-        </div>
-
-        {/* Rating */}
-        {rating > 0 && (
-          <div className="flex items-center gap-2 text-sm">
-            <div className="flex items-center gap-1 text-yellow-500">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className={`w-4 h-4 ${i < Math.floor(rating) ? "fill-current" : ""}`} />
-              ))}
-            </div>
-            <span className="text-gray-600">({totalRatings.toLocaleString()} reviews)</span>
-          </div>
-        )}
-
-        {/* Add to Plan Button */}
-        <button
-          onClick={handleAddButtonClick}
-          disabled={isAdded}
-          className={`
-            w-full py-2.5 px-4 rounded-lg font-medium text-sm
-            transition-colors flex items-center justify-center gap-2
-            ${
-              isAdded
-                ? "bg-green-50 text-green-700 cursor-default"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }
-          `}
-        >
-          {isAdded ? (
-            <>
-              <Check className="h-4 w-4" />
-              Added to Plan
-            </>
-          ) : (
-            <>
-              <Plus className="h-4 w-4" />
-              Add to Plan
-            </>
-          )}
-        </button>
+        <BasePlaceCard
+          place={place}
+          score={score}
+          isAdded={isAdded}
+          onAddClick={handleAddButtonClick}
+          onPhotoClick={handlePhotoClick}
+          showScoreTooltip={false}
+          className={isHighlighted ? "border-blue-600 border-2" : "border-gray-200"}
+        />
       </div>
 
       {/* Photo Lightbox */}
@@ -217,6 +93,6 @@ export const PlaceCard = React.memo(function PlaceCard({
           lng={place.location.lng}
         />
       )}
-    </div>
+    </>
   );
 });

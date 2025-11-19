@@ -3,17 +3,17 @@
  * Implements Stage 3.1 of the UX implementation plan
  */
 
-import React, { useEffect, useRef, useLayoutEffect, useCallback, useMemo } from "react";
+import React, { useRef, useLayoutEffect, useCallback, useMemo } from "react";
 import { Search } from "lucide-react";
 import { useMapStore } from "../stores/mapStore";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
+import { useDiscoverFilters } from "./hooks/useDiscoverFilters";
 import { DiscoverHeader } from "./DiscoverHeader";
 import { DiscoverToolbar } from "./DiscoverToolbar";
 import { ContentHeader } from "./ContentHeader";
 import { PlaceCardGrid } from "./PlaceCardGrid";
 import { PhotoGrid } from "./PhotoGrid";
 import { PlaceList } from "./PlaceList";
-import { getPersistedFilters, persistFilters } from "@/lib/map-v2/filterPersistence";
 
 // Create a context for scroll preservation
 const ScrollPreservationContext = React.createContext<{
@@ -26,13 +26,8 @@ export function DiscoverPanel() {
   const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
   const discoveryResults = useMapStore((state) => state.discoveryResults);
   const viewMode = useMapStore((state) => state.viewMode);
-  const filters = useMapStore((state) => state.filters);
   const isLoadingDiscovery = useMapStore((state) => state.isLoadingDiscovery);
   const plannedPlaces = useMapStore((state) => state.places);
-
-  // Actions
-  const updateFilters = useMapStore((state) => state.updateFilters);
-  const clearFilters = useMapStore((state) => state.clearFilters);
   const setViewMode = useMapStore((state) => state.setViewMode);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -43,28 +38,11 @@ export function DiscoverPanel() {
   // Use the nearby places hook to automatically fetch when place is selected
   useNearbyPlaces();
 
-  // Load persisted filters when place is selected
-  useEffect(() => {
-    if (selectedPlaceId) {
-      const persistedFilters = getPersistedFilters(selectedPlaceId);
-      if (persistedFilters) {
-        updateFilters(persistedFilters);
-      } else {
-        // Reset to defaults for new place
-        clearFilters();
-      }
-    }
-  }, [selectedPlaceId, updateFilters, clearFilters]);
-
-  // Save filters when they change
-  useEffect(() => {
-    if (selectedPlaceId) {
-      persistFilters(selectedPlaceId, filters);
-    }
-  }, [filters, selectedPlaceId]);
+  // Use filters hook
+  const { filters, filteredResults, handleFilterChange, handleClearFilters } = useDiscoverFilters();
 
   // Save scroll position continuously (but not when we're restoring)
-  useEffect(() => {
+  React.useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
@@ -111,70 +89,12 @@ export function DiscoverPanel() {
     }
   }, []);
 
-  // Filter and sort results based on active filters
-  const filteredResults = useMemo(() => {
-    let results = [...discoveryResults];
-
-    // Category filter
-    if (filters.category !== "all") {
-      results = results.filter((item) => {
-        // Simple type detection based on Google Place types
-        // Note: data structure has types nested under attraction object
-        const isRestaurant = item.attraction?.types?.some((t: string) =>
-          ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-        );
-        return filters.category === "restaurants" ? isRestaurant : !isRestaurant;
-      });
-    }
-
-    // High quality filter
-    if (filters.showHighQualityOnly) {
-      results = results.filter((item) => {
-        const score = item.score || 0;
-        return score >= filters.minScore * 10; // Convert 7/8/9 to 70/80/90
-      });
-    }
-
-    // Sort results: attractions first, then restaurants, both sorted by score (descending)
-    results.sort((a, b) => {
-      const isRestaurantA = a.attraction?.types?.some((t: string) =>
-        ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-      );
-      const isRestaurantB = b.attraction?.types?.some((t: string) =>
-        ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-      );
-
-      // Group by type: attractions (false) before restaurants (true)
-      if (isRestaurantA !== isRestaurantB) {
-        return isRestaurantA ? 1 : -1;
-      }
-
-      // Within same type, sort by score (descending - highest first)
-      const scoreA = a.score || 0;
-      const scoreB = b.score || 0;
-      return scoreB - scoreA;
-    });
-
-    return results;
-  }, [discoveryResults, filters]);
-
   const handleViewModeChange = useCallback(
     (mode: typeof viewMode) => {
       setViewMode(mode);
     },
     [setViewMode]
   );
-
-  const handleFilterChange = useCallback(
-    (newFilters: Partial<typeof filters>) => {
-      updateFilters(newFilters);
-    },
-    [updateFilters]
-  );
-
-  const handleClearFilters = useCallback(() => {
-    clearFilters();
-  }, [clearFilters]);
 
   // Render appropriate view based on viewMode
   const renderContent = React.useCallback(() => {
@@ -230,15 +150,7 @@ export function DiscoverPanel() {
       default:
         return <PlaceCardGrid places={filteredResults} />;
     }
-  }, [
-    selectedPlaceId,
-    isLoadingDiscovery,
-    filteredResults,
-    viewMode,
-    handleClearFilters,
-    filters.category,
-    filters.showHighQualityOnly,
-  ]);
+  }, [selectedPlaceId, isLoadingDiscovery, filteredResults, viewMode, handleClearFilters, filters]);
 
   // Memoize content to prevent unnecessary re-renders
   const memoizedContent = useMemo(() => {
@@ -246,7 +158,7 @@ export function DiscoverPanel() {
   }, [renderContent]);
 
   // Restore scroll position when plannedPlaces changes (after adding items)
-  useEffect(() => {
+  React.useEffect(() => {
     if (shouldRestoreScrollRef.current && scrollPositionRef.current > 0) {
       const savedScroll = scrollPositionRef.current;
 

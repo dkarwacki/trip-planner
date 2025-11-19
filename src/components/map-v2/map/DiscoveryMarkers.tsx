@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useRef } from "react";
-import { useMapInstance } from "./MapCanvas";
+import { useMapInstance } from "./hooks/useMapInstance";
 import type { AttractionScore } from "@/domain/map/models";
 
 interface DiscoveryMarkersProps {
