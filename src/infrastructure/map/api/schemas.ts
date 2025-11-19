@@ -385,6 +385,14 @@ const SuggestionSchema = z
           lng: z.number(),
         }),
         photos: z.array(PhotoSchema).optional(),
+        score: z.number().optional(),
+        breakdown: z
+          .object({
+            qualityScore: z.number(),
+            diversityScore: z.number().optional(),
+            confidenceScore: z.number(),
+          })
+          .optional(),
       })
       .optional(),
     photos: z.array(PhotoSchema).optional(),

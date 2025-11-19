@@ -164,6 +164,9 @@ export const suggestNearbyAttractions = (cmd: SuggestNearbyAttractionsCommand) =
     const planContext = buildPlanContext(cmd);
     const messages = buildInitialMessages(cmd, planContext);
 
+    // Store scored results from tool calls to preserve domain scores
+    const scoredAttractions = new Map<string, { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }>();
+
     // First call: use tools to gather data (no JSON mode yet - let model choose to call tools)
     let response = yield* openai.chatCompletion({
       messages,
@@ -178,7 +181,7 @@ export const suggestNearbyAttractions = (cmd: SuggestNearbyAttractionsCommand) =
     // Process tool calls until model is ready to provide final answer
     while (response.toolCalls && response.toolCalls.length > 0 && iterations < maxToolCallIterations) {
       iterations++;
-      response = yield* handleToolCallIteration(messages, response, openai, cmd.mapCoordinates);
+      response = yield* handleToolCallIteration(messages, response, openai, cmd.mapCoordinates, scoredAttractions);
     }
 
     if (!response.content) {
@@ -186,7 +189,7 @@ export const suggestNearbyAttractions = (cmd: SuggestNearbyAttractionsCommand) =
     }
 
     const validated = yield* parseAndValidateJson(response.content, AgentResponseSchema);
-    const enrichedSuggestions = yield* enrichSuggestionsWithAttractionData(validated);
+    const enrichedSuggestions = yield* enrichSuggestionsWithAttractionData(validated, scoredAttractions);
 
     return {
       ...validated,
@@ -255,7 +258,8 @@ const handleToolCallIteration = (
   messages: ChatCompletionMessageParam[],
   response: ChatCompletionResponse,
   openai: IOpenAIClient,
-  mapCoordinates: { lat: Latitude; lng: Longitude }
+  mapCoordinates: { lat: Latitude; lng: Longitude },
+  scoredAttractions: Map<string, { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }>
 ) =>
   Effect.gen(function* () {
     if (!response.toolCalls || response.toolCalls.length === 0) {
@@ -263,7 +267,7 @@ const handleToolCallIteration = (
     }
 
     const toolResults = yield* Effect.all(
-      response.toolCalls.map((toolCall) => executeToolCall(toolCall, mapCoordinates)),
+      response.toolCalls.map((toolCall) => executeToolCall(toolCall, mapCoordinates, scoredAttractions)),
       { concurrency: 3 }
     );
 
@@ -301,7 +305,8 @@ const handleToolCallIteration = (
   });
 
 const enrichSuggestionsWithAttractionData = (
-  validated: AgentResponseDTO
+  validated: AgentResponseDTO,
+  scoredAttractions: Map<string, { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }>
 ): Effect.Effect<AgentResponseDTO["suggestions"], never, TextSearchCache> =>
   Effect.gen(function* () {
     const textSearchCache = yield* TextSearchCache;
@@ -324,12 +329,20 @@ const enrichSuggestionsWithAttractionData = (
 
             return Either.match(attraction, {
               onLeft: () => Option.none(),
-              onRight: (attractionData) =>
-                Option.some({
+              onRight: (attractionData) => {
+                // Get scored data for this attraction (matched by name)
+                const scoreData = scoredAttractions.get(attractionData.name);
+
+                return Option.some({
                   ...suggestion,
-                  attractionData,
+                  attractionData: {
+                    ...attractionData,
+                    score: scoreData?.score,
+                    breakdown: scoreData?.breakdown,
+                  },
                   photos: attractionData.photos,
-                }),
+                });
+              },
             });
           }
 
@@ -342,7 +355,11 @@ const enrichSuggestionsWithAttractionData = (
     return Array.getSomes(suggestionOptions);
   });
 
-const executeToolCall = (toolCall: ToolCall, mapCoordinates: { lat: Latitude; lng: Longitude }) =>
+const executeToolCall = (
+  toolCall: ToolCall,
+  mapCoordinates: { lat: Latitude; lng: Longitude },
+  scoredAttractions: Map<string, { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }>
+) =>
   Effect.gen(function* () {
     try {
       const args = JSON.parse(toolCall.arguments);
@@ -358,6 +375,15 @@ const executeToolCall = (toolCall: ToolCall, mapCoordinates: { lat: Latitude; ln
             radius: args.radius ?? 2000,
             limit: args.limit ?? 15,
           });
+
+          // Store scores for later enrichment
+          result.forEach((item) => {
+            scoredAttractions.set(item.attraction.name, {
+              score: item.score,
+              breakdown: item.breakdown,
+            });
+          });
+
           return JSON.stringify({ attractions: result });
         }
 
@@ -369,6 +395,15 @@ const executeToolCall = (toolCall: ToolCall, mapCoordinates: { lat: Latitude; ln
             radius: args.radius ?? 2000,
             limit: args.limit ?? 10,
           });
+
+          // Store scores for later enrichment
+          result.forEach((item) => {
+            scoredAttractions.set(item.attraction.name, {
+              score: item.score,
+              breakdown: item.breakdown,
+            });
+          });
+
           return JSON.stringify({ restaurants: result });
         }
 

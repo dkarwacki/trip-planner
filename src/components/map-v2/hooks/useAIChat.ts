@@ -188,13 +188,16 @@ export function useAIChat(): UseAIChatReturn {
           // Handle attractions and restaurants with data
           const photoReference = s.attractionData.photos?.[0]?.photoReference || s.photos?.[0]?.photoReference;
 
+          // Use domain-calculated score if available, otherwise fallback to simple rating calculation
+          const score = s.attractionData.score ?? (s.attractionData.rating || 0) * 20;
+
           return {
             id: `suggestion-${s.attractionData.id}-${Date.now()}-${index}`,
             placeId: s.attractionData.id,
             placeName: s.attractionData.name,
             priority: normalizePriority(s.priority),
             reasoning: s.reasoning,
-            score: (s.attractionData.rating || 0) * 20, // Convert to 0-100 scale
+            score: score,
             category: s.type === "add_restaurant" ? "restaurant" : "attraction",
             photoUrl: photoReference
               ? getPhotoUrl(
@@ -241,8 +244,8 @@ export function useAIChat(): UseAIChatReturn {
 
         // Transform valid suggestions to discovery results format
         // Filter out general tips (they don't have place data)
-        const validSuggestions = suggestions.filter(s => s.type !== "general_tip" && s.attractionData);
-        const discoveryItems = validSuggestions.map(s => ({
+        const validSuggestions = suggestions.filter((s) => s.type !== "general_tip" && s.attractionData);
+        const discoveryItems = validSuggestions.map((s) => ({
           attraction: {
             id: s.attractionData.id,
             name: s.attractionData.name,
@@ -254,8 +257,10 @@ export function useAIChat(): UseAIChatReturn {
             location: s.attractionData.location,
             photos: s.attractionData.photos,
           },
-          // Convert rating (0-5) to score (0-100) to match discovery results format
-          score: (s.attractionData.rating || 0) * 20,
+          // Use domain-calculated score from backend (same logic as discovery results)
+          // The backend uses the full scoring algorithm: quality (60% rating + 40% reviews) + diversity + confidence
+          score: s.attractionData.score ?? (s.attractionData.rating || 0) * 20, // Fallback to simple calc if score missing
+          breakdown: s.attractionData.breakdown,
         }));
 
         // Add AI response message with the summary

@@ -31,7 +31,8 @@ export function useNearbyPlaces() {
 
       try {
         // Parallel POST requests for attractions and restaurants
-        const [attractionsResponse, restaurantsResponse] = await Promise.all([
+        // Handle each independently so one failure doesn't block the other
+        const [attractionsResult, restaurantsResult] = await Promise.allSettled([
           fetch("/api/attractions", {
             method: "POST",
             headers: {
@@ -43,6 +44,11 @@ export function useNearbyPlaces() {
               radius,
               limit: 20,
             }),
+          }).then(async (response) => {
+            if (!response.ok) {
+              throw new Error("Failed to fetch attractions");
+            }
+            return response.json();
           }),
           fetch("/api/restaurants", {
             method: "POST",
@@ -55,23 +61,23 @@ export function useNearbyPlaces() {
               radius: Math.min(radius, 10000), // Restaurants API max radius is 10km
               limit: 20,
             }),
+          }).then(async (response) => {
+            if (!response.ok) {
+              throw new Error("Failed to fetch restaurants");
+            }
+            return response.json();
           }),
         ]);
 
-        if (!attractionsResponse.ok || !restaurantsResponse.ok) {
-          throw new Error("Failed to fetch nearby places");
-        }
+        // Extract attractions if successful
+        const attractions = attractionsResult.status === "fulfilled" ? attractionsResult.value.attractions || [] : [];
 
-        const attractionsData = await attractionsResponse.json();
-        const restaurantsData = await restaurantsResponse.json();
+        // Extract restaurants if successful
+        const restaurants = restaurantsResult.status === "fulfilled" ? restaurantsResult.value.restaurants || [] : [];
 
-        // Extract arrays from response objects
-        const attractions = attractionsData.attractions || [];
-        const restaurants = restaurantsData.restaurants || [];
-
-        // Combine results
+        // Combine results (even if one failed, we still show what we got)
         const allResults = [...attractions, ...restaurants];
-        
+
         // Either append to existing results or replace them
         if (append) {
           addDiscoveryResults(allResults);
