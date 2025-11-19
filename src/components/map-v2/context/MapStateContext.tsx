@@ -1,10 +1,13 @@
 /**
  * Map state management provider
- * Simplified wrapper - all components now use useMapStore directly
+ * Handles trip data loading and auto-save setup
  */
 
 // @refresh reset
 import React, { createContext, useEffect, type ReactNode } from "react";
+import { useMapStore } from "../stores/mapStore";
+import { useAutoSave } from "../hooks/useAutoSave";
+import { plannedPlacesFromDAOs } from "@/lib/map-v2/tripMappers";
 
 // Context type - just a flag to ensure provider presence
 interface MapStateContextValue {
@@ -23,16 +26,79 @@ export interface MapStateProviderProps {
 
 // Provider component
 export function MapStateProvider({ children, tripId, conversationId }: MapStateProviderProps) {
-  // Load initial data on mount
+  const setTripId = useMapStore((state) => state.setTripId);
+  const setTripTitle = useMapStore((state) => state.setTripTitle);
+  const setConversationId = useMapStore((state) => state.setConversationId);
+  const setPlaces = useMapStore((state) => state.setPlaces);
+  const markSynced = useMapStore((state) => state.markSynced);
+
+  // Set up auto-save
+  useAutoSave({ enabled: true });
+
+  // Load trip data on mount
   useEffect(() => {
-    // TODO: Load places from Supabase based on tripId/conversationId
-    // This will be implemented when we integrate with the backend
-    if (tripId || conversationId) {
-      // console.log("Loading data for:", { tripId, conversationId });
-      // useMapStore.getState().setLoadingPlaces(true);
-      // ... fetch and load places
+    let cancelled = false;
+
+    async function loadTripData() {
+      try {
+        let trip;
+
+        if (tripId) {
+          // Load specific trip by ID
+          const response = await fetch(`/api/trips/${tripId}`);
+          if (!response.ok) throw new Error("Failed to load trip");
+          trip = await response.json();
+        } else if (conversationId) {
+          // Load trip by conversation ID
+          const response = await fetch(`/api/trips/by-conversation/${conversationId}`);
+          if (response.ok) {
+            trip = await response.json();
+          } else if (response.status === 404) {
+            // No trip for this conversation yet, create one
+            const createResponse = await fetch("/api/trips", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                title: `Trip Plan - ${new Date().toLocaleDateString()}`,
+                conversation_id: conversationId,
+                places: [],
+              }),
+            });
+            if (!createResponse.ok) throw new Error("Failed to create trip");
+            trip = await createResponse.json();
+          } else {
+            throw new Error("Failed to load trip by conversation");
+          }
+        } else {
+          // No tripId or conversationId provided - get or create current trip
+          const response = await fetch("/api/trips/current");
+          if (!response.ok) throw new Error("Failed to load current trip");
+          trip = await response.json();
+        }
+
+        if (cancelled) return;
+
+        // Update store with loaded trip
+        setTripId(trip.id);
+        setTripTitle(trip.title);
+        setConversationId(trip.conversation_id);
+
+        // Convert PlaceDAOs to PlannedPlaces
+        const places = plannedPlacesFromDAOs(trip.places_data || []);
+        setPlaces(places);
+        markSynced(places);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Failed to load trip data:", error);
+      }
     }
-  }, [tripId, conversationId]);
+
+    loadTripData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tripId, conversationId, setTripId, setTripTitle, setConversationId, setPlaces, markSynced]);
 
   return <MapStateContext.Provider value={{ isInitialized: true }}>{children}</MapStateContext.Provider>;
 }

@@ -61,6 +61,7 @@ export function MobileLayout({ mapId, conversationId }: MobileLayoutProps) {
         onSearchClick={() => setShowSearch(true)}
         showBackButton={!!conversationId}
         onBackClick={handleBackClick}
+        conversationId={conversationId}
       />
 
       {/* Main Content Area */}

@@ -15,7 +15,7 @@ import {
   TripRepositoryLive,
   UserPersonasRepositoryLive,
 } from "@/infrastructure/plan/database";
-import { PlaceRepositoryLive, AttractionRepositoryLive } from "@/infrastructure/map/database";
+import { PlaceRepositoryLive, AttractionRepositoryLive, TripServiceLive } from "@/infrastructure/map/database";
 
 // Combined application layer with proper dependency injection
 // ConfigService is at the bottom (no dependencies)
@@ -34,9 +34,7 @@ const AttractionsWithDeps = AttractionsCacheLayer.pipe(Layer.provide(GoogleMapsW
 
 const RestaurantsWithDeps = RestaurantsCacheLayer.pipe(Layer.provide(GoogleMapsWithConfig));
 
-const PhotoCacheWithDeps = PhotoCacheLayer.pipe(
-  Layer.provide(Layer.mergeAll(ConfigServiceLive, WikimediaClientLive))
-);
+const PhotoCacheWithDeps = PhotoCacheLayer.pipe(Layer.provide(Layer.mergeAll(ConfigServiceLive, WikimediaClientLive)));
 
 const TextSearchWithDeps = TextSearchCacheLayer.pipe(Layer.provide(GoogleMapsWithConfig));
 
@@ -52,6 +50,9 @@ const PlaceRepoWithDeps = PlaceRepositoryLive.pipe(Layer.provide(SupabaseWithCon
 
 const AttractionRepoWithDeps = AttractionRepositoryLive.pipe(Layer.provide(SupabaseWithConfig));
 
+// Map services
+const TripServiceWithDeps = TripServiceLive.pipe(Layer.provide(TripRepoWithDeps));
+
 export const AppLayer = Layer.mergeAll(
   ConfigServiceLive,
   GoogleMapsWithConfig,
@@ -66,7 +67,8 @@ export const AppLayer = Layer.mergeAll(
   TripRepoWithDeps,
   UserPersonasRepoWithDeps,
   PlaceRepoWithDeps,
-  AttractionRepoWithDeps
+  AttractionRepoWithDeps,
+  TripServiceWithDeps
 );
 
 // Create runtime once at module load

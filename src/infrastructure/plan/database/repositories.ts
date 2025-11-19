@@ -191,6 +191,11 @@ export interface ITripRepository {
     tripId: string,
     places: PlaceDAO[]
   ) => Effect.Effect<void, TripNotFoundError | DatabaseError>;
+  updateTitle: (
+    userId: string,
+    tripId: string,
+    title: string
+  ) => Effect.Effect<void, TripNotFoundError | DatabaseError>;
   delete: (userId: string, tripId: string) => Effect.Effect<void, DatabaseError>;
 }
 
@@ -292,6 +297,32 @@ export const TripRepositoryLive = Layer.effect(
         }
       });
 
+    const updateTitle = (
+      userId: string,
+      tripId: string,
+      title: string
+    ): Effect.Effect<void, TripNotFoundError | DatabaseError> =>
+      Effect.gen(function* () {
+        const { error, count } = yield* Effect.promise(() =>
+          supabase.client
+            .from("trips")
+            .update({
+              title,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", userId)
+            .eq("id", tripId)
+        );
+
+        if (error) {
+          return yield* Effect.fail(new DatabaseError("updateTitle", error.message, error));
+        }
+
+        if (count === 0) {
+          return yield* Effect.fail(new TripNotFoundError(userId, tripId));
+        }
+      });
+
     const deleteTrip = (userId: string, tripId: string): Effect.Effect<void, DatabaseError> =>
       Effect.gen(function* () {
         const { error } = yield* Effect.promise(() =>
@@ -309,6 +340,7 @@ export const TripRepositoryLive = Layer.effect(
       findByConversationId,
       create,
       updatePlaces,
+      updateTitle,
       delete: deleteTrip,
     };
   })

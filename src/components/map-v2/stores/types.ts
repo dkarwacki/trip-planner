@@ -31,6 +31,14 @@ export interface PlanState {
   places: PlannedPlace[];
   selectedPlaceId: string | null;
   isLoadingPlaces: boolean;
+
+  // Trip sync state
+  tripId: string | null;
+  tripTitle: string | null;
+  conversationId: string | null;
+  isDirty: boolean;
+  lastSyncedPlaces: PlannedPlace[];
+  syncError: Error | null;
 }
 
 export interface MapState {
@@ -105,6 +113,15 @@ export interface PlanActions {
 
   // Derived selectors
   getPlannedAttractionIds: () => Set<string>;
+
+  // Trip sync actions
+  setTripId: (tripId: string | null) => void;
+  setTripTitle: (title: string | null) => void;
+  setConversationId: (conversationId: string | null) => void;
+  setDirty: (isDirty: boolean) => void;
+  setSyncError: (error: Error | null) => void;
+  markSynced: (places: PlannedPlace[]) => void;
+  triggerSync: () => void;
 }
 
 export interface MapActions {

@@ -1,5 +1,6 @@
 import type { StateCreator } from "zustand";
-import type { MapStore, PlanState, PlanActions, PlannedPlace } from "../types";
+import type { MapStore, PlanState, PlanActions } from "../types";
+import type { PlannedPlace } from "../../types";
 
 export const createPlanSlice: StateCreator<
   MapStore,
@@ -12,6 +13,14 @@ export const createPlanSlice: StateCreator<
   selectedPlaceId: null,
   isLoadingPlaces: false,
 
+  // Trip sync state
+  tripId: null,
+  tripTitle: null,
+  conversationId: null,
+  isDirty: false,
+  lastSyncedPlaces: [],
+  syncError: null,
+
   // Actions
   setPlaces: (places) => set({ places }),
 
@@ -20,11 +29,13 @@ export const createPlanSlice: StateCreator<
       places: [...state.places, place],
       selectedPlaceId: place.id,
       centerRequestTimestamp: Date.now(),
+      isDirty: true,
     })),
 
   removePlace: (placeId) =>
     set((state) => ({
       places: state.places.filter((p) => p.id !== placeId),
+      isDirty: true,
     })),
 
   reorderPlaces: (sourceIndex, destIndex) =>
@@ -32,7 +43,7 @@ export const createPlanSlice: StateCreator<
       const newPlaces = Array.from(state.places);
       const [removed] = newPlaces.splice(sourceIndex, 1);
       newPlaces.splice(destIndex, 0, removed);
-      return { places: newPlaces };
+      return { places: newPlaces, isDirty: true };
     }),
 
   addAttractionToPlace: (placeId, attraction) =>
@@ -46,6 +57,7 @@ export const createPlanSlice: StateCreator<
         }
         return place;
       }),
+      isDirty: true,
     })),
 
   addRestaurantToPlace: (placeId, restaurant) =>
@@ -59,6 +71,7 @@ export const createPlanSlice: StateCreator<
         }
         return place;
       }),
+      isDirty: true,
     })),
 
   removeAttractionFromPlace: (placeId, attractionId) =>
@@ -67,11 +80,13 @@ export const createPlanSlice: StateCreator<
         if (place.id === placeId) {
           return {
             ...place,
-            plannedAttractions: (place.plannedAttractions || []).filter((a) => a.id !== attractionId),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            plannedAttractions: (place.plannedAttractions || []).filter((a: any) => a.id !== attractionId),
           };
         }
         return place;
       }),
+      isDirty: true,
     })),
 
   removeRestaurantFromPlace: (placeId, restaurantId) =>
@@ -80,11 +95,13 @@ export const createPlanSlice: StateCreator<
         if (place.id === placeId) {
           return {
             ...place,
-            plannedRestaurants: (place.plannedRestaurants || []).filter((r) => r.id !== restaurantId),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            plannedRestaurants: (place.plannedRestaurants || []).filter((r: any) => r.id !== restaurantId),
           };
         }
         return place;
       }),
+      isDirty: true,
     })),
 
   setSelectedPlace: (id) =>
@@ -96,6 +113,7 @@ export const createPlanSlice: StateCreator<
   getSelectedPlace: () => {
     const state = get();
     if (!state.selectedPlaceId) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (state.discoveryResults.find((p: any) => p.id === state.selectedPlaceId) ||
       state.places.find((p) => p.id === state.selectedPlaceId) ||
       null) as PlannedPlace | null;
@@ -111,9 +129,35 @@ export const createPlanSlice: StateCreator<
     const state = get();
     const ids = new Set<string>();
     state.places.forEach((p) => {
-      p.plannedAttractions?.forEach((a) => ids.add(a.id));
-      p.plannedRestaurants?.forEach((r) => ids.add(r.id));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      p.plannedAttractions?.forEach((a: any) => ids.add(a.id));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      p.plannedRestaurants?.forEach((r: any) => ids.add(r.id));
     });
     return ids;
+  },
+
+  // Trip sync actions
+  setTripId: (tripId) => set({ tripId }),
+
+  setTripTitle: (tripTitle) => set({ tripTitle }),
+
+  setConversationId: (conversationId) => set({ conversationId }),
+
+  setDirty: (isDirty) => set({ isDirty }),
+
+  setSyncError: (syncError) => set({ syncError }),
+
+  markSynced: (places) =>
+    set({
+      lastSyncedPlaces: places,
+      isDirty: false,
+      syncError: null,
+    }),
+
+  triggerSync: () => {
+    // This will be called by the auto-save hook
+    // The actual sync logic is handled by the hook
+    set({ isDirty: true });
   },
 });

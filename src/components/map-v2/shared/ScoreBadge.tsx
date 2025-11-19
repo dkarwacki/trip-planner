@@ -42,13 +42,34 @@ export function ScoreBadge({
   const [showExplanation, setShowExplanation] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const badgeRef = useRef<HTMLDivElement>(null);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Reset explanation when breakdown is hidden
-  const handleBreakdownChange = (show: boolean) => {
-    setShowBreakdown(show);
-    if (!show) {
-      setShowExplanation(false);
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Show tooltip immediately, hide with delay
+  const handleShow = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
     }
+    setShowBreakdown(true);
+  };
+
+  const handleHide = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowBreakdown(false);
+      setShowExplanation(false);
+    }, 300);
   };
 
   // Calculate tooltip position when shown
@@ -86,11 +107,7 @@ export function ScoreBadge({
   const tooltipContent = showTooltip && showBreakdown && (
     <>
       {/* Transparent bridge to prevent tooltip from closing when moving mouse to it */}
-      <div
-        className="absolute left-0 top-full w-full h-2"
-        onMouseEnter={() => handleBreakdownChange(true)}
-        onMouseLeave={() => handleBreakdownChange(false)}
-      />
+      <div className="absolute left-0 top-full w-full h-2" onMouseEnter={handleShow} onMouseLeave={handleHide} />
       <div
         className="fixed w-64 rounded-lg border border-border bg-popover p-3 text-xs text-popover-foreground shadow-lg"
         style={{
@@ -100,8 +117,8 @@ export function ScoreBadge({
           zIndex: 9999,
         }}
         role="tooltip"
-        onMouseEnter={() => handleBreakdownChange(true)}
-        onMouseLeave={() => handleBreakdownChange(false)}
+        onMouseEnter={handleShow}
+        onMouseLeave={handleHide}
       >
         {showExplanation ? (
           <ScoreExplanation isAttraction={isAttraction} />
@@ -166,8 +183,8 @@ export function ScoreBadge({
     <div
       ref={badgeRef}
       className={`relative inline-block ${className}`}
-      onMouseEnter={() => handleBreakdownChange(true)}
-      onMouseLeave={() => handleBreakdownChange(false)}
+      onMouseEnter={handleShow}
+      onMouseLeave={handleHide}
     >
       {/* Badge */}
       <div

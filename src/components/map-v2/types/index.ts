@@ -77,8 +77,8 @@ export interface PlannedPlace {
   name: string;
   lat: number;
   lng: number;
-  plannedAttractions?: any[];
-  plannedRestaurants?: any[];
-  photos?: any[];
-  [key: string]: any;
+  plannedAttractions?: unknown[];
+  plannedRestaurants?: unknown[];
+  photos?: unknown[];
+  [key: string]: unknown;
 }

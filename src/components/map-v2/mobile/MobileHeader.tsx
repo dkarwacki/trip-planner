@@ -4,8 +4,10 @@
  */
 
 import React from "react";
-import { Search, ArrowLeft, Menu } from "lucide-react";
+import { Search, ArrowLeft, Menu, Clock, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/common/utils";
+import { TripSelector } from "../shared/TripSelector";
+import { Button } from "@/components/ui/button";
 
 interface MobileHeaderProps {
   onSearchClick: () => void;
@@ -13,6 +15,7 @@ interface MobileHeaderProps {
   showBackButton?: boolean;
   onBackClick?: () => void;
   backLabel?: string;
+  conversationId?: string;
 }
 
 export function MobileHeader({
@@ -21,6 +24,7 @@ export function MobileHeader({
   showBackButton = false,
   onBackClick,
   backLabel = "Back to Planning",
+  conversationId,
 }: MobileHeaderProps) {
   return (
     <header className="fixed left-0 right-0 top-0 z-50 h-12 border-b border-gray-200 bg-white">
@@ -54,8 +58,36 @@ export function MobileHeader({
           <span className="text-sm font-medium">Search</span>
         </button>
 
-        {/* Right side - Back button or empty */}
-        <div className="flex items-center">
+        {/* Right side - Actions */}
+        <div className="flex items-center gap-1">
+          {/* Trip Selector */}
+          <TripSelector>
+            <button
+              className={cn(
+                "rounded-lg p-2 text-gray-700 transition-colors",
+                "hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              )}
+              aria-label="View trips"
+            >
+              <Clock className="h-5 w-5" />
+            </button>
+          </TripSelector>
+
+          {/* Conversation Link */}
+          {conversationId && (
+            <button
+              onClick={() => (window.location.href = `/plan-v2?conversationId=${conversationId}`)}
+              className={cn(
+                "rounded-lg p-2 text-gray-700 transition-colors",
+                "hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              )}
+              aria-label="Back to chat"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </button>
+          )}
+
+          {/* Back Button (if shown) */}
           {showBackButton && onBackClick && (
             <button
               onClick={onBackClick}
