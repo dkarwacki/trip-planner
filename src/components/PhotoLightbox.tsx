@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Dialog, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LazyImage } from "@/components/map-v2/shared/LazyImage";
 import type { PlacePhoto } from "@/domain/common/models";
 import { cn } from "@/lib/common/utils";
@@ -51,7 +51,7 @@ export default function PhotoLightbox({
 
   if (!isOpen) return null;
 
-  const dialogSizeClass = size === "large" ? "max-w-[98vw] md:max-w-[90vw]" : "max-w-[95vw]";
+  const dialogSizeClass = size === "large" ? "max-w-[75vw]" : "max-w-[75vw]";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -65,23 +65,16 @@ export default function PhotoLightbox({
         <DialogPrimitive.Content
           className={cn(
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed top-[50%] left-[50%] z-[200] w-full translate-x-[-50%] translate-y-[-50%] shadow-lg duration-200",
-            `${dialogSizeClass} max-h-[95vh] p-0 overflow-hidden bg-black/95 border-0`
+            `${dialogSizeClass} max-h-[75vh] p-0 overflow-hidden bg-black/95 border-0 rounded-2xl`
           )}
           onKeyDown={handleKeyDown}
         >
           <DialogTitle className="sr-only">
             {placeName} - Photo {currentIndex + 1} of {photos.length}
           </DialogTitle>
-          {/* Close button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white"
-            aria-label="Close photo viewer"
-          >
-            <X className="h-5 w-5" />
-          </Button>
+          <DialogDescription className="sr-only">
+            View full-size photo. Use arrow keys to navigate between photos or click outside to close.
+          </DialogDescription>
 
           {/* Photo counter - only show when multiple photos */}
           {photos.length > 1 && (
@@ -91,7 +84,7 @@ export default function PhotoLightbox({
           )}
 
           {/* Image - full viewport height minus padding */}
-          <div className="w-full h-[95vh] flex items-center justify-center p-4">
+          <div className="w-full h-[75vh] flex items-center justify-center py-8">
             <LazyImage
               key={`${photos[currentIndex].photoReference}-${currentIndex}`}
               photoReference={photos[currentIndex].photoReference}
@@ -100,7 +93,7 @@ export default function PhotoLightbox({
               lng={lng}
               placeName={placeName}
               size="large"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
               eager
             />
           </div>
