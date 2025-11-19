@@ -12,6 +12,7 @@ export const createMapSlice: StateCreator<
   expandedCardPlaceId: null,
   searchCenters: [],
   centerRequestTimestamp: 0,
+  shouldFitBounds: false,
 
   // Actions
   setHoveredMarker: (id) => set({ hoveredMarkerId: id }),
@@ -34,4 +35,8 @@ export const createMapSlice: StateCreator<
     })),
 
   clearSearchCenters: () => set({ searchCenters: [] }),
+
+  requestFitBounds: () => set({ shouldFitBounds: true }),
+  
+  clearFitBoundsRequest: () => set({ shouldFitBounds: false }),
 });

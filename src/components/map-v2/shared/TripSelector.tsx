@@ -28,6 +28,51 @@ interface TripSelectorProps {
   children: React.ReactNode;
 }
 
+// Type for the API response format (TripDetailDTO)
+interface TripDetailPlace {
+  place: {
+    id: string;
+    name: string;
+    formatted_address?: string;
+    latitude: number;
+    longitude: number;
+    photos?: unknown[];
+  };
+  attractions: {
+    id: string;
+    google_place_id: string;
+    name: string;
+    rating: number | null;
+    user_ratings_total: number | null;
+    types: string[];
+    vicinity: string;
+    price_level: number | null;
+    latitude: number;
+    longitude: number;
+    photos?: unknown[];
+    editorial_summary?: string;
+    quality_score: number | null;
+    diversity_score?: number | null;
+    confidence_score: number | null;
+  }[];
+  restaurants: {
+    id: string;
+    google_place_id: string;
+    name: string;
+    rating: number | null;
+    user_ratings_total: number | null;
+    types: string[];
+    vicinity: string;
+    price_level: number | null;
+    latitude: number;
+    longitude: number;
+    photos?: unknown[];
+    editorial_summary?: string;
+    quality_score: number | null;
+    confidence_score: number | null;
+  }[];
+}
+
 export function TripSelector({ children }: TripSelectorProps) {
   const [open, setOpen] = useState(false);
   const [trips, setTrips] = useState<TripSummary[]>([]);
@@ -40,6 +85,8 @@ export function TripSelector({ children }: TripSelectorProps) {
   const setConversationId = useMapStore((state) => state.setConversationId);
   const setPlaces = useMapStore((state) => state.setPlaces);
   const markSynced = useMapStore((state) => state.markSynced);
+  const setActiveMode = useMapStore((state) => state.setActiveMode);
+  const requestFitBounds = useMapStore((state) => state.requestFitBounds);
 
   // Load recent trips when popover opens
   useEffect(() => {
@@ -78,10 +125,63 @@ export function TripSelector({ children }: TripSelectorProps) {
       setTripTitle(fullTrip.title);
       setConversationId(fullTrip.conversation_id);
 
+      // Convert TripDetailDTO format to PlaceDAO[] format
+      const placeDAOs = (fullTrip.places || []).map((item: TripDetailPlace) => ({
+        id: item.place.id,
+        name: item.place.name,
+        address: item.place.formatted_address,
+        lat: item.place.latitude,
+        lng: item.place.longitude,
+        plannedAttractions: item.attractions.map((a) => ({
+          id: a.id,
+          googlePlaceId: a.google_place_id,
+          name: a.name,
+          rating: a.rating,
+          userRatingsTotal: a.user_ratings_total,
+          types: a.types,
+          vicinity: a.vicinity,
+          priceLevel: a.price_level,
+          location: {
+            lat: a.latitude,
+            lng: a.longitude,
+          },
+          photos: a.photos,
+          editorialSummary: a.editorial_summary,
+          qualityScore: a.quality_score,
+          diversityScore: a.diversity_score,
+          confidenceScore: a.confidence_score,
+        })),
+        plannedRestaurants: item.restaurants.map((r) => ({
+          id: r.id,
+          googlePlaceId: r.google_place_id,
+          name: r.name,
+          rating: r.rating,
+          userRatingsTotal: r.user_ratings_total,
+          types: r.types,
+          vicinity: r.vicinity,
+          priceLevel: r.price_level,
+          location: {
+            lat: r.latitude,
+            lng: r.longitude,
+          },
+          photos: r.photos,
+          editorialSummary: r.editorial_summary,
+          qualityScore: r.quality_score,
+          confidenceScore: r.confidence_score,
+        })),
+        photos: item.place.photos,
+      }));
+
       // Convert PlaceDAOs to PlannedPlaces and set them
-      const places = plannedPlacesFromDAOs(fullTrip.places || []);
+      const places = plannedPlacesFromDAOs(placeDAOs);
       setPlaces(places);
       markSynced(places);
+
+      // Switch to plan tab
+      setActiveMode("plan");
+
+      // Request map to fit bounds to show all places (or reset to world view if empty)
+      requestFitBounds();
 
       setOpen(false);
     } catch (error) {
@@ -117,6 +217,12 @@ export function TripSelector({ children }: TripSelectorProps) {
       setConversationId(null);
       setPlaces([]);
       markSynced([]);
+
+      // Switch to plan tab
+      setActiveMode("plan");
+
+      // Reset map to world view (no places)
+      requestFitBounds();
     } catch (error) {
       console.error("Failed to create new trip:", error);
     } finally {
@@ -154,6 +260,12 @@ export function TripSelector({ children }: TripSelectorProps) {
           setConversationId(null);
           setPlaces([]);
           markSynced([]);
+
+          // Switch to plan tab
+          setActiveMode("plan");
+
+          // Reset map to world view (no places)
+          requestFitBounds();
         }
       }
 

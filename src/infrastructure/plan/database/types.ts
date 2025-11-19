@@ -75,6 +75,7 @@ export interface AttractionDAO {
 export interface PlaceDAO {
   id: string;
   name: string;
+  address?: string;
   lat: number;
   lng: number;
   plannedAttractions: AttractionDAO[];

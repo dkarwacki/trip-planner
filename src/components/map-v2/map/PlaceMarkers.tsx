@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useMapInstance } from "./hooks/useMapInstance";
+import { useMapStore } from "../stores/mapStore";
 import type { PlannedPlace } from "../types";
 
 interface PlaceMarkersProps {
@@ -22,6 +23,8 @@ interface MarkerData {
 
 export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMarkersProps) {
   const { map, markerLibrary, isReady } = useMapInstance();
+  const shouldFitBounds = useMapStore((state) => state.shouldFitBounds);
+  const clearFitBoundsRequest = useMapStore((state) => state.clearFitBoundsRequest);
   const markersRef = useRef<Map<string, MarkerData>>(new Map());
   const previousPlacesRef = useRef<PlannedPlace[]>([]);
   const hasFitBoundsRef = useRef(false);
@@ -142,9 +145,9 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
     });
 
     // Fit bounds only on initial load or when places change significantly
-    const shouldFitBounds = !hasFitBoundsRef.current || removedPlaceIds.length > 0 || addedPlaces.length > 0;
+    const shouldDoFitBounds = !hasFitBoundsRef.current || removedPlaceIds.length > 0 || addedPlaces.length > 0;
 
-    if (shouldFitBounds && places.length > 0) {
+    if (shouldDoFitBounds && places.length > 0) {
       if (places.length > 1) {
         const bounds = new google.maps.LatLngBounds();
         places.forEach((place) => {
@@ -182,6 +185,40 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
     createMarkerElement,
     updateMarkerVisualState,
   ]);
+
+  // Handle explicit fit bounds requests (e.g., when switching trips)
+  useEffect(() => {
+    if (!map || !shouldFitBounds) return;
+
+    if (places.length > 1) {
+      const bounds = new google.maps.LatLngBounds();
+      places.forEach((place) => {
+        const lat = Number(place.lat);
+        const lng = Number(place.lng);
+        if (isFinite(lat) && isFinite(lng)) {
+          bounds.extend({ lat, lng });
+        }
+      });
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, { top: 80, right: 80, bottom: 80, left: 400 });
+      }
+    } else if (places.length === 1) {
+      const place = places[0];
+      const lat = Number(place.lat);
+      const lng = Number(place.lng);
+      if (isFinite(lat) && isFinite(lng)) {
+        map.panTo({ lat, lng });
+        map.setZoom(14);
+      }
+    } else {
+      // No places - reset to world view
+      map.setCenter({ lat: 0, lng: 0 });
+      map.setZoom(2);
+    }
+
+    // Reset the flag after handling
+    clearFitBoundsRequest();
+  }, [map, shouldFitBounds, places, clearFitBoundsRequest]);
 
   // Cleanup on unmount
   useEffect(() => {

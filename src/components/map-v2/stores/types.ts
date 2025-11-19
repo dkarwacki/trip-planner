@@ -46,6 +46,7 @@ export interface MapState {
   expandedCardPlaceId: string | null;
   searchCenters: { lat: number; lng: number }[];
   centerRequestTimestamp: number;
+  shouldFitBounds: boolean;
 }
 
 export interface AIState {
@@ -130,6 +131,8 @@ export interface MapActions {
   closeCard: () => void;
   addSearchCenter: (center: { lat: number; lng: number }) => void;
   clearSearchCenters: () => void;
+  requestFitBounds: () => void;
+  clearFitBoundsRequest: () => void;
 }
 
 export interface AIActions {

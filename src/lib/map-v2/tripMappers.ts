@@ -89,6 +89,7 @@ export function plannedPlaceToDAO(place: PlannedPlace): PlaceDAO {
   return {
     id: place.id,
     name: place.name,
+    address: (place as any).address,
     lat: place.lat,
     lng: place.lng,
     plannedAttractions: (place.plannedAttractions || []).map(attractionToDAO),
@@ -100,7 +101,8 @@ export function plannedPlaceToDAO(place: PlannedPlace): PlaceDAO {
 export function plannedPlaceFromDAO(dao: PlaceDAO): PlannedPlace {
   return {
     id: dao.id,
-    name: dao.name,
+    name: dao.name || "",
+    address: dao.address,
     lat: dao.lat,
     lng: dao.lng,
     plannedAttractions: dao.plannedAttractions?.map(attractionFromDAO) || [],
