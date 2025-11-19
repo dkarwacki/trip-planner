@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { SaveStatusIndicator } from "./SaveStatusIndicator";
+import { PlanHeader } from "./PlanHeader";
 import { PersonaSelector } from "../personas/PersonaSelector";
 import { ChatInterface } from "../chat/ChatInterface";
 import { ItineraryPanel } from "../itinerary/ItineraryPanel";
 import { ConversationLibraryPanel } from "../library/ConversationLibraryPanel";
 import { SaveConversationDialog } from "../library/SaveConversationDialog";
-import { DeleteConversationDialog } from "../library/DeleteConversationDialog";
 import { usePersonas } from "../hooks/usePersonas";
 import { useChatMessages } from "../hooks/useChatMessages";
 import { useItinerary } from "../hooks/useItinerary";
@@ -30,7 +29,7 @@ import type { Place } from "@/domain/common/models";
  * - Left sidebar: Conversation Library (collapsible)
  * - Center: Chat interface with persona selector at top
  * - Right sidebar: Itinerary panel (collapsible)
- * - Top: Save status indicator
+ * - Top: PlanHeader
  */
 export function DesktopLayout({ conversationId }: LayoutProps) {
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
@@ -38,9 +37,7 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
 
   // Dialog state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [pendingConversationId, setPendingConversationId] = useState<ConversationId | null>(null);
-  const [conversationToDelete, setConversationToDelete] = useState<{ id: ConversationId; title: string } | null>(null);
 
   // Track conversation creation to prevent auto-save race
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
@@ -336,33 +333,21 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
     }
   };
 
-  const handleDeleteConversation = (id: ConversationId) => {
-    const conv = conversations.find((c) => c.id === id);
-    if (conv) {
-      setConversationToDelete({ id, title: conv.title });
-      setShowDeleteDialog(true);
-    }
-  };
+  const handleDeleteConversation = async (id: ConversationId) => {
+    try {
+      await deleteConversation(id);
 
-  const confirmDelete = async () => {
-    if (conversationToDelete) {
-      try {
-        await deleteConversation(conversationToDelete.id);
-        setShowDeleteDialog(false);
-        setConversationToDelete(null);
+      // If deleted conversation was active, start fresh
+      if (id === activeConversationId) {
+        clearMessages();
+        clearItinerary();
+        setActiveConversationId(undefined);
 
-        // If deleted conversation was active, start fresh
-        if (conversationToDelete.id === activeConversationId) {
-          clearMessages();
-          clearItinerary();
-          setActiveConversationId(undefined);
-
-          // Update URL to remove conversation ID
-          window.history.pushState({}, "", "/plan-v2");
-        }
-      } catch (error) {
-        console.error("Failed to delete conversation:", error);
+        // Update URL to remove conversation ID
+        window.history.pushState({}, "", "/plan-v2");
       }
+    } catch (error) {
+      console.error("Failed to delete conversation:", error);
     }
   };
 
@@ -409,19 +394,18 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-screen flex-col bg-gray-50">
       {/* Header with save status */}
-      <div className="flex h-14 items-center justify-between border-b px-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold">Trip Planner</h1>
-        </div>
-        <SaveStatusIndicator status={saveStatus} />
-      </div>
+      <PlanHeader saveStatus={saveStatus} conversationId={activeConversationId} />
 
       {/* Main content area - 3 columns */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Conversation Library */}
-        <div className={`border-r transition-all duration-300 ${isLeftCollapsed ? "w-16" : "w-80"}`}>
+        <div
+          className={`bg-white border-r shadow-sm transition-all duration-300 flex-shrink-0 ${
+            isLeftCollapsed ? "w-16" : "w-[24rem] lg:w-[28rem]"
+          }`}
+        >
           <ConversationLibraryPanel
             conversations={conversations}
             activeConversationId={activeConversationId}
@@ -457,33 +441,19 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
         </div>
 
         {/* Right Sidebar - Itinerary Panel */}
-        <div className={`border-l transition-all duration-300 ${isRightCollapsed ? "w-16" : "w-96"}`}>
-          {isRightCollapsed ? (
-            <div className="flex h-full flex-col items-center justify-between p-4">
-              <div className="text-2xl">📍</div>
-              {places.length > 0 && (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                  {places.length}
-                </span>
-              )}
-              <button
-                onClick={() => setIsRightCollapsed(!isRightCollapsed)}
-                className="mt-auto"
-                aria-label="Expand itinerary panel"
-              >
-                ←
-              </button>
-            </div>
-          ) : (
-            <ItineraryPanel
-              places={places}
-              onReorder={reorderPlaces}
-              onRemove={handleRemovePlace}
-              onExportToMap={handleExportToMap}
-              isCollapsed={isRightCollapsed}
-              onToggleCollapse={() => setIsRightCollapsed(!isRightCollapsed)}
-            />
-          )}
+        <div
+          className={`bg-white border-l shadow-sm transition-all duration-300 flex-shrink-0 ${
+            isRightCollapsed ? "w-16" : "w-[24rem] lg:w-[28rem]"
+          }`}
+        >
+          <ItineraryPanel
+            places={places}
+            onReorder={reorderPlaces}
+            onRemove={handleRemovePlace}
+            onExportToMap={handleExportToMap}
+            isCollapsed={isRightCollapsed}
+            onToggleCollapse={() => setIsRightCollapsed(!isRightCollapsed)}
+          />
         </div>
       </div>
 
@@ -493,16 +463,6 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
         onSave={handleSaveAndContinue}
         onDiscard={handleDiscard}
         onCancel={() => setShowSaveDialog(false)}
-      />
-
-      <DeleteConversationDialog
-        isOpen={showDeleteDialog}
-        conversationTitle={conversationToDelete?.title || ""}
-        onConfirm={confirmDelete}
-        onCancel={() => {
-          setShowDeleteDialog(false);
-          setConversationToDelete(null);
-        }}
       />
     </div>
   );

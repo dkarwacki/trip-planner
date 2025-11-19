@@ -115,14 +115,6 @@ export function DesktopHeader({ saveStatus, onRetrySync }: DesktopHeaderProps) {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
-        {/* Trip History Selector */}
-        <TripSelector>
-          <Button variant="outline" size="sm" className="flex items-center gap-1.5">
-            <Clock className="h-4 w-4" />
-            <span>Trips</span>
-          </Button>
-        </TripSelector>
-
         {/* Conversation Button - Always visible */}
         <Button
           variant="outline"
@@ -136,8 +128,16 @@ export function DesktopHeader({ saveStatus, onRetrySync }: DesktopHeaderProps) {
           ) : (
             <MessageCircle className="h-4 w-4" />
           )}
-          <span>{conversationId ? "Chat" : "Start Chat"}</span>
+          <span>Chat</span>
         </Button>
+
+        {/* Trip History Selector */}
+        <TripSelector>
+          <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4" />
+            <span>Trips</span>
+          </Button>
+        </TripSelector>
       </div>
     </header>
   );

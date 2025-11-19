@@ -114,6 +114,24 @@ export function MobileHeader({
 
         {/* Right side - Actions */}
         <div className="flex items-center gap-1">
+          {/* Conversation Button - Always visible */}
+          <button
+            onClick={handleConversationClick}
+            disabled={isCreatingConversation}
+            className={cn(
+              "rounded-lg p-2 text-gray-700 transition-colors",
+              "hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+              "disabled:opacity-50"
+            )}
+            aria-label="Chat"
+          >
+            {isCreatingConversation ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <MessageCircle className="h-5 w-5" />
+            )}
+          </button>
+
           {/* Trip Selector */}
           <TripSelector>
             <button
@@ -126,24 +144,6 @@ export function MobileHeader({
               <Clock className="h-5 w-5" />
             </button>
           </TripSelector>
-
-          {/* Conversation Button - Always visible */}
-          <button
-            onClick={handleConversationClick}
-            disabled={isCreatingConversation}
-            className={cn(
-              "rounded-lg p-2 text-gray-700 transition-colors",
-              "hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-              "disabled:opacity-50"
-            )}
-            aria-label={conversationId ? "Open chat" : "Start chat"}
-          >
-            {isCreatingConversation ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <MessageCircle className="h-5 w-5" />
-            )}
-          </button>
 
           {/* Back Button (if shown) */}
           {showBackButton && onBackClick && (
