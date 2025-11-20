@@ -20,6 +20,7 @@ export function ChatInterface({
   onSendMessage,
   onAddPlace,
   selectedPersonas,
+  onPersonaChange,
   error,
   onRetry,
   addedPlaceIds,
@@ -29,7 +30,7 @@ export function ChatInterface({
       {/* Messages or empty state - scrollable area */}
       <div className="flex flex-1 flex-col overflow-y-auto">
         {messages.length === 0 && !isLoading ? (
-          <ChatEmptyState />
+          <ChatEmptyState selectedPersonas={selectedPersonas} onPersonaChange={onPersonaChange} />
         ) : (
           <MessageList
             messages={messages}

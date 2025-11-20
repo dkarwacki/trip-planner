@@ -66,6 +66,7 @@ export interface ChatInterfaceProps {
   onSendMessage: (message: string) => void;
   onAddPlace: (place: PlaceSuggestion) => void;
   selectedPersonas: PersonaType[];
+  onPersonaChange?: (personas: PersonaType[]) => void;
   error?: string;
   onRetry?: () => void;
   addedPlaceIds?: Set<string>;
@@ -76,6 +77,8 @@ export interface PersonaSelectorProps {
   onChange: (personas: PersonaType[]) => void;
   isLoading?: boolean;
   isMobile?: boolean;
+  readOnly?: boolean;
+  showOnlySelected?: boolean;
 }
 
 export interface ItineraryPanelProps {

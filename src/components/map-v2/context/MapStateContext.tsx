@@ -31,6 +31,10 @@ export function MapStateProvider({ children, tripId, conversationId }: MapStateP
   const setConversationId = useMapStore((state) => state.setConversationId);
   const setPlaces = useMapStore((state) => state.setPlaces);
   const markSynced = useMapStore((state) => state.markSynced);
+  const setActiveMode = useMapStore((state) => state.setActiveMode);
+  const setMobileTab = useMapStore((state) => state.setMobileTab);
+  const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
+  const centerOnPlace = useMapStore((state) => state.centerOnPlace);
 
   // Set up auto-save
   useAutoSave({ enabled: true });
@@ -87,6 +91,15 @@ export function MapStateProvider({ children, tripId, conversationId }: MapStateP
         const places = plannedPlacesFromDAOs(trip.places_data || []);
         setPlaces(places);
         markSynced(places);
+
+        // If tripId was provided in URL and we have places, focus on the first one
+        if (tripId && places.length > 0) {
+          const firstPlaceId = places[0].id;
+          setSelectedPlace(firstPlaceId);
+          centerOnPlace(firstPlaceId);
+          setActiveMode("plan");
+          setMobileTab("plan");
+        }
       } catch (error) {
         if (cancelled) return;
         console.error("Failed to load trip data:", error);
@@ -98,7 +111,19 @@ export function MapStateProvider({ children, tripId, conversationId }: MapStateP
     return () => {
       cancelled = true;
     };
-  }, [tripId, conversationId, setTripId, setTripTitle, setConversationId, setPlaces, markSynced]);
+  }, [
+    tripId,
+    conversationId,
+    setTripId,
+    setTripTitle,
+    setConversationId,
+    setPlaces,
+    markSynced,
+    setActiveMode,
+    setMobileTab,
+    setSelectedPlace,
+    centerOnPlace,
+  ]);
 
   return <MapStateContext.Provider value={{ isInitialized: true }}>{children}</MapStateContext.Provider>;
 }

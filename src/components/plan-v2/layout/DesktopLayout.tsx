@@ -21,6 +21,7 @@ import { createTrip, updateTrip, getTripForConversation } from "@/infrastructure
 import { clearCurrentItinerary } from "@/lib/common/storage";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import type { Place } from "@/domain/common/models";
+import { AnimatePresence } from "framer-motion";
 
 /**
  * DesktopLayout - 3-column desktop layout
@@ -123,10 +124,15 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
       messages.length > 0 && !activeConversationId ? { messages, personas: selectedPersonas, itinerary: places } : null,
     enabled: messages.length > 0 && !activeConversationId,
     onRecover: (state) => {
-      if (state.messages) setMessages(state.messages);
-      if (state.personas) setPersonas(state.personas);
-      if (state.itinerary) {
-        state.itinerary.forEach((place) => addPlace(place));
+      if (state?.messages) setMessages(state.messages);
+      if (state?.personas) setPersonas(state.personas);
+      if (state?.itinerary) {
+        state.itinerary.forEach((place) =>
+          addPlace({
+            ...place,
+            reasoning: "", // Add required field for PlaceSuggestion
+          })
+        );
       }
     },
   });
@@ -397,10 +403,17 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
     window.location.href = `/map-v2?conversationId=${id}`;
   };
 
+  // Determine if we should show the header persona selector
+  // Only show when we have messages (chat started)
+  const showHeaderPersonas = messages.length > 0;
+
   return (
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Header with save status */}
-      <PlanHeader saveStatus={saveStatus} conversationId={activeConversationId} />
+      <PlanHeader
+        saveStatus={saveStatus}
+        conversationId={activeConversationId ? String(activeConversationId) : undefined}
+      />
 
       {/* Main content area - 3 columns */}
       <div className="flex flex-1 overflow-hidden">
@@ -425,10 +438,20 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
 
         {/* Center - Chat Interface */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Persona Selector Area - fixed at top */}
-          <div className="flex-shrink-0 border-b p-4 bg-background">
-            <PersonaSelector selected={selectedPersonas} onChange={setPersonas} isLoading={personasLoading} />
-          </div>
+          {/* Persona Selector Area - conditionally rendered at top */}
+          <AnimatePresence>
+            {showHeaderPersonas && (
+              <div className="flex-shrink-0 border-b p-4 bg-background">
+                <PersonaSelector
+                  selected={selectedPersonas}
+                  onChange={setPersonas}
+                  isLoading={personasLoading}
+                  readOnly={true}
+                  showOnlySelected={true}
+                />
+              </div>
+            )}
+          </AnimatePresence>
 
           {/* Chat Interface - fills remaining space */}
           <div className="flex-1 overflow-hidden">
@@ -438,6 +461,7 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
               onSendMessage={handleSendMessage}
               onAddPlace={handleAddPlace}
               selectedPersonas={selectedPersonas}
+              onPersonaChange={setPersonas}
               error={chatError}
               onRetry={retryLastMessage}
               addedPlaceIds={new Set(places.map((p) => p.id))}

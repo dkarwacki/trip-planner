@@ -3,6 +3,7 @@ import { PersonaChip } from "./PersonaChip";
 import { getAllPersonas, type PersonaType } from "@/domain/plan/models/Persona";
 import type { PersonaSelectorProps } from "../types";
 import { Loader2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 /**
  * PersonaSelector - Desktop persona selector
@@ -12,11 +13,20 @@ import { Loader2 } from "lucide-react";
  * - Multi-select with visual feedback
  * - Always visible at top of chat area
  * - Shows loading state while fetching preferences
+ * - Supports read-only and filtered views
  */
-export function PersonaSelector({ selected, onChange, isLoading = false }: PersonaSelectorProps) {
+export function PersonaSelector({
+  selected,
+  onChange,
+  isLoading = false,
+  readOnly = false,
+  showOnlySelected = false,
+}: PersonaSelectorProps) {
   const allPersonas = getAllPersonas();
 
   const handleToggle = (persona: PersonaType) => {
+    if (readOnly) return;
+
     const isSelected = selected.includes(persona);
 
     if (isSelected) {
@@ -39,22 +49,33 @@ export function PersonaSelector({ selected, onChange, isLoading = false }: Perso
     );
   }
 
+  const displayedPersonas = showOnlySelected ? allPersonas.filter((p) => selected.includes(p.type)) : allPersonas;
+
+  // When showing only selected (in header), we don't show the title if empty (though it shouldn't be empty there)
+  if (showOnlySelected && displayedPersonas.length === 0) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div className="text-xs font-medium text-muted-foreground">Travel Style</div>
       <div className="flex flex-wrap gap-2">
-        {allPersonas.map((persona) => (
-          <PersonaChip
-            key={persona.type}
-            persona={persona.type}
-            isSelected={selected.includes(persona.type)}
-            onToggle={handleToggle}
-            showLabel={true}
-            size="md"
-          />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {displayedPersonas.map((persona) => (
+            <PersonaChip
+              key={persona.type}
+              layoutId={`persona-${persona.type}`}
+              persona={persona.type}
+              isSelected={selected.includes(persona.type)}
+              onToggle={handleToggle}
+              showLabel={true}
+              size="md"
+              disabled={readOnly}
+            />
+          ))}
+        </AnimatePresence>
       </div>
-      {selected.length === 0 && (
+      {!readOnly && selected.length === 0 && (
         <p className="text-xs text-muted-foreground">
           Select at least one travel style to get personalized suggestions
         </p>

@@ -39,7 +39,7 @@ export function ConversationLibraryPanel({
                 <p>Sessions</p>
               </TooltipContent>
             </Tooltip>
-            
+
             {conversations.length > 0 && (
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
                 {conversations.length}

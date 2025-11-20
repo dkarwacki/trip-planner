@@ -1,50 +1,77 @@
 import React from "react";
-import { MessageCircle, Sparkles } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { getAllPersonas, type PersonaType } from "@/domain/plan/models/Persona";
+import { PersonaChip } from "../personas/PersonaChip";
+
+interface ChatEmptyStateProps {
+  selectedPersonas?: PersonaType[];
+  onPersonaChange?: (personas: PersonaType[]) => void;
+}
 
 /**
  * ChatEmptyState - Welcome message when chat is empty
  *
  * Features:
  * - Friendly welcome message
- * - Example prompts to get started
- * - Encourages persona selection
+ * - Interactive Travel Style selector
+ * - Encourages persona selection before starting
  */
-export function ChatEmptyState() {
+export function ChatEmptyState({ selectedPersonas = [], onPersonaChange }: ChatEmptyStateProps) {
+  const allPersonas = getAllPersonas();
+
+  const handleToggle = (persona: PersonaType) => {
+    if (!onPersonaChange) return;
+
+    const isSelected = selectedPersonas.includes(persona);
+    if (isSelected) {
+      if (selectedPersonas.length === 1) return; // Prevent removing last one
+      onPersonaChange(selectedPersonas.filter((p) => p !== persona));
+    } else {
+      onPersonaChange([...selectedPersonas, persona]);
+    }
+  };
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center p-8 text-center overflow-y-auto">
       <div className="mb-6 rounded-full bg-primary/10 p-6">
         <MessageCircle className="h-12 w-12 text-primary" />
       </div>
 
       <h2 className="mb-2 text-2xl font-semibold">Start Planning Your Trip</h2>
       <p className="mb-8 max-w-md text-muted-foreground">
-        Tell me about your dream destination, and I'll help you discover amazing places tailored to your travel style.
+        Select your travel style and tell me about your dream destination.
       </p>
 
-      <div className="w-full max-w-lg space-y-3">
-        <div className="flex items-start gap-3 rounded-lg border bg-card p-4 text-left">
-          <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
-          <div>
-            <p className="text-sm font-medium">Try asking:</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              "I want to explore Japan for 2 weeks, focusing on traditional culture and food"
-            </p>
-          </div>
-        </div>
+      <div className="w-full max-w-3xl mb-8">
+        <div className="flex flex-wrap justify-center gap-3">
+          {allPersonas.map((persona) => {
+            const isSelected = selectedPersonas.includes(persona.type);
+            return (
+              <div key={persona.type} className="group relative">
+                <PersonaChip
+                  layoutId={`persona-${persona.type}`}
+                  persona={persona.type}
+                  isSelected={isSelected}
+                  onToggle={handleToggle}
+                  showLabel={true}
+                  size="md"
+                  className="relative z-10"
+                />
 
-        <div className="flex items-start gap-3 rounded-lg border bg-card p-4 text-left">
-          <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
-          <div>
-            <p className="text-sm font-medium">Or:</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              "Suggest some hidden gems in Italy for nature lovers and photographers"
-            </p>
-          </div>
+                {/* Hover description tooltip */}
+                <div className="absolute bottom-full left-1/2 mb-2 hidden w-48 -translate-x-1/2 rounded-md bg-popover p-2 text-xs text-popover-foreground shadow-md border group-hover:block z-20">
+                  {persona.description}
+                  <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b border-r bg-popover border-inherit"></div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <p className="mt-8 text-xs text-muted-foreground">
-        💡 Select your travel styles above to get personalized recommendations
+      <p className="text-xs text-muted-foreground">
+        Type your request below. For example: <br className="hidden sm:block" />
+        &quot;I&apos;m planning a 7-day trip to Italy. Can you suggest some towns to visit in Tuscany?&quot;
       </p>
     </div>
   );

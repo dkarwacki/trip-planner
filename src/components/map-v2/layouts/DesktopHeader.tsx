@@ -44,7 +44,6 @@ export function DesktopHeader({ saveStatus, onRetrySync }: DesktopHeaderProps) {
         body: JSON.stringify({
           title: "Trip Planning Chat",
           personas: ["general_tourist"],
-          initial_message: "Help me plan my trip",
         }),
       });
 

@@ -10,7 +10,7 @@ interface ExportButtonProps {
 }
 
 /**
- * ExportButton - "Open Trip Map" button
+ * ExportButton - "Show on map" button
  *
  * Features:
  * - Disabled when no places
@@ -25,7 +25,7 @@ export function ExportButton({ disabled = false, isLoading = false, onClick, pla
       disabled={disabled || isLoading}
       className="w-full"
       size="lg"
-      aria-label={`Open trip map with ${placeCount} places`}
+      aria-label={`Show ${placeCount} places on map`}
     >
       {isLoading ? (
         <>
@@ -35,7 +35,7 @@ export function ExportButton({ disabled = false, isLoading = false, onClick, pla
       ) : (
         <>
           <Map className="mr-2 h-5 w-5" />
-          Open Trip Map ({placeCount})
+          Show on map ({placeCount})
         </>
       )}
     </Button>

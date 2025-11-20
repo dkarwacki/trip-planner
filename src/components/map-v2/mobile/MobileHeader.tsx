@@ -50,7 +50,6 @@ export function MobileHeader({
         body: JSON.stringify({
           title: "Trip Planning Chat",
           personas: ["general_tourist"],
-          initial_message: "Help me plan my trip",
         }),
       });
 
@@ -163,12 +162,3 @@ export function MobileHeader({
     </header>
   );
 }
-
-
-
-
-
-
-
-
-

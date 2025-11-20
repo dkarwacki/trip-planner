@@ -11,9 +11,7 @@ interface PlanHeaderProps {
 
 export function PlanHeader({ saveStatus, onRetrySync, conversationId }: PlanHeaderProps) {
   const handleMapClick = () => {
-    const url = conversationId 
-      ? `/map-v2?conversationId=${conversationId}` 
-      : '/map-v2';
+    const url = conversationId ? `/map-v2?conversationId=${conversationId}` : "/map-v2";
     window.location.href = url;
   };
 
@@ -55,12 +53,7 @@ export function PlanHeader({ saveStatus, onRetrySync, conversationId }: PlanHead
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
         {/* Map Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleMapClick}
-          className="flex items-center gap-1.5"
-        >
+        <Button variant="outline" size="sm" onClick={handleMapClick} className="flex items-center gap-1.5">
           <MapIcon className="h-4 w-4" />
           <span>Map</span>
         </Button>
@@ -68,4 +61,3 @@ export function PlanHeader({ saveStatus, onRetrySync, conversationId }: PlanHead
     </header>
   );
 }
-
