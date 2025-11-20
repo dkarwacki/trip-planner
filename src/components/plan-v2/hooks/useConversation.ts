@@ -7,6 +7,7 @@ import {
   getConversation,
   createConversation,
   updateConversationMessages,
+  updateConversationTitle,
   deleteConversation as deleteConversationApi,
 } from "@/infrastructure/plan/clients/conversations";
 
@@ -19,6 +20,7 @@ export interface UseConversationReturn {
   loadConversation: (id: ConversationId) => Promise<any>;
   createNew: (messages: ChatMessage[], personas: PersonaType[], title?: string) => Promise<ConversationId | null>;
   saveMessages: (conversationId: ConversationId, messages: ChatMessage[]) => Promise<void>;
+  updateTitle: (conversationId: ConversationId, title: string) => Promise<void>;
   deleteConversation: (id: ConversationId) => Promise<void>;
   setActiveConversationId: (id?: ConversationId) => void;
 }
@@ -133,6 +135,24 @@ export function useConversation(): UseConversationReturn {
     [loadConversations]
   );
 
+  const updateTitle = useCallback(
+    async (conversationId: ConversationId, title: string) => {
+      try {
+        setError(null);
+
+        await updateConversationTitle(conversationId, title);
+
+        // Reload conversations list to reflect title change
+        await loadConversations();
+      } catch (err) {
+        console.error("Failed to update title:", err);
+        setError("Failed to update title");
+        throw err;
+      }
+    },
+    [loadConversations]
+  );
+
   const deleteConv = useCallback(
     async (id: ConversationId) => {
       try {
@@ -168,6 +188,7 @@ export function useConversation(): UseConversationReturn {
     loadConversation,
     createNew,
     saveMessages,
+    updateTitle,
     deleteConversation: deleteConv,
     setActiveConversationId,
   };

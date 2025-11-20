@@ -25,7 +25,7 @@ export function ConversationLibraryDrawer({
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="border-b p-4">
-        <h2 className="mb-4 text-lg font-semibold">Sessions</h2>
+        <h2 className="mb-4 text-lg font-semibold">Chats</h2>
         <NewConversationButton onClick={onNewConversation} disabled={isLoading} />
       </div>
 

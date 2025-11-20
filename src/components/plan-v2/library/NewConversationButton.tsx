@@ -8,7 +8,7 @@ interface NewConversationButtonProps {
 }
 
 /**
- * NewConversationButton - Button to start a new conversation
+ * NewConversationButton - Button to start a new chat
  *
  * Features:
  * - Prominent styling
@@ -17,9 +17,9 @@ interface NewConversationButtonProps {
  */
 export function NewConversationButton({ onClick, disabled = false }: NewConversationButtonProps) {
   return (
-    <Button onClick={onClick} disabled={disabled} className="w-full" size="lg" aria-label="Start new conversation">
+    <Button onClick={onClick} disabled={disabled} className="w-full" size="lg" aria-label="Start new chat">
       <Plus className="mr-2 h-5 w-5" />
-      New Conversation
+      New Chat
     </Button>
   );
 }

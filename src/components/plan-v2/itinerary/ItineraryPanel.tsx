@@ -3,7 +3,7 @@ import { ItineraryList } from "./ItineraryList";
 import { ItineraryEmptyState } from "./ItineraryEmptyState";
 import { ExportButton } from "./ExportButton";
 import type { ItineraryPanelProps } from "../types";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
@@ -32,7 +32,9 @@ export function ItineraryPanel({
           <div className="flex-1 flex flex-col items-center gap-4">
             <Tooltip>
               <TooltipTrigger>
-                <div className="text-2xl">📍</div>
+                <div className="flex h-10 w-10 items-center justify-center">
+                  <MapPin className="h-6 w-6" />
+                </div>
               </TooltipTrigger>
               <TooltipContent side="left">
                 <p>Itinerary</p>
@@ -90,6 +92,7 @@ export function ItineraryPanel({
           )}
           
           <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
             <h2 className="font-semibold">Your Itinerary</h2>
             {places.length > 0 && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">

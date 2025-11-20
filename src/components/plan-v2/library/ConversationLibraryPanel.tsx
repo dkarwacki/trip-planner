@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessagesSquare } from "lucide-react";
 import { NewConversationButton } from "./NewConversationButton";
 import { ConversationList } from "./ConversationList";
 import { Button } from "@/components/ui/button";
@@ -33,10 +33,12 @@ export function ConversationLibraryPanel({
           <div className="flex-1 flex flex-col items-center gap-4">
             <Tooltip>
               <TooltipTrigger>
-                <div className="text-2xl">📚</div>
+                <div className="flex h-10 w-10 items-center justify-center">
+                  <MessagesSquare className="h-6 w-6" />
+                </div>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Sessions</p>
+                <p>Chats</p>
               </TooltipContent>
             </Tooltip>
 
@@ -75,10 +77,12 @@ export function ConversationLibraryPanel({
 
   return (
     <div className="flex h-full flex-col bg-white">
-      {/* Sticky Header */}
       <div className="flex-shrink-0 bg-white border-b sticky top-0 z-[10]">
         <div className="flex items-center justify-between p-3">
-          <h2 className="font-semibold">Sessions</h2>
+          <div className="flex items-center gap-2">
+            <MessagesSquare className="h-5 w-5" />
+            <h2 className="font-semibold">Chats</h2>
+          </div>
           {onToggleCollapse && (
             <Button
               onClick={onToggleCollapse}

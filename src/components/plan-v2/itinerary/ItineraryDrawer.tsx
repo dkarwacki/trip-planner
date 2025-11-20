@@ -1,4 +1,5 @@
 import React from "react";
+import { MapPin } from "lucide-react";
 import { ItineraryList } from "./ItineraryList";
 import { ItineraryEmptyState } from "./ItineraryEmptyState";
 import { ExportButton } from "./ExportButton";
@@ -20,6 +21,7 @@ export function ItineraryDrawer({ places, onReorder, onRemove, onExportToMap }: 
       {/* Header */}
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2">
+          <MapPin className="h-5 w-5" />
           <h2 className="text-lg font-semibold">Your Itinerary</h2>
           {places.length > 0 && (
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">

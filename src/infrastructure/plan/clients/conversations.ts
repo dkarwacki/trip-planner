@@ -11,6 +11,12 @@ interface UpdateMessagesResponse {
   updated_at: string;
 }
 
+interface UpdateConversationResponse {
+  id: string;
+  title: string;
+  updated_at: string;
+}
+
 interface DeleteResponse {
   id: string;
   deleted: boolean;
@@ -113,6 +119,28 @@ export const updateConversationMessages = async (id: ConversationId, messages: C
   }
 
   const data: UpdateMessagesResponse | ErrorResponse = await response.json();
+
+  if ("error" in data) {
+    throw new Error(data.error);
+  }
+};
+
+export const updateConversationTitle = async (id: ConversationId, title: string): Promise<void> => {
+  const response = await fetch(`/api/conversations/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update conversation title: ${response.statusText}`);
+  }
+
+  const data: UpdateConversationResponse | ErrorResponse = await response.json();
 
   if ("error" in data) {
     throw new Error(data.error);

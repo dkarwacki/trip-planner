@@ -57,6 +57,7 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
     loadConversation,
     createNew,
     saveMessages,
+    updateTitle,
     deleteConversation,
     setActiveConversationId,
   } = useConversation();
@@ -73,7 +74,13 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
   } = useChatMessages({
     conversationId: activeConversationId,
     onCreateConversation: async (messages, personas) => {
-      const newId = await createNew(messages, personas);
+      // Generate title based on itinerary or default
+      let title = "Trip to ...";
+      if (places.length > 0) {
+        title = `Trip to ${places[0].name}`;
+      }
+
+      const newId = await createNew(messages, personas, title);
       if (newId) {
         setActiveConversationId(newId);
       }
@@ -86,6 +93,25 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
       setIsCreatingConversation(isCreating);
     },
   });
+
+  // Update conversation title when itinerary changes
+  useEffect(() => {
+    if (!activeConversationId || places.length === 0) return;
+
+    const currentConv = conversations.find((c) => c.id === activeConversationId);
+    if (!currentConv) return;
+
+    const newTitle = `Trip to ${places[0].name}`;
+
+    // Only update if title is different and matches our pattern (starts with "Trip to")
+    // or if it was "Trip to ..."
+    if (
+      currentConv.title !== newTitle &&
+      (currentConv.title === "Trip to ..." || currentConv.title.startsWith("Trip to "))
+    ) {
+      updateTitle(activeConversationId, newTitle);
+    }
+  }, [activeConversationId, places, conversations, updateTitle]);
 
   // Auto-save for messages and personas
   const { saveStatus, scheduleSave } = useAutoSave(
@@ -462,7 +488,7 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
               onAddPlace={handleAddPlace}
               selectedPersonas={selectedPersonas}
               onPersonaChange={setPersonas}
-              error={chatError}
+              error={chatError ?? undefined}
               onRetry={retryLastMessage}
               addedPlaceIds={new Set(places.map((p) => p.id))}
             />
