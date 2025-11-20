@@ -43,6 +43,9 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
   // Track conversation creation to prevent auto-save race
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
+  // Track last title update to prevent infinite loops
+  const lastTitleUpdate = React.useRef<{ id: ConversationId; title: string } | null>(null);
+
   // Persona state
   const { selected: selectedPersonas, setPersonas, isLoading: personasLoading } = usePersonas();
 
@@ -109,6 +112,12 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
       currentConv.title !== newTitle &&
       (currentConv.title === "Trip to ..." || currentConv.title.startsWith("Trip to "))
     ) {
+      // Prevent infinite loops by checking if we just tried to update to this title
+      if (lastTitleUpdate.current?.id === activeConversationId && lastTitleUpdate.current?.title === newTitle) {
+        return;
+      }
+
+      lastTitleUpdate.current = { id: activeConversationId, title: newTitle };
       updateTitle(activeConversationId, newTitle);
     }
   }, [activeConversationId, places, conversations, updateTitle]);

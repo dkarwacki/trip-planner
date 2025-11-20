@@ -140,13 +140,20 @@ export function useConversation(): UseConversationReturn {
       try {
         setError(null);
 
-        await updateConversationTitle(conversationId, title);
+        // Optimistically update local state
+        setConversations((prev) =>
+          prev.map((c) => (c.id === conversationId ? { ...c, title } : c))
+        );
 
-        // Reload conversations list to reflect title change
-        await loadConversations();
+        await updateConversationTitle(conversationId, title);
+        
+        // Don't reload conversations here to avoid race conditions with stale data
+        // The local update is sufficient for UI
       } catch (err) {
         console.error("Failed to update title:", err);
         setError("Failed to update title");
+        // Revert local change on error
+        await loadConversations();
         throw err;
       }
     },

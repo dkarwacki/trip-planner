@@ -8,7 +8,7 @@ import { MessageCircle } from "lucide-react";
 import type { AIMessage } from "../../types";
 import { SuggestionCard } from "./SuggestionCard";
 import { ThinkingProcess } from "./ThinkingProcess";
-import { TypingIndicator } from "./TypingIndicator";
+import { TypingIndicator } from "@/components/common/TypingIndicator";
 
 interface ChatMessagesProps {
   messages: AIMessage[];

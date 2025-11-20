@@ -35,7 +35,7 @@ export function ExportButton({ disabled = false, isLoading = false, onClick, pla
       ) : (
         <>
           <Map className="mr-2 h-5 w-5" />
-          Show on map ({placeCount})
+          Show on Map
         </>
       )}
     </Button>

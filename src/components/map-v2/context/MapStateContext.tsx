@@ -7,7 +7,8 @@
 import React, { createContext, useEffect, type ReactNode } from "react";
 import { useMapStore } from "../stores/mapStore";
 import { useAutoSave } from "../hooks/useAutoSave";
-import { plannedPlacesFromDAOs } from "@/lib/map-v2/tripMappers";
+import { plannedPlacesFromDAOs, tripPlaceDTOsToPlaceDAOs } from "@/lib/map-v2/tripMappers";
+import type { TripPlaceDTO } from "@/infrastructure/plan/api";
 
 // Context type - just a flag to ensure provider presence
 interface MapStateContextValue {
@@ -87,13 +88,28 @@ export function MapStateProvider({ children, tripId, conversationId }: MapStateP
         setTripTitle(trip.title);
         setConversationId(trip.conversation_id);
 
+        // Handle different response structures:
+        // - /api/trips/current returns { places_data: PlaceDAO[] }
+        // - /api/trips/:id and /api/trips/by-conversation/:conversationId return { places: TripPlaceDTO[] }
+        let placeDAOs;
+        if (trip.places_data) {
+          // Response from /api/trips/current
+          placeDAOs = trip.places_data;
+        } else if (trip.places) {
+          // Response from /api/trips/:id or /api/trips/by-conversation/:conversationId
+          // Convert TripPlaceDTO[] to PlaceDAO[]
+          placeDAOs = tripPlaceDTOsToPlaceDAOs(trip.places as TripPlaceDTO[]);
+        } else {
+          placeDAOs = [];
+        }
+
         // Convert PlaceDAOs to PlannedPlaces
-        const places = plannedPlacesFromDAOs(trip.places_data || []);
+        const places = plannedPlacesFromDAOs(placeDAOs);
         setPlaces(places);
         markSynced(places);
 
-        // If tripId was provided in URL and we have places, focus on the first one
-        if (tripId && places.length > 0) {
+        // Focus on first place if navigated from plan-v2 (tripId or conversationId provided) and places exist
+        if ((tripId || conversationId) && places.length > 0) {
           const firstPlaceId = places[0].id;
           setSelectedPlace(firstPlaceId);
           centerOnPlace(firstPlaceId);

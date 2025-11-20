@@ -17,7 +17,7 @@ import { MobileChatHeader } from "./MobileChatHeader";
 import { MobileChatInput } from "./MobileChatInput";
 import { MobileSuggestionCard } from "./MobileSuggestionCard";
 import type { AIMessage } from "../types";
-import { TypingIndicator } from "../sidebar/ai/TypingIndicator";
+import { TypingIndicator } from "@/components/common/TypingIndicator";
 
 interface AIChatModalProps {
   isOpen: boolean;

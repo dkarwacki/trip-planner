@@ -9,7 +9,7 @@ export { ChatInput } from "./ChatInput";
 export { SuggestionCard } from "./SuggestionCard";
 export { PriorityBadge } from "./PriorityBadge";
 export { ThinkingProcess } from "./ThinkingProcess";
-export { TypingIndicator } from "./TypingIndicator";
+export { TypingIndicator } from "@/components/common/TypingIndicator";
 
 
 

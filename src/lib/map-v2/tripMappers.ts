@@ -4,12 +4,14 @@
  * Purpose: Convert between map-v2 component types and database types
  * - PlannedPlace <-> PlaceDAO
  * - Attraction <-> AttractionDAO
+ * - TripPlaceDTO -> PlaceDAO
  */
 
 import type { PlannedPlace } from "@/components/map-v2/types";
 import type { PlaceDAO, AttractionDAO, PlacePhotoDAO } from "@/infrastructure/plan/database/types";
 import type { Attraction } from "@/domain/map/models";
 import type { PlacePhoto } from "@/domain/common/models";
+import type { TripPlaceDTO, AttractionOnlyDTO, RestaurantDTO } from "@/infrastructure/plan/api";
 
 // ============================================================================
 // Photo Conversions
@@ -123,3 +125,56 @@ export function plannedPlacesFromDAOs(daos: PlaceDAO[]): PlannedPlace[] {
   return daos.map(plannedPlaceFromDAO);
 }
 
+// ============================================================================
+// TripPlaceDTO to PlaceDAO Conversions
+// ============================================================================
+
+/**
+ * Convert AttractionOnlyDTO or RestaurantDTO to AttractionDAO
+ * (Both use the same structure in map-v2)
+ */
+function poiDTOToAttractionDAO(poi: AttractionOnlyDTO | RestaurantDTO): AttractionDAO {
+  return {
+    id: poi.id,
+    googlePlaceId: poi.google_place_id,
+    name: poi.name,
+    rating: poi.rating ?? undefined,
+    userRatingsTotal: poi.user_ratings_total ?? undefined,
+    types: poi.types,
+    vicinity: poi.vicinity,
+    priceLevel: (poi as RestaurantDTO).price_level ?? undefined,
+    location: {
+      lat: poi.latitude,
+      lng: poi.longitude,
+    },
+    photos: poi.photos?.map(placePhotoFromDAO),
+    editorialSummary: undefined,
+    qualityScore: poi.quality_score ?? undefined,
+    diversityScore: poi.diversity_score ?? undefined,
+    confidenceScore: poi.confidence_score ?? undefined,
+  };
+}
+
+/**
+ * Convert TripPlaceDTO (from API) to PlaceDAO (for map-v2 state)
+ * Used when loading trips from /api/trips/:id or /api/trips/by-conversation/:conversationId
+ */
+export function tripPlaceDTOToPlaceDAO(dto: TripPlaceDTO): PlaceDAO {
+  return {
+    id: dto.place.id,
+    name: dto.place.name,
+    address: undefined, // Not available in TripPlaceDTO
+    lat: dto.place.latitude,
+    lng: dto.place.longitude,
+    plannedAttractions: dto.attractions.map(poiDTOToAttractionDAO),
+    plannedRestaurants: dto.restaurants.map(poiDTOToAttractionDAO),
+    photos: dto.place.photos?.map(placePhotoFromDAO),
+  };
+}
+
+/**
+ * Convert TripPlaceDTO[] to PlaceDAO[] (batch conversion)
+ */
+export function tripPlaceDTOsToPlaceDAOs(dtos: TripPlaceDTO[]): PlaceDAO[] {
+  return dtos.map(tripPlaceDTOToPlaceDAO);
+}

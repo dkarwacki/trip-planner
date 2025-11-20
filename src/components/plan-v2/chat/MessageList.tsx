@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { UserMessage } from "./UserMessage";
 import { AssistantMessage } from "./AssistantMessage";
 import type { ChatMessage, PlaceSuggestion } from "@/domain/plan/models/ChatMessage";
-import { Loader2 } from "lucide-react";
+import { TypingIndicator } from "@/components/common/TypingIndicator";
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -54,18 +54,7 @@ export function MessageList({ messages, isLoading = false, onAddPlace, addedPlac
       })}
 
       {/* Loading indicator */}
-      {isLoading && (
-        <div className="flex gap-3">
-          <div className="flex-shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            </div>
-          </div>
-          <div className="flex items-center">
-            <p className="text-sm text-muted-foreground">Thinking...</p>
-          </div>
-        </div>
-      )}
+      {isLoading && <TypingIndicator />}
 
       {/* Scroll anchor */}
       <div ref={messagesEndRef} />
