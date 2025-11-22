@@ -380,12 +380,10 @@ Seamless background saving of all conversations and user preferences.
   - Calls `TravelPlanningChat` use case
   - Validates places against Google Maps
   - Generates narrative for first message
-  
 - **`POST /api/places/search`**: Place validation endpoint
   - Input: `{ query }`
   - Output: `{ place: { id, name, lat, lng } }`
   - Used for validation when adding suggestions
-  
 - **`GET /api/conversations`**: Get all user conversations
 - **`POST /api/conversations`**: Create new conversation
 - **`PUT /api/conversations/:id`**: Update conversation messages
@@ -441,4 +439,3 @@ Seamless background saving of all conversations and user preferences.
 - **Trip Notes**: Add notes/descriptions to saved trips
 - **Share Conversations**: Export/share conversations and itineraries
 - **Offline Support**: Service worker for offline conversation viewing
-

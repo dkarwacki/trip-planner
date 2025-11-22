@@ -144,7 +144,7 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
         await saveMessages(data.conversationId, data.messages);
         // Persona changes are already saved via usePersonas hook
       },
-      debounceMs: 2000,
+      debounceMs: 750,
       maxRetries: 3,
       enabled: !!activeConversationId,
     }

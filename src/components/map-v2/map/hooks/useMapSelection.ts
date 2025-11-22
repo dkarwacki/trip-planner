@@ -188,7 +188,12 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
       if (isFinite(lat) && isFinite(lng)) {
         map.panTo({ lat, lng });
-        map.setZoom(14);
+
+        // Optionally zoom in if too far out
+        const currentZoom = map.getZoom() || 0;
+        if (currentZoom < 14) {
+          map.setZoom(14);
+        }
       }
     }
   }, [map, selectedPlaceId, places]);

@@ -97,7 +97,7 @@ Get intelligent recommendations tailored to your travel plan using conversationa
 
 - Two-tab interface with lazy loading (restaurants load on first tab open)
 - **Photo integration:**
-  - List view displays 96x96px thumbnail (800px source) fetched from Google Places Nearby Search API
+  - List view displays 60x60px thumbnail (800px source) fetched from Google Places Nearby Search API
   - Limited to 1 photo per item in list for performance
   - Details dialog shows 1 high-quality photo (800px, aspect 4:3) with click-to-expand lightbox for all photos
   - Graceful fallback when photos unavailable or fail to load
@@ -124,9 +124,9 @@ Get intelligent recommendations tailored to your travel plan using conversationa
   - Open/closed status positioned below address for better information flow
   - Checkmark indicator for already-planned items
 - **Persona-aware scoring:** Results personalized based on user's travel style preferences
-  - Automatically applies if persona selected in /plan chat interface
   - 30% boost for attractions matching persona (e.g., Art Enthusiast → museums, galleries)
   - Eight personas: General Tourist, Nature Lover, Art Enthusiast, Foodie, Adventure Seeker, Digital Nomad, History Buff, Photography Enthusiast
+
 - Google Places API (Nearby Search + Place Details)
 
 ### 5. Build Your Itinerary

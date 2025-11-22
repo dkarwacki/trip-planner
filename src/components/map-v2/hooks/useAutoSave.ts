@@ -10,14 +10,13 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useMapStore } from "../stores/mapStore";
 import { plannedPlacesToDAOs } from "@/lib/map-v2/tripMappers";
-import { DEV_USER_ID } from "@/utils/consts";
 
 interface UseAutoSaveOptions {
   enabled?: boolean;
   debounceMs?: number;
 }
 
-export function useAutoSave({ enabled = true, debounceMs = 500 }: UseAutoSaveOptions = {}) {
+export function useAutoSave({ enabled = true, debounceMs = 750 }: UseAutoSaveOptions = {}) {
   const places = useMapStore((state) => state.places);
   const tripId = useMapStore((state) => state.tripId);
   const tripTitle = useMapStore((state) => state.tripTitle);
@@ -28,7 +27,7 @@ export function useAutoSave({ enabled = true, debounceMs = 500 }: UseAutoSaveOpt
   const markSynced = useMapStore((state) => state.markSynced);
   const setSyncError = useMapStore((state) => state.setSyncError);
 
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isSavingRef = useRef(false);
 
   const savePlaces = useCallback(async () => {
@@ -54,7 +53,7 @@ export function useAutoSave({ enabled = true, debounceMs = 500 }: UseAutoSaveOpt
       // Prepare body - include title if it changed
       const body: { places: unknown; title?: string } = { places: placesData };
       if (newTitle !== tripTitle) {
-        body.title = newTitle;
+        body.title = newTitle || undefined;
       }
 
       // Call API to update trip places (and title if needed)
@@ -140,4 +139,3 @@ export function useAutoSave({ enabled = true, debounceMs = 500 }: UseAutoSaveOpt
     isSaving: isSavingRef.current,
   };
 }
-
