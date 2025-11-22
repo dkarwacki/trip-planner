@@ -1,6 +1,6 @@
 ---
 import "../styles/global.css";
-// import { DevStats } from "@/components/common/DevStats";
+import { DevStats } from "@/components/common/DevStats";
 
 interface Props {
   title?: string;
@@ -20,7 +20,7 @@ const { title = "10x Astro Starter" } = Astro.props;
   </head>
   <body>
     <slot />
-    <!-- <DevStats client:load /> -->
+    <DevStats client:load />
   </body>
 </html>
 
