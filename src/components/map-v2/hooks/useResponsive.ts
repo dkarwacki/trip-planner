@@ -1,9 +1,10 @@
 /**
  * Responsive platform detection hook
  * Provides semantic breakpoints aligned with Tailwind CSS
+ * Optimized to use a single resize listener instead of multiple media queries
  */
 
-import { useMediaQuery } from "./useMediaQuery";
+import { useState, useEffect } from "react";
 
 export interface ResponsiveState {
   isMobile: boolean;
@@ -12,20 +13,15 @@ export interface ResponsiveState {
   platform: "mobile" | "tablet" | "desktop";
 }
 
-export function useResponsive(): ResponsiveState {
+function getResponsiveState(width: number): ResponsiveState {
   // Tailwind breakpoints:
   // sm: 640px
   // md: 768px
   // lg: 1024px
 
-  // Mobile: max-width 639px
-  const isMobile = useMediaQuery("(max-width: 639px)");
-
-  // Tablet: 640px - 1023px
-  const isTablet = useMediaQuery("(min-width: 640px) and (max-width: 1023px)");
-
-  // Desktop: 1024px and up
-  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const isMobile = width < 640;
+  const isTablet = width >= 640 && width < 1024;
+  const isDesktop = width >= 1024;
 
   // Determine platform (priority: desktop > tablet > mobile)
   let platform: "mobile" | "tablet" | "desktop";
@@ -45,15 +41,17 @@ export function useResponsive(): ResponsiveState {
   };
 }
 
+export function useResponsive(): ResponsiveState {
+  const [state, setState] = useState<ResponsiveState>(() => getResponsiveState(window.innerWidth));
 
+  useEffect(() => {
+    const handleResize = () => {
+      setState(getResponsiveState(window.innerWidth));
+    };
 
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-
-
-
-
-
-
-
-
-
+  return state;
+}

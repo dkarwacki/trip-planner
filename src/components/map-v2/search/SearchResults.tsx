@@ -89,16 +89,3 @@ export function SearchResults({
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -54,4 +54,3 @@ export const WikimediaGeosearchResponseSchema = z.object({
 export const WikimediaImageInfoSchema = ImageInfoSchema;
 export const WikimediaPageSchema = PageSchema;
 export const WikimediaExtMetadataSchema = ExtMetadataSchema;
-

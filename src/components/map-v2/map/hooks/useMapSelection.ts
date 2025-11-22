@@ -29,6 +29,48 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     return filterDiscoveryResults(discoveryResults, filters);
   }, [discoveryResults, filters]);
 
+  // Create lookup maps for O(1) access to planned attractions
+  const plannedAttractionMap = useMemo(() => {
+    const map = new Map<string, { attraction: any; score: number; breakdown?: any }>();
+
+    for (const place of places) {
+      // Process attractions
+      place.plannedAttractions?.forEach((attraction: any) => {
+        const score =
+          attraction.qualityScore && attraction.diversityScore && attraction.confidenceScore
+            ? (attraction.qualityScore + attraction.diversityScore + attraction.confidenceScore) / 3
+            : 0;
+        map.set(attraction.id, {
+          attraction,
+          score: Math.round(score),
+          breakdown: {
+            qualityScore: attraction.qualityScore || 0,
+            diversityScore: attraction.diversityScore || 0,
+            confidenceScore: attraction.confidenceScore || 0,
+          },
+        });
+      });
+
+      // Process restaurants
+      place.plannedRestaurants?.forEach((restaurant: any) => {
+        const score =
+          restaurant.qualityScore && restaurant.confidenceScore
+            ? (restaurant.qualityScore + restaurant.confidenceScore) / 2
+            : 0;
+        map.set(restaurant.id, {
+          attraction: restaurant,
+          score: Math.round(score),
+          breakdown: {
+            qualityScore: restaurant.qualityScore || 0,
+            confidenceScore: restaurant.confidenceScore || 0,
+          },
+        });
+      });
+    }
+
+    return map;
+  }, [places]);
+
   const handlePlaceClick = useCallback(
     (place: { id: string }) => {
       setSelectedPlace(place.id);
@@ -69,62 +111,29 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     [setExpandedCard, setHighlightedPlace]
   );
 
-  const hoveredAttraction = hoveredMarkerId
-    ? activeMode === "discover" || activeMode === "ai"
-      ? filteredDiscoveryResults.find((r) => r.attraction?.id === hoveredMarkerId)
-      : (() => {
-          for (const place of places) {
-            const found =
-              place.plannedAttractions?.find((a) => a.id === hoveredMarkerId) ||
-              place.plannedRestaurants?.find((r) => r.id === hoveredMarkerId);
-            if (found) return { attraction: found, score: 0 };
-          }
-          return null;
-        })()
-    : null;
+  // Memoized to prevent expensive lookups on every render
+  const hoveredAttraction = useMemo(() => {
+    if (!hoveredMarkerId) return null;
 
-  const expandedAttraction = expandedCardPlaceId
-    ? activeMode === "discover" || activeMode === "ai"
-      ? filteredDiscoveryResults.find((r) => r.attraction?.id === expandedCardPlaceId)
-      : (() => {
-          for (const place of places) {
-            const foundAttraction = place.plannedAttractions?.find((a) => a.id === expandedCardPlaceId);
-            if (foundAttraction) {
-              const score =
-                foundAttraction.qualityScore && foundAttraction.diversityScore && foundAttraction.confidenceScore
-                  ? (foundAttraction.qualityScore + foundAttraction.diversityScore + foundAttraction.confidenceScore) /
-                    3
-                  : 0;
-              return {
-                attraction: foundAttraction,
-                score: Math.round(score),
-                breakdown: {
-                  qualityScore: foundAttraction.qualityScore || 0,
-                  diversityScore: foundAttraction.diversityScore || 0,
-                  confidenceScore: foundAttraction.confidenceScore || 0,
-                },
-              };
-            }
+    if (activeMode === "discover" || activeMode === "ai") {
+      return filteredDiscoveryResults.find((r) => r.attraction?.id === hoveredMarkerId) || null;
+    }
 
-            const foundRestaurant = place.plannedRestaurants?.find((r) => r.id === expandedCardPlaceId);
-            if (foundRestaurant) {
-              const score =
-                foundRestaurant.qualityScore && foundRestaurant.confidenceScore
-                  ? (foundRestaurant.qualityScore + foundRestaurant.confidenceScore) / 2
-                  : 0;
-              return {
-                attraction: foundRestaurant,
-                score: Math.round(score),
-                breakdown: {
-                  qualityScore: foundRestaurant.qualityScore || 0,
-                  confidenceScore: foundRestaurant.confidenceScore || 0,
-                },
-              };
-            }
-          }
-          return null;
-        })()
-    : null;
+    // Use lookup map for O(1) access
+    return plannedAttractionMap.get(hoveredMarkerId) || null;
+  }, [hoveredMarkerId, activeMode, filteredDiscoveryResults, plannedAttractionMap]);
+
+  // Memoized to prevent expensive lookups on every render
+  const expandedAttraction = useMemo(() => {
+    if (!expandedCardPlaceId) return null;
+
+    if (activeMode === "discover" || activeMode === "ai") {
+      return filteredDiscoveryResults.find((r) => r.attraction?.id === expandedCardPlaceId) || null;
+    }
+
+    // Use lookup map for O(1) access
+    return plannedAttractionMap.get(expandedCardPlaceId) || null;
+  }, [expandedCardPlaceId, activeMode, filteredDiscoveryResults, plannedAttractionMap]);
 
   const isPositionInViewport = useCallback(
     (lat: number, lng: number): boolean => {

@@ -7,8 +7,8 @@ alwaysApply: true
 
 ## Our relationship
 
-- Im experienced Scala Developer which value well writen functional code
-- Im willing to learn how to write good TypeScript code keeping best practices from functional programming
+- I am an experienced Scala Developer which value well-written functional code
+- I am willing to learn how to write good TypeScript code keeping best practices from functional programming
 - YOU MUST speak up immediately when you don't know something
 - When you disagree with my approach, YOU MUST push back, citing specific technical reasons if you have them
 - YOU MUST call out bad ideas, unreasonable expectations, and mistakes - I depend on this
@@ -97,7 +97,12 @@ When modifying the directory structure, always update this section.
 
 ## Coding practices
 
-### Guidelines for clean code
+### General Guidelines
+
+- Use Astro components (.astro) for static content and layout
+- Implement framework components in React only when interactivity is needed
+
+### Guidelines for Clean Code
 
 - Use feedback from linters to improve the code when making changes.
 - Prioritize error handling and edge cases.
@@ -108,7 +113,6 @@ When modifying the directory structure, always update this section.
 - Use guard clauses to handle preconditions and invalid states early.
 - Implement proper error logging and user-friendly error messages.
 - Consider using custom error types or error factories for consistent error handling.
-- Write comments only if code is not self-explanatory in terms of purpose or reasoning.
 
 ### Validation and Data Transfer Objects (DTOs)
 
@@ -119,6 +123,7 @@ When modifying the directory structure, always update this section.
 - Validate using `safeParse()`, wrap in Effect with tagged errors for error handling
 
 **DTO Naming Conventions:**
+
 - Command inputs: `*CommandDTO` (e.g., `CreateTripCommandDTO`, `ChatRequestCommandDTO`) - live in `infrastructure/*/api/types.ts`
 - Query results from repositories: `*DTO` (e.g., `TripDTO`, `AttractionDTO`, `PlaceDTO`)
 - Domain command/query types: `*Command` or `*Query` (e.g., `ChatRequestCommand`, `GetAttractionsQuery`) - live in `domain/*/models/types.ts`
@@ -126,17 +131,19 @@ When modifying the directory structure, always update this section.
 - **Application layer uses ONLY domain types, never infrastructure types**
 
 **Data Flow:**
+
 1. API route receives raw request → validates with infrastructure schema → gets CommandDTO
 2. API route maps DTO to domain type using `toDomain` mappers → gets domain command/query
 3. Use case receives domain command → implements business logic → returns domain result
 4. No validation or DTO handling in application layer - it works with pure domain types
 
 **Mappers:**
+
 - `infrastructure/*/api/mappers.ts` - Convert DTOs to domain types
 - Export `toDomain` object with mapping functions (e.g., `toDomain.chatRequest(dto)`)
 - Infrastructure layer owns the mapping responsibility
 
-### Effect Guidelines
+### Guidelines for Effect
 
 - **Use Effect for server-side logic** (API routes, use cases, infrastructure services)
 - **Use plain async/await in browser components** (React hooks, event handlers)

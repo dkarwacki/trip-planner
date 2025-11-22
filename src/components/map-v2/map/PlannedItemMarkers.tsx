@@ -5,9 +5,8 @@
  */
 
 import React from "react";
-import { AdvancedMarker } from "@vis.gl/react-google-maps";
 import type { Attraction } from "@/domain/map/models";
-import { Utensils, Landmark } from "lucide-react";
+import { PlannedItemMarker } from "./PlannedItemMarker";
 
 interface PlannedItem {
   attraction: Attraction;
@@ -31,67 +30,39 @@ export const PlannedItemMarkers = React.memo(function PlannedItemMarkers({
   expandedCardPlaceId,
 }: PlannedItemMarkersProps) {
   // Flatten all planned items from all places
-  const plannedItems: PlannedItem[] = places.flatMap((place) => {
-    const attractions: PlannedItem[] = (place.plannedAttractions || []).map((attraction: Attraction) => ({
-      attraction,
-      placeId: place.id,
-      category: "attractions" as const,
-    }));
+  // Memoized to prevent expensive flatMap on every render (critical for large trip plans)
+  const plannedItems: PlannedItem[] = React.useMemo(() => {
+    return places.flatMap((place) => {
+      const attractions: PlannedItem[] = (place.plannedAttractions || []).map((attraction: Attraction) => ({
+        attraction,
+        placeId: place.id,
+        category: "attractions" as const,
+      }));
 
-    const restaurants: PlannedItem[] = (place.plannedRestaurants || []).map((restaurant: Attraction) => ({
-      attraction: restaurant,
-      placeId: place.id,
-      category: "restaurants" as const,
-    }));
+      const restaurants: PlannedItem[] = (place.plannedRestaurants || []).map((restaurant: Attraction) => ({
+        attraction: restaurant,
+        placeId: place.id,
+        category: "restaurants" as const,
+      }));
 
-    return [...attractions, ...restaurants];
-  });
+      return [...attractions, ...restaurants];
+    });
+  }, [places]);
 
   return (
     <>
-      {plannedItems.map(({ attraction, placeId, category }) => {
-        const isHovered = hoveredId === attraction.id;
-        const isExpanded = expandedCardPlaceId === attraction.id;
-        const isRestaurant = category === "restaurants";
-
-        return (
-          <AdvancedMarker
-            key={attraction.id}
-            position={attraction.location}
-            onClick={() => onMarkerClick(attraction.id, placeId)}
-            zIndex={isExpanded ? 200 : isHovered ? 150 : 140}
-            className="custom-marker"
-          >
-            <div
-              className={`
-                relative transition-all duration-300 cursor-pointer group
-                ${isExpanded ? "scale-125 z-50" : isHovered ? "scale-110 z-40" : "scale-100 z-30"}
-              `}
-              onMouseEnter={() => onMarkerHover?.(attraction.id)}
-              onMouseLeave={() => onMarkerHover?.(null)}
-            >
-              {/* Marker Pin */}
-              <div
-                className={`
-                  flex items-center justify-center w-7 h-7 rounded-full shadow-lg border-2 transition-colors
-                  ${
-                    isExpanded
-                      ? "bg-green-600 border-white text-white"
-                      : "bg-white border-green-500 text-green-600 hover:bg-green-50"
-                  }
-                `}
-              >
-                {isRestaurant ? <Utensils className="w-4 h-4" /> : <Landmark className="w-4 h-4" />}
-              </div>
-
-              {/* Pulse effect for expanded marker */}
-              {isExpanded && (
-                <div className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-30 -z-10" />
-              )}
-            </div>
-          </AdvancedMarker>
-        );
-      })}
+      {plannedItems.map(({ attraction, placeId, category }) => (
+        <PlannedItemMarker
+          key={attraction.id}
+          attraction={attraction}
+          placeId={placeId}
+          isRestaurant={category === "restaurants"}
+          isHovered={hoveredId === attraction.id}
+          isExpanded={expandedCardPlaceId === attraction.id}
+          onMarkerClick={onMarkerClick}
+          onMarkerHover={onMarkerHover}
+        />
+      ))}
     </>
   );
 });

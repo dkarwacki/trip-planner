@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useMemo } from "react";
 import { PlaceMarkers } from "./PlaceMarkers";
 import { DiscoveryMarkersLayer } from "./DiscoveryMarkersLayer";
 import { PlannedItemMarkers } from "./PlannedItemMarkers";
@@ -111,8 +111,10 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
   }, [map, onMapLoad]);
 
   // Filter discovery results to exclude items already in the plan
-  const filteredDiscoveryResults = discoveryResults.filter(
-    (result) => result.attraction && !isInPlan(result.attraction.id)
+  // Memoized to prevent creating new array on every render
+  const filteredDiscoveryResults = useMemo(
+    () => discoveryResults.filter((result) => result.attraction && !isInPlan(result.attraction.id)),
+    [discoveryResults, isInPlan]
   );
 
   return (

@@ -105,16 +105,3 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
 
   return Array.from(container.querySelectorAll(selector)) as HTMLElement[];
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

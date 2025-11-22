@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useMapStore } from "../../stores/mapStore";
 import { useNearbyPlaces } from "../../hooks/useNearbyPlaces";
 import { useReverseGeocoding } from "../../hooks/useReverseGeocoding";
@@ -34,8 +34,16 @@ export function useMapSearch({ mapCenter, mapZoom }: UseMapSearchProps) {
 
   const SEARCH_BUTTON_SHOW_THRESHOLD_KM = SEARCH_AREA_BUTTON_SHOW_THRESHOLD_METERS / 1000;
 
-  const selectedPlace = selectedPlaceId ? places.find((p) => p.id === selectedPlaceId) : null;
-  const fallbackLocation = selectedPlace ? { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) } : null;
+  // Memoize to prevent array search on every render
+  const selectedPlace = useMemo(
+    () => (selectedPlaceId ? places.find((p) => p.id === selectedPlaceId) : null),
+    [selectedPlaceId, places]
+  );
+
+  const fallbackLocation = useMemo(
+    () => (selectedPlace ? { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) } : null),
+    [selectedPlace]
+  );
 
   const { shouldShowButton } = useMapPanDetection(searchCenters, mapCenter, fallbackLocation, {
     thresholdKm: SEARCH_BUTTON_SHOW_THRESHOLD_KM,

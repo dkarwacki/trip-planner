@@ -4,8 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Our relationship
 
-- Im experienced Scala Developer which value well writen functional code
-- Im willing to learn how to write good TypeScript code keeping best practices from functional programming
+- I am an experienced Scala Developer which value well-written functional code
+- I am willing to learn how to write good TypeScript code keeping best practices from functional programming
 - YOU MUST speak up immediately when you don't know something
 - When you disagree with my approach, YOU MUST push back, citing specific technical reasons if you have them
 - YOU MUST call out bad ideas, unreasonable expectations, and mistakes - I depend on this
@@ -16,67 +16,57 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Tech Stack
 
-- **Astro 5** - Modern web framework with server-side rendering
-- **React 19** - UI library for interactive components (functional components with hooks)
-- **TypeScript 5** - Type-safe JavaScript
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **Shadcn/ui** - UI component library (new-york style, with lucide icons)
-- **Effect** - Functional effect system for type-safe error handling and composable business logic
-
-## Development Commands
-
-- `npm run dev` - Start development server (port 3000)
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues automatically
-- `npm run format` - Format code with Prettier
+- Astro 5
+- TypeScript 5
+- React 19
+- Tailwind 4
+- Shadcn/ui
+- Effect
 
 ## Project Structure
 
-The project follows **Clean Architecture** principles with clear separation of concerns, organized by **feature domains**: `map` (interactive map exploration), `plan` (trip planning chat), and `common` (shared utilities).
+When introducing changes to the project, always follow the directory structure below:
 
-- `./src` - Source code
+The project follows **Clean Architecture** principles with clear separation of concerns, organized by **feature domains**:
+
+- `./src` - source code
 - `./src/layouts` - Astro layouts
-- `./src/pages` - Astro pages (file-based routing)
-- `./src/pages/api` - API endpoints (call application use cases)
+- `./src/pages` - Astro pages
+- `./src/pages/api` - API endpoints (thin adapters calling application use cases)
 - `./src/middleware/index.ts` - Astro middleware
 
-### Clean Architecture Layers (Feature-based)
+### Feature-based Organization
 
-The structure below uses `{feature}` as a generic pattern applicable to any feature.
-
-- `./src/domain` - **Domain layer** (pure business logic, no external dependencies)
+- `./src/domain` - Domain layer (pure business logic, no dependencies)
   - `./src/domain/common/` - Shared domain logic
     - `models/` - Core entities
     - `errors/` - Shared errors
   - `./src/domain/{feature}/` - Feature domain
     - `models/` - Feature entities
     - `errors/` - Feature errors
-    - `{business_rule}/` - Business rules (eg. scoring)
+    - `scoring/` - Business rules and algorithms (if applicable)
 
-- `./src/application` - **Application layer** (use cases, orchestration)
+- `./src/application` - Application layer (use cases with Effect)
+  - Use cases implement domain logic with Effect
   - `./src/application/{feature}/` - Feature use cases
-    - `{usecase}/` - Use case per subdirectory
-    - `{usecase}/index.ts` - Public API exports
 
-- `./src/infrastructure` - **Infrastructure layer** (external services, I/O, validation)
+- `./src/infrastructure` - Infrastructure layer (external services, I/O)
   - `./src/infrastructure/common/` - Shared infrastructure
     - `api/` - Shared validation schemas and types
       - `schemas.ts` - Common Zod schemas (UUID, coordinates, photos)
       - `types.ts` - Type definitions using z.infer
       - `index.ts` - Barrel exports
-    - `config/` - Configuration management
+    - `config/` - Configuration service
     - `database/` - Supabase database infrastructure
       - `types.ts` - Supabase generated Database types
       - `SupabaseClient.ts` - Effect service wrapper
       - `index.ts` - Barrel exports
-    - `google-maps/` - Google Maps API client (used by both features)
+    - `google-maps/` - Google Maps API client
       - `schemas.ts` - API response validation schemas
       - `types.ts` - Type definitions for external API
-    - `openai/` - OpenAI client (used by both features)
+    - `openai/` - OpenAI client
     - `http/` - HTTP utilities (validation, response mappers)
-    - `runtime.ts` - Effect runtime configuration with all dependencies
+    - `runtime.ts` - Effect runtime with all dependencies
   - `./src/infrastructure/{feature}/` - Feature-specific infrastructure
     - `api/` - API contracts (DTOs and validation)
       - `schemas.ts` - Zod schemas with branded type transforms
@@ -87,139 +77,72 @@ The structure below uses `{feature}` as a generic pattern applicable to any feat
     - `cache/` - Effect cache services (if applicable)
     - `clients/` - Browser API clients
 
-- `./src/components` - Components (Astro for static, React for interactive)
+- `./src/components` - Client-side components
   - `./src/components/common/` - Shared components
   - `./src/components/{feature}/` - Feature components
   - `./src/components/ui/` - Shadcn/ui components
 
 - `./src/lib` - Shared utilities
-  - `./src/lib/common/` - Shared utilities
+  - `./src/lib/common/` - Shared utilities (storage, utils)
   - `./src/lib/{feature}/` - Feature utilities
 
-- `./src/assets` - Static internal assets
-- `./public` - Public assets
+- `./src/assets` - static internal assets
+- `./public` - public assets
 
-### Feature Organization Rationale
+When modifying the directory structure, always update this section.
 
-- **`common/`** - Code used by multiple features or core to the application
-- **`{feature}/`** - Everything related to a specific feature
-- API routes and pages remain flat for simplicity
+## Coding practices
 
-## Important Configuration
+### General Guidelines
 
-- **Path aliases**: Use `@/*` for `./src/*` (defined in tsconfig.json)
-- **Server output**: Project uses `output: "server"` (SSR mode)
-- **Node adapter**: Configured in standalone mode
-- **Port**: Development server runs on port 3000
-- **Lint-staged**: Automatically runs ESLint on `.ts`, `.tsx`, `.astro` files and Prettier on `.json`, `.css`, `.md` files
+- Use Astro components (.astro) for static content and layout
+- Implement framework components in React only when interactivity is needed
 
-### Error Handling
+### Guidelines for Clean Code
 
-- Handle errors and edge cases at the beginning of functions
-- Use early returns for error conditions
-- Place happy path last in functions
-- Use guard clauses for preconditions
-- Implement proper error logging and user-friendly messages
 - Use feedback from linters to improve the code when making changes.
+- Prioritize error handling and edge cases.
+- Handle errors and edge cases at the beginning of functions.
+- Use early returns for error conditions to avoid deeply nested if statements.
+- Place the happy path last in the function for improved readability.
+- Avoid unnecessary else statements; use if-return pattern instead.
+- Use guard clauses to handle preconditions and invalid states early.
+- Implement proper error logging and user-friendly error messages.
+- Consider using custom error types or error factories for consistent error handling.
 
-### Zod Validation & Schemas
+### Validation and Data Transfer Objects (DTOs)
 
-- **Schemas** (`infrastructure/*/api/schemas.ts`): Define Zod schemas with `.transform()` to branded types (from domain)
-- **DTOs** (`infrastructure/*/api/types.ts`): Derive types using `z.infer<typeof Schema>` - all API types have DTO suffix
-- **Barrel exports** (`infrastructure/*/api/index.ts`): Re-export all schemas and types for convenient imports
+- Use Zod for validation: define schemas in `infrastructure/*/api/schemas.ts`, use `z.infer<>` in `types.ts`
+- **Schemas** (`api/schemas.ts`): Define Zod schemas with `.transform()` to branded types (from domain)
+- **DTOs** (`api/types.ts`): Derive types using `z.infer<typeof Schema>` - all API types have DTO suffix
+- **Barrel exports** (`api/index.ts`): Re-export all schemas and types for convenient imports
 - Validate using `safeParse()`, wrap in Effect with tagged errors for error handling
 
-### Data Flow Pattern
+**DTO Naming Conventions:**
 
-The architecture enforces clear data flow with strict layer separation:
+- Command inputs: `*CommandDTO` (e.g., `CreateTripCommandDTO`, `ChatRequestCommandDTO`) - live in `infrastructure/*/api/types.ts`
+- Query results from repositories: `*DTO` (e.g., `TripDTO`, `AttractionDTO`, `PlaceDTO`)
+- Domain command/query types: `*Command` or `*Query` (e.g., `ChatRequestCommand`, `GetAttractionsQuery`) - live in `domain/*/models/types.ts`
+- **Infrastructure layer owns DTOs, domain layer owns command/query types**
+- **Application layer uses ONLY domain types, never infrastructure types**
 
-**1. API Route (infrastructure adapter):**
+**Data Flow:**
 
-- Receives raw HTTP request
-- Validates using `infrastructure/*/api/schemas.ts` → gets typed DTO
-- **Maps DTO to domain type** using `toDomain` mappers from `infrastructure/*/api/mappers`
-- Calls use case with domain command/query
-- Maps Effect result to HTTP response
+1. API route receives raw request → validates with infrastructure schema → gets CommandDTO
+2. API route maps DTO to domain type using `toDomain` mappers → gets domain command/query
+3. Use case receives domain command → implements business logic → returns domain result
+4. No validation or DTO handling in application layer - it works with pure domain types
 
-**2. Use Case:**
+**Mappers:**
 
-- Receives **domain type** as input
-- NO infrastructure dependencies - only domain types
-- No validation needed - data is pre-validated and mapped
-- Implements business logic using Effect
-- Returns domain models or results
+- `infrastructure/*/api/mappers.ts` - Convert DTOs to domain types
+- Export `toDomain` object with mapping functions (e.g., `toDomain.chatRequest(dto)`)
+- Infrastructure layer owns the mapping responsibility
 
-**3. Response Mapping:**
+### Guidelines for Effect
 
-- Map domain results to response DTOs if needed
-- Use infrastructure response schemas for transforms
-- Return HTTP response
-
-**Key Principles:**
-
-- Validation happens ONCE at the infrastructure boundary
-- DTO→Domain mapping happens in infrastructure layer (`toDomain` mappers)
-- Application layer depends ONLY on domain types
-
-### Astro Guidelines
-
-- Use `export const prerender = false` for API routes
-- Use POST, GET (uppercase) for endpoint handlers
-- API routes are **thin adapters** with clear responsibilities:
-  1. Validate input using infrastructure schemas
-  2. Map DTO to domain type using `toDomain` mappers
-  3. Call application use case with domain command/query
-  4. Map Effect result to HTTP response
-- Use Zod for validation (import schemas from `infrastructure/*/api`), wrap in Effect with tagged errors
-- Use `toDomain` mappers (from `infrastructure/*/api/mappers`) to convert DTOs to domain types
-- Use cases receive **domain types only** (from `domain/*/models/types.ts`)
-- Use `Astro.cookies` for server-side cookie management
-- Use `import.meta.env` for environment variables
-- Leverage View Transitions API for smooth page transitions
-
-### React Guidelines
-
-- Use functional components with hooks (never class components)
-- **Never use "use client"** or other Next.js directives
-- Extract custom hooks into `src/components/hooks`
-- Use React.memo() for expensive components
-- Use React.lazy() and Suspense for code-splitting
-- Use useCallback for event handlers passed to children
-- Use useMemo for expensive calculations
-- Use useId() for generating unique IDs for accessibility
-
-### Component Strategy
-
-- Use Astro components (.astro) for static content and layouts
-- Use React components (.tsx) only when interactivity is needed
-
-### Tailwind CSS
-
-- Use responsive variants (sm:, md:, lg:)
-- Use state variants (hover:, focus-visible:, active:)
-- Implement dark mode with the `dark:` variant
-- Use arbitrary values with square brackets for one-off designs
-- Use the @layer directive for organizing styles
-
-### Accessibility
-
-- Use ARIA landmarks for page regions
-- Apply aria-expanded and aria-controls for expandable content
-- Use aria-live regions for dynamic updates
-- Apply aria-label or aria-labelledby for elements without visible labels
-- Avoid redundant ARIA that duplicates semantic HTML
-
-### Backend (Supabase)
-
-- Use supabase from `context.locals` in Astro routes (not direct imports)
-- Use SupabaseClient type from `src/db/supabase.client.ts`
-- Use Zod schemas to validate data exchanged with backend
-- Follow Supabase guidelines for security and performance
-
-### Effect Guidelines
-
-- **Use Effect for server-side logic only** (API routes, use cases, infrastructure services)
-- **Use plain async/await in browser components** (React hooks, event handlers call browser API clients from `infrastructure/http/clients`)
+- **Use Effect for server-side logic** (API routes, use cases, infrastructure services)
+- **Use plain async/await in browser components** (React hooks, event handlers)
 - **Always use `Effect.gen`** (generator-style) for effect composition instead of pipe
 - **Always yield the service tag first to get the instance**, then call methods on that instance
 - **Use tagged errors** (objects with `_tag` field) for better error discrimination
@@ -227,3 +150,60 @@ The architecture enforces clear data flow with strict layer separation:
 - **Use Context.Tag + Layer** for dependency injection (see `infrastructure/runtime.ts`)
 - **Use branded types** for domain primitives (IDs, emails, etc.)
 - **See detailed best practices** in `.cursor/rules/effect.mdc`
+
+### Guidelines for React
+
+- Use functional components with hooks instead of class components
+- Implement React.memo() for expensive components that render often with the same props
+- Utilize React.lazy() and Suspense for code-splitting and performance optimization
+- Use the useCallback hook for event handlers passed to child components to prevent unnecessary re-renders
+- Prefer useMemo for expensive calculations to avoid recomputation on every render
+- Implement useId() for generating unique IDs for accessibility attributes
+- Consider using the new useOptimistic hook for optimistic UI updates in forms
+- Use useTransition for non-urgent state updates to keep the UI responsive
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Favor named exports for components.
+- Use TypeScript for all code. Prefer interfaces over types.
+- Use Zod for form validation.
+- Use Zustand for state managament.
+- Use Shadcn UI, Radix, and Tailwind CSS for components and styling.
+
+### Guidelines for Astro
+
+- Leverage View Transitions API for smooth page transitions (use ClientRouter)
+- Use content collections with type safety for blog posts, documentation, etc.
+- Leverage Server Endpoints for API routes
+- Use POST, GET - uppercase format for endpoint handlers
+- Use `export const prerender = false` for API routes
+- Extract logic into services in `src/lib/services`
+- Implement middleware for request/response modification
+- Use image optimization with the Astro Image integration
+- Implement hybrid rendering with server-side rendering where needed
+- Use Astro.cookies for server-side cookie management
+- Leverage import.meta.env for environment variables
+
+### Guidelines for Styling
+
+#### Tailwind
+
+- Use the @layer directive to organize styles into components, utilities, and base layers
+- Use arbitrary values with square brackets (e.g., w-[123px]) for precise one-off designs
+- Implement the Tailwind configuration file for customizing theme, plugins, and variants
+- Leverage the theme() function in CSS for accessing Tailwind theme values
+- Implement dark mode with the dark: variant
+- Use responsive variants (sm:, md:, lg:, etc.) for adaptive designs
+- Leverage state variants (hover:, focus-visible:, active:, etc.) for interactive elements
+
+### Guidelines for Accessibility
+
+#### ARIA Best Practices
+
+- Use ARIA landmarks to identify regions of the page (main, navigation, search, etc.)
+- Apply appropriate ARIA roles to custom interface elements that lack semantic HTML equivalents
+- Set aria-expanded and aria-controls for expandable content like accordions and dropdowns
+- Use aria-live regions with appropriate politeness settings for dynamic content updates
+- Implement aria-hidden to hide decorative or duplicative content from screen readers
+- Apply aria-label or aria-labelledby for elements without visible text labels
+- Use aria-describedby to associate descriptive text with form inputs or complex elements
+- Implement aria-current for indicating the current item in a set, navigation, or process
+- Avoid redundant ARIA that duplicates the semantics of native HTML elements

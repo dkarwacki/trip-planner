@@ -41,13 +41,7 @@ export function SearchAreaButton({
           "disabled:opacity-90 disabled:cursor-not-allowed select-none",
           isTooFar && "bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100"
         )}
-        aria-label={
-          isLoading
-            ? "Searching..."
-            : isTooFar
-              ? "Start new trip point here"
-              : "Search this area"
-        }
+        aria-label={isLoading ? "Searching..." : isTooFar ? "Start new trip point here" : "Search this area"}
       >
         {isLoading ? (
           <>

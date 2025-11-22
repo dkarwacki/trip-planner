@@ -18,8 +18,3 @@ export function TypingIndicator() {
     </div>
   );
 }
-
-
-
-
-

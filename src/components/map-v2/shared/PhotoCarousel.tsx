@@ -144,7 +144,14 @@ export function PhotoCarousel({
   if (photos.length === 1) {
     return (
       <div className={className}>
-        <LazyImage photoReference={photos[0]} alt={alt} lat={lat} lng={lng} placeName={placeName} className="h-full w-full" />
+        <LazyImage
+          photoReference={photos[0]}
+          alt={alt}
+          lat={lat}
+          lng={lng}
+          placeName={placeName}
+          className="h-full w-full"
+        />
       </div>
     );
   }

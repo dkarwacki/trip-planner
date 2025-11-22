@@ -45,5 +45,3 @@ export function PlanItemCardSkeleton({ className = "" }: PlanItemCardSkeletonPro
     </div>
   );
 }
-
-

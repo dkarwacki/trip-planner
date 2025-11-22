@@ -87,5 +87,3 @@ export function clearRecentSearches(): void {
     console.error("[recentSearches] Failed to clear recent searches:", error);
   }
 }
-
-

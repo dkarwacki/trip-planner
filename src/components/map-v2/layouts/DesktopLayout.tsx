@@ -3,7 +3,7 @@
  * Main layout structure with header, sidebar, and map
  */
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useMapStore } from "../stores/mapStore";
 import { DesktopHeader } from "./DesktopHeader";
 import { DynamicSidebar } from "./DynamicSidebar";
@@ -43,7 +43,8 @@ export function DesktopLayout({ mapId, tripId }: DesktopLayoutProps) {
   };
 
   // Render appropriate mode content based on activeMode
-  const renderModeContent = () => {
+  // Memoized to prevent recreation on every render
+  const renderModeContent = useCallback(() => {
     switch (activeMode) {
       case "discover":
         return <DiscoverMode />;
@@ -54,7 +55,7 @@ export function DesktopLayout({ mapId, tripId }: DesktopLayoutProps) {
       default:
         return <DiscoverMode />;
     }
-  };
+  }, [activeMode]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50">

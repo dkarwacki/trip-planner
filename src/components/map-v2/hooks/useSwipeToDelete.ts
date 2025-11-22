@@ -108,16 +108,3 @@ export function useSwipeToDelete({
     handleDelete,
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

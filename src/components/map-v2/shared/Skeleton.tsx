@@ -81,16 +81,3 @@ export function SkeletonText({
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

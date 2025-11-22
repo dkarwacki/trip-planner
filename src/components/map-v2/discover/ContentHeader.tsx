@@ -36,17 +36,3 @@ export function ContentHeader({
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

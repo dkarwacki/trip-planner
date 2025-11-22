@@ -97,13 +97,3 @@ export function MobilePlannedItem({ item, category }: MobilePlannedItemProps) {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-

@@ -141,16 +141,3 @@ export function constrainToViewport({
 
   return { x, y };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

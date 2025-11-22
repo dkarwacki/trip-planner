@@ -40,7 +40,7 @@ export function useMapState() {
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  // Track map center changes and add click listener to close cards
+  // Track map center and zoom changes
   useEffect(() => {
     if (!map) return;
 
@@ -53,10 +53,6 @@ export function useMapState() {
       if (zoom !== undefined) {
         setMapZoom(zoom);
       }
-    });
-
-    const clickListener = map.addListener("click", () => {
-      closeCard();
     });
 
     // Initialize center and zoom immediately
@@ -77,9 +73,25 @@ export function useMapState() {
 
     return () => {
       google.maps.event.removeListener(idleListener);
+    };
+    // addSearchCenter is a Zustand action and is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map]);
+
+  // Add click listener to close cards
+  useEffect(() => {
+    if (!map) return;
+
+    const clickListener = map.addListener("click", () => {
+      closeCard();
+    });
+
+    return () => {
       google.maps.event.removeListener(clickListener);
     };
-  }, [map, closeCard, addSearchCenter]);
+    // closeCard is a Zustand action and is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map]);
 
   return {
     map,

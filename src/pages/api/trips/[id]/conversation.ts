@@ -66,8 +66,3 @@ export const PUT: APIRoute = async ({ params, request }) => {
     headers: { "Content-Type": "application/json" },
   });
 };
-
-
-
-
-

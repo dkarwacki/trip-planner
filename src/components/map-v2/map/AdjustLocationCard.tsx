@@ -33,4 +33,3 @@ export function AdjustLocationCard({ onConfirm, onCancel }: AdjustLocationCardPr
     </div>
   );
 }
-

@@ -10,7 +10,13 @@ import { fetchPhoto } from "./photo-utils";
  * @param placeName - Name of the place
  * @returns Object with photo URL and loading state
  */
-export const usePhoto = (photoReference: string | undefined, maxWidth: number, lat: number, lng: number, placeName: string) => {
+export const usePhoto = (
+  photoReference: string | undefined,
+  maxWidth: number,
+  lat: number,
+  lng: number,
+  placeName: string
+) => {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);

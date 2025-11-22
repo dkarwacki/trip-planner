@@ -10,12 +10,3 @@ export { SuggestionCard } from "./SuggestionCard";
 export { PriorityBadge } from "./PriorityBadge";
 export { ThinkingProcess } from "./ThinkingProcess";
 export { TypingIndicator } from "@/components/common/TypingIndicator";
-
-
-
-
-
-
-
-
-

@@ -42,17 +42,3 @@ export function isAttraction(types: string[]): boolean {
 export function getPlaceTypeCategory(types: string[]): "restaurant" | "attraction" {
   return isRestaurant(types) ? "restaurant" : "attraction";
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

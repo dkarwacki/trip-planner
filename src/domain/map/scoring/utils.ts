@@ -15,16 +15,3 @@ export const personaTypeToKey = (persona?: PersonaType): PersonaKey | undefined 
   const upperKey = persona.toUpperCase().replace(/-/g, "_") as PersonaKey;
   return upperKey in PERSONA_FILTER_TYPES ? upperKey : undefined;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -8,7 +8,6 @@ import { useShallow } from "zustand/react/shallow";
 import { PlaceListItem } from "./PlaceListItem";
 import type { Attraction, AttractionScore } from "@/domain/map/models";
 import { useMapStore, selectPlannedIds } from "../stores/mapStore";
-import { useScrollPreservation } from "./DiscoverPanel";
 
 interface PlaceListProps {
   places: (Attraction | AttractionScore)[];
@@ -33,8 +32,6 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const scrolledIdRef = useRef<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const scrollPreservation = useScrollPreservation();
 
   // Scroll to highlighted place (only once per highlight)
   useEffect(() => {
@@ -94,17 +91,24 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
   // Check if attraction is already in plan
   const isInPlan = (attractionId: string) => plannedIds.has(attractionId);
 
+  // Keep stable reference to places array for handleAddClick
+  const placesRef = useRef(places);
+  useEffect(() => {
+    placesRef.current = places;
+  }, [places]);
+
   const handleAddClick = React.useCallback(
     (attractionId: string) => {
       if (!selectedPlaceId) {
         return;
       }
 
-      // Save scroll position BEFORE state update
-      scrollPreservation?.saveScrollPosition();
+      // Preserve scroll position during state update to prevent any movement
+      const scrollContainer = containerRef.current?.parentElement;
+      const scrollPos = scrollContainer?.scrollTop ?? 0;
 
-      // Find the attraction in the places array
-      const place = places.find((p) => {
+      // Find the attraction in the places array using stable ref
+      const place = placesRef.current.find((p) => {
         const attraction = getAttraction(p);
         return attraction.id === attractionId;
       });
@@ -126,8 +130,15 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
       } else {
         addAttractionToPlace(selectedPlaceId, attraction);
       }
+
+      // Restore scroll position after React re-renders
+      requestAnimationFrame(() => {
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollPos;
+        }
+      });
     },
-    [selectedPlaceId, places, addRestaurantToPlace, addAttractionToPlace, scrollPreservation]
+    [selectedPlaceId, addRestaurantToPlace, addAttractionToPlace]
   );
 
   const handleExpandCard = React.useCallback(

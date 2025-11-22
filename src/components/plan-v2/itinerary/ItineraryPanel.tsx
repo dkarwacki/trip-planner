@@ -90,7 +90,7 @@ export function ItineraryPanel({
               <ChevronRight className="h-4 w-4" />
             </Button>
           )}
-          
+
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
             <h2 className="font-semibold">Your Itinerary</h2>

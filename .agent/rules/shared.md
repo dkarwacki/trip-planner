@@ -96,7 +96,12 @@ When modifying the directory structure, always update this section.
 
 ## Coding practices
 
-### Guidelines for clean code
+### General Guidelines
+
+- Use Astro components (.astro) for static content and layout
+- Implement framework components in React only when interactivity is needed
+
+### Guidelines for Clean Code
 
 - Use feedback from linters to improve the code when making changes.
 - Prioritize error handling and edge cases.
@@ -107,7 +112,6 @@ When modifying the directory structure, always update this section.
 - Use guard clauses to handle preconditions and invalid states early.
 - Implement proper error logging and user-friendly error messages.
 - Consider using custom error types or error factories for consistent error handling.
-- Write comments only if code is not self-explanatory in terms of purpose or reasoning.
 
 ### Validation and Data Transfer Objects (DTOs)
 
@@ -138,7 +142,7 @@ When modifying the directory structure, always update this section.
 - Export `toDomain` object with mapping functions (e.g., `toDomain.chatRequest(dto)`)
 - Infrastructure layer owns the mapping responsibility
 
-### Effect Guidelines
+### Guidelines for Effect
 
 - **Use Effect for server-side logic** (API routes, use cases, infrastructure services)
 - **Use plain async/await in browser components** (React hooks, event handlers)
@@ -149,3 +153,55 @@ When modifying the directory structure, always update this section.
 - **Use Context.Tag + Layer** for dependency injection (see `infrastructure/runtime.ts`)
 - **Use branded types** for domain primitives (IDs, emails, etc.)
 - **See detailed best practices** in `.cursor/rules/effect.mdc`
+
+### Guidelines for React
+
+- Use functional components with hooks instead of class components
+- Never use "use client" and other Next.js directives as we use React with Astro
+- Implement React.memo() for expensive components that render often with the same props
+- Utilize React.lazy() and Suspense for code-splitting and performance optimization
+- Use the useCallback hook for event handlers passed to child components to prevent unnecessary re-renders
+- Prefer useMemo for expensive calculations to avoid recomputation on every render
+- Implement useId() for generating unique IDs for accessibility attributes
+- Consider using the new useOptimistic hook for optimistic UI updates in forms
+- Use useTransition for non-urgent state updates to keep the UI responsive
+
+### Guidelines for Astro
+
+- Leverage View Transitions API for smooth page transitions (use ClientRouter)
+- Use content collections with type safety for blog posts, documentation, etc.
+- Leverage Server Endpoints for API routes
+- Use POST, GET - uppercase format for endpoint handlers
+- Use `export const prerender = false` for API routes
+- Extract logic into services in `src/lib/services`
+- Implement middleware for request/response modification
+- Use image optimization with the Astro Image integration
+- Implement hybrid rendering with server-side rendering where needed
+- Use Astro.cookies for server-side cookie management
+- Leverage import.meta.env for environment variables
+
+### Guidelines for Styling
+
+#### Tailwind
+
+- Use the @layer directive to organize styles into components, utilities, and base layers
+- Use arbitrary values with square brackets (e.g., w-[123px]) for precise one-off designs
+- Implement the Tailwind configuration file for customizing theme, plugins, and variants
+- Leverage the theme() function in CSS for accessing Tailwind theme values
+- Implement dark mode with the dark: variant
+- Use responsive variants (sm:, md:, lg:, etc.) for adaptive designs
+- Leverage state variants (hover:, focus-visible:, active:, etc.) for interactive elements
+
+### Guidelines for Accessibility
+
+#### ARIA Best Practices
+
+- Use ARIA landmarks to identify regions of the page (main, navigation, search, etc.)
+- Apply appropriate ARIA roles to custom interface elements that lack semantic HTML equivalents
+- Set aria-expanded and aria-controls for expandable content like accordions and dropdowns
+- Use aria-live regions with appropriate politeness settings for dynamic content updates
+- Implement aria-hidden to hide decorative or duplicative content from screen readers
+- Apply aria-label or aria-labelledby for elements without visible text labels
+- Use aria-describedby to associate descriptive text with form inputs or complex elements
+- Implement aria-current for indicating the current item in a set, navigation, or process
+- Avoid redundant ARIA that duplicates the semantics of native HTML elements

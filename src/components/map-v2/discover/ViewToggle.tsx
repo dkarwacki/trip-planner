@@ -23,10 +23,7 @@ export function ViewToggle({ activeMode, onChange, variant = "default" }: ViewTo
   const isCompact = variant === "compact";
 
   return (
-    <div className={cn(
-      "flex items-center gap-1 bg-gray-100 rounded-lg",
-      isCompact ? "p-0.5" : "p-1"
-    )}>
+    <div className={cn("flex items-center gap-1 bg-gray-100 rounded-lg", isCompact ? "p-0.5" : "p-1")}>
       {modes.map((mode) => (
         <button
           key={mode.id}

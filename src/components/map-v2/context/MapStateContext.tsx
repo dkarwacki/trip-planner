@@ -138,19 +138,10 @@ export function MapStateProvider({ children, tripId, conversationId }: MapStateP
     return () => {
       cancelled = true;
     };
-  }, [
-    tripId,
-    conversationId,
-    setTripId,
-    setTripTitle,
-    setConversationId,
-    setPlaces,
-    markSynced,
-    setActiveMode,
-    setMobileTab,
-    setSelectedPlace,
-    centerOnPlace,
-  ]);
+    // Zustand actions are stable and don't need to be in dependencies
+    // Only tripId and conversationId should trigger re-loading
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripId, conversationId]);
 
   return <MapStateContext.Provider value={{ isInitialized: true }}>{children}</MapStateContext.Provider>;
 }

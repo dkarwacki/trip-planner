@@ -11,11 +11,7 @@ interface Location {
  * Generates a Google Maps URL for a place
  * Tries to be as specific as possible with the available data
  */
-export function getGoogleMapsUrl(place: {
-  name: string;
-  placeId?: string;
-  location?: Location;
-}): string {
+export function getGoogleMapsUrl(place: { name: string; placeId?: string; location?: Location }): string {
   const baseUrl = "https://www.google.com/maps/search/?api=1";
 
   // If we have a place ID, that's the most specific way to link
@@ -35,12 +31,7 @@ export function getGoogleMapsUrl(place: {
 /**
  * Opens the Google Maps URL in a new tab
  */
-export function openInGoogleMaps(place: {
-  name: string;
-  placeId?: string;
-  location?: Location;
-}) {
+export function openInGoogleMaps(place: { name: string; placeId?: string; location?: Location }) {
   const url = getGoogleMapsUrl(place);
   window.open(url, "_blank", "noopener,noreferrer");
 }
-

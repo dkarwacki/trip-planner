@@ -59,7 +59,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
   const program = Effect.gen(function* () {
     const service = yield* TripService;
     yield* service.updateTripPlaces(DEV_USER_ID, tripId, places, title);
-    
+
     return {
       success: true,
       message: "Trip places updated successfully",
@@ -67,9 +67,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
     };
   });
 
-  const result = await Runtime.runPromise(AppRuntime)(
-    Effect.either(program)
-  );
+  const result = await Runtime.runPromise(AppRuntime)(Effect.either(program));
 
   if (result._tag === "Left") {
     console.error(`[API /api/trips/${tripId}/places PUT] Request failed:`, result.left);
@@ -81,4 +79,3 @@ export const PUT: APIRoute = async ({ params, request }) => {
     headers: { "Content-Type": "application/json" },
   });
 };
-

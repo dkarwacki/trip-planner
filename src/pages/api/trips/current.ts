@@ -16,7 +16,7 @@ export const GET: APIRoute = async () => {
   const program = Effect.gen(function* () {
     const service = yield* TripService;
     const trip = yield* service.getCurrentOrCreate(DEV_USER_ID);
-    
+
     return {
       id: trip.id,
       user_id: trip.userId,
@@ -28,9 +28,7 @@ export const GET: APIRoute = async () => {
     };
   });
 
-  const result = await Runtime.runPromise(AppRuntime)(
-    Effect.either(program)
-  );
+  const result = await Runtime.runPromise(AppRuntime)(Effect.either(program));
 
   if (result._tag === "Left") {
     console.error("[API /api/trips/current GET] Request failed:", result.left);
@@ -42,4 +40,3 @@ export const GET: APIRoute = async () => {
     headers: { "Content-Type": "application/json" },
   });
 };
-

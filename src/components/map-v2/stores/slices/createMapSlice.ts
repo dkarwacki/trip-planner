@@ -37,6 +37,6 @@ export const createMapSlice: StateCreator<
   clearSearchCenters: () => set({ searchCenters: [] }),
 
   requestFitBounds: () => set({ shouldFitBounds: true }),
-  
+
   clearFitBoundsRequest: () => set({ shouldFitBounds: false }),
 });

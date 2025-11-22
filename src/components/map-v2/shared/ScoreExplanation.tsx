@@ -26,9 +26,7 @@ export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps)
       <div className="space-y-2">
         {/* Quality Score */}
         <div>
-          <p className="font-semibold mb-1">
-            Quality Score ({qualityWeight} weight)
-          </p>
+          <p className="font-semibold mb-1">Quality Score ({qualityWeight} weight)</p>
           <ul className="space-y-0.5 text-muted-foreground">
             <li>• Normalized rating from 0-10 scale</li>
             <li>• Higher ratings = better quality</li>
@@ -39,9 +37,7 @@ export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps)
         {/* Diversity Score (attractions only) */}
         {isAttraction && (
           <div>
-            <p className="font-semibold mb-1">
-              Diversity Score ({diversityWeight} weight)
-            </p>
+            <p className="font-semibold mb-1">Diversity Score ({diversityWeight} weight)</p>
             <ul className="space-y-0.5 text-muted-foreground">
               <li>• Rewards unique/rare place types</li>
               <li>• Adds variety to recommendations</li>
@@ -52,9 +48,7 @@ export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps)
 
         {/* Confidence Score */}
         <div>
-          <p className="font-semibold mb-1">
-            Confidence Score ({confidenceWeight} weight)
-          </p>
+          <p className="font-semibold mb-1">Confidence Score ({confidenceWeight} weight)</p>
           <ul className="space-y-0.5 text-muted-foreground">
             <li>• Based on review volume</li>
             <li>• More reviews = higher confidence</li>
@@ -64,9 +58,7 @@ export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps)
 
         {/* Persona Boost */}
         <div>
-          <p className="font-semibold mb-1">
-            Persona Boost ({personaWeight} bonus)
-          </p>
+          <p className="font-semibold mb-1">Persona Boost ({personaWeight} bonus)</p>
           <ul className="space-y-0.5 text-muted-foreground">
             <li>• Matches your travel style</li>
             <li>• AI-based personalization</li>
@@ -77,27 +69,11 @@ export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps)
         {/* Formula */}
         <div className="pt-1 border-t border-border">
           <p className="text-muted-foreground italic">
-            Overall Score = {qualityWeight} Quality +{" "}
-            {isAttraction && `${diversityWeight} Diversity + `}
-            {confidenceWeight} Confidence{" "}
-            {personaWeight && `+ ${personaWeight} Persona`}
+            Overall Score = {qualityWeight} Quality + {isAttraction && `${diversityWeight} Diversity + `}
+            {confidenceWeight} Confidence {personaWeight && `+ ${personaWeight} Persona`}
           </p>
         </div>
       </div>
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

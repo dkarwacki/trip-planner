@@ -25,7 +25,16 @@ interface PhotoBlockProps {
  * - Responsive sizing with lazy loading
  * - Optional click handler for lightbox
  */
-export function PhotoBlock({ photos, alt, lat, lng, placeName, className = "", eager = false, onClick }: PhotoBlockProps) {
+export function PhotoBlock({
+  photos,
+  alt,
+  lat,
+  lng,
+  placeName,
+  className = "",
+  eager = false,
+  onClick,
+}: PhotoBlockProps) {
   const [imageError, setImageError] = useState(false);
   const photo = photos?.[0];
 

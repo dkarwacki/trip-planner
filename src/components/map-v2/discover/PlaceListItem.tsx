@@ -30,7 +30,7 @@ export const PlaceListItem = React.memo(function PlaceListItem({
   onAddClick,
 }: PlaceListItemProps) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  
+
   const photoReference = place.photos?.[0]?.photoReference;
   const placeType = getPlaceTypeCategory(place.types);
 

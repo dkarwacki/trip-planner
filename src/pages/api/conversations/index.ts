@@ -100,10 +100,10 @@ export const POST: APIRoute = async ({ request }) => {
     // If tripId provided, link trip to conversation
     if (trip_id) {
       const tripRepo = yield* TripRepository;
-      
+
       // Verify trip exists and belongs to user
       const trip = yield* tripRepo.findById(DEV_USER_ID, trip_id);
-      
+
       // Link trip to conversation
       yield* tripRepo.updateConversationId(DEV_USER_ID, trip_id, conversationId);
     }

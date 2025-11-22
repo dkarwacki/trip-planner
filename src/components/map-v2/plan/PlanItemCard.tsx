@@ -35,15 +35,10 @@ const PlanItemCard = React.memo(
       id: id,
     });
 
-    // Get actual attractions and restaurants from place data (memoized to avoid recalculation)
-    const attractions = useMemo(
-      () => (Array.isArray(place.plannedAttractions) ? place.plannedAttractions : []) as any[],
-      [place.plannedAttractions]
-    );
-    const restaurants = useMemo(
-      () => (Array.isArray(place.plannedRestaurants) ? place.plannedRestaurants : []) as any[],
-      [place.plannedRestaurants]
-    );
+    // Get actual attractions and restaurants from place data
+    // No need for useMemo - simple array check is faster than memoization overhead
+    const attractions = (Array.isArray(place.plannedAttractions) ? place.plannedAttractions : []) as any[];
+    const restaurants = (Array.isArray(place.plannedRestaurants) ? place.plannedRestaurants : []) as any[];
 
     // Get first attraction's photo for banner (memoized)
     const bannerPhoto = useMemo(() => attractions[0]?.photos?.[0], [attractions]);
@@ -214,13 +209,18 @@ const PlanItemCard = React.memo(
   },
   (prevProps, nextProps) => {
     // Custom comparison function for React.memo
-    // Only re-render if these specific props change
+    // Compare actual IDs to catch when items are removed/added even if length stays same
+    const prevAttractionIds = prevProps.place.plannedAttractions?.map((a) => a.id).join(",") || "";
+    const nextAttractionIds = nextProps.place.plannedAttractions?.map((a) => a.id).join(",") || "";
+    const prevRestaurantIds = prevProps.place.plannedRestaurants?.map((r) => r.id).join(",") || "";
+    const nextRestaurantIds = nextProps.place.plannedRestaurants?.map((r) => r.id).join(",") || "";
+
     return (
       prevProps.place.id === nextProps.place.id &&
       prevProps.order === nextProps.order &&
       prevProps.isExpanded === nextProps.isExpanded &&
-      prevProps.place.plannedAttractions?.length === nextProps.place.plannedAttractions?.length &&
-      prevProps.place.plannedRestaurants?.length === nextProps.place.plannedRestaurants?.length &&
+      prevAttractionIds === nextAttractionIds &&
+      prevRestaurantIds === nextRestaurantIds &&
       prevProps.filter === nextProps.filter
     );
   }

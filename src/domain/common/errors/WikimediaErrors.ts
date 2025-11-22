@@ -11,17 +11,3 @@ export class NoWikimediaPhotosFoundError {
     readonly radius: number
   ) {}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

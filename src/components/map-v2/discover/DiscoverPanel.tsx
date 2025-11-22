@@ -3,7 +3,7 @@
  * Implements Stage 3.1 of the UX implementation plan
  */
 
-import React, { useRef, useLayoutEffect, useCallback, useMemo } from "react";
+import React, { useRef, useLayoutEffect, useCallback } from "react";
 import { Search } from "lucide-react";
 import { useMapStore } from "../stores/mapStore";
 import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
@@ -27,13 +27,11 @@ export function DiscoverPanel() {
   const discoveryResults = useMapStore((state) => state.discoveryResults);
   const viewMode = useMapStore((state) => state.viewMode);
   const isLoadingDiscovery = useMapStore((state) => state.isLoadingDiscovery);
-  const plannedPlaces = useMapStore((state) => state.places);
   const setViewMode = useMapStore((state) => state.setViewMode);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollPositionRef = useRef<number>(0);
   const shouldRestoreScrollRef = useRef<boolean>(false);
-  const isRestoringScrollRef = useRef<boolean>(false);
 
   // Use the nearby places hook to automatically fetch when place is selected
   useNearbyPlaces();
@@ -41,16 +39,13 @@ export function DiscoverPanel() {
   // Use filters hook
   const { filters, filteredResults, handleFilterChange, handleClearFilters } = useDiscoverFilters();
 
-  // Save scroll position continuously (but not when we're restoring)
+  // Save scroll position continuously
   React.useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
     const handleScroll = () => {
-      // Don't save scroll position if we're in the middle of restoring it
-      if (!isRestoringScrollRef.current) {
-        scrollPositionRef.current = container.scrollTop;
-      }
+      scrollPositionRef.current = container.scrollTop;
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
@@ -66,27 +61,9 @@ export function DiscoverPanel() {
     }
   }, []);
 
-  // Function to restore scroll position
+  // Function to restore scroll position (not used directly, but kept for context API)
   const restoreScrollPosition = useCallback(() => {
-    if (!shouldRestoreScrollRef.current) return;
-
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const savedScrollTop = scrollPositionRef.current;
-    if (savedScrollTop > 0) {
-      // Use multiple requestAnimationFrame calls to ensure DOM has fully updated
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            if (container && scrollPositionRef.current > 0) {
-              container.scrollTop = scrollPositionRef.current;
-              shouldRestoreScrollRef.current = false;
-            }
-          });
-        });
-      });
-    }
+    // Restoration now happens automatically in useLayoutEffect
   }, []);
 
   const handleViewModeChange = useCallback(
@@ -152,98 +129,36 @@ export function DiscoverPanel() {
     }
   }, [selectedPlaceId, isLoadingDiscovery, filteredResults, viewMode, handleClearFilters, filters]);
 
-  // Memoize content to prevent unnecessary re-renders
-  const memoizedContent = useMemo(() => {
-    return renderContent();
-  }, [renderContent]);
+  // Simplified scroll restoration - runs after layout updates
+  useLayoutEffect(() => {
+    if (!shouldRestoreScrollRef.current) return;
 
-  // Restore scroll position when plannedPlaces changes (after adding items)
-  React.useEffect(() => {
-    if (shouldRestoreScrollRef.current && scrollPositionRef.current > 0) {
-      const savedScroll = scrollPositionRef.current;
+    const container = scrollContainerRef.current;
+    const savedScroll = scrollPositionRef.current;
 
-      // Use multiple requestAnimationFrame calls to ensure DOM has fully updated
+    if (container && savedScroll > 0) {
+      // Restore immediately in layout phase
+      container.scrollTop = savedScroll;
+
+      // Use one requestAnimationFrame to handle any late DOM updates
       requestAnimationFrame(() => {
-        const container = scrollContainerRef.current;
         if (container && container.scrollTop !== savedScroll) {
           container.scrollTop = savedScroll;
         }
-        requestAnimationFrame(() => {
-          const container = scrollContainerRef.current;
-          if (container && container.scrollTop !== savedScroll) {
-            container.scrollTop = savedScroll;
-          }
-          requestAnimationFrame(() => {
-            const container = scrollContainerRef.current;
-            if (container && container.scrollTop !== savedScroll) {
-              container.scrollTop = savedScroll;
-            }
-          });
-        });
       });
-    }
-  }, [plannedPlaces]);
 
-  // Preserve scroll position - use multiple strategies to ensure it sticks
-  useLayoutEffect(() => {
-    if (shouldRestoreScrollRef.current) {
-      const container = scrollContainerRef.current;
-      if (container && scrollPositionRef.current > 0) {
-        const savedScroll = scrollPositionRef.current;
-        isRestoringScrollRef.current = true;
-
-        // Restore immediately in layout phase
-        container.scrollTop = savedScroll;
-
-        // Also restore after multiple animation frames to catch any late DOM updates
-        requestAnimationFrame(() => {
-          if (container && container.scrollTop !== savedScroll) {
-            container.scrollTop = savedScroll;
-          }
-          requestAnimationFrame(() => {
-            if (container && container.scrollTop !== savedScroll) {
-              container.scrollTop = savedScroll;
-            }
-            requestAnimationFrame(() => {
-              if (container && container.scrollTop !== savedScroll) {
-                container.scrollTop = savedScroll;
-              }
-              isRestoringScrollRef.current = false;
-            });
-          });
-        });
-
-        shouldRestoreScrollRef.current = false;
-      }
+      shouldRestoreScrollRef.current = false;
     }
   });
 
-  // Ref callback to preserve scroll when container is recreated
+  // Simplified ref callback
   const scrollContainerCallback = useCallback((node: HTMLDivElement | null) => {
     if (node) {
-      const savedScroll = scrollPositionRef.current;
       scrollContainerRef.current = node;
 
-      // If we have a saved scroll position, restore it immediately and keep restoring
-      if (shouldRestoreScrollRef.current && savedScroll > 0) {
-        isRestoringScrollRef.current = true;
-        node.scrollTop = savedScroll;
-
-        // Keep restoring until it sticks
-        const restoreInterval = setInterval(() => {
-          if (node.scrollTop !== savedScroll && savedScroll > 0) {
-            node.scrollTop = savedScroll;
-          } else {
-            clearInterval(restoreInterval);
-            isRestoringScrollRef.current = false;
-          }
-        }, 16); // ~60fps
-
-        // Stop after 500ms max
-        setTimeout(() => {
-          clearInterval(restoreInterval);
-          isRestoringScrollRef.current = false;
-        }, 500);
+      // Restore scroll position if needed
+      if (shouldRestoreScrollRef.current && scrollPositionRef.current > 0) {
+        node.scrollTop = scrollPositionRef.current;
       }
     }
   }, []);
@@ -276,7 +191,7 @@ export function DiscoverPanel() {
       {/* Scrollable content area */}
       <ScrollPreservationContext.Provider value={{ saveScrollPosition, restoreScrollPosition }}>
         <div ref={scrollContainerCallback} className="flex-1 overflow-y-auto">
-          {memoizedContent}
+          {renderContent()}
         </div>
       </ScrollPreservationContext.Provider>
     </div>

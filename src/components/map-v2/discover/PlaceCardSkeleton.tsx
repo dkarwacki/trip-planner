@@ -31,16 +31,3 @@ export function PlaceCardSkeleton() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

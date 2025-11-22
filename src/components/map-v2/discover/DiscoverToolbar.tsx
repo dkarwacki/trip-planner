@@ -15,12 +15,7 @@ interface DiscoverToolbarProps {
   className?: string;
 }
 
-export function DiscoverToolbar({
-  filters,
-  onFilterChange,
-  onClearFilters,
-  className,
-}: DiscoverToolbarProps) {
+export function DiscoverToolbar({ filters, onFilterChange, onClearFilters, className }: DiscoverToolbarProps) {
   const [filterOpen, setFilterOpen] = useState(false);
 
   const categories: { id: FilterState["category"]; label: string }[] = [
@@ -87,9 +82,7 @@ export function DiscoverToolbar({
             <Filter className="h-4 w-4" />
             <span>Filter</span>
             {qualityFilterCount > 0 && (
-              <span className="px-1.5 py-0.5 bg-blue-600 text-white text-xs rounded-full">
-                {qualityFilterCount}
-              </span>
+              <span className="px-1.5 py-0.5 bg-blue-600 text-white text-xs rounded-full">{qualityFilterCount}</span>
             )}
           </button>
         </PopoverTrigger>
@@ -179,4 +172,3 @@ export function DiscoverToolbar({
     </div>
   );
 }
-
