@@ -14,6 +14,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
   const discoveryResults = useMapStore((state) => state.discoveryResults);
   const filters = useMapStore((state) => state.filters);
   const activeMode = useMapStore((state) => state.activeMode);
+  const centerRequestTimestamp = useMapStore((state) => state.centerRequestTimestamp);
 
   const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
   const setHoveredMarker = useMapStore((state) => state.setHoveredMarker);
@@ -196,7 +197,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
         }
       }
     }
-  }, [map, selectedPlaceId, places]);
+  }, [map, selectedPlaceId, places, centerRequestTimestamp]);
 
   // Close card when marker moves outside viewport
   useEffect(() => {

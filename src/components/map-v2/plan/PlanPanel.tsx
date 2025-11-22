@@ -3,13 +3,13 @@
  * Shows itinerary with places, stats, and view options
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useMapStore } from "../stores/mapStore";
-import ItineraryStats from "./ItineraryStats";
 import PlanItemCardList from "./PlanItemCardList";
-import { Backpack, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Backpack } from "lucide-react";
+import { PlanHeader } from "./PlanHeader";
+import { PlanToolbar } from "./PlanToolbar";
+import type { FilterState } from "../types";
 
 export default function PlanPanel() {
   // Selectors
@@ -17,6 +17,9 @@ export default function PlanPanel() {
 
   // Actions
   const setActiveMode = useMapStore((state) => state.setActiveMode);
+
+  // Local state
+  const [filter, setFilter] = useState<FilterState["category"]>("all");
 
   const hasPlaces = places.length > 0;
 
@@ -45,31 +48,29 @@ export default function PlanPanel() {
     );
   }
 
-  return (
-    <div className="flex h-full flex-col">
-      {/* Header with stats and Create Button */}
-      <div className="border-b border-border bg-background px-4 py-3 sticky top-0 z-10 space-y-3">
-        <ItineraryStats places={places} />
+  const handleCreatePlan = () => {
+    console.log("Create plan clicked");
+    // TODO: Implement create plan functionality
+  };
 
-        {/* Create Plan Button */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 flex items-center gap-2 justify-center">
-                <Plus className="h-4 w-4" />
-                Create Plan
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Creates exportable plan from planned items (Coming Soon)</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+  const handleShare = () => {
+    console.log("Share clicked");
+    // TODO: Implement share functionality
+  };
+
+  return (
+    <div className="flex h-full flex-col bg-white">
+      {/* Header with stats and actions */}
+      <PlanHeader places={places} onCreatePlan={handleCreatePlan} onShare={handleShare} />
+
+      {/* Toolbar with filters */}
+      <div className="px-4 py-2 border-b border-gray-200">
+        <PlanToolbar filter={filter} onFilterChange={setFilter} />
       </div>
 
       {/* Scrollable place cards area */}
-      <div className="flex-1 overflow-y-auto">
-        <PlanItemCardList places={places} />
+      <div className="flex-1 overflow-y-auto bg-gray-50">
+        <PlanItemCardList places={places} filter={filter} />
       </div>
     </div>
   );

@@ -9,21 +9,24 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { useMapStore } from "../stores/mapStore";
 import PlanItemCard from "./PlanItemCard";
 
+import type { FilterState, PlannedPlace } from "../types";
+
 interface PlanItemCardListProps {
-  places: { id?: string | number; [key: string]: unknown }[]; // Will be typed with domain Place type
+  places: PlannedPlace[];
+  filter?: FilterState["category"];
 }
 
-export default function PlanItemCardList({ places }: PlanItemCardListProps) {
+export default function PlanItemCardList({ places, filter = "all" }: PlanItemCardListProps) {
   // Actions
   const reorderPlaces = useMapStore((state) => state.reorderPlaces);
 
-  // Track expanded state for each place (placeId -> boolean)
-  const [expandedPlaces, setExpandedPlaces] = useState<Record<string, boolean>>(() => {
+  // Track expanded place ID (only one can be expanded at a time)
+  const [expandedPlaceId, setExpandedPlaceId] = useState<string | null>(() => {
     // Expand first place by default
     if (places.length > 0) {
-      return { [places[0].id || "0"]: true };
+      return places[0].id || "0";
     }
-    return {};
+    return null;
   });
 
   // Configure drag sensors
@@ -39,10 +42,7 @@ export default function PlanItemCardList({ places }: PlanItemCardListProps) {
   );
 
   const toggleExpand = (placeId: string) => {
-    setExpandedPlaces((prev) => ({
-      ...prev,
-      [placeId]: !prev[placeId],
-    }));
+    setExpandedPlaceId((prevId) => (prevId === placeId ? null : placeId));
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -65,14 +65,19 @@ export default function PlanItemCardList({ places }: PlanItemCardListProps) {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={placeIds} strategy={verticalListSortingStrategy}>
-        <div className="space-y-4 p-4">
+        <div className="relative space-y-6 p-6">
+          {/* Vertical Timeline Line */}
+          <div className="absolute left-[2.5rem] top-6 bottom-6 w-0.5 bg-gray-300 -z-10" />
+
           {places.map((place, index) => (
             <PlanItemCard
               key={place.id || index}
+              id={place.id || String(index)}
               place={place}
               order={index + 1}
-              isExpanded={expandedPlaces[place.id || index] || false}
+              isExpanded={expandedPlaceId === (place.id || index)}
               onToggleExpand={toggleExpand}
+              filter={filter}
             />
           ))}
         </div>

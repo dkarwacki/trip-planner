@@ -3,23 +3,27 @@
  * Shows attractions and restaurants grouped for a place (city/location)
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useMapStore } from "../stores/mapStore";
-import { GripVertical, ChevronRight, ChevronDown, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import PlannedItemList from "./PlannedItemList";
 import { LazyImage } from "../shared/LazyImage";
 
+import type { PlannedPlace, FilterState } from "../types";
+
 interface PlanItemCardProps {
-  place: any; // Will be typed with domain types
+  id: string;
+  place: PlannedPlace;
   order: number;
   isExpanded: boolean;
   onToggleExpand: (placeId: string) => void;
+  filter?: FilterState["category"];
 }
 
 const PlanItemCard = React.memo(
-  function PlanItemCard({ place, order, isExpanded, onToggleExpand }: PlanItemCardProps) {
+  function PlanItemCard({ id, place, order, isExpanded, onToggleExpand, filter = "all" }: PlanItemCardProps) {
     // Actions
     const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
     const setActiveMode = useMapStore((state) => state.setActiveMode);
@@ -28,43 +32,35 @@ const PlanItemCard = React.memo(
 
     // Setup sortable
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-      id: place.id || place,
+      id: id,
     });
-
-    // Track which category sections are expanded (attractions, restaurants)
-    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-      attractions: isExpanded,
-      restaurants: false,
-    });
-
-    const toggleSection = (section: string) => {
-      setExpandedSections((prev) => ({
-        ...prev,
-        [section]: !prev[section],
-      }));
-    };
 
     // Get actual attractions and restaurants from place data (memoized to avoid recalculation)
-    const attractions: any[] = useMemo(() => place.plannedAttractions || [], [place.plannedAttractions]);
-    const restaurants: any[] = useMemo(() => place.plannedRestaurants || [], [place.plannedRestaurants]);
+    const attractions = useMemo(
+      () => (Array.isArray(place.plannedAttractions) ? place.plannedAttractions : []) as any[],
+      [place.plannedAttractions]
+    );
+    const restaurants = useMemo(
+      () => (Array.isArray(place.plannedRestaurants) ? place.plannedRestaurants : []) as any[],
+      [place.plannedRestaurants]
+    );
 
     // Get first attraction's photo for banner (memoized)
     const bannerPhoto = useMemo(() => attractions[0]?.photos?.[0], [attractions]);
 
     const placeName = place.name || place.displayName || "Unknown Place";
-    const placeLocation = place.location || place.vicinity || "";
 
     const handleDiscoverMore = () => {
-      setSelectedPlace(place.id);
+      setSelectedPlace(id);
       setActiveMode("discover");
     };
 
     const handleRemove = (e: React.MouseEvent) => {
       e.stopPropagation();
-      removePlace(place.id);
+      removePlace(id);
     };
 
-    const handleCardClick = (e: React.MouseEvent) => {
+    const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
       // Don't trigger if clicking on interactive elements
       const target = e.target as HTMLElement;
       const isInteractiveElement =
@@ -79,8 +75,15 @@ const PlanItemCard = React.memo(
       }
 
       if (!isInteractiveElement) {
-        onToggleExpand(place.id);
-        centerOnPlace(place.id);
+        onToggleExpand(id);
+        centerOnPlace(id);
+      }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleCardClick(e);
       }
     };
 
@@ -90,150 +93,118 @@ const PlanItemCard = React.memo(
     };
 
     return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        onClick={handleCardClick}
-        className={`rounded-lg border border-border bg-card shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${
-          isDragging ? "opacity-50 shadow-lg scale-105" : ""
-        }`}
-      >
-        {/* Banner with drag handle and photo */}
-        <div className="relative h-24 bg-gradient-to-br from-primary/20 to-primary/5 overflow-hidden">
-          {/* Background photo if available */}
-          {bannerPhoto && attractions[0] && (
-            <div className="absolute inset-0">
-              <LazyImage
-                photoReference={bannerPhoto.photoReference}
-                alt={attractions[0]?.name || "Place photo"}
-                lat={attractions[0].location.lat}
-                lng={attractions[0].location.lng}
-                placeName={attractions[0].name}
-                size="small"
-                className="w-full h-full object-cover opacity-70"
-              />
-              {/* Overlay gradient for better contrast */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10" />
-            </div>
-          )}
-
-          {/* Drag handle */}
+      <div ref={setNodeRef} style={style} className={`relative flex gap-6 ${isDragging ? "opacity-50 z-50" : ""}`}>
+        {/* Timeline Node */}
+        <div className="flex-shrink-0 flex flex-col items-center pt-4">
           <div
             {...attributes}
             {...listeners}
             data-sortable-handle
-            className="absolute left-0 top-0 bottom-0 flex w-11 items-center justify-center cursor-grab hover:bg-black/5 active:cursor-grabbing z-10"
-            onClick={(e) => e.stopPropagation()}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white border-2 border-gray-400 text-sm font-medium text-gray-500 shadow-sm cursor-grab hover:border-gray-600 hover:text-gray-700 active:cursor-grabbing z-10"
           >
-            <GripVertical className="h-5 w-5 text-muted-foreground" />
-          </div>
-
-          {/* Number badge */}
-          <div className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow z-10">
             {order}
           </div>
         </div>
 
-        {/* Card content */}
-        <div className="p-4 group">
-          {/* Hub name and location */}
-          <div className="w-full text-left relative">
-            <h3 className="text-lg font-semibold text-foreground mb-1 pr-8">{placeName}</h3>
-            {placeLocation && <p className="text-sm text-muted-foreground">{placeLocation}</p>}
-            {/* Remove button */}
-            <button
-              onClick={handleRemove}
-              className="absolute top-0 right-0 flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
-              aria-label="Remove place from itinerary"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+        {/* Card Content */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleCardClick}
+          onKeyDown={handleKeyDown}
+          className="flex-1 rounded-2xl bg-white shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200 overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 group"
+        >
+          <div className="flex p-4 gap-4">
+            {/* Left Thumbnail */}
+            <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
+              {bannerPhoto ? (
+                <LazyImage
+                  photoReference={bannerPhoto.photoReference}
+                  alt={attractions[0]?.name || "Place photo"}
+                  lat={attractions[0]?.location?.lat || 0}
+                  lng={attractions[0]?.location?.lng || 0}
+                  placeName={attractions[0]?.name || ""}
+                  size="small"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                  <Search className="h-8 w-8" />
+                </div>
+              )}
+            </div>
 
-          {/* Stats */}
-          <div className="mt-2 text-sm text-muted-foreground">
-            <span className="text-blue-600 font-medium">
-              {attractions.length} {attractions.length === 1 ? "attraction" : "attractions"}
-            </span>{" "}
-            •{" "}
-            <span className="text-red-600 font-medium">
-              {restaurants.length} {restaurants.length === 1 ? "restaurant" : "restaurants"}
-            </span>
-          </div>
-
-          {/* Collapsible sections */}
-          {isExpanded && (
-            <div className="mt-4 space-y-3">
-              {/* Attractions section */}
-              <div>
+            {/* Content */}
+            <div className="flex-1 flex flex-col justify-center min-w-0">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-bold text-gray-900 leading-tight truncate pr-2">{placeName}</h3>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSection("attractions");
-                  }}
-                  className="flex w-full items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                  onClick={handleRemove}
+                  className="text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                  aria-label="Remove place"
                 >
-                  {expandedSections.attractions ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                  <span>Attractions ({attractions.length})</span>
+                  <X className="h-4 w-4" />
                 </button>
-
-                {expandedSections.attractions && (
-                  <div className="mt-2">
-                    {attractions.length > 0 ? (
-                      <PlannedItemList items={attractions} category="attractions" placeId={place.id} />
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic py-2 px-4">No attractions added yet</p>
-                    )}
-                  </div>
-                )}
               </div>
 
-              {/* Restaurants section */}
-              <div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSection("restaurants");
-                  }}
-                  className="flex w-full items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
-                >
-                  {expandedSections.restaurants ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                  <span>Restaurants ({restaurants.length})</span>
-                </button>
-
-                {expandedSections.restaurants && (
-                  <div className="mt-2">
-                    {restaurants.length > 0 ? (
-                      <PlannedItemList items={restaurants} category="restaurants" placeId={place.id} />
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic py-2 px-4">No restaurants added yet</p>
-                    )}
-                  </div>
-                )}
+              <div className="mt-1 space-y-0.5">
+                <p className="text-sm text-gray-600">
+                  {attractions.length} {attractions.length === 1 ? "attraction" : "attractions"}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {restaurants.length} {restaurants.length === 1 ? "restaurant" : "restaurants"}
+                </p>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Discover more button */}
+          {/* Collapsible Sections */}
           {isExpanded && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDiscoverMore();
-              }}
-              className="mt-4 w-full rounded-md border border-blue-200 bg-blue-50/50 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
-            >
-              <Search className="h-4 w-4" />
-              Discover more
-            </button>
+            <div className="border-t border-gray-100 bg-gray-50/50 p-3 space-y-4">
+              {/* Combined list of items */}
+              <div className="space-y-4">
+                {/* Attractions */}
+                {(filter === "all" || filter === "attractions") && attractions.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 pl-1">
+                      Attractions
+                    </h4>
+                    <PlannedItemList items={attractions} category="attractions" placeId={id} />
+                  </div>
+                )}
+
+                {/* Restaurants */}
+                {(filter === "all" || filter === "restaurants") && restaurants.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 pl-1">
+                      Restaurants
+                    </h4>
+                    <PlannedItemList items={restaurants} category="restaurants" placeId={id} />
+                  </div>
+                )}
+
+                {/* Empty state if nothing added */}
+                {attractions.length === 0 && restaurants.length === 0 && (
+                  <p className="text-sm text-gray-400 italic py-2 px-2 text-center">
+                    No items added to this place yet.
+                  </p>
+                )}
+              </div>
+
+              {/* Discover More Button (Visible when expanded) */}
+              <div className="pt-2 border-t border-gray-200/50">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDiscoverMore();
+                  }}
+                  className="w-full rounded-lg bg-white border border-blue-200 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700 flex items-center justify-center gap-2 transition-colors shadow-sm"
+                >
+                  <Search className="h-4 w-4" />
+                  Discover more
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -247,7 +218,8 @@ const PlanItemCard = React.memo(
       prevProps.order === nextProps.order &&
       prevProps.isExpanded === nextProps.isExpanded &&
       prevProps.place.plannedAttractions?.length === nextProps.place.plannedAttractions?.length &&
-      prevProps.place.plannedRestaurants?.length === nextProps.place.plannedRestaurants?.length
+      prevProps.place.plannedRestaurants?.length === nextProps.place.plannedRestaurants?.length &&
+      prevProps.filter === nextProps.filter
     );
   }
 );
