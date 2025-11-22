@@ -110,36 +110,37 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
     }
   }, [map, onMapLoad]);
 
+  // Filter discovery results to exclude items already in the plan
+  const filteredDiscoveryResults = discoveryResults.filter(
+    (result) => result.attraction && !isInPlan(result.attraction.id)
+  );
+
   return (
     <>
-      {/* Conditional rendering based on active mode */}
-      {activeMode === "discover" || activeMode === "ai" ? (
-        <>
-          {/* Discover & AI Mode: Show hub markers + discovery markers */}
-          <PlaceMarkers places={places} selectedPlaceId={selectedPlaceId} onPlaceClick={handlePlaceClick} />
-          <DiscoveryMarkersLayer
-            places={discoveryResults.map((r) => r.attraction).filter((a): a is NonNullable<typeof a> => !!a)}
-            hoveredMarkerId={hoveredMarkerId}
-            selectedPlaceId={selectedPlaceId}
-            onMarkerClick={(id) => {
-              setHighlightedPlace(id);
-              setExpandedCard(id);
-            }}
-            onMarkerHover={handleMarkerHover}
-          />
-        </>
-      ) : (
-        <>
-          {/* Plan Mode: Show hub place markers + planned item markers */}
-          <PlaceMarkers places={places} selectedPlaceId={selectedPlaceId} onPlaceClick={handlePlaceClick} />
-          <PlannedItemMarkers
-            places={places}
-            onMarkerClick={handlePlannedItemClick}
-            onMarkerHover={handleMarkerHover}
-            hoveredId={hoveredMarkerId}
-            expandedCardPlaceId={expandedCardPlaceId}
-          />
-        </>
+      {/* Hub place markers (shown in all modes) */}
+      <PlaceMarkers places={places} selectedPlaceId={selectedPlaceId} onPlaceClick={handlePlaceClick} />
+
+      {/* Planned item markers (always shown - green markers for items in the plan) */}
+      <PlannedItemMarkers
+        places={places}
+        onMarkerClick={handlePlannedItemClick}
+        onMarkerHover={handleMarkerHover}
+        hoveredId={hoveredMarkerId}
+        expandedCardPlaceId={expandedCardPlaceId}
+      />
+
+      {/* Discovery markers (shown only in discover/ai mode, excluding planned items) */}
+      {(activeMode === "discover" || activeMode === "ai") && (
+        <DiscoveryMarkersLayer
+          places={filteredDiscoveryResults.map((r) => r.attraction).filter((a): a is NonNullable<typeof a> => !!a)}
+          hoveredMarkerId={hoveredMarkerId}
+          selectedPlaceId={selectedPlaceId}
+          onMarkerClick={(id) => {
+            setHighlightedPlace(id);
+            setExpandedCard(id);
+          }}
+          onMarkerHover={handleMarkerHover}
+        />
       )}
 
       {/* Search Area Button (Discover & AI mode) */}

@@ -1,12 +1,13 @@
 /**
  * Planned item markers component
  * Renders markers for attractions/restaurants that have been added to the plan
- * Color-coded: blue for attractions, red for restaurants
+ * Color-coded: green for all planned items to distinguish from discovery markers
  */
 
-import { useCallback, useEffect, useRef } from "react";
-import { useMapInstance } from "./hooks/useMapInstance";
+import React from "react";
+import { AdvancedMarker } from "@vis.gl/react-google-maps";
 import type { Attraction } from "@/domain/map/models";
+import { Utensils, Landmark } from "lucide-react";
 
 interface PlannedItem {
   attraction: Attraction;
@@ -22,25 +23,13 @@ interface PlannedItemMarkersProps {
   expandedCardPlaceId?: string | null;
 }
 
-interface MarkerData {
-  marker: google.maps.marker.AdvancedMarkerElement;
-  element: HTMLDivElement;
-  plannedItem: PlannedItem;
-  mouseEnterHandler: () => void;
-  mouseLeaveHandler: () => void;
-}
-
-export function PlannedItemMarkers({
+export const PlannedItemMarkers = React.memo(function PlannedItemMarkers({
   places,
   onMarkerClick,
   onMarkerHover,
   hoveredId,
   expandedCardPlaceId,
 }: PlannedItemMarkersProps) {
-  const { map, markerLibrary, isReady } = useMapInstance();
-  const markersRef = useRef<Map<string, MarkerData>>(new Map());
-  const previousItemsRef = useRef<PlannedItem[]>([]);
-
   // Flatten all planned items from all places
   const plannedItems: PlannedItem[] = places.flatMap((place) => {
     const attractions: PlannedItem[] = (place.plannedAttractions || []).map((attraction: Attraction) => ({
@@ -58,148 +47,51 @@ export function PlannedItemMarkers({
     return [...attractions, ...restaurants];
   });
 
-  // Create marker element
-  const createMarkerElement = useCallback((category: "attractions" | "restaurants") => {
-    const markerColor = "#22c55e"; // green-500 for all planned items
-    const element = document.createElement("div");
-    element.className = "cursor-pointer transition-all duration-200";
-    element.style.width = "20px";
-    element.style.height = "20px";
+  return (
+    <>
+      {plannedItems.map(({ attraction, placeId, category }) => {
+        const isHovered = hoveredId === attraction.id;
+        const isExpanded = expandedCardPlaceId === attraction.id;
+        const isRestaurant = category === "restaurants";
 
-    element.innerHTML = `
-      <div class="w-full h-full rounded-full border-2 border-white shadow-md" style="background-color: ${markerColor};"></div>
-    `;
+        return (
+          <AdvancedMarker
+            key={attraction.id}
+            position={attraction.location}
+            onClick={() => onMarkerClick(attraction.id, placeId)}
+            zIndex={isExpanded ? 200 : isHovered ? 150 : 140}
+            className="custom-marker"
+          >
+            <div
+              className={`
+                relative transition-all duration-300 cursor-pointer group
+                ${isExpanded ? "scale-125 z-50" : isHovered ? "scale-110 z-40" : "scale-100 z-30"}
+              `}
+              onMouseEnter={() => onMarkerHover?.(attraction.id)}
+              onMouseLeave={() => onMarkerHover?.(null)}
+            >
+              {/* Marker Pin */}
+              <div
+                className={`
+                  flex items-center justify-center w-7 h-7 rounded-full shadow-lg border-2 transition-colors
+                  ${
+                    isExpanded
+                      ? "bg-green-600 border-white text-white"
+                      : "bg-white border-green-500 text-green-600 hover:bg-green-50"
+                  }
+                `}
+              >
+                {isRestaurant ? <Utensils className="w-4 h-4" /> : <Landmark className="w-4 h-4" />}
+              </div>
 
-    return element;
-  }, []);
-
-  // Incremental marker updates
-  useEffect(() => {
-    if (!isReady || !map || !markerLibrary) {
-      return;
-    }
-
-    if (!plannedItems || !Array.isArray(plannedItems)) {
-      // Clear all markers if plannedItems is invalid
-      markersRef.current.forEach(({ marker, element, mouseEnterHandler, mouseLeaveHandler }) => {
-        marker.map = null;
-        element.removeEventListener("mouseenter", mouseEnterHandler);
-        element.removeEventListener("mouseleave", mouseLeaveHandler);
-      });
-      markersRef.current.clear();
-      previousItemsRef.current = [];
-      return;
-    }
-
-    const previousItems = previousItemsRef.current;
-    const currentItemIds = new Set(plannedItems.map((item) => item.attraction.id));
-    const previousItemIds = new Set(previousItems.map((item) => item.attraction.id));
-
-    // If previousItems is empty (component just mounted/remounted), clear any stale markers
-    // and treat all current items as new to ensure they're all recreated
-    if (previousItems.length === 0) {
-      // Clear any existing markers that might be stale (shouldn't happen on fresh mount, but be safe)
-      markersRef.current.forEach(({ marker, element, mouseEnterHandler, mouseLeaveHandler }) => {
-        marker.map = null;
-        element.removeEventListener("mouseenter", mouseEnterHandler);
-        element.removeEventListener("mouseleave", mouseLeaveHandler);
-      });
-      markersRef.current.clear();
-    }
-
-    // Find removed items
-    const removedItemIds = previousItems
-      .filter((item) => !currentItemIds.has(item.attraction.id))
-      .map((item) => item.attraction.id);
-
-    // Find added items
-    const addedItems = plannedItems.filter((item) => !previousItemIds.has(item.attraction.id));
-
-    // Remove markers for removed items
-    removedItemIds.forEach((attractionId) => {
-      const markerData = markersRef.current.get(attractionId);
-      if (markerData) {
-        markerData.marker.map = null;
-        markerData.element.removeEventListener("mouseenter", markerData.mouseEnterHandler);
-        markerData.element.removeEventListener("mouseleave", markerData.mouseLeaveHandler);
-        markersRef.current.delete(attractionId);
-      }
-    });
-
-    // Add markers for new items
-    addedItems.forEach((plannedItem) => {
-      const { attraction, placeId, category } = plannedItem;
-      const element = createMarkerElement(category);
-
-      const marker = new markerLibrary.AdvancedMarkerElement({
-        map,
-        position: { lat: attraction.location.lat, lng: attraction.location.lng },
-        content: element,
-        title: attraction.name,
-      });
-
-      // Click handler
-      marker.addListener("click", () => {
-        onMarkerClick(attraction.id, placeId);
-      });
-
-      // Hover handlers (desktop only)
-      const mouseEnterHandler = () => {
-        if (onMarkerHover) {
-          onMarkerHover(attraction.id);
-        }
-      };
-
-      const mouseLeaveHandler = () => {
-        if (onMarkerHover) {
-          onMarkerHover(null);
-        }
-      };
-
-      if (onMarkerHover) {
-        element.addEventListener("mouseenter", mouseEnterHandler);
-        element.addEventListener("mouseleave", mouseLeaveHandler);
-      }
-
-      markersRef.current.set(attraction.id, {
-        marker,
-        element,
-        plannedItem,
-        mouseEnterHandler,
-        mouseLeaveHandler,
-      });
-    });
-
-    // Update previous items reference
-    previousItemsRef.current = plannedItems;
-  }, [plannedItems, map, markerLibrary, isReady, onMarkerClick, onMarkerHover, createMarkerElement]);
-
-  // Update marker styles on hover or when card is expanded (separate effect to avoid recreating markers)
-  useEffect(() => {
-    markersRef.current.forEach(({ element }, id) => {
-      const isHighlighted = id === hoveredId || id === expandedCardPlaceId;
-      if (isHighlighted) {
-        element.style.transform = "scale(1.3)";
-        element.style.zIndex = "1000";
-      } else {
-        element.style.transform = "scale(1)";
-        element.style.zIndex = "auto";
-      }
-    });
-  }, [hoveredId, expandedCardPlaceId]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    const markers = markersRef.current;
-    return () => {
-      markers.forEach(({ marker, element, mouseEnterHandler, mouseLeaveHandler }) => {
-        marker.map = null;
-        element.removeEventListener("mouseenter", mouseEnterHandler);
-        element.removeEventListener("mouseleave", mouseLeaveHandler);
-      });
-      markers.clear();
-    };
-  }, []);
-
-  return null;
-}
+              {/* Pulse effect for expanded marker */}
+              {isExpanded && (
+                <div className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-30 -z-10" />
+              )}
+            </div>
+          </AdvancedMarker>
+        );
+      })}
+    </>
+  );
+});
