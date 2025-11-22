@@ -4,11 +4,12 @@
  */
 
 import React, { useState } from "react";
-import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark, MapPin } from "lucide-react";
+import { Plus, Check, ChevronDown, Lightbulb, Loader2, Utensils, Landmark, MapPin, Map } from "lucide-react";
 import type { SuggestionCardProps } from "../../types";
 import { PriorityBadge } from "./PriorityBadge";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { useMapStore } from "../../stores/mapStore";
+import { openInGoogleMaps } from "@/lib/common/google-maps";
 
 export const SuggestionCard = React.memo(
   function SuggestionCard({ suggestion, isAdded, isAdding = false, onAddClick }: SuggestionCardProps) {
@@ -46,6 +47,17 @@ export const SuggestionCard = React.memo(
       if (!isGeneralTip && suggestion.placeId) {
         setExpandedCard(suggestion.placeId);
         setHighlightedPlace(suggestion.placeId);
+      }
+    };
+
+    const handleGoogleMapsClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent card click
+      if (!isGeneralTip && suggestion.placeName) {
+        openInGoogleMaps({
+          name: suggestion.placeName,
+          placeId: suggestion.placeId || undefined,
+          location: suggestion.attractionData?.location,
+        });
       }
     };
 
@@ -170,38 +182,52 @@ export const SuggestionCard = React.memo(
 
             {/* Action button (only for places, not general tips) */}
             {!isGeneralTip && (
-              <button
-                onClick={handleAddClick}
-                disabled={isAdded || isAdding}
-                className={`
-              w-full py-2.5 px-4 rounded-lg font-medium text-sm
-              transition-colors flex items-center justify-center gap-2
-              ${
-                isAdded
-                  ? "bg-green-50 text-green-700 cursor-default"
-                  : isAdding
-                    ? "bg-blue-50 text-blue-600 cursor-wait"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-              }
-            `}
-              >
-                {isAdding ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Adding...
-                  </>
-                ) : isAdded ? (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Added to Plan
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4" />
-                    Add to Plan
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleGoogleMapsClick}
+                  className="
+                    p-2.5 rounded-lg font-medium text-sm
+                    transition-colors flex items-center justify-center
+                    bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900
+                  "
+                  aria-label="View in Google Maps"
+                  title="View in Google Maps"
+                >
+                  <Map className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={handleAddClick}
+                  disabled={isAdded || isAdding}
+                  className={`
+                    flex-1 py-2.5 px-4 rounded-lg font-medium text-sm
+                    transition-colors flex items-center justify-center gap-2
+                    ${
+                      isAdded
+                        ? "bg-green-50 text-green-700 cursor-default"
+                        : isAdding
+                          ? "bg-blue-50 text-blue-600 cursor-wait"
+                          : "bg-blue-600 text-white hover:bg-blue-700"
+                    }
+                  `}
+                >
+                  {isAdding ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Adding...
+                    </>
+                  ) : isAdded ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Added to Plan
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      Add to Plan
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         </div>

@@ -7,6 +7,8 @@ import React, { useState } from "react";
 import type { Attraction } from "@/domain/map/models";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { BasePlaceCard } from "../shared/BasePlaceCard";
+import { getGoogleMapsUrl } from "@/lib/common/google-maps";
+import { MapPin } from "lucide-react";
 
 interface PlaceCardProps {
   place: Attraction;
@@ -78,7 +80,24 @@ export const PlaceCard = React.memo(function PlaceCard({
           onPhotoClick={handlePhotoClick}
           showScoreTooltip={false}
           className={isHighlighted ? "border-blue-600 border-2" : "border-gray-200"}
-        />
+        >
+          <div className="border-t border-gray-100 pt-3 mt-2">
+            <a
+              href={getGoogleMapsUrl({
+                name: place.name,
+                placeId: place.id,
+                location: place.location,
+              })}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <MapPin className="w-4 h-4" />
+              View on Google Maps
+            </a>
+          </div>
+        </BasePlaceCard>
       </div>
 
       {/* Photo Lightbox */}

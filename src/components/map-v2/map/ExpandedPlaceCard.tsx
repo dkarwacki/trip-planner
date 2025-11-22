@@ -14,6 +14,7 @@ import { MapPin } from "lucide-react";
 import type { Attraction } from "@/domain/map/models";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { BasePlaceCard } from "../shared/BasePlaceCard";
+import { getGoogleMapsUrl } from "@/lib/common/google-maps";
 
 interface ExpandedPlaceCardProps {
   attraction: Attraction;
@@ -29,6 +30,8 @@ interface ExpandedPlaceCardProps {
   isAddingToPlan: boolean;
   onClose: () => void;
   onAddToPlan: (place: Attraction) => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 export const ExpandedPlaceCard = React.memo(
@@ -42,6 +45,8 @@ export const ExpandedPlaceCard = React.memo(
     isAddingToPlan,
     onClose,
     onAddToPlan,
+    onMouseEnter,
+    onMouseLeave,
   }: ExpandedPlaceCardProps) {
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
@@ -168,13 +173,15 @@ export const ExpandedPlaceCard = React.memo(
           ref={cardRef}
           className={`
             fixed bg-white shadow-2xl z-50 overflow-hidden flex flex-col
-            transition-all duration-300 ease-out
+            transition-all duration-50 ease-out
             ${isMobile ? "transform translate-y-full" : "rounded-xl border border-gray-200 opacity-0 scale-95"}
             ${isVisible ? (isMobile ? "translate-y-0" : "opacity-100 scale-100") : ""}
           `}
           style={getCardPosition()}
           role="dialog"
           aria-label={`Details for ${attraction.name}`}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
         >
           <div className="overflow-y-auto custom-scrollbar">
             <BasePlaceCard
@@ -185,6 +192,7 @@ export const ExpandedPlaceCard = React.memo(
               isAdding={isAddingToPlan}
               onAddClick={handleAddToPlan}
               onPhotoClick={handlePhotoClick}
+              onClose={onClose}
               className="border-0 shadow-none rounded-none"
               showActions={true}
             >
@@ -213,7 +221,11 @@ export const ExpandedPlaceCard = React.memo(
               {/* View on Google Maps */}
               <div className="border-t border-gray-100 pt-3 mt-2">
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${attraction.location.lat},${attraction.location.lng}&query_place_id=${attraction.id}`}
+                  href={getGoogleMapsUrl({
+                    name: attraction.name,
+                    placeId: attraction.id,
+                    location: attraction.location,
+                  })}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"

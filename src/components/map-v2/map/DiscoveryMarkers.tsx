@@ -43,8 +43,8 @@ export function DiscoveryMarkers({
     (score: number) => {
       const element = document.createElement("div");
       element.className = "cursor-pointer transition-all duration-200";
-      element.style.width = "20px";
-      element.style.height = "20px";
+      element.style.width = "18px";
+      element.style.height = "18px";
 
       element.innerHTML = `
         <div class="w-full h-full rounded-full border-2 border-white shadow-md" style="background-color: ${markerColor};"></div>

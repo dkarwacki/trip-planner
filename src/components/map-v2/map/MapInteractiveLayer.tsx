@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { PlaceMarkers } from "./PlaceMarkers";
 import { DiscoveryMarkersLayer } from "./DiscoveryMarkersLayer";
 import { PlannedItemMarkers } from "./PlannedItemMarkers";
@@ -8,7 +8,6 @@ import { PlacePreviewCard } from "./PlacePreviewCard";
 import { AdjustLocationCard } from "./AdjustLocationCard";
 import { PinModeUI } from "./PinModeUI";
 import { MapBackdrop } from "./MapBackdrop";
-import { HoverMiniCard } from "./HoverMiniCard";
 import { ExpandedPlaceCard } from "./ExpandedPlaceCard";
 import { useMapState } from "./hooks/useMapState";
 import { useMapSearch } from "./hooks/useMapSearch";
@@ -57,6 +56,53 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
     getMarkerScreenPosition,
   } = useMapSelection({ map, mapCenter });
 
+  // 4. Hover Delay Logic
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleMarkerHover = useCallback(
+    (id: string | null) => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+
+      if (id) {
+        setHoveredMarker(id);
+      } else {
+        // Add delay before clearing to allow moving to the card
+        hoverTimeoutRef.current = setTimeout(() => {
+          setHoveredMarker(null);
+        }, 300); // 300ms grace period
+      }
+    },
+    [setHoveredMarker]
+  );
+
+  const handleCardMouseEnter = useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  }, []);
+
+  const handleCardMouseLeave = useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredMarker(null);
+    }, 300);
+  }, [setHoveredMarker]);
+
   // Notify parent when map is loaded
   useEffect(() => {
     if (map && onMapLoad) {
@@ -79,7 +125,7 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
               setHighlightedPlace(id);
               setExpandedCard(id);
             }}
-            onMarkerHover={setHoveredMarker}
+            onMarkerHover={handleMarkerHover}
           />
         </>
       ) : (
@@ -89,7 +135,7 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
           <PlannedItemMarkers
             places={places}
             onMarkerClick={handlePlannedItemClick}
-            onMarkerHover={setHoveredMarker}
+            onMarkerHover={handleMarkerHover}
             hoveredId={hoveredMarkerId}
             expandedCardPlaceId={expandedCardPlaceId}
           />
@@ -130,24 +176,29 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
       {/* Map Backdrop (when card is expanded) */}
       <MapBackdrop isVisible={!!expandedCardPlaceId} onClick={closeCard} />
 
-      {/* Hover Mini Card (Desktop only, with 300ms delay) */}
+      {/* Hover Preview Card (Desktop only) - Replaces HoverMiniCard with ExpandedPlaceCard logic */}
       {isDesktop && hoveredAttraction && !expandedCardPlaceId && (
-        <HoverMiniCard
+        <ExpandedPlaceCard
           attraction={hoveredAttraction.attraction}
+          score={hoveredAttraction.score}
+          breakdown={hoveredAttraction.breakdown}
           markerPosition={
             getMarkerScreenPosition(
               hoveredAttraction.attraction.location.lat,
               hoveredAttraction.attraction.location.lng
-            ) || { x: 0, y: 0 }
+            ) || null
           }
           viewportSize={viewportSize}
-          onMouseEnter={() => setHoveredMarker(hoveredAttraction.attraction.id)}
-          onMouseLeave={() => setHoveredMarker(null)}
-          onClick={() => setExpandedCard(hoveredAttraction.attraction.id)}
+          isAddedToPlan={isInPlan(hoveredAttraction.attraction.id)}
+          isAddingToPlan={false}
+          onClose={() => setHoveredMarker(null)}
+          onAddToPlan={(place) => handleAddToPlan(place.id)}
+          onMouseEnter={handleCardMouseEnter}
+          onMouseLeave={handleCardMouseLeave}
         />
       )}
 
-      {/* Expanded Place Card */}
+      {/* Expanded Place Card (Selected) */}
       {expandedAttraction && (
         <ExpandedPlaceCard
           attraction={expandedAttraction.attraction}

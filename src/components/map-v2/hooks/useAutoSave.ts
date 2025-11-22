@@ -47,6 +47,8 @@ export function useAutoSave({ enabled = true, debounceMs = 500 }: UseAutoSaveOpt
       let newTitle = tripTitle;
       if (tripTitle === "Trip to ..." && places.length > 0) {
         newTitle = `Trip to ${places[0].name}`;
+      } else if (tripTitle?.startsWith("Trip to ") && places.length === 0) {
+        newTitle = "Trip to ...";
       }
 
       // Prepare body - include title if it changed

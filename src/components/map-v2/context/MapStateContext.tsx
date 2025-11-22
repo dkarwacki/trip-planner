@@ -113,8 +113,19 @@ export function MapStateProvider({ children, tripId, conversationId }: MapStateP
           const firstPlaceId = places[0].id;
           setSelectedPlace(firstPlaceId);
           centerOnPlace(firstPlaceId);
-          setActiveMode("plan");
-          setMobileTab("plan");
+
+          // Check for mode query param to override default plan mode
+          // This allows "Show on Map" to open in Discover mode
+          const urlParams = new URLSearchParams(window.location.search);
+          const modeParam = urlParams.get("mode");
+
+          if (modeParam === "discover") {
+            setActiveMode("discover");
+            setMobileTab("discover");
+          } else {
+            setActiveMode("plan");
+            setMobileTab("plan");
+          }
         }
       } catch (error) {
         if (cancelled) return;

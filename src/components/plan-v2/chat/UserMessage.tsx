@@ -23,7 +23,7 @@ export function UserMessage({ message }: UserMessageProps) {
   return (
     <div className="flex justify-end">
       <div className="max-w-[80%] space-y-1">
-        <div className="rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-primary-foreground">
+        <div className="rounded-2xl rounded-tr-sm bg-blue-600 px-4 py-2.5 text-white dark:bg-blue-700">
           <p className="whitespace-pre-wrap break-words text-sm">{message.content}</p>
         </div>
         <p className="px-1 text-right text-xs text-muted-foreground">{timestamp}</p>

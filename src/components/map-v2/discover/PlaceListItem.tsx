@@ -8,6 +8,7 @@ import { MapPin, Star, Plus, CheckCircle2, Utensils, Landmark } from "lucide-rea
 import { LazyImage } from "../shared/LazyImage";
 import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
 import PhotoLightbox from "@/components/PhotoLightbox";
+import { openInGoogleMaps } from "@/lib/common/google-maps";
 
 interface PlaceListItemProps {
   place: Attraction;
@@ -66,6 +67,15 @@ export const PlaceListItem = React.memo(function PlaceListItem({
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onAddClick?.(place.id);
+  };
+
+  const handleMapsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openInGoogleMaps({
+      name: place.name,
+      placeId: place.id,
+      location: place.location,
+    });
   };
 
   return (
@@ -149,18 +159,31 @@ export const PlaceListItem = React.memo(function PlaceListItem({
         </div>
       </div>
 
-      {/* Add button */}
-      <button
-        onClick={handleAddClick}
-        disabled={isAdded}
-        className={`
-          flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors
-          ${isAdded ? "bg-green-600 text-white cursor-default" : "bg-blue-600 hover:bg-blue-700 text-white"}
-        `}
-        aria-label={isAdded ? `${place.name} added to plan` : `Add ${place.name} to plan`}
-      >
-        {isAdded ? <CheckCircle2 className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-      </button>
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        {/* Maps button */}
+        <button
+          onClick={handleMapsClick}
+          className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+          aria-label={`View ${place.name} in Google Maps`}
+          title="View in Google Maps"
+        >
+          <MapPin className="w-5 h-5" />
+        </button>
+
+        {/* Add button */}
+        <button
+          onClick={handleAddClick}
+          disabled={isAdded}
+          className={`
+            flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors
+            ${isAdded ? "bg-green-600 text-white cursor-default" : "bg-blue-600 hover:bg-blue-700 text-white"}
+          `}
+          aria-label={isAdded ? `${place.name} added to plan` : `Add ${place.name} to plan`}
+        >
+          {isAdded ? <CheckCircle2 className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+        </button>
+      </div>
 
       {/* Photo Lightbox */}
       {place.photos && place.photos.length > 0 && (

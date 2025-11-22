@@ -46,7 +46,7 @@ export const DiscoveryMarkersLayer = React.memo(function DiscoveryMarkersLayer({
               {/* Marker Pin */}
               <div
                 className={`
-                  flex items-center justify-center w-8 h-8 rounded-full shadow-lg border-2 transition-colors
+                  flex items-center justify-center w-7 h-7 rounded-full shadow-lg border-2 transition-colors
                   ${
                     isSelected
                       ? "bg-blue-600 border-white text-white"

@@ -153,6 +153,7 @@ export const CreateConversationCommandSchema = z.object({
     .string()
     .min(1, "Initial message is required")
     .max(2000, "Message must be 2000 characters or less"),
+  trip_id: UUIDSchema.optional(),
 });
 
 /**

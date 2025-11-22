@@ -12,7 +12,7 @@ interface MapCanvasProps {
 export function MapCanvas({ mapId, defaultCenter = { lat: 0, lng: 0 }, defaultZoom = 2, onMapLoad }: MapCanvasProps) {
   return (
     <div className="relative h-full w-full bg-gray-100">
-      <div className="relative h-full w-full" style={{ zIndex: 45 }}>
+      <div className="relative h-full w-full" style={{ zIndex: 10 }}>
         <Map
           defaultCenter={defaultCenter}
           defaultZoom={defaultZoom}

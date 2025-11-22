@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { LazyImage } from "@/components/map-v2/shared/LazyImage";
 import type { PlacePhoto } from "@/domain/common/models";
 import { cn } from "@/lib/common/utils";
@@ -75,6 +75,15 @@ export default function PhotoLightbox({
           <DialogDescription className="sr-only">
             View full-size photo. Use arrow keys to navigate between photos or click outside to close.
           </DialogDescription>
+
+          {/* Close button */}
+          <DialogPrimitive.Close
+            className="absolute right-4 top-4 z-50 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-white"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
 
           {/* Photo counter - only show when multiple photos */}
           {photos.length > 1 && (

@@ -60,7 +60,7 @@ export function PlannedItemMarkers({
 
   // Create marker element
   const createMarkerElement = useCallback((category: "attractions" | "restaurants") => {
-    const markerColor = category === "attractions" ? "#3B82F6" : "#EF4444"; // blue-600 or red-500
+    const markerColor = "#22c55e"; // green-500 for all planned items
     const element = document.createElement("div");
     element.className = "cursor-pointer transition-all duration-200";
     element.style.width = "20px";

@@ -96,24 +96,16 @@ export const PUT: APIRoute = async ({ params, request }) => {
   const program = Effect.gen(function* () {
     const conversationRepo = yield* ConversationRepository;
 
-    // Get current conversation
-    const conversation = yield* conversationRepo.findById(DEV_USER_ID, id);
-
     // Update with new title
-    const updatedConversation = {
-      ...conversation,
-      title,
-      updatedAt: new Date().toISOString(),
-    };
+    yield* conversationRepo.updateTitle(DEV_USER_ID, id, title);
 
-    // Note: We need to update the full conversation since repository doesn't have updateTitle
-    // We'll use updateMessages to trigger an update (keeping same messages)
-    yield* conversationRepo.updateMessages(DEV_USER_ID, id, updatedConversation.messages);
+    // Get updated conversation
+    const updatedConversation = yield* conversationRepo.findById(DEV_USER_ID, id);
 
     return UpdateConversationResponseSchema.parse({
       id: updatedConversation.id,
       title: updatedConversation.title,
-      updated_at: updatedConversation.updatedAt,
+      updated_at: new Date(updatedConversation.updatedAt).toISOString(),
     });
   }).pipe(
     Effect.catchAll((error) => {

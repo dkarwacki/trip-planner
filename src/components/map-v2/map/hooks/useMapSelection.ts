@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from "react";
-import { useMapStore } from "../../stores/mapStore";
+import { useCallback, useEffect, useMemo } from "react";
+import { useMapStore, filterDiscoveryResults } from "../../stores/mapStore";
 
 interface UseMapSelectionProps {
   map: google.maps.Map | null;
@@ -12,6 +12,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
   const hoveredMarkerId = useMapStore((state) => state.hoveredMarkerId);
   const expandedCardPlaceId = useMapStore((state) => state.expandedCardPlaceId);
   const discoveryResults = useMapStore((state) => state.discoveryResults);
+  const filters = useMapStore((state) => state.filters);
   const activeMode = useMapStore((state) => state.activeMode);
 
   const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
@@ -21,6 +22,11 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
   const addAttractionToPlace = useMapStore((state) => state.addAttractionToPlace);
   const addRestaurantToPlace = useMapStore((state) => state.addRestaurantToPlace);
   const closeCard = useMapStore((state) => state.closeCard);
+
+  // Apply filters to discovery results
+  const filteredDiscoveryResults = useMemo(() => {
+    return filterDiscoveryResults(discoveryResults, filters);
+  }, [discoveryResults, filters]);
 
   const handlePlaceClick = useCallback(
     (place: { id: string }) => {
@@ -33,7 +39,10 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     (attractionId: string) => {
       if (!selectedPlaceId) return;
 
-      const result = discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === attractionId);
+      // Look up in filtered results first, but fallback to all results just in case
+      // (though typically we only click what we see)
+      const result = filteredDiscoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === attractionId)
+        || discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === attractionId);
 
       if (!result?.attraction) return;
 
@@ -47,7 +56,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
         addAttractionToPlace(selectedPlaceId, result.attraction);
       }
     },
-    [discoveryResults, selectedPlaceId, addAttractionToPlace, addRestaurantToPlace]
+    [filteredDiscoveryResults, discoveryResults, selectedPlaceId, addAttractionToPlace, addRestaurantToPlace]
   );
 
   const handlePlannedItemClick = useCallback(
@@ -60,7 +69,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
   const hoveredAttraction = hoveredMarkerId
     ? activeMode === "discover" || activeMode === "ai"
-      ? discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === hoveredMarkerId)
+      ? filteredDiscoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === hoveredMarkerId)
       : (() => {
           for (const place of places) {
             const found =
@@ -74,7 +83,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
   const expandedAttraction = expandedCardPlaceId
     ? activeMode === "discover" || activeMode === "ai"
-      ? discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === expandedCardPlaceId)
+      ? filteredDiscoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === expandedCardPlaceId)
       : (() => {
           for (const place of places) {
             const foundAttraction = place.plannedAttractions?.find((a: { id: string }) => a.id === expandedCardPlaceId);
@@ -131,12 +140,12 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
     // Find the attraction in discovery results (Discover/AI mode) or planned items (Plan mode)
     let expandedItem: { attraction?: { id: string; location: { lat: number; lng: number } } } | undefined =
-      discoveryResults.find(
+      filteredDiscoveryResults.find(
         (r: { attraction?: { id: string; location: { lat: number; lng: number } } }) =>
           r.attraction?.id === expandedCardPlaceId
       );
 
-    // If not found in discovery results, search in planned items
+    // If not found in filtered results, search in planned items
     if (!expandedItem) {
       for (const place of places) {
         const found =
@@ -163,7 +172,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
         map.setZoom(14);
       }
     }
-  }, [map, expandedCardPlaceId, discoveryResults, places]);
+  }, [map, expandedCardPlaceId, filteredDiscoveryResults, places]);
 
   // Close card when marker moves outside viewport
   useEffect(() => {
@@ -229,7 +238,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     hoveredMarkerId,
     expandedCardPlaceId,
     activeMode,
-    discoveryResults,
+    discoveryResults: filteredDiscoveryResults, // Return filtered results instead of raw
     places,
     setHoveredMarker,
     setExpandedCard,

@@ -1,5 +1,5 @@
 import React from "react";
-import { MapPin, Utensils, Landmark, CheckCircle2, Plus, Check, Loader2 } from "lucide-react";
+import { MapPin, Utensils, Landmark, CheckCircle2, Plus, Check, Loader2, X, Map } from "lucide-react";
 import { LazyImage } from "./LazyImage";
 import { ScoreBadge } from "./ScoreBadge";
 import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
@@ -26,6 +26,8 @@ export interface BasePlaceCardProps {
   isAdding?: boolean;
   onAddClick: (e: React.MouseEvent) => void;
   onPhotoClick?: (e: React.MouseEvent) => void;
+  onGoogleMapsClick?: (e: React.MouseEvent) => void;
+  onClose?: (e: React.MouseEvent) => void;
   className?: string;
   children?: React.ReactNode;
   showScore?: boolean;
@@ -45,6 +47,8 @@ export function BasePlaceCard({
   isAdding = false,
   onAddClick,
   onPhotoClick,
+  onGoogleMapsClick,
+  onClose,
   className = "",
   children,
   showScore = true,
@@ -111,9 +115,23 @@ export function BasePlaceCard({
           )}
         </div>
 
-        {/* Score Badge */}
+        {/* Close Button - Top Right (High Z-Index) */}
+        {onClose && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose(e);
+            }}
+            className="absolute top-2 right-2 z-20 p-1.5 bg-white/90 hover:bg-white text-gray-700 hover:text-gray-900 rounded-full shadow-md transition-all"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Score Badge - Top Right (Shifted if Close button exists) */}
         {showScore && score !== undefined && score > 0 && (
-          <div className="absolute top-2 right-2">
+          <div className={`absolute top-2 ${onClose ? "right-12" : "right-2"}`}>
             <ScoreBadge score={score} breakdown={breakdown} size="sm" showTooltip={showScoreTooltip} />
           </div>
         )}
@@ -157,38 +175,57 @@ export function BasePlaceCard({
 
         {/* Action Button */}
         {showActions && (
-          <button
-            onClick={onAddClick}
-            disabled={isAdded || isAdding}
-            className={`
-              w-full py-2.5 px-4 rounded-lg font-medium text-sm
-              transition-colors flex items-center justify-center gap-2
-              ${
-                isAdded
-                  ? "bg-green-50 text-green-700 cursor-default"
-                  : isAdding
-                    ? "bg-blue-50 text-blue-600 cursor-wait"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-              }
-            `}
-          >
-            {isAdding ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Adding...
-              </>
-            ) : isAdded ? (
-              <>
-                <Check className="h-4 w-4" />
-                {addedLabel}
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4" />
-                {actionButtonLabel}
-              </>
+          <div className="flex items-center gap-2">
+            {onGoogleMapsClick && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onGoogleMapsClick(e);
+                }}
+                className="
+                  py-2.5 px-3 rounded-lg font-medium text-sm
+                  transition-colors flex items-center justify-center
+                  bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900
+                "
+                aria-label="View in Google Maps"
+                title="View in Google Maps"
+              >
+                <Map className="h-4 w-4" />
+              </button>
             )}
-          </button>
+            <button
+              onClick={onAddClick}
+              disabled={isAdded || isAdding}
+              className={`
+                flex-1 py-2.5 px-4 rounded-lg font-medium text-sm
+                transition-colors flex items-center justify-center gap-2
+                ${
+                  isAdded
+                    ? "bg-green-50 text-green-700 cursor-default"
+                    : isAdding
+                      ? "bg-blue-50 text-blue-600 cursor-wait"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                }
+              `}
+            >
+              {isAdding ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : isAdded ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  {addedLabel}
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  {actionButtonLabel}
+                </>
+              )}
+            </button>
+          </div>
         )}
       </div>
     </div>

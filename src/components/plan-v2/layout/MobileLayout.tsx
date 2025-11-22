@@ -85,7 +85,19 @@ export function MobileLayout({ conversationId }: LayoutProps) {
         title = `Trip to ${places[0].name}`;
       }
 
-      const newId = await createNew(messages, personas, title);
+      // Check if activeConversationId is a virtual conversation (trip)
+      // by checking if it exists in conversations list and has messageCount === 0 and tripId === id
+      const currentConv = conversations.find((c) => c.id === activeConversationId);
+      const isVirtualConversation =
+        currentConv &&
+        currentConv.messageCount === 0 &&
+        currentConv.tripId &&
+        String(currentConv.tripId) === String(currentConv.id);
+
+      // If it's a virtual conversation, pass the tripId to link the conversation to the trip
+      const tripIdToLink = isVirtualConversation ? (activeConversationId as string) : undefined;
+
+      const newId = await createNew(messages, personas, title, tripIdToLink);
       if (newId) {
         setActiveConversationId(newId);
       }
@@ -313,10 +325,11 @@ export function MobileLayout({ conversationId }: LayoutProps) {
       clearItinerary();
 
       // Navigate to map with trip ID (and conversation ID if available)
+      // Add mode=discover to open discover panel
       if (activeConversationId) {
-        window.location.href = `/map-v2?tripId=${tripId}&conversationId=${activeConversationId}`;
+        window.location.href = `/map-v2?tripId=${tripId}&conversationId=${activeConversationId}&mode=discover`;
       } else {
-        window.location.href = `/map-v2?tripId=${tripId}`;
+        window.location.href = `/map-v2?tripId=${tripId}&mode=discover`;
       }
     } catch (error) {
       console.error("Failed to export to map:", error);

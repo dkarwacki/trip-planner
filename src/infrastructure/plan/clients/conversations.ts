@@ -61,7 +61,8 @@ export const getConversation = async (id: ConversationId): Promise<SavedConversa
 export const createConversation = async (
   messages: ChatMessage[],
   personas: PersonaType[],
-  title?: string
+  title?: string,
+  tripId?: string
 ): Promise<ConversationId> => {
   // Generate title if not provided
   const conversationTitle =
@@ -82,6 +83,7 @@ export const createConversation = async (
       title: conversationTitle,
       personas,
       initial_message: firstMessage.content,
+      trip_id: tripId,
     }),
   });
 

@@ -33,8 +33,8 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
   const createMarkerElement = useCallback((place: PlannedPlace, index: number, isSelected: boolean) => {
     const element = document.createElement("div");
     element.className = "relative cursor-pointer transition-all duration-200";
-    element.style.width = isSelected ? "40px" : "32px";
-    element.style.height = isSelected ? "40px" : "32px";
+    element.style.width = isSelected ? "48px" : "36px";
+    element.style.height = isSelected ? "48px" : "36px";
 
     element.innerHTML = `
       <div class="w-full h-full rounded-full bg-blue-600 border-4 border-white shadow-lg flex items-center justify-center ${
@@ -49,8 +49,8 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
 
   // Update marker visual state when selection changes
   const updateMarkerVisualState = useCallback((element: HTMLDivElement, index: number, isSelected: boolean) => {
-    element.style.width = isSelected ? "40px" : "32px";
-    element.style.height = isSelected ? "40px" : "32px";
+    element.style.width = isSelected ? "44px" : "36px";
+    element.style.height = isSelected ? "44px" : "36px";
 
     const innerDiv = element.querySelector("div");
     if (innerDiv) {

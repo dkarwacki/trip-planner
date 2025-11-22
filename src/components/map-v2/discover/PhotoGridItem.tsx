@@ -4,9 +4,10 @@
 
 import React, { useState } from "react";
 import type { Attraction } from "@/domain/map/models";
-import { Plus, CheckCircle2, Utensils, Landmark } from "lucide-react";
+import { Plus, CheckCircle2, Utensils, Landmark, MapPin } from "lucide-react";
 import { LazyImage } from "../shared/LazyImage";
 import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
+import { getGoogleMapsUrl } from "@/lib/common/google-maps";
 
 interface PhotoGridItemProps {
   place: Attraction;
@@ -57,6 +58,13 @@ export const PhotoGridItem = React.memo(function PhotoGridItem({
     onAddClick?.(place.id);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
   if (!photoReference) {
     return null;
   }
@@ -69,6 +77,10 @@ export const PhotoGridItem = React.memo(function PhotoGridItem({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`View details for ${place.name}`}
     >
       {/* Photo */}
       <LazyImage
@@ -115,8 +127,29 @@ export const PhotoGridItem = React.memo(function PhotoGridItem({
 
       {/* Place name overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-3">
-        <h3 className="text-white font-semibold text-sm line-clamp-2">{place.name}</h3>
+        <h3 className="text-white font-semibold text-sm line-clamp-2 cursor-default">{place.name}</h3>
       </div>
+
+      {/* View on Google Maps button (visible on hover) */}
+      {isHovered && (
+        <a
+          href={getGoogleMapsUrl({
+            name: place.name,
+            placeId: place.id,
+            location: place.location,
+          })}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className={`absolute top-2 p-1.5 bg-white/90 hover:bg-white text-gray-700 hover:text-blue-600 rounded-full shadow-md transition-all z-20 ${
+            score > 0 ? "right-14" : "right-2"
+          }`}
+          aria-label="View on Google Maps"
+          title="View on Google Maps"
+        >
+          <MapPin className="w-3.5 h-3.5" />
+        </a>
+      )}
 
       {/* Quick add button (visible on hover, hidden if already added) */}
       {isHovered && !isAdded && (

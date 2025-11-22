@@ -69,6 +69,11 @@ export interface IConversationRepository {
     conversationId: string,
     messages: ChatMessageDAO[]
   ) => Effect.Effect<void, ConversationNotFoundError | DatabaseError>;
+  updateTitle: (
+    userId: string,
+    conversationId: string,
+    title: string
+  ) => Effect.Effect<void, ConversationNotFoundError | DatabaseError>;
   delete: (userId: string, conversationId: string) => Effect.Effect<void, DatabaseError>;
 }
 
@@ -156,6 +161,32 @@ export const ConversationRepositoryLive = Layer.effect(
         }
       });
 
+    const updateTitle = (
+      userId: string,
+      conversationId: string,
+      title: string
+    ): Effect.Effect<void, ConversationNotFoundError | DatabaseError> =>
+      Effect.gen(function* () {
+        const { error, count } = yield* Effect.promise(() =>
+          supabase.client
+            .from("conversations")
+            .update({
+              title,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", userId)
+            .eq("id", conversationId)
+        );
+
+        if (error) {
+          return yield* Effect.fail(new DatabaseError("updateTitle", error.message, error));
+        }
+
+        if (count === 0) {
+          return yield* Effect.fail(new ConversationNotFoundError(userId, conversationId));
+        }
+      });
+
     const deleteConversation = (userId: string, conversationId: string): Effect.Effect<void, DatabaseError> =>
       Effect.gen(function* () {
         const { error } = yield* Effect.promise(() =>
@@ -172,6 +203,7 @@ export const ConversationRepositoryLive = Layer.effect(
       findAll,
       create,
       updateMessages,
+      updateTitle,
       delete: deleteConversation,
     };
   })

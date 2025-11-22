@@ -1,11 +1,12 @@
 import { create } from "zustand";
 import { devtools, persist, createJSONStorage } from "zustand/middleware";
-import type { MapStore } from "./types";
+import type { MapStore, FilterState } from "./types";
 import { createDiscoverSlice } from "./slices/createDiscoverSlice";
 import { createPlanSlice } from "./slices/createPlanSlice";
 import { createMapSlice } from "./slices/createMapSlice";
 import { createAISlice } from "./slices/createAISlice";
 import { createUISlice } from "./slices/createUISlice";
+import type { AttractionScore } from "@/domain/map/models";
 
 // ============= STORE IMPLEMENTATION =============
 
@@ -55,26 +56,34 @@ export const selectIsInPlan = (attractionId: string) => (state: MapStore) => {
   return ids.has(attractionId);
 };
 
-// Get filtered discovery results
-export const selectFilteredDiscovery = (state: MapStore) => {
-  let results = [...state.discoveryResults];
+/**
+ * Pure function to filter discovery results
+ * Can be used by both the store selector and hooks
+ */
+export const filterDiscoveryResults = (results: AttractionScore[], filters: FilterState) => {
+  let filtered = [...results];
 
   // Apply filters (same logic as DiscoverPanel)
-  if (state.filters.category !== "all") {
-    results = results.filter((item: any) => {
+  if (filters.category !== "all") {
+    filtered = filtered.filter((item: any) => {
       const isRestaurant = item.attraction?.types?.some((t: string) =>
         ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
       );
-      return state.filters.category === "restaurants" ? isRestaurant : !isRestaurant;
+      return filters.category === "restaurants" ? isRestaurant : !isRestaurant;
     });
   }
 
-  if (state.filters.showHighQualityOnly) {
-    results = results.filter((item: any) => {
+  if (filters.showHighQualityOnly) {
+    filtered = filtered.filter((item: any) => {
       const score = item.score || 0;
-      return score >= state.filters.minScore * 10;
+      return score >= filters.minScore * 10;
     });
   }
 
-  return results;
+  return filtered;
+};
+
+// Get filtered discovery results
+export const selectFilteredDiscovery = (state: MapStore) => {
+  return filterDiscoveryResults(state.discoveryResults, state.filters);
 };

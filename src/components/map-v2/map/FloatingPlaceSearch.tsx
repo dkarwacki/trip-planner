@@ -1,6 +1,8 @@
 import React, { useCallback } from "react";
 import { PlaceSearchBar } from "../search/PlaceSearchBar";
 import { useMapStore } from "../stores/mapStore";
+import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
+import { NEARBY_SEARCH_RADIUS_METERS } from "@/lib/map-v2/search-constants";
 
 interface FloatingPlaceSearchProps {
   mapInstance?: google.maps.Map | null;
@@ -13,9 +15,10 @@ export function FloatingPlaceSearch({ mapInstance }: FloatingPlaceSearchProps) {
   // Actions
   const addPlace = useMapStore((state) => state.addPlace);
   const setActiveMode = useMapStore((state) => state.setActiveMode);
+  const { fetchNearbyPlaces } = useNearbyPlaces();
 
   const handlePlaceSelect = useCallback(
-    (placeDetails: {
+    async (placeDetails: {
       placeId: string;
       name: string;
       formattedAddress: string;
@@ -45,15 +48,28 @@ export function FloatingPlaceSearch({ mapInstance }: FloatingPlaceSearchProps) {
       addPlace(newPlace);
       setActiveMode("discover");
 
-      // Zoom in if needed
+      // Center map and zoom in
       if (mapInstance) {
+        mapInstance.setCenter({ lat, lng });
         const currentZoom = mapInstance.getZoom() || 0;
         if (currentZoom < 13) {
           mapInstance.setZoom(13);
         }
       }
+
+      // Trigger search for nearby attractions
+      try {
+        await fetchNearbyPlaces({
+          lat,
+          lng,
+          radius: NEARBY_SEARCH_RADIUS_METERS,
+          append: false, // Replace existing results for a new place search
+        });
+      } catch (error) {
+        console.error("Failed to fetch nearby places:", error);
+      }
     },
-    [addPlace, setActiveMode, mapInstance]
+    [addPlace, setActiveMode, mapInstance, fetchNearbyPlaces]
   );
 
   return (

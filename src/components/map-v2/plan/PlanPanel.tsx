@@ -7,7 +7,9 @@ import React from "react";
 import { useMapStore } from "../stores/mapStore";
 import ItineraryStats from "./ItineraryStats";
 import PlanItemCardList from "./PlanItemCardList";
-import { Backpack } from "lucide-react";
+import { Backpack, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function PlanPanel() {
   // Selectors
@@ -45,9 +47,24 @@ export default function PlanPanel() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header with stats */}
-      <div className="border-b border-border bg-background px-4 py-3 sticky top-0 z-10">
+      {/* Header with stats and Create Button */}
+      <div className="border-b border-border bg-background px-4 py-3 sticky top-0 z-10 space-y-3">
         <ItineraryStats places={places} />
+
+        {/* Create Plan Button */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700 flex items-center gap-2 justify-center">
+                <Plus className="h-4 w-4" />
+                Create Plan
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Creates exportable plan from planned items (Coming Soon)</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Scrollable place cards area */}

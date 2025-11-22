@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { MapPin, Plus, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MapPin, Plus, Check, Loader2 } from "lucide-react";
 import { PhotoBlock } from "../shared/PhotoBlock";
-import { ValidationBadge } from "../shared/ValidationBadge";
 import { ReasoningSection } from "./ReasoningSection";
+import { ValidationBadge } from "../shared/ValidationBadge";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import type { PlaceSuggestion } from "@/domain/plan/models/ChatMessage";
+import { getGoogleMapsUrl } from "@/lib/common/google-maps";
 
 /**
  * Parse markdown-style bold text (**text**)
@@ -69,9 +69,6 @@ export function PlaceSuggestionCard({
     onAdd(place);
   };
 
-  // Format coordinates for display
-  const coordinates = place.lat && place.lng ? `${place.lat.toFixed(4)}, ${place.lng.toFixed(4)}` : null;
-
   return (
     <div
       ref={scrollRef}
@@ -90,58 +87,92 @@ export function PlaceSuggestionCard({
       />
 
       {/* Content */}
-      <div className="space-y-3 p-4">
-        {/* Header: Name and validation */}
-        <div className="space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold leading-tight">{place.name}</h3>
-            <ValidationBadge status={place.validationStatus} size="sm" />
+      <div className="flex flex-col p-4 min-h-[280px]">
+        {/* Top section - grows/shrinks */}
+        <div className="flex-1 space-y-3">
+          {/* Header: Name and validation */}
+          <div className="space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-semibold leading-tight">{place.name}</h3>
+              <ValidationBadge status={place.validationStatus} size="sm" />
+            </div>
+
+            {/* Google Maps link */}
+            <a
+              href={getGoogleMapsUrl({
+                name: place.name,
+                placeId: place.id,
+                location: place.lat && place.lng ? { lat: place.lat, lng: place.lng } : undefined,
+              })}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              View on Google Maps
+            </a>
           </div>
 
-          {/* Coordinates */}
-          {coordinates && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <MapPin size={12} />
-              <span>{coordinates}</span>
-            </div>
-          )}
+          {/* Description */}
+          {place.description && <p className="text-sm text-muted-foreground">{parseBoldText(place.description)}</p>}
         </div>
 
-        {/* Description */}
-        {place.description && <p className="text-sm text-muted-foreground">{parseBoldText(place.description)}</p>}
+        {/* Bottom section - fixed position */}
+        <div className="mt-auto space-y-3 pt-4">
+          {/* Reasoning (collapsible) */}
+          <ReasoningSection reasoning={place.reasoning} />
 
-        {/* Reasoning (collapsible) */}
-        <ReasoningSection reasoning={place.reasoning} />
-
-        {/* Action button */}
-        <div className="pt-2">
-          {isAdded ? (
-            <Button variant="outline" className="w-full" disabled aria-label="Already added to plan">
-              <Check size={16} className="mr-2" />
-              Added to Plan
-            </Button>
-          ) : (
-            <Button onClick={handleAdd} disabled={!canAdd} className="w-full" aria-label={`Add ${place.name} to plan`}>
+          {/* Action button */}
+          <div className="space-y-2">
+            <button
+              onClick={handleAdd}
+              disabled={isAdded || isAdding || !canAdd}
+              className={`
+                w-full py-2.5 px-4 rounded-lg font-medium text-sm
+                transition-colors flex items-center justify-center gap-2
+                ${
+                  isAdded
+                    ? "bg-green-50 text-green-700 cursor-default"
+                    : isAdding
+                      ? "bg-blue-50 text-blue-600 cursor-wait"
+                      : canAdd
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                }
+              `}
+              aria-label={isAdded ? "Already added to plan" : `Add ${place.name} to plan`}
+            >
               {isAdding ? (
-                <>Adding...</>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : isAdded ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Added to Plan
+                </>
               ) : (
                 <>
-                  <Plus size={16} className="mr-2" />
+                  <Plus className="h-4 w-4" />
                   Add to Plan
                 </>
               )}
-            </Button>
-          )}
+            </button>
 
-          {place.validationStatus === "not_found" && (
-            <p className="mt-2 text-xs text-destructive">This place could not be verified. Please check the details.</p>
-          )}
+            {place.validationStatus === "not_found" && (
+              <p className="mt-2 text-xs text-destructive">
+                This place could not be verified. Please check the details.
+              </p>
+            )}
 
-          {place.validationStatus === "partial" && (
-            <p className="mt-2 text-xs text-yellow-600 dark:text-yellow-500">
-              This place was partially verified. Some details may be incomplete.
-            </p>
-          )}
+            {place.validationStatus === "partial" && (
+              <p className="mt-2 text-xs text-yellow-600 dark:text-yellow-500">
+                This place was partially verified. Some details may be incomplete.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

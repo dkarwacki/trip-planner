@@ -50,7 +50,7 @@ function renderNarrative(
           <button
             key={`place-${index}`}
             onClick={() => onPlaceClick(placeId)}
-            className="font-semibold text-primary hover:bg-primary/10 px-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+            className="font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-100 hover:scale-105 dark:text-blue-500 dark:bg-blue-950/20 dark:hover:text-blue-400 dark:hover:bg-blue-950/40 px-0.5 py-0.5 rounded transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 inline-block"
             type="button"
           >
             {placeName}
@@ -59,7 +59,7 @@ function renderNarrative(
       } else {
         // If we can't find the place ID or no click handler, render as plain bold text
         parts.push(
-          <span key={`place-${index}`} className="font-semibold">
+          <span key={`place-${index}`} className="font-semibold text-blue-600 dark:text-blue-500">
             {placeName}
           </span>
         );

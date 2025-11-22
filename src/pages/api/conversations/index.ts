@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
-import { ConversationRepository } from "@/infrastructure/plan/database/repositories";
+import { ConversationRepository, TripRepository } from "@/infrastructure/plan/database/repositories";
 import { toSavedConversation } from "@/infrastructure/plan/database/types";
 import { CreateConversationCommandSchema } from "@/infrastructure/plan/api/schemas";
 import { AppRuntime } from "@/infrastructure/common/runtime";
@@ -70,7 +70,7 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
-  const { title, personas, initial_message } = validation.data;
+  const { title, personas, initial_message, trip_id } = validation.data;
 
   const program = Effect.gen(function* () {
     const conversationId = crypto.randomUUID();
@@ -96,6 +96,17 @@ export const POST: APIRoute = async ({ request }) => {
 
     const conversationRepo = yield* ConversationRepository;
     yield* conversationRepo.create(DEV_USER_ID, conversationData);
+
+    // If tripId provided, link trip to conversation
+    if (trip_id) {
+      const tripRepo = yield* TripRepository;
+      
+      // Verify trip exists and belongs to user
+      const trip = yield* tripRepo.findById(DEV_USER_ID, trip_id);
+      
+      // Link trip to conversation
+      yield* tripRepo.updateConversationId(DEV_USER_ID, trip_id, conversationId);
+    }
 
     const conversation = yield* conversationRepo.findById(DEV_USER_ID, conversationId);
     const domainConversation = toSavedConversation(conversation);
