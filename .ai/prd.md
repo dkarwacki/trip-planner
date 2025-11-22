@@ -66,8 +66,8 @@ The application serves eight primary personas:
 - Even weighting applied when multiple personas are active
 - Persistent persona choices across sessions
 - Visual feedback for selected personas
-- Personas influence place and destination recommendations only
-- Attraction and restaurant discovery on the map is not persona-driven
+- Personas influence place and destination recommendations
+- Attraction and restaurant discovery on the map is also influenced by personas
 
 ### 3.3 AI Chat Interface
 
@@ -112,8 +112,9 @@ The application serves eight primary personas:
 - Places from itinerary appear in order on the map
 - Discovery of local attractions and restaurants near the starting point places from chat
 - This is where users discover why certain places were suggested - exploring the rich surrounding area of attractions and restaurants
-- Quality/diversity/confidence scoring for attractions and restaurants only
-- Discovery is generic and not influenced by personas
+- Quality/diversity/confidence scoring for attractions and restaurants
+- Discovery is personalized based on user's travel style preferences (e.g., Art Enthusiast gets more museum suggestions)
+- Advanced Conversational AI on the map for refining suggestions and finding specific types of places
 - Visual score badges with explanations for attractions and restaurants
 - This is where detailed planning of attractions and restaurants happens
 - Place details display
@@ -200,7 +201,7 @@ The application serves eight primary personas:
   - Selected personas are visually highlighted
   - Selections persist across sessions for logged-in users
   - Personas influence place and destination recommendations in chat
-  - Attraction and restaurant discovery on map is not persona-driven
+  - Attraction and restaurant discovery on map is also persona-driven (e.g., boosting scores for relevant categories)
 
 ### US-003
 
@@ -348,7 +349,9 @@ The application serves eight primary personas:
 - Acceptance Criteria:
   - "Suggest nearby" functionality available on map
   - Suggestions based on current map view and places from itinerary
-  - Discovery is generic and not influenced by personas
+  - Discovery is personalized based on selected personas
+  - Users can have multi-turn conversations to refine suggestions
+  - AI provides reasoning for its suggestions
   - Quality/diversity/confidence scores displayed
   - Filters available for attraction types
 
