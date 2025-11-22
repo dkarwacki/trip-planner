@@ -41,8 +41,9 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
       // Look up in filtered results first, but fallback to all results just in case
       // (though typically we only click what we see)
-      const result = filteredDiscoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === attractionId)
-        || discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === attractionId);
+      const result =
+        filteredDiscoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === attractionId) ||
+        discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === attractionId);
 
       if (!result?.attraction) return;
 
@@ -173,6 +174,24 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
       }
     }
   }, [map, expandedCardPlaceId, filteredDiscoveryResults, places]);
+
+  // Center and zoom map on selected hub place (numbered markers)
+  useEffect(() => {
+    if (!map || !selectedPlaceId) return;
+
+    // Find the selected hub place
+    const selectedPlace = places.find((p) => p.id === selectedPlaceId);
+
+    if (selectedPlace) {
+      const lat = Number(selectedPlace.lat);
+      const lng = Number(selectedPlace.lng);
+
+      if (isFinite(lat) && isFinite(lng)) {
+        map.panTo({ lat, lng });
+        map.setZoom(14);
+      }
+    }
+  }, [map, selectedPlaceId, places]);
 
   // Close card when marker moves outside viewport
   useEffect(() => {
