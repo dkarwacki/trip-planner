@@ -75,7 +75,7 @@ export default function PlanItemCardList({ places, filter = "all" }: PlanItemCar
               id={place.id || String(index)}
               place={place}
               order={index + 1}
-              isExpanded={expandedPlaceId === (place.id || index)}
+              isExpanded={expandedPlaceId === (place.id || String(index))}
               onToggleExpand={toggleExpand}
               filter={filter}
             />

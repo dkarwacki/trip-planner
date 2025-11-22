@@ -43,8 +43,8 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
       // Look up in filtered results first, but fallback to all results just in case
       // (though typically we only click what we see)
       const result =
-        filteredDiscoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === attractionId) ||
-        discoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === attractionId);
+        filteredDiscoveryResults.find((r) => r.attraction?.id === attractionId) ||
+        discoveryResults.find((r) => r.attraction?.id === attractionId);
 
       if (!result?.attraction) return;
 
@@ -71,12 +71,12 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
   const hoveredAttraction = hoveredMarkerId
     ? activeMode === "discover" || activeMode === "ai"
-      ? filteredDiscoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === hoveredMarkerId)
+      ? filteredDiscoveryResults.find((r) => r.attraction?.id === hoveredMarkerId)
       : (() => {
           for (const place of places) {
             const found =
-              place.plannedAttractions?.find((a: { id: string }) => a.id === hoveredMarkerId) ||
-              place.plannedRestaurants?.find((r: { id: string }) => r.id === hoveredMarkerId);
+              place.plannedAttractions?.find((a) => a.id === hoveredMarkerId) ||
+              place.plannedRestaurants?.find((r) => r.id === hoveredMarkerId);
             if (found) return { attraction: found, score: 0 };
           }
           return null;
@@ -85,10 +85,10 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
   const expandedAttraction = expandedCardPlaceId
     ? activeMode === "discover" || activeMode === "ai"
-      ? filteredDiscoveryResults.find((r: { attraction?: { id: string } }) => r.attraction?.id === expandedCardPlaceId)
+      ? filteredDiscoveryResults.find((r) => r.attraction?.id === expandedCardPlaceId)
       : (() => {
           for (const place of places) {
-            const foundAttraction = place.plannedAttractions?.find((a: { id: string }) => a.id === expandedCardPlaceId);
+            const foundAttraction = place.plannedAttractions?.find((a) => a.id === expandedCardPlaceId);
             if (foundAttraction) {
               const score =
                 foundAttraction.qualityScore && foundAttraction.diversityScore && foundAttraction.confidenceScore
@@ -106,7 +106,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
               };
             }
 
-            const foundRestaurant = place.plannedRestaurants?.find((r: { id: string }) => r.id === expandedCardPlaceId);
+            const foundRestaurant = place.plannedRestaurants?.find((r) => r.id === expandedCardPlaceId);
             if (foundRestaurant) {
               const score =
                 foundRestaurant.qualityScore && foundRestaurant.confidenceScore
@@ -142,21 +142,14 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
     // Find the attraction in discovery results (Discover/AI mode) or planned items (Plan mode)
     let expandedItem: { attraction?: { id: string; location: { lat: number; lng: number } } } | undefined =
-      filteredDiscoveryResults.find(
-        (r: { attraction?: { id: string; location: { lat: number; lng: number } } }) =>
-          r.attraction?.id === expandedCardPlaceId
-      );
+      filteredDiscoveryResults.find((r) => r.attraction?.id === expandedCardPlaceId);
 
     // If not found in filtered results, search in planned items
     if (!expandedItem) {
       for (const place of places) {
         const found =
-          place.plannedAttractions?.find(
-            (a: { id: string; location: { lat: number; lng: number } }) => a.id === expandedCardPlaceId
-          ) ||
-          place.plannedRestaurants?.find(
-            (r: { id: string; location: { lat: number; lng: number } }) => r.id === expandedCardPlaceId
-          );
+          place.plannedAttractions?.find((a) => a.id === expandedCardPlaceId) ||
+          place.plannedRestaurants?.find((r) => r.id === expandedCardPlaceId);
         if (found) {
           expandedItem = { attraction: found };
           break;
@@ -213,9 +206,9 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
   const isInPlan = (attractionId: string) => {
     return places.some(
-      (p: { plannedAttractions?: { id: string }[]; plannedRestaurants?: { id: string }[] }) =>
-        p.plannedAttractions?.some((a: { id: string }) => a.id === attractionId) ||
-        p.plannedRestaurants?.some((r: { id: string }) => r.id === attractionId)
+      (p) =>
+        p.plannedAttractions?.some((a) => a.id === attractionId) ||
+        p.plannedRestaurants?.some((r) => r.id === attractionId)
     );
   };
 

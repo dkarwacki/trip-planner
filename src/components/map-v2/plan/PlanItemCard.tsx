@@ -63,10 +63,12 @@ const PlanItemCard = React.memo(
     const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
       // Don't trigger if clicking on interactive elements
       const target = e.target as HTMLElement;
+      const closestRoleButton = target.closest('[role="button"]');
       const isInteractiveElement =
         target.closest("button") ||
         target.closest("a") ||
-        target.closest('[role="button"]') ||
+        // Ignore the card's own role="button", only check for child interactive elements
+        (closestRoleButton && closestRoleButton !== e.currentTarget) ||
         target.closest("[data-sortable-handle]");
 
       // Don't trigger if clicking on the drag handle area

@@ -2,6 +2,8 @@
  * Shared type definitions for map-v2 components
  */
 
+import type { Attraction } from "@/domain/map/models";
+
 // View mode for discovery results display
 export type ViewMode = "cards" | "grid" | "list";
 
@@ -77,8 +79,8 @@ export interface PlannedPlace {
   name: string;
   lat: number;
   lng: number;
-  plannedAttractions?: unknown[];
-  plannedRestaurants?: unknown[];
+  plannedAttractions?: Attraction[];
+  plannedRestaurants?: Attraction[];
   photos?: unknown[];
   [key: string]: unknown;
 }

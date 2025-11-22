@@ -7,7 +7,7 @@ import { useState, useCallback } from "react";
 import { useMapStore } from "../stores/mapStore";
 import type { AIMessage, AISuggestion } from "../types";
 import { getPhotoUrl } from "@/lib/common/photo-utils";
-import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
+import { PlaceId, Latitude, Longitude, type Place } from "@/domain/common/models";
 import type { Attraction } from "@/domain/map/models";
 
 interface UseAIChatReturn {
@@ -39,18 +39,18 @@ export function useAIChat(): UseAIChatReturn {
   const addedPlaceIds = (() => {
     if (!context) return new Set<string>();
 
-    const selectedPlace = places.find((p: any) => p.id === context);
+    const selectedPlace = places.find((p: unknown) => p.id === context);
     if (!selectedPlace) return new Set<string>();
 
     const ids = new Set<string>();
 
     // Add all attraction IDs
-    (selectedPlace.plannedAttractions || []).forEach((a: any) => {
+    (selectedPlace.plannedAttractions || []).forEach((a: unknown) => {
       ids.add(a.id);
     });
 
     // Add all restaurant IDs
-    (selectedPlace.plannedRestaurants || []).forEach((r: any) => {
+    (selectedPlace.plannedRestaurants || []).forEach((r: unknown) => {
       ids.add(r.id);
     });
 
@@ -66,7 +66,7 @@ export function useAIChat(): UseAIChatReturn {
       }
 
       // Find the selected place to get context
-      const selectedPlace = places.find((p: any) => p.id === context);
+      const selectedPlace = places.find((p: unknown) => p.id === context);
       if (!selectedPlace) {
         console.warn("Selected place not found");
         setError("Place not found. Please select a place first.");
@@ -91,7 +91,7 @@ export function useAIChat(): UseAIChatReturn {
         const place = {
           id: selectedPlace.id,
           name: selectedPlace.name,
-          plannedAttractions: (selectedPlace.plannedAttractions || []).map((a: any) => ({
+          plannedAttractions: (selectedPlace.plannedAttractions || []).map((a: unknown) => ({
             id: a.id,
             name: a.name,
             rating: a.rating ?? 0, // Default to 0 if missing (required by schema)
@@ -101,15 +101,15 @@ export function useAIChat(): UseAIChatReturn {
             priceLevel: a.priceLevel,
             location: a.location,
           })),
-          plannedRestaurants: (selectedPlace.plannedRestaurants || []).map((r: any) => ({
-            id: r.id,
-            name: r.name,
-            rating: r.rating ?? 0, // Default to 0 if missing (required by schema)
-            userRatingsTotal: r.userRatingsTotal ?? 0, // Default to 0 if missing (required by schema)
-            types: r.types || [],
-            vicinity: r.vicinity || "",
-            priceLevel: r.priceLevel,
-            location: r.location,
+          plannedRestaurants: (selectedPlace.plannedRestaurants || []).map((r: unknown) => ({
+            id: (r as Attraction).id,
+            name: (r as Attraction).name,
+            rating: (r as Attraction).rating ?? 0, // Default to 0 if missing (required by schema)
+            userRatingsTotal: (r as Attraction).userRatingsTotal ?? 0, // Default to 0 if missing (required by schema)
+            types: (r as Attraction).types || [],
+            vicinity: (r as Attraction).vicinity || "",
+            priceLevel: (r as Attraction).priceLevel,
+            location: (r as Attraction).location,
           })),
         };
 
@@ -179,9 +179,9 @@ export function useAIChat(): UseAIChatReturn {
         };
 
         // Parse suggestions from response (including general tips)
-        const suggestions: AISuggestion[] = agentResponse.suggestions.map((s: any, index: number) => {
+        const suggestions: AISuggestion[] = agentResponse.suggestions.map((s: unknown, index: number) => {
           // Handle general tips (no attraction data)
-          if (s.type === "general_tip" || !s.attractionData) {
+          if ((s as AISuggestion).type === "general_tip" || !s.attractionData) {
             return {
               id: `suggestion-general-${Date.now()}-${index}`,
               placeId: null,
@@ -196,15 +196,18 @@ export function useAIChat(): UseAIChatReturn {
           }
 
           // Handle attractions and restaurants with data
-          const photoReference = s.attractionData.photos?.[0]?.photoReference || s.photos?.[0]?.photoReference;
+          const photoReference =
+            (s as AISuggestion).attractionData.photos?.[0]?.photoReference ||
+            (s as AISuggestion).photos?.[0]?.photoReference;
 
           // Use domain-calculated score if available, otherwise fallback to simple rating calculation
-          const score = s.attractionData.score ?? (s.attractionData.rating || 0) * 20;
+          const score =
+            (s as AISuggestion).attractionData.score ?? ((s as AISuggestion).attractionData.rating || 0) * 20;
 
           return {
-            id: `suggestion-${s.attractionData.id}-${Date.now()}-${index}`,
-            placeId: s.attractionData.id,
-            placeName: s.attractionData.name,
+            id: `suggestion-${(s as AISuggestion).attractionData.id}-${Date.now()}-${index}`,
+            placeId: (s as AISuggestion).attractionData.id,
+            placeName: (s as AISuggestion).attractionData.name,
             priority: normalizePriority(s.priority),
             reasoning: s.reasoning,
             score: score,
@@ -213,9 +216,9 @@ export function useAIChat(): UseAIChatReturn {
               ? getPhotoUrl(
                   photoReference,
                   800,
-                  s.attractionData.location.lat,
-                  s.attractionData.location.lng,
-                  s.attractionData.name
+                  (s as AISuggestion).attractionData.location.lat,
+                  (s as AISuggestion).attractionData.location.lng,
+                  (s as AISuggestion).attractionData.name
                 )
               : undefined,
             type: s.type as "add_attraction" | "add_restaurant",
@@ -231,7 +234,7 @@ export function useAIChat(): UseAIChatReturn {
 
           // If it's already an array, use it
           if (Array.isArray(thinking)) {
-            return thinking.filter((step: any) => typeof step === "string" && step.trim().length > 0);
+            return thinking.filter((step: unknown) => typeof step === "string" && step.trim().length > 0);
           }
 
           // If it's a string, try to split by newlines or numbered steps
@@ -352,7 +355,7 @@ export function useAIChat(): UseAIChatReturn {
       }
 
       // Check if already in current place's attractions/restaurants
-      const contextPlace = places.find((p: any) => p.id === context);
+      const contextPlace = places.find((p: unknown) => (p as Place).id === context);
       if (!contextPlace) {
         console.warn("Context place not found");
         return;
@@ -360,8 +363,8 @@ export function useAIChat(): UseAIChatReturn {
 
       const isRestaurant = foundSuggestion.category === "restaurant";
       const alreadyExists = isRestaurant
-        ? contextPlace.plannedRestaurants?.some((r: any) => r.id === placeId)
-        : contextPlace.plannedAttractions?.some((a: any) => a.id === placeId);
+        ? contextPlace.plannedRestaurants?.some((r: unknown) => (r as Place).id === placeId)
+        : contextPlace.plannedAttractions?.some((a: unknown) => (a as Place).id === placeId);
 
       if (alreadyExists) {
         // Already exists, no need to add again
