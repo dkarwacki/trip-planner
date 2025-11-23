@@ -12,6 +12,8 @@ export const Latitude = Brand.nominal<Latitude>();
 export const Longitude = Brand.nominal<Longitude>();
 
 export interface PlacePhoto {
+  lng: number;
+  placeName: string;
   photoReference: string;
   width: number;
   height: number;

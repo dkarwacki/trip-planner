@@ -11,27 +11,36 @@ interface DiscoverHeaderProps {
   filteredCount: number;
 }
 
-export function DiscoverHeader({ selectedPlaceId, totalCount, filteredCount }: DiscoverHeaderProps) {
-  const places = useMapStore((state) => state.places);
+export const DiscoverHeader = React.memo(function DiscoverHeader({ selectedPlaceId, totalCount, filteredCount }: DiscoverHeaderProps) {
+  // Optimized: Only subscribe to the selected place name, not entire places array
+  const placeName = useMapStore((state) => {
+    if (!selectedPlaceId) return null;
+    const place = state.places.find((p) => p.id === selectedPlaceId);
+    return place?.name || selectedPlaceId || "Unknown";
+  });
+
   const discoveryResults = useMapStore((state) => state.discoveryResults);
 
-  // Look up the place name from the places array
-  const selectedPlace = selectedPlaceId ? places.find((p) => p.id === selectedPlaceId) : null;
-  const placeName = selectedPlace?.name || selectedPlaceId || "Unknown";
+  // Count actual attractions vs restaurants from results - memoized to prevent infinite loops
+  const { attractionsCount, restaurantsCount } = React.useMemo(() => {
+    const restaurantTypes = ["restaurant", "food", "cafe", "bar", "bakery"];
 
-  // Count actual attractions vs restaurants from results
-  const attractionsCount = discoveryResults.filter((item) => {
-    const isRestaurant = item.attraction?.types?.some((t: string) =>
-      ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-    );
-    return !isRestaurant;
-  }).length;
-  const restaurantsCount = discoveryResults.filter((item) => {
-    const isRestaurant = item.attraction?.types?.some((t: string) =>
-      ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-    );
-    return isRestaurant;
-  }).length;
+    let attractions = 0;
+    let restaurants = 0;
+
+    for (const item of discoveryResults) {
+      const isRestaurant = item.attraction?.types?.some((t: string) =>
+        restaurantTypes.includes(t)
+      );
+      if (isRestaurant) {
+        restaurants++;
+      } else {
+        attractions++;
+      }
+    }
+
+    return { attractionsCount: attractions, restaurantsCount: restaurants };
+  }, [discoveryResults]);
 
   if (!selectedPlaceId) {
     return null;
@@ -54,4 +63,4 @@ export function DiscoverHeader({ selectedPlaceId, totalCount, filteredCount }: D
       </div>
     </div>
   );
-}
+});

@@ -2,8 +2,6 @@
  * Typing indicator shown while AI is generating response
  */
 
-import React from "react";
-
 export function TypingIndicator() {
   return (
     <div className="flex justify-start">

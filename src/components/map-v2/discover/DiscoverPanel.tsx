@@ -39,13 +39,15 @@ export function DiscoverPanel() {
   // Use filters hook
   const { filters, filteredResults, handleFilterChange, handleClearFilters } = useDiscoverFilters();
 
-  // Save scroll position continuously
+  // Save scroll position continuously and enable automatic restoration
   React.useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
     const handleScroll = () => {
       scrollPositionRef.current = container.scrollTop;
+      // Enable automatic scroll restoration on re-renders
+      shouldRestoreScrollRef.current = true;
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });

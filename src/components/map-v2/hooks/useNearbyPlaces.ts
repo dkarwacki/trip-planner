@@ -5,7 +5,7 @@
  * Uses existing API endpoints from v1 with smart caching and parallel requests
  */
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useMapStore } from "../stores/mapStore";
 import { NEARBY_SEARCH_RADIUS_METERS } from "@/lib/map-v2/search-constants";
 
@@ -19,7 +19,28 @@ interface FetchNearbyOptions {
 export function useNearbyPlaces() {
   // Selectors
   const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
-  const places = useMapStore((state) => state.places);
+
+  // Select lat and lng separately to avoid creating new object references
+  const selectedPlaceLat = useMapStore((state) => {
+    if (!state.selectedPlaceId) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const selectedPlace = state.places.find((p: any) => p.id === state.selectedPlaceId);
+    return selectedPlace?.lat ? Number(selectedPlace.lat) : null;
+  });
+
+  const selectedPlaceLng = useMapStore((state) => {
+    if (!state.selectedPlaceId) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const selectedPlace = state.places.find((p: any) => p.id === state.selectedPlaceId);
+    return selectedPlace?.lng ? Number(selectedPlace.lng) : null;
+  });
+
+  // Create stable location object only when lat/lng values actually change
+  const selectedPlaceLocation = useMemo(() => {
+    if (selectedPlaceLat === null || selectedPlaceLng === null) return null;
+    return { lat: selectedPlaceLat, lng: selectedPlaceLng };
+  }, [selectedPlaceLat, selectedPlaceLng]);
+
   const isLoadingDiscovery = useMapStore((state) => state.isLoadingDiscovery);
   const discoveryResults = useMapStore((state) => state.discoveryResults);
 
@@ -120,31 +141,24 @@ export function useNearbyPlaces() {
    * Refresh current results (refetch for selected place)
    */
   const refresh = useCallback(() => {
-    if (selectedPlaceId && places.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const selectedPlace = places.find((p: any) => p.id === selectedPlaceId);
-      if (selectedPlace?.lat !== undefined && selectedPlace?.lng !== undefined) {
-        fetchNearbyPlaces({
-          lat: Number(selectedPlace.lat),
-          lng: Number(selectedPlace.lng),
-        });
-      }
+    if (selectedPlaceLocation) {
+      fetchNearbyPlaces({
+        lat: selectedPlaceLocation.lat,
+        lng: selectedPlaceLocation.lng,
+      });
     }
-  }, [selectedPlaceId, places, fetchNearbyPlaces]);
+  }, [selectedPlaceLocation, fetchNearbyPlaces]);
 
-  // Auto-fetch when a place is selected
+  // Auto-fetch when a place is selected or its location changes
+  // Note: This will NOT trigger when attractions/restaurants are added to the place
   useEffect(() => {
-    if (selectedPlaceId && places.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const selectedPlace = places.find((p: any) => p.id === selectedPlaceId);
-      if (selectedPlace?.lat !== undefined && selectedPlace?.lng !== undefined) {
-        fetchNearbyPlaces({
-          lat: Number(selectedPlace.lat),
-          lng: Number(selectedPlace.lng),
-        });
-      }
+    if (selectedPlaceLocation) {
+      fetchNearbyPlaces({
+        lat: selectedPlaceLocation.lat,
+        lng: selectedPlaceLocation.lng,
+      });
     }
-  }, [selectedPlaceId, places, fetchNearbyPlaces]);
+  }, [selectedPlaceLocation, fetchNearbyPlaces]);
 
   return {
     isLoading: isLoadingDiscovery,

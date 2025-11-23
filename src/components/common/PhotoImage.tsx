@@ -47,7 +47,6 @@ export default function PhotoImage({
 
   // Only load photo when visible (or if eager loading)
   const shouldLoad = eager || isIntersecting;
-  const isLoading = shouldLoad && !isLoaded;
 
   if (hasError) {
     // Hide the component if there's an error
