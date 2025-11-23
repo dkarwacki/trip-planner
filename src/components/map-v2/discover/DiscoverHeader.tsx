@@ -11,7 +11,11 @@ interface DiscoverHeaderProps {
   filteredCount: number;
 }
 
-export const DiscoverHeader = React.memo(function DiscoverHeader({ selectedPlaceId, totalCount, filteredCount }: DiscoverHeaderProps) {
+export const DiscoverHeader = React.memo(function DiscoverHeader({
+  selectedPlaceId,
+  totalCount,
+  filteredCount,
+}: DiscoverHeaderProps) {
   // Optimized: Only subscribe to the selected place name, not entire places array
   const placeName = useMapStore((state) => {
     if (!selectedPlaceId) return null;
@@ -29,9 +33,7 @@ export const DiscoverHeader = React.memo(function DiscoverHeader({ selectedPlace
     let restaurants = 0;
 
     for (const item of discoveryResults) {
-      const isRestaurant = item.attraction?.types?.some((t: string) =>
-        restaurantTypes.includes(t)
-      );
+      const isRestaurant = item.attraction?.types?.some(restaurantTypes.includes);
       if (isRestaurant) {
         restaurants++;
       } else {

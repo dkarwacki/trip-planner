@@ -68,6 +68,9 @@ export default function PhotoLightbox({ photos, initialIndex, isOpen, onClose, p
               photoReference={photos[currentIndex].photoReference}
               alt={`${placeName} - view ${currentIndex + 1}`}
               maxWidth={1600}
+              lat={photos[currentIndex].lat}
+              lng={photos[currentIndex].lng}
+              placeName={placeName}
               className="max-w-full max-h-full w-full object-contain"
             />
           </div>

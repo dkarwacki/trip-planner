@@ -250,6 +250,9 @@ const ContentList = ({
                     <PhotoImage
                       photoReference={attraction.photos[0].photoReference}
                       alt={attraction.name}
+                      lat={attraction.location.lat}
+                      lng={attraction.location.lng}
+                      placeName={attraction.name}
                       maxWidth={800}
                       className="w-24 h-24 object-cover"
                     />

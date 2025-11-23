@@ -56,6 +56,9 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
                 photoReference={suggestion.photos[0].photoReference}
                 alt={`${suggestion.name}`}
                 maxWidth={800}
+                lat={suggestion.photos[0].lat}
+                lng={suggestion.photos[0].lng}
+                placeName={suggestion.name}
                 className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
               />
               {/* Hover overlay to indicate clickability */}

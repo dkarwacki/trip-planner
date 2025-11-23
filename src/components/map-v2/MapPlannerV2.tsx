@@ -26,8 +26,8 @@ export function MapPlannerV2({ apiKey, mapId, tripId, conversationId }: MapPlann
 }
 
 // Separate inner component to use context hooks
-function MapPlannerV2Inner({ apiKey, mapId, tripId, conversationId }: MapPlannerV2Props) {
-  const { isDesktop, isMobile, isTablet } = useResponsive();
+function MapPlannerV2Inner({ apiKey, mapId, tripId }: MapPlannerV2Props) {
+  const { isDesktop, isTablet } = useResponsive();
 
   // Treat tablet as desktop for now (can be refined later)
   const shouldShowDesktop = isDesktop || isTablet;

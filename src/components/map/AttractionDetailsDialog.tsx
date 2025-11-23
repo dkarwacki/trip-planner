@@ -106,6 +106,9 @@ export default function AttractionDetailsDialog({
                   <PhotoImage
                     photoReference={attraction.photos[0].photoReference}
                     alt={`${attraction.name}`}
+                    lat={attraction.location.lat}
+                    lng={attraction.location.lng}
+                    placeName={attraction.name}
                     maxWidth={800}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                   />

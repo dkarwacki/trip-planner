@@ -106,6 +106,7 @@ const MapContent = ({
         const loadedPersonas = await getUserPersonas();
         setPersonas(loadedPersonas);
       } catch (error) {
+        console.error("Failed to load personas:", error);
         // Continue with empty personas array
       }
     };
@@ -189,6 +190,7 @@ const MapContent = ({
           setSaveStatus("idle");
         }, 2000);
       } catch (error) {
+        console.error("Failed to save trip:", error);
         setSaveStatus("error");
       }
     },
