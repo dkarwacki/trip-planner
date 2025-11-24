@@ -1,13 +1,11 @@
 import type { APIRoute } from "astro";
 import { Effect, Runtime } from "effect";
-import type { TripDetailDTO } from "@/infrastructure/plan/api";
 import { TripRepository, type TripDAO } from "@/infrastructure/plan/database";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
 import { UnexpectedError } from "@/domain/common/errors";
 import type { Place } from "@/domain/common/models";
-import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
-import { TripId, ConversationId } from "@/domain/plan/models";
+import { TripId } from "@/domain/plan/models";
 import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
@@ -23,6 +21,7 @@ function placesToPlaceDAOs(places: Place[]) {
     lng: place.lng,
     plannedAttractions: (place.plannedAttractions ?? []).map((attr) => ({
       id: attr.id,
+      googlePlaceId: attr.id,
       name: attr.name,
       rating: attr.rating,
       userRatingsTotal: attr.userRatingsTotal,
@@ -41,6 +40,7 @@ function placesToPlaceDAOs(places: Place[]) {
     })),
     plannedRestaurants: (place.plannedRestaurants ?? []).map((rest) => ({
       id: rest.id,
+      googlePlaceId: rest.id,
       name: rest.name,
       rating: rest.rating,
       userRatingsTotal: rest.userRatingsTotal,

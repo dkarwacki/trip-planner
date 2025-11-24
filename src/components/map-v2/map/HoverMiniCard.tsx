@@ -4,12 +4,12 @@
  */
 
 import React, { useEffect, useState } from "react";
-import type { Attraction } from "@/domain/map/models";
+import type { PlannedPOIViewModel } from "@/lib/map-v2/types";
 import { calculateCardPosition } from "./CardPositioning";
 import { LazyImage } from "../shared/LazyImage";
 
 interface HoverMiniCardProps {
-  attraction: Attraction;
+  poi: PlannedPOIViewModel;
   markerPosition: { x: number; y: number };
   viewportSize: { width: number; height: number };
   onMouseEnter?: () => void;
@@ -26,7 +26,7 @@ const SPACING = 20; // Spacing between marker and card
 
 export const HoverMiniCard = React.memo(
   function HoverMiniCard({
-    attraction,
+    poi,
     markerPosition,
     viewportSize,
     onMouseEnter,
@@ -53,10 +53,10 @@ export const HoverMiniCard = React.memo(
     });
 
     // Get first photo reference (if available)
-    const photoReference = attraction.photos?.[0]?.photoReference;
+    const photoReference = poi.photos?.[0]?.photoReference;
 
     // Format rating
-    const rating = attraction.rating || 0;
+    const rating = poi.rating || 0;
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
 
@@ -90,10 +90,10 @@ export const HoverMiniCard = React.memo(
               <div className="w-full h-20 bg-gray-200 overflow-hidden">
                 <LazyImage
                   photoReference={photoReference}
-                  alt={attraction.name}
-                  lat={attraction.location.lat}
-                  lng={attraction.location.lng}
-                  placeName={attraction.name}
+                  alt={poi.name}
+                  lat={poi.latitude}
+                  lng={poi.longitude}
+                  placeName={poi.name}
                   size="small"
                   eager={true}
                   className="w-full h-full object-cover"
@@ -107,7 +107,7 @@ export const HoverMiniCard = React.memo(
 
             {/* Content */}
             <div className="p-2">
-              <h3 className="font-bold text-sm text-gray-900 truncate mb-1">{attraction.name}</h3>
+              <h3 className="font-bold text-sm text-gray-900 truncate mb-1">{poi.name}</h3>
               <div className="flex items-center gap-1 text-xs">
                 {/* Rating Stars */}
                 <div className="flex items-center text-yellow-500">
@@ -135,9 +135,9 @@ export const HoverMiniCard = React.memo(
   },
   (prevProps, nextProps) => {
     // Custom comparison function for React.memo
-    // Only re-render if attraction ID or position changes
+    // Only re-render if poi ID or position changes
     return (
-      prevProps.attraction.id === nextProps.attraction.id &&
+      prevProps.poi.id === nextProps.poi.id &&
       prevProps.markerPosition.x === nextProps.markerPosition.x &&
       prevProps.markerPosition.y === nextProps.markerPosition.y
     );

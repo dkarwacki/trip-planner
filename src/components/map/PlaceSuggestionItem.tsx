@@ -24,6 +24,10 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
       // Don't allow removing from here - user should remove from itinerary panel
       return;
     }
+    if (!suggestion.id) {
+      console.error("Cannot add suggestion without an ID");
+      return;
+    }
     onAdd(suggestion.id);
   };
 
@@ -56,8 +60,8 @@ export default function PlaceSuggestionItem({ suggestion, isAdded, isValidating,
                 photoReference={suggestion.photos[0].photoReference}
                 alt={`${suggestion.name}`}
                 maxWidth={800}
-                lat={suggestion.photos[0].lat}
-                lng={suggestion.photos[0].lng}
+                lat={suggestion.photos[0].lat ?? 0}
+                lng={suggestion.photos[0].lng ?? 0}
                 placeName={suggestion.name}
                 className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
               />

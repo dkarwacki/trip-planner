@@ -14,6 +14,7 @@ import { PlaceCardGrid } from "../discover/PlaceCardGrid";
 import { PhotoGrid } from "../discover/PhotoGrid";
 import { PlaceList } from "../discover/PlaceList";
 import { getPersistedFilters, persistFilters } from "@/lib/map-v2/filterPersistence";
+import type { DiscoveryItemViewModel } from "@/lib/map-v2/types";
 
 interface DiscoverViewProps {
   mapId?: string;
@@ -22,14 +23,14 @@ interface DiscoverViewProps {
 }
 
 export function DiscoverView({ onNavigateToMap }: DiscoverViewProps) {
-  const { selectedPlaceId, discoveryResults, viewMode, filters, isLoadingDiscovery, places } = useMapStore(
+  const { selectedPlaceId, selectedPlace, discoveryResults, viewMode, filters, isLoadingDiscovery } = useMapStore(
     useShallow((state) => ({
       selectedPlaceId: state.selectedPlaceId,
+      selectedPlace: state.places.find((p) => p.id === state.selectedPlaceId),
       discoveryResults: state.discoveryResults,
       viewMode: state.viewMode,
       filters: state.filters,
       isLoadingDiscovery: state.isLoadingDiscovery,
-      places: state.places,
     }))
   );
   const updateFilters = useMapStore((state) => state.updateFilters);
@@ -52,8 +53,7 @@ export function DiscoverView({ onNavigateToMap }: DiscoverViewProps) {
         clearFilters();
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPlaceId]);
+  }, [selectedPlaceId, updateFilters, clearFilters]);
 
   // Save filters when they change
   useEffect(() => {
@@ -75,11 +75,9 @@ export function DiscoverView({ onNavigateToMap }: DiscoverViewProps) {
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const selectedPlace = places.find((p) => p.id === selectedPlaceId);
-
-  // Helper to check if attraction is a restaurant
-  const isRestaurant = (item: { attraction?: { types?: string[] } }) => {
-    return item.attraction?.types?.some((t: string) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
+  // Helper to check if item is a restaurant
+  const isRestaurant = (item: DiscoveryItemViewModel) => {
+    return item.types?.some((t) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
   };
 
   // Split into attractions and restaurants based on types
@@ -87,7 +85,7 @@ export function DiscoverView({ onNavigateToMap }: DiscoverViewProps) {
   const restaurants = discoveryResults.filter((r) => isRestaurant(r));
 
   // Sort each group by score (descending - highest first)
-  const sortByScore = (a: any, b: any) => {
+  const sortByScore = (a: DiscoveryItemViewModel, b: DiscoveryItemViewModel) => {
     const scoreA = a.score || 0;
     const scoreB = b.score || 0;
     return scoreB - scoreA;
@@ -128,7 +126,11 @@ export function DiscoverView({ onNavigateToMap }: DiscoverViewProps) {
         <div className="flex flex-col">
           {/* Discover Header */}
           <div className="sticky top-0 z-10 bg-white shadow-sm">
-            <DiscoverHeader />
+            <DiscoverHeader
+              selectedPlaceId={selectedPlaceId}
+              totalCount={discoveryResults.length}
+              filteredCount={filteredResults.length}
+            />
           </div>
 
           {/* Filter Panel */}
@@ -172,7 +174,7 @@ export function DiscoverView({ onNavigateToMap }: DiscoverViewProps) {
             ) : (
               <>
                 {viewMode === "cards" && <PlaceCardGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />}
-                {viewMode === "photos" && <PhotoGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />}
+                {viewMode === "grid" && <PhotoGrid places={filteredResults} onNavigateToMap={onNavigateToMap} />}
                 {viewMode === "list" && <PlaceList places={filteredResults} onNavigateToMap={onNavigateToMap} />}
               </>
             )}

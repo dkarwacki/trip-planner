@@ -21,19 +21,13 @@ export const createDiscoverSlice: StateCreator<
   isLoadingDiscovery: false,
 
   // Results
-  fetchDiscoveryResults: async (_lat, _lng, _radius) => {
-    // TODO: Implement actual discovery fetching logic
-    // This will be implemented when we migrate the discovery fetching logic
-    // For now, this is a placeholder that does nothing
-    return Promise.resolve();
-  },
-
+  // Note: Discovery fetching is handled by useNearbyPlaces hook, not the store
   setDiscoveryResults: (results) => set({ discoveryResults: results }),
 
   addDiscoveryResults: (newResults) =>
     set((state) => {
-      const existingIds = new Set(state.discoveryResults.map((r) => r.attraction?.id));
-      const uniqueNewResults = newResults.filter((r) => !existingIds.has(r.attraction?.id));
+      const existingIds = new Set(state.discoveryResults.map((r) => r.id));
+      const uniqueNewResults = newResults.filter((r) => !existingIds.has(r.id));
       return { discoveryResults: [...state.discoveryResults, ...uniqueNewResults] };
     }),
 

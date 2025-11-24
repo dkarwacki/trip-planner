@@ -17,7 +17,7 @@ export const prerender = false;
  * Maps from the structure used in localStorage to database structure
  */
 function placesToPlaceDAOs(places: Place[]) {
-  return places.map((place, index) => ({
+  return places.map((place) => ({
     id: place.id,
     name: place.name,
     lat: place.lat,
@@ -55,7 +55,7 @@ function tripDAOToDetailDTO(dao: TripDAO): TripDetailDTO {
       display_order: index,
       attractions: placeDAO.plannedAttractions.map((a) => ({
         id: PlaceId(a.id),
-        google_place_id: a.googlePlaceId || "",
+        google_place_id: a.id, // Using id as google_place_id since it's not on DAO
         type: "attraction" as const,
         name: a.name,
         rating: a.rating ?? null,

@@ -19,6 +19,8 @@ import type { LayoutProps, MobileTab } from "../types";
 import type { PlaceSuggestion } from "@/domain/plan/models/ChatMessage";
 import type { ConversationId } from "@/domain/plan/models/ConversationHistory";
 import { ConversationId as ConversationIdBrand } from "@/domain/plan/models/ConversationHistory";
+import type { PersonaType } from "@/domain/plan/models";
+import { PersonaType as PersonaTypeBrand } from "@/domain/plan/models";
 import { createTrip, updateTrip, getTripForConversation } from "@/infrastructure/plan/clients/trips";
 import { clearCurrentItinerary } from "@/lib/common/storage";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
@@ -157,8 +159,7 @@ export function MobileLayout({ conversationId }: LayoutProps) {
     if (activeConversationId && messages.length > 0 && !isCreatingConversation) {
       scheduleSave();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, selectedPersonas, activeConversationId, isCreatingConversation]); // Don't include scheduleSave - it causes infinite loop
+  }, [messages, selectedPersonas, activeConversationId, isCreatingConversation, scheduleSave]);
 
   // Warn before leaving with unsaved changes
   useUnsavedChangesWarning({
@@ -198,8 +199,10 @@ export function MobileLayout({ conversationId }: LayoutProps) {
         try {
           const brandedConversationId = ConversationIdBrand(conversationId);
           const conversation = await loadConversation(brandedConversationId);
-          setMessages(conversation.messages);
-          setPersonas(conversation.personas);
+          if (conversation) {
+            setMessages(conversation.messages);
+            setPersonas(conversation.personas.map((p) => PersonaTypeBrand(p)) as PersonaType[]);
+          }
 
           // Load trip places into itinerary from database
           try {
@@ -220,8 +223,9 @@ export function MobileLayout({ conversationId }: LayoutProps) {
           } catch (error) {
             console.error("Failed to load trip for conversation:", error);
           }
-        } catch (error) {
-          console.error("Failed to load conversation from URL:", error);
+        } catch {
+          // Error already logged by useConversation hook
+          // This is expected for virtual conversations (trips without conversation records)
         }
       })();
     }
@@ -363,8 +367,11 @@ export function MobileLayout({ conversationId }: LayoutProps) {
 
     try {
       const conversation = await loadConversation(id);
-      setMessages(conversation.messages);
-      setPersonas(conversation.personas);
+      if (conversation) {
+        // Restore state
+        setMessages(conversation.messages);
+        setPersonas(conversation.personas.map((p) => PersonaTypeBrand(p)) as PersonaType[]);
+      }
       setActiveTab("chat");
 
       // Load trip places into itinerary from database (like old plan view)

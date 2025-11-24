@@ -29,7 +29,7 @@ export function AssistantMessage({
 }: AssistantMessageProps) {
   const [addingPlaceId, setAddingPlaceId] = useState<string | null>(null);
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
-  const placeRefs = useRef<Map<string, React.RefObject<HTMLDivElement>>>(new Map());
+  const placeRefs = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(new Map());
 
   const timestamp = new Date(message.timestamp).toLocaleTimeString([], {
     hour: "2-digit",
@@ -41,7 +41,7 @@ export function AssistantMessage({
     message.suggestedPlaces.forEach((place) => {
       const placeId = place.id || place.name;
       if (!placeRefs.current.has(placeId)) {
-        placeRefs.current.set(placeId, createRef());
+        placeRefs.current.set(placeId, createRef<HTMLDivElement>());
       }
     });
   }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { useMapStore, filterDiscoveryResults } from "../../stores/mapStore";
+import type { PlannedPOIViewModel } from "@/lib/map-v2/types";
 
 interface UseMapSelectionProps {
   map: google.maps.Map | null;
@@ -31,11 +32,22 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
   // Create lookup maps for O(1) access to planned attractions
   const plannedAttractionMap = useMemo(() => {
-    const map = new Map<string, { attraction: any; score: number; breakdown?: any }>();
+    const map = new Map<
+      string,
+      {
+        attraction: PlannedPOIViewModel;
+        score: number;
+        breakdown?: {
+          qualityScore: number;
+          diversityScore?: number;
+          confidenceScore: number;
+        };
+      }
+    >();
 
     for (const place of places) {
       // Process attractions
-      place.plannedAttractions?.forEach((attraction: any) => {
+      place.plannedAttractions.forEach((attraction) => {
         const score =
           attraction.qualityScore && attraction.diversityScore && attraction.confidenceScore
             ? (attraction.qualityScore + attraction.diversityScore + attraction.confidenceScore) / 3
@@ -52,7 +64,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
       });
 
       // Process restaurants
-      place.plannedRestaurants?.forEach((restaurant: any) => {
+      place.plannedRestaurants.forEach((restaurant) => {
         const score =
           restaurant.qualityScore && restaurant.confidenceScore
             ? (restaurant.qualityScore + restaurant.confidenceScore) / 2
@@ -84,20 +96,34 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
       // Look up in filtered results first, but fallback to all results just in case
       // (though typically we only click what we see)
-      const result =
-        filteredDiscoveryResults.find((r) => r.attraction?.id === attractionId) ||
-        discoveryResults.find((r) => r.attraction?.id === attractionId);
+      const discoveryItem =
+        filteredDiscoveryResults.find((item) => item.id === attractionId) ||
+        discoveryResults.find((item) => item.id === attractionId);
 
-      if (!result?.attraction) return;
+      if (!discoveryItem) return;
 
-      const isRestaurant = result.attraction.types?.some((t: string) =>
-        ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-      );
+      // Convert DiscoveryItemViewModel to PlannedPOIViewModel
+      const poi: PlannedPOIViewModel = {
+        id: discoveryItem.id,
+        googlePlaceId: discoveryItem.googlePlaceId,
+        name: discoveryItem.name,
+        latitude: discoveryItem.latitude,
+        longitude: discoveryItem.longitude,
+        rating: discoveryItem.rating,
+        userRatingsTotal: discoveryItem.userRatingsTotal,
+        types: discoveryItem.types,
+        vicinity: discoveryItem.vicinity,
+        photos: discoveryItem.photos,
+        priceLevel: discoveryItem.itemType === "restaurant" ? discoveryItem.priceLevel : undefined,
+        qualityScore: discoveryItem.qualityScore,
+        diversityScore: discoveryItem.diversityScore,
+        confidenceScore: discoveryItem.confidenceScore,
+      };
 
-      if (isRestaurant) {
-        addRestaurantToPlace(selectedPlaceId, result.attraction);
+      if (discoveryItem.itemType === "restaurant") {
+        addRestaurantToPlace(selectedPlaceId, poi);
       } else {
-        addAttractionToPlace(selectedPlaceId, result.attraction);
+        addAttractionToPlace(selectedPlaceId, poi);
       }
     },
     [filteredDiscoveryResults, discoveryResults, selectedPlaceId, addAttractionToPlace, addRestaurantToPlace]
@@ -116,7 +142,20 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     if (!hoveredMarkerId) return null;
 
     if (activeMode === "discover" || activeMode === "ai") {
-      return filteredDiscoveryResults.find((r) => r.attraction?.id === hoveredMarkerId) || null;
+      const discoveryItem = filteredDiscoveryResults.find((item) => item.id === hoveredMarkerId);
+      if (!discoveryItem) return null;
+      return {
+        attraction: discoveryItem,
+        score: discoveryItem.score,
+        breakdown:
+          discoveryItem.qualityScore !== undefined && discoveryItem.confidenceScore !== undefined
+            ? {
+                qualityScore: discoveryItem.qualityScore,
+                diversityScore: discoveryItem.diversityScore,
+                confidenceScore: discoveryItem.confidenceScore,
+              }
+            : undefined,
+      };
     }
 
     // Use lookup map for O(1) access
@@ -128,7 +167,20 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     if (!expandedCardPlaceId) return null;
 
     if (activeMode === "discover" || activeMode === "ai") {
-      return filteredDiscoveryResults.find((r) => r.attraction?.id === expandedCardPlaceId) || null;
+      const discoveryItem = filteredDiscoveryResults.find((item) => item.id === expandedCardPlaceId);
+      if (!discoveryItem) return null;
+      return {
+        attraction: discoveryItem,
+        score: discoveryItem.score,
+        breakdown:
+          discoveryItem.qualityScore !== undefined && discoveryItem.confidenceScore !== undefined
+            ? {
+                qualityScore: discoveryItem.qualityScore,
+                diversityScore: discoveryItem.diversityScore,
+                confidenceScore: discoveryItem.confidenceScore,
+              }
+            : undefined,
+      };
     }
 
     // Use lookup map for O(1) access
@@ -150,30 +202,34 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     if (!map || !expandedCardPlaceId) return;
 
     // Find the attraction in discovery results (Discover/AI mode) or planned items (Plan mode)
-    let expandedItem: { attraction?: { id: string; location: { lat: number; lng: number } } } | undefined =
-      filteredDiscoveryResults.find((r) => r.attraction?.id === expandedCardPlaceId);
+    const discoveryItem = filteredDiscoveryResults.find((item) => item.id === expandedCardPlaceId);
 
-    // If not found in filtered results, search in planned items
-    if (!expandedItem) {
-      for (const place of places) {
-        const found =
-          place.plannedAttractions?.find((a) => a.id === expandedCardPlaceId) ||
-          place.plannedRestaurants?.find((r) => r.id === expandedCardPlaceId);
-        if (found) {
-          expandedItem = { attraction: found };
-          break;
-        }
-      }
-    }
-
-    if (expandedItem?.attraction?.location) {
-      const { lat, lng } = expandedItem.attraction.location;
-      map.panTo({ lat: Number(lat), lng: Number(lng) });
+    if (discoveryItem) {
+      map.panTo({ lat: discoveryItem.latitude, lng: discoveryItem.longitude });
 
       // Optionally zoom in if too far out
       const currentZoom = map.getZoom() || 0;
       if (currentZoom < 14) {
         map.setZoom(14);
+      }
+      return;
+    }
+
+    // If not found in filtered results, search in planned items
+    for (const place of places) {
+      const found =
+        place.plannedAttractions.find((a) => a.id === expandedCardPlaceId) ||
+        place.plannedRestaurants.find((r) => r.id === expandedCardPlaceId);
+
+      if (found) {
+        map.panTo({ lat: found.latitude, lng: found.longitude });
+
+        // Optionally zoom in if too far out
+        const currentZoom = map.getZoom() || 0;
+        if (currentZoom < 14) {
+          map.setZoom(14);
+        }
+        return;
       }
     }
   }, [map, expandedCardPlaceId, filteredDiscoveryResults, places]);
@@ -186,8 +242,8 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     const selectedPlace = places.find((p) => p.id === selectedPlaceId);
 
     if (selectedPlace) {
-      const lat = Number(selectedPlace.lat);
-      const lng = Number(selectedPlace.lng);
+      const lat = selectedPlace.latitude;
+      const lng = selectedPlace.longitude;
 
       if (isFinite(lat) && isFinite(lng)) {
         map.panTo({ lat, lng });
@@ -205,7 +261,8 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
   useEffect(() => {
     if (!expandedCardPlaceId || !expandedAttraction) return;
 
-    const { lat, lng } = expandedAttraction.attraction.location;
+    const lat = expandedAttraction.attraction.latitude;
+    const lng = expandedAttraction.attraction.longitude;
     const isVisible = isPositionInViewport(lat, lng);
 
     if (!isVisible) {

@@ -8,7 +8,8 @@ export interface BasePlaceCardProps {
   place: {
     id: string;
     name: string;
-    location: { lat: number; lng: number };
+    latitude: number;
+    longitude: number;
     photos?: { photoReference: string }[];
     types?: string[];
     rating?: number;
@@ -60,7 +61,7 @@ export function BasePlaceCard({
   photoAspectRatio = "aspect-video",
 }: BasePlaceCardProps) {
   const photoReference = place.photos?.[0]?.photoReference;
-  const placeType = getPlaceTypeCategory(place.types);
+  const placeType = getPlaceTypeCategory(place.types || []);
 
   // Format rating
   const rating = place.rating || 0;
@@ -76,13 +77,25 @@ export function BasePlaceCard({
       <div
         className={`relative ${photoAspectRatio} bg-gray-100 ${photoReference && onPhotoClick ? "cursor-pointer" : ""}`}
         onClick={onPhotoClick}
+        onKeyDown={
+          onPhotoClick
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onPhotoClick(e as unknown as React.MouseEvent);
+                }
+              }
+            : undefined
+        }
+        role={photoReference && onPhotoClick ? "button" : undefined}
+        tabIndex={photoReference && onPhotoClick ? 0 : undefined}
       >
         {photoReference ? (
           <LazyImage
             photoReference={photoReference}
             alt={place.name}
-            lat={place.location.lat}
-            lng={place.location.lng}
+            lat={place.latitude}
+            lng={place.longitude}
             placeName={place.name}
             size="medium"
             className={`w-full h-full object-cover ${isAdded ? "opacity-90" : ""}`}

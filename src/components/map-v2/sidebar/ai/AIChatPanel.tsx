@@ -52,7 +52,7 @@ export function AIChatPanel() {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <ChatHeader selectedPlace={selectedPlace} />
+      <ChatHeader selectedPlace={selectedPlace ?? null} />
 
       <ChatMessages
         messages={conversation}

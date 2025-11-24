@@ -124,7 +124,7 @@ export const PhotoCacheLayer = Layer.effect(
             });
 
             const placeholderPhoto = Effect.gen(function* () {
-              const width = key.maxWidth;
+              const width = MAX_PHOTO_WIDTH;
               const height = Math.round(width * 0.67); // 3:2 aspect ratio
               const placeholderUrl = `https://placehold.co/${width}x${height}/e2e8f0/475569/png?text=Photo`;
 

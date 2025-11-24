@@ -1,6 +1,5 @@
 /**
  * Place card grid - displays places in large card view (default)
- * Implements Stage 3.2 of the UX implementation plan
  *
  * ARCHITECTURE: This component is a pure layout container.
  * It only manages scroll behavior for highlighted items.
@@ -10,10 +9,10 @@
 import React, { useEffect, useRef } from "react";
 import { PlaceCard } from "./PlaceCard";
 import { useMapStore } from "../stores/mapStore";
-import type { Attraction, AttractionScore } from "@/domain/map/models";
+import type { DiscoveryItemViewModel } from "@/lib/map-v2/types";
 
 interface PlaceCardGridProps {
-  places: (Attraction | AttractionScore)[];
+  places: DiscoveryItemViewModel[];
   onNavigateToMap?: (attractionId: string, lat: number, lng: number) => void;
 }
 
@@ -61,48 +60,24 @@ export function PlaceCardGrid({ places, onNavigateToMap }: PlaceCardGridProps) {
     return () => container.removeEventListener("scroll", handleScroll);
   }, [highlightedPlaceId, setHighlightedPlace]);
 
-  // Extract attraction from AttractionScore if needed
-  const getAttraction = (place: Attraction | AttractionScore): Attraction => {
-    if ("attraction" in place) {
-      return place.attraction;
-    }
-    return place;
-  };
-
-  // Get score from AttractionScore or calculate basic score
-  const getScore = (place: Attraction | AttractionScore): number => {
-    if ("score" in place && typeof place.score === "number") {
-      return place.score;
-    }
-    const attraction = getAttraction(place);
-    // Simple fallback score calculation
-    if (attraction.rating && attraction.userRatingsTotal) {
-      return (attraction.rating / 5) * 10;
-    }
-    return 0;
-  };
-
   return (
     <div ref={containerRef} className="p-4 space-y-4">
       {places.map((place) => {
-        const attraction = getAttraction(place);
-        const score = getScore(place);
-
         return (
           <div
-            key={attraction.id}
+            key={place.id}
             ref={(el) => {
               if (el) {
-                itemRefs.current.set(attraction.id, el);
+                itemRefs.current.set(place.id, el);
               } else {
-                itemRefs.current.delete(attraction.id);
+                itemRefs.current.delete(place.id);
               }
             }}
           >
             <PlaceCard
-              place={attraction}
-              score={score}
-              isHighlighted={highlightedPlaceId === attraction.id}
+              place={place}
+              score={place.score}
+              isHighlighted={highlightedPlaceId === place.id}
               onNavigateToMap={onNavigateToMap}
             />
           </div>

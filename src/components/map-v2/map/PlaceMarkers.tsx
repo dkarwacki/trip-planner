@@ -7,18 +7,18 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useMapInstance } from "./hooks/useMapInstance";
 import { useMapStore } from "../stores/mapStore";
-import type { PlannedPlace } from "../types";
+import type { PlannedPlaceViewModel } from "@/lib/map-v2/types";
 
 interface PlaceMarkersProps {
-  places: PlannedPlace[];
+  places: PlannedPlaceViewModel[];
   selectedPlaceId: string | null;
-  onPlaceClick: (place: PlannedPlace) => void;
+  onPlaceClick: (place: PlannedPlaceViewModel) => void;
 }
 
 interface MarkerData {
   marker: google.maps.marker.AdvancedMarkerElement;
   element: HTMLDivElement;
-  place: PlannedPlace;
+  place: PlannedPlaceViewModel;
 }
 
 export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMarkersProps) {
@@ -26,11 +26,11 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
   const shouldFitBounds = useMapStore((state) => state.shouldFitBounds);
   const clearFitBoundsRequest = useMapStore((state) => state.clearFitBoundsRequest);
   const markersRef = useRef<Map<string, MarkerData>>(new Map());
-  const previousPlacesRef = useRef<PlannedPlace[]>([]);
+  const previousPlacesRef = useRef<PlannedPlaceViewModel[]>([]);
   const hasFitBoundsRef = useRef(false);
 
   // Create marker element with proper styling
-  const createMarkerElement = useCallback((place: PlannedPlace, index: number, isSelected: boolean) => {
+  const createMarkerElement = useCallback((place: PlannedPlaceViewModel, index: number, isSelected: boolean) => {
     const element = document.createElement("div");
     element.className = "relative cursor-pointer transition-all duration-200";
     element.style.width = isSelected ? "48px" : "36px";
@@ -107,12 +107,11 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
       const index = places.findIndex((p) => p.id === place.id);
       const isSelected = place.id === selectedPlaceId;
 
-      // Convert branded types to numbers
-      const lat = Number(place.lat);
-      const lng = Number(place.lng);
+      const lat = place.latitude;
+      const lng = place.longitude;
 
       // Skip invalid coordinates
-      if (isNaN(lat) || isNaN(lng) || !isFinite(lat) || !isFinite(lng)) {
+      if (!isFinite(lat) || !isFinite(lng)) {
         return;
       }
 
@@ -151,8 +150,8 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
       if (places.length > 1) {
         const bounds = new google.maps.LatLngBounds();
         places.forEach((place) => {
-          const lat = Number(place.lat);
-          const lng = Number(place.lng);
+          const lat = place.latitude;
+          const lng = place.longitude;
           if (isFinite(lat) && isFinite(lng)) {
             bounds.extend({ lat, lng });
           }
@@ -163,8 +162,8 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
         }
       } else if (places.length === 1) {
         const place = places[0];
-        const lat = Number(place.lat);
-        const lng = Number(place.lng);
+        const lat = place.latitude;
+        const lng = place.longitude;
         if (isFinite(lat) && isFinite(lng)) {
           map.panTo({ lat, lng });
           map.setZoom(14);
@@ -193,8 +192,8 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
     if (places.length > 1) {
       const bounds = new google.maps.LatLngBounds();
       places.forEach((place) => {
-        const lat = Number(place.lat);
-        const lng = Number(place.lng);
+        const lat = place.latitude;
+        const lng = place.longitude;
         if (isFinite(lat) && isFinite(lng)) {
           bounds.extend({ lat, lng });
         }
@@ -204,8 +203,8 @@ export function PlaceMarkers({ places, selectedPlaceId, onPlaceClick }: PlaceMar
       }
     } else if (places.length === 1) {
       const place = places[0];
-      const lat = Number(place.lat);
-      const lng = Number(place.lng);
+      const lat = place.latitude;
+      const lng = place.longitude;
       if (isFinite(lat) && isFinite(lng)) {
         map.panTo({ lat, lng });
         map.setZoom(14);

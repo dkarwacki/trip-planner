@@ -1,6 +1,5 @@
 /**
  * Expanded Place Card
- * Stage 3.3: Detailed Map Card
  *
  * Features:
  * - Detailed view of a place
@@ -11,13 +10,13 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { MapPin } from "lucide-react";
-import type { Attraction } from "@/domain/map/models";
+import type { DiscoveryItemViewModel, PlannedPOIViewModel } from "@/lib/map-v2/types";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { BasePlaceCard } from "../shared/BasePlaceCard";
 import { getGoogleMapsUrl } from "@/lib/common/google-maps";
 
 interface ExpandedPlaceCardProps {
-  attraction: Attraction;
+  attraction: DiscoveryItemViewModel | PlannedPOIViewModel;
   markerPosition: { x: number; y: number } | null;
   viewportSize: { width: number; height: number };
   score?: number;
@@ -29,7 +28,7 @@ interface ExpandedPlaceCardProps {
   isAddedToPlan: boolean;
   isAddingToPlan: boolean;
   onClose: () => void;
-  onAddToPlan: (place: Attraction) => void;
+  onAddToPlan: (place: DiscoveryItemViewModel | PlannedPOIViewModel) => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }
@@ -49,7 +48,6 @@ export const ExpandedPlaceCard = React.memo(
     onMouseLeave,
   }: ExpandedPlaceCardProps) {
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-    const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
 
@@ -196,35 +194,16 @@ export const ExpandedPlaceCard = React.memo(
               className="border-0 shadow-none rounded-none"
               showActions={true}
             >
-              {/* Editorial Summary */}
-              {attraction.editorialSummary && (
-                <div className="border-t border-gray-100 pt-3 mt-2">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2">About this place</h4>
-                  <div className="text-sm text-gray-700 leading-relaxed">
-                    {attraction.editorialSummary.length > 150 ? (
-                      <>
-                        <p className={isDescriptionOpen ? "" : "line-clamp-3"}>{attraction.editorialSummary}</p>
-                        <button
-                          onClick={() => setIsDescriptionOpen(!isDescriptionOpen)}
-                          className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-                        >
-                          {isDescriptionOpen ? "Read less" : "Read more"}
-                        </button>
-                      </>
-                    ) : (
-                      <p>{attraction.editorialSummary}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* View on Google Maps */}
               <div className="border-t border-gray-100 pt-3 mt-2">
                 <a
                   href={getGoogleMapsUrl({
                     name: attraction.name,
                     placeId: attraction.id,
-                    location: attraction.location,
+                    location: {
+                      lat: attraction.latitude,
+                      lng: attraction.longitude,
+                    },
                   })}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -246,8 +225,8 @@ export const ExpandedPlaceCard = React.memo(
             isOpen={isLightboxOpen}
             onClose={() => setIsLightboxOpen(false)}
             placeName={attraction.name}
-            lat={attraction.location.lat}
-            lng={attraction.location.lng}
+            lat={attraction.latitude}
+            lng={attraction.longitude}
           />
         )}
       </>

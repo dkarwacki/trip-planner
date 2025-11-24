@@ -37,7 +37,7 @@ interface PlaceSuggestionCardProps {
   onAdd: (place: PlaceSuggestion) => void;
   isAdded?: boolean;
   isAdding?: boolean;
-  scrollRef?: React.RefObject<HTMLDivElement>;
+  scrollRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 /**

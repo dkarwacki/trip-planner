@@ -76,7 +76,8 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
   const placeForBaseCard = {
     id: suggestion.placeId || "",
     name: suggestion.placeName || "",
-    location: suggestion.attractionData?.location || { lat: 0, lng: 0 },
+    latitude: suggestion.attractionData?.latitude || 0,
+    longitude: suggestion.attractionData?.longitude || 0,
     photos: suggestion.photoUrl ? [{ photoReference: suggestion.photoUrl }] : [],
     types: suggestion.type === "add_restaurant" ? ["restaurant"] : ["tourist_attraction"],
     // Add other fields if available in suggestion
@@ -168,8 +169,8 @@ export function MobileSuggestionCard({ suggestion, isAdded, isAdding = false, on
           isOpen={isLightboxOpen}
           onClose={() => setIsLightboxOpen(false)}
           placeName={suggestion.placeName || "Place"}
-          lat={suggestion.attractionData.location.lat}
-          lng={suggestion.attractionData.location.lng}
+          lat={suggestion.attractionData.latitude}
+          lng={suggestion.attractionData.longitude}
           size="large"
         />
       )}

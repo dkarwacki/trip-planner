@@ -75,8 +75,8 @@ function PlannedItem({ attraction, index, type, onRemove, onItemClick }: Planned
           </h4>
           <div className="flex items-center gap-0.5 text-xs text-muted-foreground flex-shrink-0">
             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-            <span className="font-medium">{attraction.rating.toFixed(1)}</span>
-            <span className="text-muted-foreground/70">({formatReviewCount(attraction.userRatingsTotal)})</span>
+            <span className="font-medium">{attraction.rating?.toFixed(1) || "N/A"}</span>
+            <span className="text-muted-foreground/70">({formatReviewCount(attraction.userRatingsTotal || 0)})</span>
           </div>
         </div>
       </button>

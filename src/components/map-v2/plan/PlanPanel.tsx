@@ -48,11 +48,6 @@ export default function PlanPanel() {
     );
   }
 
-  const handleCreatePlan = () => {
-    console.log("Create plan clicked");
-    // TODO: Implement create plan functionality
-  };
-
   const handleShare = () => {
     console.log("Share clicked");
     // TODO: Implement share functionality
@@ -61,7 +56,7 @@ export default function PlanPanel() {
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Header with stats and actions */}
-      <PlanHeader places={places} onCreatePlan={handleCreatePlan} onShare={handleShare} />
+      <PlanHeader places={places} onShare={handleShare} />
 
       {/* Toolbar with filters */}
       <div className="px-4 py-2 border-b border-gray-200">

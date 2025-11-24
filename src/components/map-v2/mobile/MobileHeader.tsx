@@ -7,7 +7,6 @@ import React, { useState } from "react";
 import { Search, ArrowLeft, Menu, Clock, MessageCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/common/utils";
 import { TripSelector } from "../shared/TripSelector";
-import { Button } from "@/components/ui/button";
 import { useMapStore } from "../stores/mapStore";
 
 interface MobileHeaderProps {

@@ -81,7 +81,7 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
         // Add delay before clearing to allow moving to the card
         hoverTimeoutRef.current = setTimeout(() => {
           setHoveredMarker(null);
-        }, 300); // 300ms grace period
+        }, 100);
       }
     },
     [setHoveredMarker]
@@ -113,7 +113,7 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
   // Filter discovery results to exclude items already in the plan
   // Memoized to prevent creating new array on every render
   const filteredDiscoveryResults = useMemo(
-    () => discoveryResults.filter((result) => result.attraction && !isInPlan(result.attraction.id)),
+    () => discoveryResults.filter((result) => !isInPlan(result.id)),
     [discoveryResults, isInPlan]
   );
 
@@ -134,7 +134,7 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
       {/* Discovery markers (shown only in discover/ai mode, excluding planned items) */}
       {(activeMode === "discover" || activeMode === "ai") && (
         <DiscoveryMarkersLayer
-          places={filteredDiscoveryResults.map((r) => r.attraction).filter((a): a is NonNullable<typeof a> => !!a)}
+          places={filteredDiscoveryResults}
           hoveredMarkerId={hoveredMarkerId}
           selectedPlaceId={selectedPlaceId}
           onMarkerClick={(id) => {
@@ -186,10 +186,8 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
           score={hoveredAttraction.score}
           breakdown={hoveredAttraction.breakdown}
           markerPosition={
-            getMarkerScreenPosition(
-              hoveredAttraction.attraction.location.lat,
-              hoveredAttraction.attraction.location.lng
-            ) || null
+            getMarkerScreenPosition(hoveredAttraction.attraction.latitude, hoveredAttraction.attraction.longitude) ||
+            null
           }
           viewportSize={viewportSize}
           isAddedToPlan={isInPlan(hoveredAttraction.attraction.id)}
@@ -208,10 +206,8 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
           score={expandedAttraction.score}
           breakdown={expandedAttraction.breakdown}
           markerPosition={
-            getMarkerScreenPosition(
-              expandedAttraction.attraction.location.lat,
-              expandedAttraction.attraction.location.lng
-            ) || null
+            getMarkerScreenPosition(expandedAttraction.attraction.latitude, expandedAttraction.attraction.longitude) ||
+            null
           }
           viewportSize={viewportSize}
           isAddedToPlan={isInPlan(expandedAttraction.attraction.id)}

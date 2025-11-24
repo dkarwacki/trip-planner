@@ -5,22 +5,22 @@
 
 import React from "react";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
-import type { Attraction } from "@/domain/map/models";
+import type { PlannedPOIViewModel } from "@/lib/map-v2/types";
 import { Utensils, Landmark } from "lucide-react";
 
 interface PlannedItemMarkerProps {
-  attraction: Attraction;
+  poi: PlannedPOIViewModel;
   placeId: string;
   isRestaurant: boolean;
   isHovered: boolean;
   isExpanded: boolean;
-  onMarkerClick: (attractionId: string, placeId: string) => void;
-  onMarkerHover?: (attractionId: string | null) => void;
+  onMarkerClick: (poiId: string, placeId: string) => void;
+  onMarkerHover?: (poiId: string | null) => void;
 }
 
 export const PlannedItemMarker = React.memo(
   function PlannedItemMarker({
-    attraction,
+    poi,
     placeId,
     isRestaurant,
     isHovered,
@@ -30,9 +30,9 @@ export const PlannedItemMarker = React.memo(
   }: PlannedItemMarkerProps) {
     return (
       <AdvancedMarker
-        key={attraction.id}
-        position={attraction.location}
-        onClick={() => onMarkerClick(attraction.id, placeId)}
+        key={poi.id}
+        position={{ lat: poi.latitude, lng: poi.longitude }}
+        onClick={() => onMarkerClick(poi.id, placeId)}
         zIndex={isExpanded ? 200 : isHovered ? 150 : 140}
         className="custom-marker"
       >
@@ -41,7 +41,7 @@ export const PlannedItemMarker = React.memo(
             relative transition-all duration-300 cursor-pointer group
             ${isExpanded ? "scale-125 z-50" : isHovered ? "scale-110 z-40" : "scale-100 z-30"}
           `}
-          onMouseEnter={() => onMarkerHover?.(attraction.id)}
+          onMouseEnter={() => onMarkerHover?.(poi.id)}
           onMouseLeave={() => onMarkerHover?.(null)}
         >
           {/* Marker Pin */}
@@ -67,7 +67,7 @@ export const PlannedItemMarker = React.memo(
   (prevProps, nextProps) => {
     // Only re-render if these specific props change
     return (
-      prevProps.attraction.id === nextProps.attraction.id &&
+      prevProps.poi.id === nextProps.poi.id &&
       prevProps.isHovered === nextProps.isHovered &&
       prevProps.isExpanded === nextProps.isExpanded &&
       prevProps.isRestaurant === nextProps.isRestaurant

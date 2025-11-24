@@ -33,7 +33,7 @@ export const DiscoverHeader = React.memo(function DiscoverHeader({
     let restaurants = 0;
 
     for (const item of discoveryResults) {
-      const isRestaurant = item.attraction?.types?.some(restaurantTypes.includes);
+      const isRestaurant = item.types?.some((type) => restaurantTypes.includes(type));
       if (isRestaurant) {
         restaurants++;
       } else {

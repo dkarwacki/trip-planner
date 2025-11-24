@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from "react";
-import type { Attraction } from "@/domain/map/models";
+import type { DiscoveryItemViewModel } from "@/lib/map-v2/types";
 import { MapPin, Star, Plus, CheckCircle2, Utensils, Landmark } from "lucide-react";
 import { LazyImage } from "../shared/LazyImage";
 import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
@@ -11,7 +11,7 @@ import PhotoLightbox from "@/components/PhotoLightbox";
 import { openInGoogleMaps } from "@/lib/common/google-maps";
 
 interface PlaceListItemProps {
-  place: Attraction;
+  place: DiscoveryItemViewModel;
   score: number;
   isAdded?: boolean;
   isHighlighted?: boolean;
@@ -37,7 +37,8 @@ export const PlaceListItem = React.memo(function PlaceListItem({
   const rating = place.rating || 0;
   const totalRatings = place.userRatingsTotal || 0;
   const category = place.types?.[0]?.replace(/_/g, " ") || "Place";
-  const priceLevel = place.priceLevel ? "💰".repeat(place.priceLevel) : "";
+  // priceLevel only exists on RestaurantViewModel
+  const priceLevel = "priceLevel" in place && place.priceLevel ? "💰".repeat(place.priceLevel) : "";
 
   const getScoreBadgeColor = (score: number) => {
     if (score >= 90) return "text-green-600";
@@ -74,7 +75,7 @@ export const PlaceListItem = React.memo(function PlaceListItem({
     openInGoogleMaps({
       name: place.name,
       placeId: place.id,
-      location: place.location,
+      location: { lat: place.latitude, lng: place.longitude },
     });
   };
 
@@ -83,6 +84,14 @@ export const PlaceListItem = React.memo(function PlaceListItem({
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
       className={`flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-colors ${
         isHighlighted ? "bg-blue-50 border-l-4 border-blue-600" : ""
       }`}
@@ -91,13 +100,21 @@ export const PlaceListItem = React.memo(function PlaceListItem({
       <div
         className={`flex-shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden bg-gray-100 relative ${photoReference ? "cursor-pointer" : ""}`}
         onClick={handlePhotoClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handlePhotoClick(e as unknown as React.MouseEvent);
+          }
+        }}
       >
         {photoReference ? (
           <LazyImage
             photoReference={photoReference}
             alt={place.name}
-            lat={place.location.lat}
-            lng={place.location.lng}
+            lat={place.latitude}
+            lng={place.longitude}
             placeName={place.name}
             size="thumbnail"
             className="w-full h-full object-cover"
@@ -193,8 +210,8 @@ export const PlaceListItem = React.memo(function PlaceListItem({
           isOpen={isLightboxOpen}
           onClose={() => setIsLightboxOpen(false)}
           placeName={place.name}
-          lat={place.location.lat}
-          lng={place.location.lng}
+          lat={place.latitude}
+          lng={place.longitude}
         />
       )}
     </div>

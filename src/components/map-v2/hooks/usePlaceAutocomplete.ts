@@ -139,8 +139,8 @@ export function usePlaceAutocomplete(options: UsePlaceAutocompleteOptions = {}) 
         }
 
         // Extract lat/lng from LatLng object (methods, not properties)
-        const lat = typeof place.location.lat === "function" ? place.location.lat() : place.location.lat;
-        const lng = typeof place.location.lng === "function" ? place.location.lng() : place.location.lng;
+        const lat = (typeof place.location.lat === "function" ? place.location.lat() : place.location.lat) as number;
+        const lng = (typeof place.location.lng === "function" ? place.location.lng() : place.location.lng) as number;
 
         return {
           placeId: place.id,

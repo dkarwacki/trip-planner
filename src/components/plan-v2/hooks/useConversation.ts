@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import type { ConversationId } from "@/domain/plan/models/ConversationHistory";
-import { ConversationId as ConversationIdBrand } from "@/domain/plan/models/ConversationHistory";
+import { ConversationId as ConversationIdBrand, ConversationTimestamp } from "@/domain/plan/models/ConversationHistory";
 import type { ChatMessage, PersonaType } from "@/domain/plan/models";
+import type { SavedConversation } from "@/domain/plan/models/ConversationHistory";
 import type { ConversationSummary } from "../types";
 import {
   getAllConversations,
@@ -19,7 +20,7 @@ export interface UseConversationReturn {
   isLoading: boolean;
   error: string | null;
   loadConversations: () => Promise<void>;
-  loadConversation: (id: ConversationId) => Promise<any>;
+  loadConversation: (id: ConversationId) => Promise<SavedConversation | null>;
   createNew: (
     messages: ChatMessage[],
     personas: PersonaType[],
@@ -65,7 +66,7 @@ export function useConversation(): UseConversationReturn {
       const conversationSummaries: ConversationSummary[] = conversations.map((conv) => ({
         id: conv.id,
         title: conv.title,
-        personas: conv.personas,
+        personas: conv.personas as PersonaType[],
         messageCount: conv.messageCount,
         createdAt: new Date(conv.timestamp),
         updatedAt: new Date(conv.lastUpdated),
@@ -102,19 +103,19 @@ export function useConversation(): UseConversationReturn {
     }
   }, [activeConversationId]);
 
-  const loadConversation = useCallback(async (id: ConversationId) => {
+  const loadConversation = useCallback(async (id: ConversationId): Promise<SavedConversation | null> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Try to load as a conversation first
+      // Try to load as a conversation first (silent mode to avoid logging expected 404s)
       try {
-        const conversation = await getConversation(id);
+        const conversation = await getConversation(id, { silent: true });
         setActiveConversationId(id);
         return conversation;
       } catch (convError) {
         // If conversation not found, try to load as a trip (virtual conversation)
-        console.log("Conversation not found, trying to load as trip:", id);
+        // This is expected behavior for trips without conversations
 
         try {
           const trip = await getTrip(id as string);
@@ -125,21 +126,22 @@ export function useConversation(): UseConversationReturn {
             title: trip.title,
             messages: [],
             personas: [],
-            timestamp: trip.timestamp,
-            lastUpdated: trip.timestamp,
+            timestamp: ConversationTimestamp(trip.timestamp as number),
+            lastUpdated: ConversationTimestamp(trip.timestamp as number),
             messageCount: 0,
             tripId: trip.id,
           };
 
           setActiveConversationId(id);
           return virtualConversation;
-        } catch (tripError) {
-          // Neither conversation nor trip found
+        } catch {
+          // Neither conversation nor trip found - this is a genuine error
           throw convError;
         }
       }
     } catch (err) {
-      console.error("Failed to load conversation:", err);
+      // Only log error if it's a genuine failure (not a virtual conversation)
+      console.error("Failed to load conversation or trip:", err);
       setError("Failed to load conversation");
       throw err;
     } finally {

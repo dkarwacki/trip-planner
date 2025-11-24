@@ -4,9 +4,10 @@
  */
 
 import React from "react";
+import type { PlannedPlaceViewModel } from "@/lib/map-v2/types";
 
 interface MobileItineraryStatsProps {
-  places: any[]; // Will be typed with domain types
+  places: PlannedPlaceViewModel[];
 }
 
 export function MobileItineraryStats({ places }: MobileItineraryStatsProps) {

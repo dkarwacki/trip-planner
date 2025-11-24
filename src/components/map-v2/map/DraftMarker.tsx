@@ -6,7 +6,7 @@ interface DraftMarkerProps {
 }
 
 export function DraftMarker({ position }: DraftMarkerProps) {
-  const [markerRef, marker] = useAdvancedMarkerRef();
+  const [markerRef] = useAdvancedMarkerRef();
 
   return (
     <AdvancedMarker ref={markerRef} position={position}>

@@ -80,8 +80,7 @@ export const createPlanSlice: StateCreator<
         if (place.id === placeId) {
           return {
             ...place,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            plannedAttractions: (place.plannedAttractions || []).filter((a: any) => a.id !== attractionId),
+            plannedAttractions: (place.plannedAttractions || []).filter((a) => a.id !== attractionId),
           };
         }
         return place;
@@ -95,8 +94,7 @@ export const createPlanSlice: StateCreator<
         if (place.id === placeId) {
           return {
             ...place,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            plannedRestaurants: (place.plannedRestaurants || []).filter((r: any) => r.id !== restaurantId),
+            plannedRestaurants: (place.plannedRestaurants || []).filter((r) => r.id !== restaurantId),
           };
         }
         return place;
@@ -113,8 +111,7 @@ export const createPlanSlice: StateCreator<
   getSelectedPlace: () => {
     const state = get();
     if (!state.selectedPlaceId) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (state.discoveryResults.find((p: any) => p.id === state.selectedPlaceId) ||
+    return (state.discoveryResults.find((p) => p.id === state.selectedPlaceId) ||
       state.places.find((p) => p.id === state.selectedPlaceId) ||
       null) as PlannedPlace | null;
   },
@@ -129,10 +126,8 @@ export const createPlanSlice: StateCreator<
     const state = get();
     const ids = new Set<string>();
     state.places.forEach((p) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      p.plannedAttractions?.forEach((a: any) => ids.add(a.id));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      p.plannedRestaurants?.forEach((r: any) => ids.add(r.id));
+      p.plannedAttractions?.forEach((a) => ids.add(a.id));
+      p.plannedRestaurants?.forEach((r) => ids.add(r.id));
     });
     return ids;
   },

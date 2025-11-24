@@ -205,8 +205,7 @@ const MapContent = ({
     if (places.length > 0) {
       debouncedSave(places);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [places]);
+  }, [places, debouncedSave]);
 
   // Helper function to merge API results with planned attractions (persona-aware)
   const mergeAttractionsWithPlanned = useCallback(

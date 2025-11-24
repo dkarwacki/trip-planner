@@ -74,9 +74,7 @@ export function useMapState() {
     return () => {
       google.maps.event.removeListener(idleListener);
     };
-    // addSearchCenter is a Zustand action and is stable
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map]);
+  }, [map, addSearchCenter]);
 
   // Add click listener to close cards
   useEffect(() => {
@@ -89,9 +87,7 @@ export function useMapState() {
     return () => {
       google.maps.event.removeListener(clickListener);
     };
-    // closeCard is a Zustand action and is stable
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map]);
+  }, [map, closeCard]);
 
   return {
     map,

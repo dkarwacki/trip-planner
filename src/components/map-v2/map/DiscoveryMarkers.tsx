@@ -6,10 +6,10 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useMapInstance } from "./hooks/useMapInstance";
-import type { AttractionScore } from "@/domain/map/models";
+import type { DiscoveryItemViewModel } from "@/lib/map-v2/types";
 
 interface DiscoveryMarkersProps {
-  attractions: AttractionScore[];
+  attractions: DiscoveryItemViewModel[];
   category: "attractions" | "restaurants";
   onMarkerClick: (attractionId: string) => void;
   onMarkerHover?: (attractionId: string | null) => void;
@@ -19,7 +19,7 @@ interface DiscoveryMarkersProps {
 interface MarkerData {
   marker: google.maps.marker.AdvancedMarkerElement;
   element: HTMLDivElement;
-  attraction: AttractionScore;
+  attraction: DiscoveryItemViewModel;
   mouseEnterHandler: () => void;
   mouseLeaveHandler: () => void;
 }
@@ -33,27 +33,24 @@ export function DiscoveryMarkers({
 }: DiscoveryMarkersProps) {
   const { map, markerLibrary, isReady } = useMapInstance();
   const markersRef = useRef<Map<string, MarkerData>>(new Map());
-  const previousAttractionsRef = useRef<AttractionScore[]>([]);
+  const previousAttractionsRef = useRef<DiscoveryItemViewModel[]>([]);
 
   // Color coding
   const markerColor = category === "attractions" ? "#3B82F6" : "#EF4444"; // blue-600 or red-500
 
   // Create marker element
-  const createMarkerElement = useCallback(
-    (score: number) => {
-      const element = document.createElement("div");
-      element.className = "cursor-pointer transition-all duration-200";
-      element.style.width = "18px";
-      element.style.height = "18px";
+  const createMarkerElement = useCallback(() => {
+    const element = document.createElement("div");
+    element.className = "cursor-pointer transition-all duration-200";
+    element.style.width = "18px";
+    element.style.height = "18px";
 
-      element.innerHTML = `
+    element.innerHTML = `
         <div class="w-full h-full rounded-full border-2 border-white shadow-md" style="background-color: ${markerColor};"></div>
       `;
 
-      return element;
-    },
-    [markerColor]
-  );
+    return element;
+  }, [markerColor]);
 
   // Incremental marker updates
   useEffect(() => {
@@ -74,16 +71,14 @@ export function DiscoveryMarkers({
     }
 
     const previousAttractions = previousAttractionsRef.current;
-    const currentAttractionIds = new Set(attractions.map((a) => a.attraction.id));
-    const previousAttractionIds = new Set(previousAttractions.map((a) => a.attraction.id));
+    const currentAttractionIds = new Set(attractions.map((a) => a.id));
+    const previousAttractionIds = new Set(previousAttractions.map((a) => a.id));
 
     // Find removed attractions
-    const removedAttractionIds = previousAttractions
-      .filter((a) => !currentAttractionIds.has(a.attraction.id))
-      .map((a) => a.attraction.id);
+    const removedAttractionIds = previousAttractions.filter((a) => !currentAttractionIds.has(a.id)).map((a) => a.id);
 
     // Find added attractions
-    const addedAttractions = attractions.filter((a) => !previousAttractionIds.has(a.attraction.id));
+    const addedAttractions = attractions.filter((a) => !previousAttractionIds.has(a.id));
 
     // Remove markers for removed attractions
     removedAttractionIds.forEach((attractionId) => {
@@ -97,13 +92,12 @@ export function DiscoveryMarkers({
     });
 
     // Add markers for new attractions
-    addedAttractions.forEach((attractionScore) => {
-      const { attraction, score } = attractionScore;
-      const element = createMarkerElement(score);
+    addedAttractions.forEach((attraction) => {
+      const element = createMarkerElement();
 
       const marker = new markerLibrary.AdvancedMarkerElement({
         map,
-        position: { lat: attraction.location.lat, lng: attraction.location.lng },
+        position: { lat: attraction.latitude, lng: attraction.longitude },
         content: element,
         title: attraction.name,
       });
@@ -134,7 +128,7 @@ export function DiscoveryMarkers({
       markersRef.current.set(attraction.id, {
         marker,
         element,
-        attraction: attractionScore,
+        attraction,
         mouseEnterHandler,
         mouseLeaveHandler,
       });

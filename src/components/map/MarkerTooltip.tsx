@@ -100,14 +100,14 @@ export function MarkerTooltip({ attraction, position, type }: MarkerTooltipProps
           <h4 className="font-semibold text-sm leading-tight">{attraction.name}</h4>
 
           <div className="flex items-center gap-2 text-xs">
-            {attraction.rating > 0 && (
+            {attraction.rating != null && attraction.rating > 0 && (
               <div className="flex items-center gap-1">
                 <div className="flex items-center gap-0.5">{renderStars(attraction.rating)}</div>
                 <span className="font-medium">{attraction.rating.toFixed(1)}</span>
               </div>
             )}
 
-            {attraction.userRatingsTotal > 0 && (
+            {attraction.userRatingsTotal != null && attraction.userRatingsTotal > 0 && (
               <span className="text-white/80">({attraction.userRatingsTotal.toLocaleString()})</span>
             )}
 

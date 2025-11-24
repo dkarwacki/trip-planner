@@ -1,9 +1,9 @@
 import React from "react";
 import { MapPin, Plus, X, Move } from "lucide-react";
-import type { Place } from "@/domain/common/models";
+import type { PlannedPlaceViewModel } from "@/lib/map-v2/types";
 
 interface PlacePreviewCardProps {
-  place: Place;
+  place: PlannedPlaceViewModel;
   country?: string;
   onConfirm: () => void;
   onAdjust: () => void;
@@ -30,7 +30,7 @@ export function PlacePreviewCard({
             <div>
               <h3 className="font-semibold text-gray-900 leading-tight">{place.name || "New Location"}</h3>
               <p className="text-sm text-gray-500 mt-1">
-                {country || `${place.lat.toFixed(4)}, ${place.lng.toFixed(4)}`}
+                {country || `${place.latitude.toFixed(4)}, ${place.longitude.toFixed(4)}`}
               </p>
             </div>
           </div>

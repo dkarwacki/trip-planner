@@ -196,6 +196,7 @@ export function PlaceSearchBar({
         <input
           ref={inputRef}
           type="text"
+          role="combobox"
           value={inputValue}
           onChange={handleInputChange}
           onFocus={handleFocus}

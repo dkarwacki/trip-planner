@@ -20,13 +20,42 @@ const validateRequest = (body: unknown) =>
     return result.data;
   });
 
+/**
+ * Map domain AttractionScore (restaurant) to RestaurantDTO
+ * Restaurants use same AttractionScore structure as attractions
+ */
+const restaurantToDTO = (scored: import("@/domain/map/models/AttractionScore").AttractionScore) => {
+  const { attraction, breakdown } = scored;
+  return {
+    id: String(attraction.id),
+    google_place_id: "",
+    type: "restaurant" as const,
+    name: attraction.name,
+    rating: attraction.rating ?? null,
+    user_ratings_total: attraction.userRatingsTotal ?? null,
+    types: attraction.types,
+    vicinity: attraction.vicinity ?? null,
+    price_level: attraction.priceLevel ?? null,
+    latitude: Number(attraction.location.lat),
+    longitude: Number(attraction.location.lng),
+    photos: attraction.photos || [],
+    quality_score: breakdown.qualityScore,
+    diversity_score: breakdown.diversityScore,
+    confidence_score: breakdown.confidenceScore,
+  };
+};
+
 export const POST: APIRoute = async ({ request }) => {
   const body = await request.json();
 
   const program = Effect.gen(function* () {
     const dto = yield* validateRequest(body);
     const query = toDomain.getRestaurants(dto);
-    const restaurants = yield* getTopRestaurants(query);
+    const domainRestaurants = yield* getTopRestaurants(query);
+
+    // Convert domain objects to DTOs
+    const restaurants = domainRestaurants.map(restaurantToDTO);
+
     return { restaurants };
   });
 

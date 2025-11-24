@@ -23,7 +23,7 @@ function tripDAOToDetailDTO(dao: TripDAO): TripDetailDTO {
     places: dao.placesData.map((placeDAO, index) => ({
       place: {
         id: PlaceId(placeDAO.id),
-        google_place_id: placeDAO.id,
+        google_place_id: "",
         name: placeDAO.name,
         latitude: Latitude(placeDAO.lat),
         longitude: Longitude(placeDAO.lng),

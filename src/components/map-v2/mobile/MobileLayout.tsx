@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileHeader } from "./MobileHeader";
 import { MapView } from "./MapView";
@@ -10,8 +10,7 @@ import { AIChatModal } from "./AIChatModal";
 import { useMapStore } from "../stores/mapStore";
 import { useMobileAIChat } from "./hooks/useMobileAIChat";
 import { useMobileNavigation } from "./hooks/useMobileNavigation";
-
-import type { Place } from "@/domain/common/models";
+import type { PlannedPlaceViewModel } from "@/lib/map-v2/types";
 
 interface MobileLayoutProps {
   mapId?: string;
@@ -27,6 +26,9 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
   const planItems = places;
   const selectedPlace = selectedPlaceId ? places.find((p) => p.id === selectedPlaceId) : null;
 
+  // Local state for AI chat modal
+  const [aiChatModalOpen, setAiChatModalOpen] = useState(false);
+
   // Custom Hooks
   const {
     activeTab,
@@ -40,7 +42,6 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
   } = useMobileNavigation();
 
   const {
-    aiChatModalOpen,
     conversation,
     isLoading,
     isLoadingAI,
@@ -51,7 +52,17 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
     handleCloseAIChat,
     handleSendMessage,
     handleAddSuggestion,
-  } = useMobileAIChat(selectedPlace as Place | null);
+  } = useMobileAIChat(selectedPlace as PlannedPlaceViewModel | null);
+
+  const handleOpenChat = () => {
+    handleOpenAIChat();
+    setAiChatModalOpen(true);
+  };
+
+  const handleCloseChat = () => {
+    handleCloseAIChat();
+    setAiChatModalOpen(false);
+  };
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-gray-50">
@@ -97,7 +108,7 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
 
       {/* Floating AI Button - hidden when modal is open or bottom sheet is expanded */}
       <FloatingAIButton
-        onOpenChat={handleOpenAIChat}
+        onOpenChat={handleOpenChat}
         isLoading={isLoadingAI}
         hidden={aiChatModalOpen || bottomSheetOpen}
       />
@@ -105,7 +116,7 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
       {/* AI Chat Modal */}
       <AIChatModal
         isOpen={aiChatModalOpen}
-        onClose={handleCloseAIChat}
+        onClose={handleCloseChat}
         messages={conversation}
         isLoading={isLoading}
         onSendMessage={handleSendMessage}

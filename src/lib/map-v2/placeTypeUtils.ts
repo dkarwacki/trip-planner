@@ -22,6 +22,9 @@ const RESTAURANT_TYPES = [
  * @returns true if the place is a restaurant/food establishment
  */
 export function isRestaurant(types: string[]): boolean {
+  if (!types || !Array.isArray(types)) {
+    return false;
+  }
   return types.some((type) => RESTAURANT_TYPES.includes(type));
 }
 

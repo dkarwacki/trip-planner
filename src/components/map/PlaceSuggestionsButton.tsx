@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import type { Place } from "@/domain/common/models";
+import type { Place, PlacePhoto } from "@/domain/common/models";
 import type { Attraction } from "@/domain/map/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import type { AgentResponseDTO } from "@/infrastructure/map/api";
@@ -59,9 +59,7 @@ export default function PlaceSuggestionsButton({
   const [scrollToGroupIndex, setScrollToGroupIndex] = useState<number | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
-  const [selectedPhotos, setSelectedPhotos] = useState<
-    { url: string; width: number; height: number; attributions: string[] }[]
-  >([]);
+  const [selectedPhotos, setSelectedPhotos] = useState<PlacePhoto[]>([]);
   const [selectedPlaceName, setSelectedPlaceName] = useState("");
 
   // Sync local state with place prop changes (from parent updates)
@@ -528,6 +526,11 @@ export default function PlaceSuggestionsButton({
                                                   <PhotoImage
                                                     photoReference={suggestion.photos[0].photoReference}
                                                     alt={`${suggestion.attractionData?.name || suggestion.attractionName}`}
+                                                    lat={suggestion.attractionData?.location.lat ?? place.lat}
+                                                    lng={suggestion.attractionData?.location.lng ?? place.lng}
+                                                    placeName={
+                                                      suggestion.attractionData?.name || suggestion.attractionName || ""
+                                                    }
                                                     maxWidth={800}
                                                     className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                                                   />

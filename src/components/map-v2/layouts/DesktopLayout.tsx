@@ -18,7 +18,7 @@ interface DesktopLayoutProps {
   tripId?: string;
 }
 
-export function DesktopLayout({ mapId, tripId }: DesktopLayoutProps) {
+export function DesktopLayout({ mapId }: DesktopLayoutProps) {
   // Selectors
   const activeMode = useMapStore((state) => state.activeMode);
   const sidebarCollapsed = useMapStore((state) => state.sidebarCollapsed);
@@ -39,7 +39,6 @@ export function DesktopLayout({ mapId, tripId }: DesktopLayoutProps) {
 
   const handleRetrySync = () => {
     // Retry save logic will be implemented later
-    console.log("Retry sync");
   };
 
   // Render appropriate mode content based on activeMode

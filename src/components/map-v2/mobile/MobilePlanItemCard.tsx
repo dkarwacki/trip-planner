@@ -9,9 +9,10 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMapStore } from "../stores/mapStore";
 import { GripVertical, ChevronRight, ChevronDown, Search } from "lucide-react";
 import { MobilePlannedItemList } from "./MobilePlannedItemList";
+import type { PlannedPlaceViewModel, PlannedPOIViewModel } from "@/lib/map-v2/types";
 
 interface MobilePlanItemCardProps {
-  place: any; // Will be typed with domain types
+  place: PlannedPlaceViewModel;
   order: number;
   isExpanded: boolean;
   onToggleExpand: (placeId: string) => void;
@@ -31,7 +32,7 @@ export function MobilePlanItemCard({
 
   // Setup sortable
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: place.id || place,
+    id: place.id,
   });
 
   // Track which category sections are expanded (attractions, restaurants)
@@ -48,11 +49,11 @@ export function MobilePlanItemCard({
   };
 
   // Get actual attractions and restaurants from place data
-  const attractions: any[] = place.plannedAttractions || [];
-  const restaurants: any[] = place.plannedRestaurants || [];
+  const attractions: PlannedPOIViewModel[] = place.plannedAttractions || [];
+  const restaurants: PlannedPOIViewModel[] = place.plannedRestaurants || [];
 
-  const placeName = place.name || place.displayName || "Unknown Place";
-  const placeLocation = place.location || place.vicinity || "";
+  const placeName = place.name || "Unknown Place";
+  const placeLocation = ""; // PlannedPlaceViewModel doesn't have vicinity field
 
   const handleBannerTap = () => {
     // Pan map to place location and switch to Map tab
@@ -90,6 +91,13 @@ export function MobilePlanItemCard({
             {...listeners}
             className="absolute left-0 top-0 bottom-0 flex w-11 items-center justify-center cursor-grab bg-black/10 active:cursor-grabbing z-10"
             onClick={(e) => e.stopPropagation()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.stopPropagation();
+              }
+            }}
           >
             <GripVertical className="h-6 w-6 text-foreground" />
           </div>

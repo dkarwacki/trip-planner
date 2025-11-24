@@ -1,6 +1,5 @@
-import type { Attraction, AttractionScore } from "@/domain/map/models";
 import type { AIMessage } from "../types";
-import type { PlannedPlace } from "../types";
+import type { DiscoveryItemViewModel, PlannedPlaceViewModel, PlannedPOIViewModel } from "@/lib/map-v2/types";
 
 // ============= STATE INTERFACES =============
 
@@ -11,7 +10,7 @@ export interface FilterState {
 }
 
 export interface CachedDiscovery {
-  results: AttractionScore[];
+  results: DiscoveryItemViewModel[];
   timestamp: number;
   center: { lat: number; lng: number };
   radius: number;
@@ -20,7 +19,7 @@ export interface CachedDiscovery {
 export interface DiscoverState {
   discoveryCache: Map<string, CachedDiscovery>;
   currentDiscoveryKey: string | null;
-  discoveryResults: AttractionScore[];
+  discoveryResults: DiscoveryItemViewModel[];
   highlightedPlaceId: string | null;
   filters: FilterState;
   viewMode: "cards" | "grid" | "list";
@@ -28,7 +27,7 @@ export interface DiscoverState {
 }
 
 export interface PlanState {
-  places: PlannedPlace[];
+  places: PlannedPlaceViewModel[];
   selectedPlaceId: string | null;
   isLoadingPlaces: boolean;
 
@@ -37,7 +36,7 @@ export interface PlanState {
   tripTitle: string | null;
   conversationId: string | null;
   isDirty: boolean;
-  lastSyncedPlaces: PlannedPlace[];
+  lastSyncedPlaces: PlannedPlaceViewModel[];
   syncError: Error | null;
 }
 
@@ -75,9 +74,8 @@ export interface UIState {
 
 export interface DiscoverActions {
   // Results
-  fetchDiscoveryResults: (lat: number, lng: number, radius: number) => Promise<void>;
-  setDiscoveryResults: (results: AttractionScore[]) => void;
-  addDiscoveryResults: (results: AttractionScore[]) => void;
+  setDiscoveryResults: (results: DiscoveryItemViewModel[]) => void;
+  addDiscoveryResults: (results: DiscoveryItemViewModel[]) => void;
   clearDiscoveryCache: (olderThanMs?: number) => void;
 
   // Highlighting
@@ -96,20 +94,20 @@ export interface DiscoverActions {
 
 export interface PlanActions {
   // Place CRUD
-  setPlaces: (places: PlannedPlace[]) => void;
-  addPlace: (place: PlannedPlace) => void;
+  setPlaces: (places: PlannedPlaceViewModel[]) => void;
+  addPlace: (place: PlannedPlaceViewModel) => void;
   removePlace: (placeId: string) => void;
   reorderPlaces: (sourceIndex: number, destIndex: number) => void;
 
   // Attraction/Restaurant CRUD
-  addAttractionToPlace: (placeId: string, attraction: Attraction) => void;
-  addRestaurantToPlace: (placeId: string, restaurant: Attraction) => void;
+  addAttractionToPlace: (placeId: string, attraction: PlannedPOIViewModel) => void;
+  addRestaurantToPlace: (placeId: string, restaurant: PlannedPOIViewModel) => void;
   removeAttractionFromPlace: (placeId: string, attractionId: string) => void;
   removeRestaurantFromPlace: (placeId: string, restaurantId: string) => void;
 
   // Selection
   setSelectedPlace: (id: string | null) => void;
-  getSelectedPlace: () => PlannedPlace | null;
+  getSelectedPlace: () => PlannedPlaceViewModel | null;
   centerOnPlace: (placeId: string) => void;
 
   // Derived selectors
@@ -121,7 +119,7 @@ export interface PlanActions {
   setConversationId: (conversationId: string | null) => void;
   setDirty: (isDirty: boolean) => void;
   setSyncError: (error: Error | null) => void;
-  markSynced: (places: PlannedPlace[]) => void;
+  markSynced: (places: PlannedPlaceViewModel[]) => void;
   triggerSync: () => void;
 }
 

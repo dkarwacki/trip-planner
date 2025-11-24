@@ -14,7 +14,7 @@ interface UseLongPressOptions {
 
 interface LongPressHandlers {
   onTouchStart: (e: React.TouchEvent) => void;
-  onTouchMove: () => void;
+  onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: () => void;
 }
 

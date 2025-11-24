@@ -13,7 +13,7 @@ function findPlaceId(placeName: string, places: PlaceSuggestion[]): string | nul
 
   // Try exact match first
   const exactMatch = places.find((p) => p.name.toLowerCase() === placeName.toLowerCase());
-  if (exactMatch) return exactMatch.id;
+  if (exactMatch) return exactMatch.id ?? null;
 
   // Try partial match (narrative might use shortened names)
   const partialMatch = places.find(

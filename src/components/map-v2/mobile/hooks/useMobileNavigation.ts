@@ -68,9 +68,8 @@ export function useMobileNavigation() {
     const newPlace = {
       id: placeDetails.placeId,
       name: placeDetails.name,
-      address: placeDetails.formattedAddress,
-      lat,
-      lng,
+      latitude: lat,
+      longitude: lng,
       plannedAttractions: [],
       plannedRestaurants: [],
     };

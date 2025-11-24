@@ -1,12 +1,5 @@
 import type { ValidationError } from "./validation";
 import type {
-  NoAttractionsFoundError,
-  AttractionsAPIError,
-  AttractionNotFoundError,
-  PlaceNotFoundError,
-  PlacesAPIError,
-  NoResultsError,
-  GeocodingError,
   MissingGoogleMapsAPIKeyError,
   MissingOpenRouterAPIKeyError,
   MissingOpenRouterModelError,
@@ -15,6 +8,15 @@ import type {
   InvalidToolCallError,
   ModelResponseError,
 } from "@/domain/common/errors";
+import type {
+  NoAttractionsFoundError,
+  AttractionsAPIError,
+  AttractionNotFoundError,
+  PlaceNotFoundError,
+  PlacesAPIError,
+  NoResultsError,
+  GeocodingError,
+} from "@/domain/map/errors";
 
 type AppError =
   | ValidationError
@@ -37,7 +39,7 @@ export const toHttpResponse = (error: AppError, successData?: Record<string, unk
   if ("_tag" in error) {
     switch (error._tag) {
       case "ValidationError": {
-        const formattedErrors = error.errors.errors.map((err) => ({
+        const formattedErrors = error.errors.errors.map((err: { path: (string | number)[]; message: string }) => ({
           path: err.path.join("."),
           message: err.message,
         }));

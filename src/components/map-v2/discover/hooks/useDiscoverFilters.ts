@@ -37,10 +37,7 @@ export function useDiscoverFilters() {
     if (filters.category !== "all") {
       results = results.filter((item) => {
         // Simple type detection based on Google Place types
-        // Note: data structure has types nested under attraction object
-        const isRestaurant = item.attraction?.types?.some((t: string) =>
-          ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-        );
+        const isRestaurant = item.types?.some((t) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
         return filters.category === "restaurants" ? isRestaurant : !isRestaurant;
       });
     }
@@ -55,12 +52,8 @@ export function useDiscoverFilters() {
 
     // Sort results: attractions first, then restaurants, both sorted by score (descending)
     results.sort((a, b) => {
-      const isRestaurantA = a.attraction?.types?.some((t: string) =>
-        ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-      );
-      const isRestaurantB = b.attraction?.types?.some((t: string) =>
-        ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-      );
+      const isRestaurantA = a.types?.some((t) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)) || false;
+      const isRestaurantB = b.types?.some((t) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)) || false;
 
       // Group by type: attractions (false) before restaurants (true)
       if (isRestaurantA !== isRestaurantB) {

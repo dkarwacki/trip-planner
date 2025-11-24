@@ -6,7 +6,7 @@ import { createPlanSlice } from "./slices/createPlanSlice";
 import { createMapSlice } from "./slices/createMapSlice";
 import { createAISlice } from "./slices/createAISlice";
 import { createUISlice } from "./slices/createUISlice";
-import type { AttractionScore } from "@/domain/map/models";
+import type { DiscoveryItemViewModel } from "@/lib/map-v2/types";
 
 // ============= STORE IMPLEMENTATION =============
 
@@ -60,21 +60,22 @@ export const selectIsInPlan = (attractionId: string) => (state: MapStore) => {
  * Pure function to filter discovery results
  * Can be used by both the store selector and hooks
  */
-export const filterDiscoveryResults = (results: AttractionScore[], filters: FilterState) => {
+export const filterDiscoveryResults = (
+  results: DiscoveryItemViewModel[],
+  filters: FilterState
+): DiscoveryItemViewModel[] => {
   let filtered = [...results];
 
   // Apply filters (same logic as DiscoverPanel)
   if (filters.category !== "all") {
-    filtered = filtered.filter((item: any) => {
-      const isRestaurant = item.attraction?.types?.some((t: string) =>
-        ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
-      );
+    filtered = filtered.filter((item) => {
+      const isRestaurant = item.types?.some((t) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
       return filters.category === "restaurants" ? isRestaurant : !isRestaurant;
     });
   }
 
   if (filters.showHighQualityOnly) {
-    filtered = filtered.filter((item: any) => {
+    filtered = filtered.filter((item) => {
       const score = item.score || 0;
       return score >= filters.minScore * 10;
     });

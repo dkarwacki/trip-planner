@@ -6,9 +6,10 @@
 import React from "react";
 import { X, Landmark, UtensilsCrossed, Star } from "lucide-react";
 import { LazyImage } from "../shared/LazyImage";
+import type { PlannedPOIViewModel } from "@/lib/map-v2/types";
 
 interface PlannedItemProps {
-  item: any; // Will be typed with domain types
+  item: PlannedPOIViewModel;
   category: "attractions" | "restaurants";
   onRemove: (itemId: string) => void;
   onClick: (itemId: string) => void;
@@ -18,9 +19,12 @@ const PlannedItem = React.memo(
   function PlannedItem({ item, category, onRemove, onClick }: PlannedItemProps) {
     const name = item.name || "Unknown";
     const categoryLabel = category === "attractions" ? "Attraction" : "Restaurant";
-    const score = item.score || 0;
+
+    // Calculate aggregate score to match MobileSuggestionCard and useMapSelection logic
+    // Use quality score directly to match MobileSuggestionCard and discovery results
+    const score = item.qualityScore || 0;
     const rating = item.rating || 0;
-    const reviewCount = item.reviewCount || item.userRatingsTotal || 0;
+    const reviewCount = item.userRatingsTotal || 0;
 
     // Get photo from photos array (Attraction model has photos?: PlacePhoto[])
     const photo = item.photos?.[0];
@@ -29,13 +33,26 @@ const PlannedItem = React.memo(
     // Category icon
     const CategoryIcon = category === "attractions" ? Landmark : UtensilsCrossed;
 
+    const handleClick = (e: React.MouseEvent | React.KeyboardEvent) => {
+      e.stopPropagation();
+      onClick(item.id);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleClick(e);
+      }
+    };
+
     return (
       <div
-        className="group flex gap-3 rounded-md border border-border bg-background p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick(item.id);
-        }}
+        role="button"
+        tabIndex={0}
+        className="group flex gap-3 rounded-md border border-border bg-background p-3 hover:bg-muted/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        aria-label={`View ${name} details`}
       >
         {/* Photo thumbnail with category badge */}
         <div className="relative flex-shrink-0">
@@ -44,8 +61,8 @@ const PlannedItem = React.memo(
               <LazyImage
                 photoReference={photoReference}
                 alt={name}
-                lat={item.location.lat}
-                lng={item.location.lng}
+                lat={item.latitude}
+                lng={item.longitude}
                 placeName={name}
                 size="thumbnail"
                 className="h-full w-full object-cover"

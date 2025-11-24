@@ -12,7 +12,7 @@ interface MobileViewToggleProps {
   onViewChange?: (view: "hubs" | "days" | "category") => void;
 }
 
-export function MobileViewToggle({ currentView = "hubs", onViewChange }: MobileViewToggleProps) {
+export function MobileViewToggle({ currentView = "hubs" }: MobileViewToggleProps) {
   const viewLabels = {
     hubs: "By Hubs",
     days: "By Day",

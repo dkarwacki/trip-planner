@@ -1,23 +1,21 @@
 /**
  * Data Mappers for Trip State
  *
- * Purpose: Convert between map-v2 component types and database types
- * - PlannedPlace <-> PlaceDAO
- * - Attraction <-> AttractionDAO
+ * Purpose: Convert between map-v2 ViewModels and database types
+ * - PlannedPlaceViewModel <-> PlaceDAO
+ * - PlannedPOIViewModel <-> AttractionDAO
  * - TripPlaceDTO -> PlaceDAO
  */
 
-import type { PlannedPlace } from "@/components/map-v2/types";
+import type { PlannedPlaceViewModel, PlannedPOIViewModel, PhotoViewModel } from "@/lib/map-v2/types";
 import type { PlaceDAO, AttractionDAO, PlacePhotoDAO } from "@/infrastructure/plan/database/types";
-import type { Attraction } from "@/domain/map/models";
-import type { PlacePhoto } from "@/domain/common/models";
 import type { TripPlaceDTO, AttractionOnlyDTO, RestaurantDTO } from "@/infrastructure/plan/api";
 
 // ============================================================================
 // Photo Conversions
 // ============================================================================
 
-export function placePhotoToDAO(photo: PlacePhoto): PlacePhotoDAO {
+export function placePhotoToDAO(photo: PhotoViewModel): PlacePhotoDAO {
   return {
     photoReference: photo.photoReference,
     width: photo.width,
@@ -26,7 +24,7 @@ export function placePhotoToDAO(photo: PlacePhoto): PlacePhotoDAO {
   };
 }
 
-export function placePhotoFromDAO(dao: PlacePhotoDAO): PlacePhoto {
+export function placePhotoFromDAO(dao: PlacePhotoDAO): PhotoViewModel {
   return {
     photoReference: dao.photoReference,
     width: dao.width,
@@ -39,44 +37,41 @@ export function placePhotoFromDAO(dao: PlacePhotoDAO): PlacePhoto {
 // Attraction Conversions
 // ============================================================================
 
-export function attractionToDAO(attraction: Attraction): AttractionDAO {
+export function poiToDAO(poi: PlannedPOIViewModel): AttractionDAO {
   return {
-    id: attraction.id,
-    googlePlaceId: attraction.googlePlaceId || attraction.id,
-    name: attraction.name,
-    rating: attraction.rating,
-    userRatingsTotal: attraction.userRatingsTotal,
-    types: attraction.types || [],
-    vicinity: attraction.vicinity || "",
-    priceLevel: attraction.priceLevel,
+    id: poi.id,
+    googlePlaceId: poi.id,
+    name: poi.name,
+    rating: poi.rating,
+    userRatingsTotal: poi.userRatingsTotal,
+    types: poi.types,
+    vicinity: poi.vicinity,
+    priceLevel: poi.priceLevel,
     location: {
-      lat: attraction.location.lat,
-      lng: attraction.location.lng,
+      lat: poi.latitude,
+      lng: poi.longitude,
     },
-    photos: attraction.photos?.map(placePhotoToDAO),
-    editorialSummary: attraction.editorialSummary,
-    qualityScore: attraction.qualityScore,
-    diversityScore: attraction.diversityScore,
-    confidenceScore: attraction.confidenceScore,
+    photos: poi.photos?.map(placePhotoToDAO),
+    editorialSummary: undefined,
+    qualityScore: poi.qualityScore,
+    diversityScore: poi.diversityScore,
+    confidenceScore: poi.confidenceScore,
   };
 }
 
-export function attractionFromDAO(dao: AttractionDAO): Attraction {
+export function poiFromDAO(dao: AttractionDAO): PlannedPOIViewModel {
   return {
     id: dao.id,
-    googlePlaceId: dao.googlePlaceId || dao.id,
+    googlePlaceId: dao.googlePlaceId,
     name: dao.name,
+    latitude: dao.location.lat,
+    longitude: dao.location.lng,
     rating: dao.rating,
     userRatingsTotal: dao.userRatingsTotal,
     types: dao.types,
     vicinity: dao.vicinity,
     priceLevel: dao.priceLevel,
-    location: {
-      lat: dao.location.lat,
-      lng: dao.location.lng,
-    },
     photos: dao.photos?.map(placePhotoFromDAO),
-    editorialSummary: dao.editorialSummary,
     qualityScore: dao.qualityScore,
     diversityScore: dao.diversityScore,
     confidenceScore: dao.confidenceScore,
@@ -87,28 +82,27 @@ export function attractionFromDAO(dao: AttractionDAO): Attraction {
 // PlannedPlace Conversions
 // ============================================================================
 
-export function plannedPlaceToDAO(place: PlannedPlace): PlaceDAO {
+export function plannedPlaceToDAO(place: PlannedPlaceViewModel): PlaceDAO {
   return {
     id: place.id,
     name: place.name,
-    address: (place as any).address,
-    lat: place.lat,
-    lng: place.lng,
-    plannedAttractions: (place.plannedAttractions || []).map(attractionToDAO),
-    plannedRestaurants: (place.plannedRestaurants || []).map(attractionToDAO),
+    address: undefined, // Not available in PlannedPlaceViewModel
+    lat: place.latitude,
+    lng: place.longitude,
+    plannedAttractions: place.plannedAttractions.map(poiToDAO),
+    plannedRestaurants: place.plannedRestaurants.map(poiToDAO),
     photos: place.photos?.map(placePhotoToDAO),
   };
 }
 
-export function plannedPlaceFromDAO(dao: PlaceDAO): PlannedPlace {
+export function plannedPlaceFromDAO(dao: PlaceDAO): PlannedPlaceViewModel {
   return {
     id: dao.id,
     name: dao.name || "",
-    address: dao.address,
-    lat: dao.lat,
-    lng: dao.lng,
-    plannedAttractions: dao.plannedAttractions?.map(attractionFromDAO) || [],
-    plannedRestaurants: dao.plannedRestaurants?.map(attractionFromDAO) || [],
+    latitude: dao.lat,
+    longitude: dao.lng,
+    plannedAttractions: dao.plannedAttractions?.map(poiFromDAO) || [],
+    plannedRestaurants: dao.plannedRestaurants?.map(poiFromDAO) || [],
     photos: dao.photos?.map(placePhotoFromDAO),
   };
 }
@@ -117,11 +111,11 @@ export function plannedPlaceFromDAO(dao: PlaceDAO): PlannedPlace {
 // Batch Conversions
 // ============================================================================
 
-export function plannedPlacesToDAOs(places: PlannedPlace[]): PlaceDAO[] {
+export function plannedPlacesToDAOs(places: PlannedPlaceViewModel[]): PlaceDAO[] {
   return places.map(plannedPlaceToDAO);
 }
 
-export function plannedPlacesFromDAOs(daos: PlaceDAO[]): PlannedPlace[] {
+export function plannedPlacesFromDAOs(daos: PlaceDAO[]): PlannedPlaceViewModel[] {
   return daos.map(plannedPlaceFromDAO);
 }
 
@@ -136,7 +130,7 @@ export function plannedPlacesFromDAOs(daos: PlaceDAO[]): PlannedPlace[] {
 function poiDTOToAttractionDAO(poi: AttractionOnlyDTO | RestaurantDTO): AttractionDAO {
   return {
     id: poi.id,
-    googlePlaceId: poi.google_place_id,
+    googlePlaceId: poi.id,
     name: poi.name,
     rating: poi.rating ?? undefined,
     userRatingsTotal: poi.user_ratings_total ?? undefined,

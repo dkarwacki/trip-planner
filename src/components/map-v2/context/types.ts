@@ -3,13 +3,14 @@
  */
 
 import type { ViewMode, DesktopMode, MobileTab, SaveStatus, FilterState, AIMessage } from "../types";
+import type { PlannedPlaceViewModel, DiscoveryItemViewModel } from "@/lib/map-v2/types";
 
 // Main state interface
 export interface MapStateV2 {
   // Core data
-  places: any[]; // Will be typed with domain Place type
+  places: PlannedPlaceViewModel[];
   selectedPlaceId: string | null;
-  discoveryResults: any[]; // Will be typed with domain Attraction/Restaurant types
+  discoveryResults: DiscoveryItemViewModel[];
   searchCenters: { lat: number; lng: number }[]; // Track all search locations for "search this area" button
 
   // Desktop UI state
@@ -53,12 +54,12 @@ export interface MapStateV2 {
 // Action types
 export type MapAction =
   // Place management
-  | { type: "SET_PLACES"; payload: any[] }
-  | { type: "ADD_PLACE"; payload: any }
+  | { type: "SET_PLACES"; payload: PlannedPlaceViewModel[] }
+  | { type: "ADD_PLACE"; payload: PlannedPlaceViewModel }
   | { type: "REMOVE_PLACE"; payload: string }
   | { type: "REORDER_PLACES"; payload: { sourceIndex: number; destinationIndex: number } }
-  | { type: "ADD_ATTRACTION_TO_PLACE"; payload: { placeId: string; attraction: any } }
-  | { type: "ADD_RESTAURANT_TO_PLACE"; payload: { placeId: string; restaurant: any } }
+  | { type: "ADD_ATTRACTION_TO_PLACE"; payload: { placeId: string; attraction: DiscoveryItemViewModel } }
+  | { type: "ADD_RESTAURANT_TO_PLACE"; payload: { placeId: string; restaurant: DiscoveryItemViewModel } }
   | { type: "REMOVE_ATTRACTION_FROM_PLACE"; payload: { placeId: string; attractionId: string } }
   | { type: "REMOVE_RESTAURANT_FROM_PLACE"; payload: { placeId: string; restaurantId: string } }
 
@@ -66,8 +67,8 @@ export type MapAction =
   | { type: "SELECT_PLACE"; payload: string | null }
 
   // Discovery
-  | { type: "SET_DISCOVERY_RESULTS"; payload: any[] }
-  | { type: "ADD_DISCOVERY_RESULTS"; payload: any[] }
+  | { type: "SET_DISCOVERY_RESULTS"; payload: DiscoveryItemViewModel[] }
+  | { type: "ADD_DISCOVERY_RESULTS"; payload: DiscoveryItemViewModel[] }
   | { type: "ADD_SEARCH_CENTER"; payload: { lat: number; lng: number } }
   | { type: "CLEAR_SEARCH_CENTERS" }
 

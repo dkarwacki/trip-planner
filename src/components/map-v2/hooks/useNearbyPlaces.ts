@@ -1,13 +1,13 @@
 /**
  * Hook to fetch nearby places (attractions and restaurants)
- * Implements Stage 3.5 of the UX implementation plan
  *
- * Uses existing API endpoints from v1 with smart caching and parallel requests
  */
 
 import { useCallback, useEffect, useMemo } from "react";
 import { useMapStore } from "../stores/mapStore";
 import { NEARBY_SEARCH_RADIUS_METERS } from "@/lib/map-v2/search-constants";
+import { toViewModel } from "@/lib/map-v2/mappers";
+import type { AttractionDTO, RestaurantDTO } from "@/infrastructure/map/api";
 
 interface FetchNearbyOptions {
   lat: number;
@@ -18,21 +18,18 @@ interface FetchNearbyOptions {
 
 export function useNearbyPlaces() {
   // Selectors
-  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
 
   // Select lat and lng separately to avoid creating new object references
   const selectedPlaceLat = useMapStore((state) => {
     if (!state.selectedPlaceId) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const selectedPlace = state.places.find((p: any) => p.id === state.selectedPlaceId);
-    return selectedPlace?.lat ? Number(selectedPlace.lat) : null;
+    const selectedPlace = state.places.find((p) => p.id === state.selectedPlaceId);
+    return selectedPlace?.latitude ?? null;
   });
 
   const selectedPlaceLng = useMapStore((state) => {
     if (!state.selectedPlaceId) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const selectedPlace = state.places.find((p: any) => p.id === state.selectedPlaceId);
-    return selectedPlace?.lng ? Number(selectedPlace.lng) : null;
+    const selectedPlace = state.places.find((p) => p.id === state.selectedPlaceId);
+    return selectedPlace?.longitude ?? null;
   });
 
   // Create stable location object only when lat/lng values actually change
@@ -100,11 +97,14 @@ export function useNearbyPlaces() {
           }),
         ]);
 
-        // Extract attractions if successful
-        const attractions = attractionsResult.status === "fulfilled" ? attractionsResult.value.attractions || [] : [];
+        // API now returns proper DTOs - pass directly to ViewModel mappers
+        const attractionDTOs: AttractionDTO[] =
+          attractionsResult.status === "fulfilled" ? attractionsResult.value.attractions || [] : [];
+        const restaurantDTOs: RestaurantDTO[] =
+          restaurantsResult.status === "fulfilled" ? restaurantsResult.value.restaurants || [] : [];
 
-        // Extract restaurants if successful
-        const restaurants = restaurantsResult.status === "fulfilled" ? restaurantsResult.value.restaurants || [] : [];
+        const attractions = toViewModel.attractions(attractionDTOs);
+        const restaurants = toViewModel.restaurants(restaurantDTOs);
 
         // Combine results (even if one failed, we still show what we got)
         const allResults = [...attractions, ...restaurants];

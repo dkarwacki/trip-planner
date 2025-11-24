@@ -1,19 +1,19 @@
 import React, { useMemo } from "react";
-import type { Attraction } from "@/domain/map/models";
+import type { DiscoveryItemViewModel } from "@/lib/map-v2/types";
 import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
 import { DiscoveryMarker } from "./DiscoveryMarker";
 
 interface DiscoveryMarkersLayerProps {
-  places: Attraction[];
+  places: DiscoveryItemViewModel[];
   hoveredMarkerId: string | null;
   selectedPlaceId: string | null;
   onMarkerClick: (placeId: string) => void;
   onMarkerHover: (placeId: string | null) => void;
 }
 
-interface PlaceWithCategory extends Attraction {
+type PlaceWithCategory = DiscoveryItemViewModel & {
   isRestaurant: boolean;
-}
+};
 
 export const DiscoveryMarkersLayer = React.memo(function DiscoveryMarkersLayer({
   places,

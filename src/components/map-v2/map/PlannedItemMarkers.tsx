@@ -5,17 +5,17 @@
  */
 
 import React from "react";
-import type { Attraction } from "@/domain/map/models";
+import type { PlannedPlaceViewModel, PlannedPOIViewModel } from "@/lib/map-v2/types";
 import { PlannedItemMarker } from "./PlannedItemMarker";
 
 interface PlannedItem {
-  attraction: Attraction;
+  poi: PlannedPOIViewModel;
   placeId: string;
   category: "attractions" | "restaurants";
 }
 
 interface PlannedItemMarkersProps {
-  places: any[]; // Will be typed with domain Place type
+  places: PlannedPlaceViewModel[];
   onMarkerClick: (attractionId: string, placeId: string) => void;
   onMarkerHover?: (attractionId: string | null) => void;
   hoveredId?: string | null;
@@ -33,14 +33,14 @@ export const PlannedItemMarkers = React.memo(function PlannedItemMarkers({
   // Memoized to prevent expensive flatMap on every render (critical for large trip plans)
   const plannedItems: PlannedItem[] = React.useMemo(() => {
     return places.flatMap((place) => {
-      const attractions: PlannedItem[] = (place.plannedAttractions || []).map((attraction: Attraction) => ({
-        attraction,
+      const attractions: PlannedItem[] = (place.plannedAttractions || []).map((poi) => ({
+        poi,
         placeId: place.id,
         category: "attractions" as const,
       }));
 
-      const restaurants: PlannedItem[] = (place.plannedRestaurants || []).map((restaurant: Attraction) => ({
-        attraction: restaurant,
+      const restaurants: PlannedItem[] = (place.plannedRestaurants || []).map((poi) => ({
+        poi,
         placeId: place.id,
         category: "restaurants" as const,
       }));
@@ -51,14 +51,14 @@ export const PlannedItemMarkers = React.memo(function PlannedItemMarkers({
 
   return (
     <>
-      {plannedItems.map(({ attraction, placeId, category }) => (
+      {plannedItems.map(({ poi, placeId, category }) => (
         <PlannedItemMarker
-          key={attraction.id}
-          attraction={attraction}
+          key={poi.id}
+          poi={poi}
           placeId={placeId}
           isRestaurant={category === "restaurants"}
-          isHovered={hoveredId === attraction.id}
-          isExpanded={expandedCardPlaceId === attraction.id}
+          isHovered={hoveredId === poi.id}
+          isExpanded={expandedCardPlaceId === poi.id}
           onMarkerClick={onMarkerClick}
           onMarkerHover={onMarkerHover}
         />

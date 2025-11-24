@@ -55,6 +55,7 @@ export interface ChatMessageDAO {
 
 export interface AttractionDAO {
   id: string;
+  googlePlaceId: string;
   name: string;
   rating?: number;
   userRatingsTotal?: number;

@@ -7,9 +7,10 @@ import React, { useRef } from "react";
 import { useMapStore } from "../stores/mapStore";
 import { Star, Trash2 } from "lucide-react";
 import { useSwipeToDelete } from "../hooks/useSwipeToDelete";
+import type { PlannedPOIViewModel } from "@/lib/map-v2/types";
 
 interface MobilePlannedItemProps {
-  item: any; // Will be typed with domain types
+  item: PlannedPOIViewModel;
   category: "attractions" | "restaurants";
 }
 
@@ -38,7 +39,7 @@ export function MobilePlannedItem({ item, category }: MobilePlannedItemProps) {
   };
 
   // Mock data - replace with real data structure
-  const name = item.name || item.displayName || "Unknown Place";
+  const name = item.name || "Unknown Place";
   const categoryText = category === "attractions" ? "Attraction" : "Restaurant";
   const priceLevel = "$$";
   const rating = 4.5;

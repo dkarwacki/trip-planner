@@ -339,13 +339,18 @@ const enrichSuggestionsWithAttractionData = (
             return Either.match(attraction, {
               onLeft: () => Option.none(),
               onRight: (attractionData) => {
-                // Get scored data for this attraction (matched by name)
+                if (attractionData.rating === undefined || attractionData.userRatingsTotal === undefined) {
+                  return Option.none();
+                }
+
                 const scoreData = scoredAttractions.get(attractionData.name);
 
                 return Option.some({
                   ...suggestion,
                   attractionData: {
                     ...attractionData,
+                    rating: attractionData.rating,
+                    userRatingsTotal: attractionData.userRatingsTotal,
                     score: scoreData?.score,
                     breakdown: scoreData?.breakdown,
                   },

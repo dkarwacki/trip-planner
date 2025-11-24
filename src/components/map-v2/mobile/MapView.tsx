@@ -5,7 +5,7 @@
 
 import React, { useEffect } from "react";
 import { MapCanvas } from "../map/MapCanvas";
-import { DiscoveryMarkers } from "../map/DiscoveryMarkers";
+import { DiscoveryMarkersLayer } from "../map/DiscoveryMarkersLayer";
 import { PlaceMarkers } from "../map/PlaceMarkers";
 import { MapBackdrop } from "../map/MapBackdrop";
 import { FilterButton } from "./FilterButton";
@@ -22,62 +22,50 @@ interface MapViewProps {
  * Layer component for discovery markers
  * Gets data from context
  */
-function DiscoveryMarkersLayer() {
+function MobileDiscoveryMarkersLayer() {
   const discoveryResults = useMapStore((state) => state.discoveryResults);
   const filters = useMapStore((state) => state.filters);
+  const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
   const setExpandedCard = useMapStore((state) => state.setExpandedCard);
+  const setHoveredMarker = useMapStore((state) => state.setHoveredMarker);
 
   const handleMarkerClick = (attractionId: string) => {
     setExpandedCard(attractionId);
   };
 
-  // Helper to check if attraction is a restaurant
-  const isRestaurant = (item: { attraction?: { types?: string[] } }) => {
-    return item.attraction?.types?.some((t: string) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
+  const handleMarkerHover = (attractionId: string | null) => {
+    setHoveredMarker(attractionId);
+  };
+
+  // Helper to check if item is a restaurant
+  const isRestaurant = (item: { types?: string[] }) => {
+    return item.types?.some((t: string) => ["restaurant", "food", "cafe", "bar", "bakery"].includes(t));
   };
 
   // Apply quality filter first
   let results = discoveryResults;
   if (filters.showHighQualityOnly) {
-    results = results.filter((item: any) => {
+    results = results.filter((item) => {
       const score = item.score || 0;
       return score >= filters.minScore * 10; // Convert 7/8/9 to 70/80/90
     });
   }
 
-  // Split into attractions and restaurants based on types
-  const attractions = results.filter((r: { attraction?: { types?: string[] } }) => !isRestaurant(r));
-  const restaurants = results.filter((r: { attraction?: { types?: string[] } }) => isRestaurant(r));
-
   // Apply category filter
-  let filteredAttractions = attractions;
-  let filteredRestaurants = restaurants;
-
   if (filters.category === "attractions") {
-    filteredRestaurants = [];
+    results = results.filter((r) => !isRestaurant(r));
   } else if (filters.category === "restaurants") {
-    filteredAttractions = [];
+    results = results.filter((r) => isRestaurant(r));
   }
 
   return (
-    <>
-      {filteredAttractions.length > 0 && (
-        <DiscoveryMarkers
-          attractions={filteredAttractions}
-          category="attractions"
-          onMarkerClick={handleMarkerClick}
-          hoveredId={null}
-        />
-      )}
-      {filteredRestaurants.length > 0 && (
-        <DiscoveryMarkers
-          attractions={filteredRestaurants}
-          category="restaurants"
-          onMarkerClick={handleMarkerClick}
-          hoveredId={null}
-        />
-      )}
-    </>
+    <DiscoveryMarkersLayer
+      places={results}
+      hoveredMarkerId={null}
+      selectedPlaceId={selectedPlaceId}
+      onMarkerClick={handleMarkerClick}
+      onMarkerHover={handleMarkerHover}
+    />
   );
 }
 
@@ -146,7 +134,7 @@ export function MapView({ mapId, onMapLoad }: MapViewProps) {
       <MapCanvas mapId={mapId} onMapLoad={onMapLoad} />
 
       {/* Map Markers */}
-      <DiscoveryMarkersLayer />
+      <MobileDiscoveryMarkersLayer />
       <PlaceMarkersLayer />
 
       {/* Map Backdrop (when bottom sheet is open) */}

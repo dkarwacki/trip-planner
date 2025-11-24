@@ -16,7 +16,6 @@ export const GetPhoto = (query: GetPhotoQuery) =>
 
     const photoData = yield* photoCache.get({
       photoReference: query.photoReference,
-      maxWidth: query.maxWidth,
       lat: query.lat,
       lng: query.lng,
       placeName: query.placeName,

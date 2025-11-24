@@ -5,11 +5,11 @@
 
 import React from "react";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
-import type { Attraction } from "@/domain/map/models";
+import type { DiscoveryItemViewModel } from "@/lib/map-v2/types";
 import { Utensils, Landmark } from "lucide-react";
 
 interface DiscoveryMarkerProps {
-  place: Attraction;
+  place: DiscoveryItemViewModel;
   isHovered: boolean;
   isSelected: boolean;
   isRestaurant: boolean;
@@ -29,7 +29,7 @@ export const DiscoveryMarker = React.memo(
     return (
       <AdvancedMarker
         key={place.id}
-        position={place.location}
+        position={{ lat: place.latitude, lng: place.longitude }}
         onClick={() => onMarkerClick(place.id)}
         zIndex={isSelected ? 200 : isHovered ? 150 : 100}
         className="custom-marker"

@@ -102,7 +102,7 @@ export const POST: APIRoute = async ({ request }) => {
       const tripRepo = yield* TripRepository;
 
       // Verify trip exists and belongs to user
-      const trip = yield* tripRepo.findById(DEV_USER_ID, trip_id);
+      yield* tripRepo.findById(DEV_USER_ID, trip_id);
 
       // Link trip to conversation
       yield* tripRepo.updateConversationId(DEV_USER_ID, trip_id, conversationId);

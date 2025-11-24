@@ -7,8 +7,10 @@ import React from "react";
 import PlannedItem from "./PlannedItem";
 import { useMapStore } from "../stores/mapStore";
 
+import type { PlannedPOIViewModel } from "@/lib/map-v2/types";
+
 interface PlannedItemListProps {
-  items: any[]; // Will be typed with domain types
+  items: PlannedPOIViewModel[];
   category: "attractions" | "restaurants";
   placeId: string;
 }

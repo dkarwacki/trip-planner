@@ -2,7 +2,7 @@
  * Shared type definitions for map-v2 components
  */
 
-import type { Attraction } from "@/domain/map/models";
+import type { DiscoveryItemViewModel, PlannedPlaceViewModel } from "@/lib/map-v2/types";
 
 // View mode for discovery results display
 export type ViewMode = "cards" | "grid" | "list";
@@ -47,12 +47,12 @@ export interface AISuggestion {
   category: string;
   photoUrl?: string;
   type: "add_attraction" | "add_restaurant" | "general_tip";
-  attractionData?: any; // Full attraction data from API for adding to plan
+  attractionData?: DiscoveryItemViewModel; // Full attraction data from API for adding to plan
 }
 
 // Component props interfaces
 export interface PlaceCardProps {
-  place: any; // Will be typed with domain Place type
+  place: DiscoveryItemViewModel;
   viewMode: ViewMode;
   isAdded: boolean;
   onAddClick: (placeId: string) => void;
@@ -60,7 +60,7 @@ export interface PlaceCardProps {
 }
 
 export interface PlanItemCardProps {
-  place: any; // Will be typed with domain Place type
+  place: PlannedPlaceViewModel;
   order: number;
   isExpanded: boolean;
   onToggleExpand: (placeId: string) => void;
@@ -74,13 +74,5 @@ export interface SuggestionCardProps {
   onAddClick: (placeId: string) => void;
 }
 
-export interface PlannedPlace {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-  plannedAttractions?: Attraction[];
-  plannedRestaurants?: Attraction[];
-  photos?: unknown[];
-  [key: string]: unknown;
-}
+// Re-export PlannedPlaceViewModel for backward compatibility
+export type { PlannedPlaceViewModel as PlannedPlace } from "@/lib/map-v2/types";

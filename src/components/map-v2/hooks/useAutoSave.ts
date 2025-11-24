@@ -92,9 +92,7 @@ export function useAutoSave({ enabled = true, debounceMs = 750 }: UseAutoSaveOpt
     } finally {
       isSavingRef.current = false;
     }
-    // Zustand actions are stable and don't need to be in dependencies
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tripId, tripTitle, places, enabled]);
+  }, [tripId, tripTitle, places, enabled, setSaveStatus, setLastSaved, setTripTitle, markSynced, setSyncError]);
 
   // Debounced save effect
   useEffect(() => {

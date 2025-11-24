@@ -125,14 +125,7 @@ export function ConversationListItem({
       {conversation.personas && conversation.personas.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {conversation.personas.slice(0, 3).map((persona) => (
-            <PersonaChip
-              key={persona}
-              persona={persona}
-              isSelected={false}
-              onToggle={() => {}}
-              showLabel={false}
-              size="sm"
-            />
+            <PersonaChip key={persona} persona={persona} isSelected={false} showLabel={false} size="sm" />
           ))}
           {conversation.personas.length > 3 && (
             <span className="text-xs text-muted-foreground">+{conversation.personas.length - 3}</span>

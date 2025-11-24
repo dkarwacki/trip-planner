@@ -26,6 +26,14 @@ alwaysApply: true
 - Shadcn/ui
 - Effect
 
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Fix ESLint issues
+
 ## Project Structure
 
 When introducing changes to the project, always follow the directory structure below:

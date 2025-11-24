@@ -37,7 +37,13 @@ export function ErrorDisplay({ message, onRetry, size = "md", variant = "inline"
             {message}
           </p>
           {onRetry && (
-            <Button variant="outline" size={size} onClick={onRetry} className="gap-2" aria-label="Retry action">
+            <Button
+              variant="outline"
+              size={size === "md" ? "default" : size}
+              onClick={onRetry}
+              className="gap-2"
+              aria-label="Retry action"
+            >
               <RefreshCw size={14} />
               Try Again
             </Button>

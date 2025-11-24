@@ -10,9 +10,10 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useMapStore } from "../stores/mapStore";
 import { MobilePlanItemCard } from "./MobilePlanItemCard";
 import { X } from "lucide-react";
+import type { PlannedPlaceViewModel } from "@/lib/map-v2/types";
 
 interface MobilePlanItemCardListProps {
-  places: any[]; // Will be typed with domain types
+  places: PlannedPlaceViewModel[];
 }
 
 export function MobilePlanItemCardList({ places }: MobilePlanItemCardListProps) {
@@ -64,18 +65,6 @@ export function MobilePlanItemCardList({ places }: MobilePlanItemCardListProps) 
     // Reset inactivity timer
     resetInactivityTimer();
   };
-
-  const enterReorderMode = useCallback(() => {
-    setIsReorderMode(true);
-
-    // Haptic feedback
-    if ("vibrate" in navigator) {
-      navigator.vibrate(50);
-    }
-
-    // Start inactivity timer
-    resetInactivityTimer();
-  }, []);
 
   const exitReorderMode = useCallback(() => {
     setIsReorderMode(false);

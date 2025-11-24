@@ -1,16 +1,15 @@
 /**
  * Place list - compact list view for browsing many places
- * Implements Stage 3.4 of the UX implementation plan
  */
 
 import React, { useEffect, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { PlaceListItem } from "./PlaceListItem";
-import type { Attraction, AttractionScore } from "@/domain/map/models";
+import type { DiscoveryItemViewModel } from "@/lib/map-v2/types";
 import { useMapStore, selectPlannedIds } from "../stores/mapStore";
 
 interface PlaceListProps {
-  places: (Attraction | AttractionScore)[];
+  places: DiscoveryItemViewModel[];
   onNavigateToMap?: (attractionId: string, lat: number, lng: number) => void;
 }
 
@@ -68,26 +67,6 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
     return () => container.removeEventListener("scroll", handleScroll);
   }, [highlightedPlaceId, setHighlightedPlace]);
 
-  // Extract attraction from AttractionScore if needed
-  const getAttraction = (place: Attraction | AttractionScore): Attraction => {
-    if ("attraction" in place) {
-      return place.attraction;
-    }
-    return place;
-  };
-
-  // Get score from AttractionScore or calculate basic score
-  const getScore = (place: Attraction | AttractionScore): number => {
-    if ("score" in place && typeof place.score === "number") {
-      return place.score;
-    }
-    const attraction = getAttraction(place);
-    if (attraction.rating && attraction.userRatingsTotal) {
-      return (attraction.rating / 5) * 10;
-    }
-    return 0;
-  };
-
   // Check if attraction is already in plan
   const isInPlan = (attractionId: string) => plannedIds.has(attractionId);
 
@@ -107,28 +86,23 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
       const scrollContainer = containerRef.current?.parentElement;
       const scrollPos = scrollContainer?.scrollTop ?? 0;
 
-      // Find the attraction in the places array using stable ref
-      const place = placesRef.current.find((p) => {
-        const attraction = getAttraction(p);
-        return attraction.id === attractionId;
-      });
+      // Find the place in the places array using stable ref
+      const place = placesRef.current.find((p) => p.id === attractionId);
 
       if (!place) {
         return;
       }
 
-      const attraction = getAttraction(place);
-
       // Check if it's a restaurant based on types
-      const isRestaurant = attraction.types?.some((t: string) =>
+      const isRestaurant = place.types?.some((t: string) =>
         ["restaurant", "food", "cafe", "bar", "bakery"].includes(t)
       );
 
       // Add to the selected place's appropriate array
       if (isRestaurant) {
-        addRestaurantToPlace(selectedPlaceId, attraction);
+        addRestaurantToPlace(selectedPlaceId, place);
       } else {
-        addAttractionToPlace(selectedPlaceId, attraction);
+        addAttractionToPlace(selectedPlaceId, place);
       }
 
       // Restore scroll position after React re-renders
@@ -145,17 +119,11 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
     (placeId: string) => {
       // If onNavigateToMap is provided (mobile), navigate to map with attraction
       if (onNavigateToMap) {
-        const place = places.find((p) => {
-          const attraction = getAttraction(p);
-          return attraction.id === placeId;
-        });
+        const place = places.find((p) => p.id === placeId);
 
         if (place) {
-          const attraction = getAttraction(place);
-          if (attraction.location) {
-            onNavigateToMap(placeId, attraction.location.lat, attraction.location.lng);
-            return;
-          }
+          onNavigateToMap(placeId, place.latitude, place.longitude);
+          return;
         }
       }
 
@@ -168,26 +136,24 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
   return (
     <div ref={containerRef} className="divide-y divide-gray-200">
       {places.map((place) => {
-        const attraction = getAttraction(place);
-        const score = getScore(place);
-        const isAdded = isInPlan(attraction.id);
+        const isAdded = isInPlan(place.id);
 
         return (
           <div
-            key={attraction.id}
+            key={place.id}
             ref={(el) => {
               if (el) {
-                itemRefs.current.set(attraction.id, el);
+                itemRefs.current.set(place.id, el);
               } else {
-                itemRefs.current.delete(attraction.id);
+                itemRefs.current.delete(place.id);
               }
             }}
           >
             <PlaceListItem
-              place={attraction}
-              score={score}
+              place={place}
+              score={place.score}
               isAdded={isAdded}
-              isHighlighted={highlightedPlaceId === attraction.id}
+              isHighlighted={highlightedPlaceId === place.id}
               onHover={setHoveredMarker}
               onExpandCard={handleExpandCard}
               onAddClick={handleAddClick}

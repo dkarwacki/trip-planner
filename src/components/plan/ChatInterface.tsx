@@ -156,10 +156,10 @@ export default function ChatInterface({
     };
   }, [personas, onPersonasChange]);
 
-  const isSuggestionInItinerary = (suggestion: { id: string; name: string; lat?: number; lng?: number }): boolean => {
+  const isSuggestionInItinerary = (suggestion: { id?: string; name: string; lat?: number; lng?: number }): boolean => {
     return itinerary.some((place) => {
-      // Match by ID
-      if (String(place.id) === String(suggestion.id)) {
+      // Match by ID (only if suggestion has an ID)
+      if (suggestion.id && String(place.id) === String(suggestion.id)) {
         return true;
       }
 
@@ -248,7 +248,12 @@ export default function ChatInterface({
 
       // If suggestion already has coordinates and a valid Google Place ID, use it directly
       // (This means it was successfully resolved during the AI response photo fetch)
-      if (suggestion.lat !== undefined && suggestion.lng !== undefined && suggestion.id.startsWith("ChIJ")) {
+      if (
+        suggestion.lat !== undefined &&
+        suggestion.lng !== undefined &&
+        suggestion.id &&
+        suggestion.id.startsWith("ChIJ")
+      ) {
         place = {
           id: PlaceId(suggestion.id),
           name: suggestion.name,
@@ -442,12 +447,12 @@ export default function ChatInterface({
 
                   {message.suggestedPlaces && message.suggestedPlaces.length > 0 && (
                     <div className="mt-3 space-y-2 w-full">
-                      {message.suggestedPlaces.map((suggestion) => (
+                      {message.suggestedPlaces.map((suggestion, idx) => (
                         <PlaceSuggestionItem
-                          key={suggestion.id}
+                          key={suggestion.id || `suggestion-${idx}`}
                           suggestion={suggestion}
                           isAdded={isSuggestionInItinerary(suggestion)}
-                          isValidating={validatingPlaces.has(suggestion.id)}
+                          isValidating={suggestion.id ? validatingPlaces.has(suggestion.id) : false}
                           onAdd={handleAddPlace}
                         />
                       ))}

@@ -12,6 +12,7 @@ import PlannedItemList from "./PlannedItemList";
 import { LazyImage } from "../shared/LazyImage";
 
 import type { PlannedPlace, FilterState } from "../types";
+import type { PlannedPOIViewModel } from "@/lib/map-v2/types";
 
 interface PlanItemCardProps {
   id: string;
@@ -37,13 +38,13 @@ const PlanItemCard = React.memo(
 
     // Get actual attractions and restaurants from place data
     // No need for useMemo - simple array check is faster than memoization overhead
-    const attractions = (Array.isArray(place.plannedAttractions) ? place.plannedAttractions : []) as any[];
-    const restaurants = (Array.isArray(place.plannedRestaurants) ? place.plannedRestaurants : []) as any[];
+    const attractions: PlannedPOIViewModel[] = Array.isArray(place.plannedAttractions) ? place.plannedAttractions : [];
+    const restaurants: PlannedPOIViewModel[] = Array.isArray(place.plannedRestaurants) ? place.plannedRestaurants : [];
 
     // Get first attraction's photo for banner (memoized)
     const bannerPhoto = useMemo(() => attractions[0]?.photos?.[0], [attractions]);
 
-    const placeName = place.name || place.displayName || "Unknown Place";
+    const placeName = place.name || "Unknown Place";
 
     const handleDiscoverMore = () => {
       setSelectedPlace(id);
@@ -118,8 +119,8 @@ const PlanItemCard = React.memo(
                 <LazyImage
                   photoReference={bannerPhoto.photoReference}
                   alt={attractions[0]?.name || "Place photo"}
-                  lat={attractions[0]?.location?.lat || 0}
-                  lng={attractions[0]?.location?.lng || 0}
+                  lat={attractions[0]?.latitude || 0}
+                  lng={attractions[0]?.longitude || 0}
                   placeName={attractions[0]?.name || ""}
                   size="small"
                   className="w-full h-full object-cover"

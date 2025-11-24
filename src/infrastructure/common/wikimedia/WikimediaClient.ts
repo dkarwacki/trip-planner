@@ -1,5 +1,4 @@
 import { Effect, Context, Layer } from "effect";
-import { ZodError } from "zod";
 import type { PlacePhoto } from "@/domain/common/models";
 import { WikimediaAPIError, NoWikimediaPhotosFoundError } from "@/domain/common/errors";
 import { WikimediaGeosearchResponseSchema } from "./schemas";

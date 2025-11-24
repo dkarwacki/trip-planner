@@ -20,6 +20,30 @@ const validateRequest = (body: unknown) =>
     return result.data;
   });
 
+/**
+ * Map domain AttractionScore to AttractionDTO
+ * Converts nested location and branded types to flat DTO structure
+ */
+const attractionToDTO = (scored: import("@/domain/map/models/AttractionScore").AttractionScore) => {
+  const { attraction, breakdown } = scored;
+  return {
+    id: String(attraction.id), // Unwrap PlaceId branded type
+    google_place_id: "", // Not available in domain model
+    type: "attraction" as const,
+    name: attraction.name,
+    rating: attraction.rating ?? null,
+    user_ratings_total: attraction.userRatingsTotal ?? null,
+    types: attraction.types,
+    vicinity: attraction.vicinity ?? null,
+    latitude: Number(attraction.location.lat), // Unwrap Latitude and flatten
+    longitude: Number(attraction.location.lng), // Unwrap Longitude and flatten
+    photos: attraction.photos || [],
+    quality_score: breakdown.qualityScore,
+    diversity_score: breakdown.diversityScore,
+    confidence_score: breakdown.confidenceScore,
+  };
+};
+
 export const POST: APIRoute = async ({ request }) => {
   let body;
   try {
@@ -35,7 +59,10 @@ export const POST: APIRoute = async ({ request }) => {
   const program = Effect.gen(function* () {
     const dto = yield* validateRequest(body);
     const query = toDomain.getAttractions(dto);
-    const attractions = yield* getTopAttractions(query);
+    const domainAttractions = yield* getTopAttractions(query);
+
+    // Convert domain objects to DTOs
+    const attractions = domainAttractions.map(attractionToDTO);
 
     return { attractions };
   });

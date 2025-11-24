@@ -91,6 +91,13 @@ export function AIChatModal({
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center bg-black/40 animate-in fade-in duration-300"
       onClick={handleOverlayClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          onClose();
+        }
+      }}
     >
       {/* Modal container */}
       <div
@@ -132,7 +139,6 @@ export function AIChatModal({
           disabled={!selectedPlace || isLoading}
           placeholder={selectedPlace ? `Ask about ${selectedPlace.name}...` : "Select a place to get started..."}
           suggestedPrompts={suggestedPrompts}
-          autoFocus
         />
       </div>
     </div>

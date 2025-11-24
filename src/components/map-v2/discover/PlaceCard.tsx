@@ -1,13 +1,9 @@
 /**
  * Place card - large photo card with details
- * Stage 3.2: Large Photo Card View
- *
- * IMPORTANT: This component is fully self-contained and handles all interactions
- * independently to prevent parent re-renders when the store updates.
  */
 
 import React, { useState, useCallback, useRef } from "react";
-import type { Attraction } from "@/domain/map/models";
+import type { DiscoveryItemViewModel } from "@/lib/map-v2/types";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { BasePlaceCard } from "../shared/BasePlaceCard";
 import { getGoogleMapsUrl } from "@/lib/common/google-maps";
@@ -16,7 +12,7 @@ import { useMapStore } from "../stores/mapStore";
 import { useOptimisticPlanned } from "./useOptimisticPlanned";
 
 interface PlaceCardProps {
-  place: Attraction;
+  place: DiscoveryItemViewModel;
   score: number;
   isHighlighted?: boolean;
   onNavigateToMap?: (attractionId: string, lat: number, lng: number) => void;
@@ -52,14 +48,14 @@ export const PlaceCard = React.memo(
     // Handle card click - directly update store
     const handleCardClick = useCallback(() => {
       // If onNavigateToMap is provided (mobile), navigate to map with attraction
-      if (onNavigateToMap && place.location) {
-        onNavigateToMap(place.id, place.location.lat, place.location.lng);
+      if (onNavigateToMap) {
+        onNavigateToMap(place.id, place.latitude, place.longitude);
         return;
       }
 
       // Otherwise use desktop behavior (expand card in sidebar)
       setExpandedCard(place.id);
-    }, [setExpandedCard, onNavigateToMap, place.id, place.location]);
+    }, [setExpandedCard, onNavigateToMap, place.id, place.latitude, place.longitude]);
 
     // Handle Add to Plan directly in the card
     const handleAddButtonClick = useCallback(
@@ -144,7 +140,7 @@ export const PlaceCard = React.memo(
                 href={getGoogleMapsUrl({
                   name: place.name,
                   placeId: place.id,
-                  location: place.location,
+                  location: { lat: place.latitude, lng: place.longitude },
                 })}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -166,8 +162,8 @@ export const PlaceCard = React.memo(
             isOpen={isLightboxOpen}
             onClose={() => setIsLightboxOpen(false)}
             placeName={place.name}
-            lat={place.location.lat}
-            lng={place.location.lng}
+            lat={place.latitude}
+            lng={place.longitude}
           />
         )}
       </>

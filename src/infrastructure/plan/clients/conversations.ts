@@ -42,16 +42,26 @@ export const getAllConversations = async (): Promise<SavedConversation[]> => {
   return data.conversations;
 };
 
-export const getConversation = async (id: ConversationId): Promise<SavedConversation> => {
+export const getConversation = async (
+  id: ConversationId,
+  options?: { silent?: boolean }
+): Promise<SavedConversation> => {
   const response = await fetch(`/api/conversations/${id}`);
 
   if (!response.ok) {
+    // Only log error if not in silent mode or if it's not a 404
+    if (!options?.silent || response.status !== 404) {
+      console.error(`Failed to load conversation ${id}: ${response.statusText}`);
+    }
     throw new Error(`Failed to load conversation: ${response.statusText}`);
   }
 
   const data: ConversationDetailResponse | ErrorResponse = await response.json();
 
   if ("error" in data) {
+    if (!options?.silent) {
+      console.error(`Failed to load conversation ${id}:`, data.error);
+    }
     throw new Error(data.error);
   }
 

@@ -4,9 +4,10 @@
 
 import React from "react";
 import { MobilePlannedItem } from "./MobilePlannedItem";
+import type { PlannedPOIViewModel } from "@/lib/map-v2/types";
 
 interface MobilePlannedItemListProps {
-  items: any[]; // Will be typed with domain types
+  items: PlannedPOIViewModel[];
   category: "attractions" | "restaurants";
 }
 

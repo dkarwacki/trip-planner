@@ -9,7 +9,7 @@ import {
   SEARCH_AREA_BUTTON_SHOW_THRESHOLD_METERS,
   NEW_TRIP_POINT_THRESHOLD_METERS,
 } from "@/lib/map-v2/search-constants";
-import type { Place } from "@/domain/common/models";
+import type { PlannedPlaceViewModel } from "@/lib/map-v2/types";
 
 interface UseMapSearchProps {
   mapCenter: { lat: number; lng: number } | null;
@@ -24,9 +24,12 @@ export function useMapSearch({ mapCenter, mapZoom }: UseMapSearchProps) {
   const addPlace = useMapStore((state) => state.addPlace);
 
   const [isSearching, setIsSearching] = useState(false);
-  const [draftPlace, setDraftPlace] = useState<{ place: Place; lat: number; lng: number; country?: string } | null>(
-    null
-  );
+  const [draftPlace, setDraftPlace] = useState<{
+    place: PlannedPlaceViewModel;
+    lat: number;
+    lng: number;
+    country?: string;
+  } | null>(null);
   const [isAdjustingLocation, setIsAdjustingLocation] = useState(false);
 
   const { fetchNearbyPlaces } = useNearbyPlaces();
@@ -41,7 +44,7 @@ export function useMapSearch({ mapCenter, mapZoom }: UseMapSearchProps) {
   );
 
   const fallbackLocation = useMemo(
-    () => (selectedPlace ? { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) } : null),
+    () => (selectedPlace ? { lat: selectedPlace.latitude, lng: selectedPlace.longitude } : null),
     [selectedPlace]
   );
 
@@ -61,17 +64,32 @@ export function useMapSearch({ mapCenter, mapZoom }: UseMapSearchProps) {
       if (!shouldStartNewPoint && selectedPlace) {
         const distance = calculateDistance(
           { lat: mapCenter.lat, lng: mapCenter.lng },
-          { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
+          { lat: selectedPlace.latitude, lng: selectedPlace.longitude }
         );
         shouldStartNewPoint = distance > NEW_TRIP_POINT_THRESHOLD_METERS;
       }
 
       if (shouldStartNewPoint) {
-        const newPlace = await findPlace(mapCenter.lat, mapCenter.lng);
-        if (newPlace) {
-          const [cityName, countryName] = newPlace.name.split("||");
+        const geocodingResult = await findPlace(mapCenter.lat, mapCenter.lng);
+        if (geocodingResult) {
+          const [cityName, countryName] = geocodingResult.name.split("||");
+          // Convert GeocodingResult to PlannedPlaceViewModel
+          const plannedPlace: PlannedPlaceViewModel = {
+            id: geocodingResult.id,
+            name: cityName,
+            latitude: geocodingResult.lat,
+            longitude: geocodingResult.lng,
+            photos: geocodingResult.photos?.map((p) => ({
+              photoReference: p.photoReference,
+              width: p.width,
+              height: p.height,
+              attributions: p.attributions,
+            })),
+            plannedAttractions: [],
+            plannedRestaurants: [],
+          };
           setDraftPlace({
-            place: { ...newPlace, name: cityName },
+            place: plannedPlace,
             lat: mapCenter.lat,
             lng: mapCenter.lng,
             country: countryName,
@@ -112,11 +130,26 @@ export function useMapSearch({ mapCenter, mapZoom }: UseMapSearchProps) {
     if (!mapCenter) return;
     setIsSearching(true);
     try {
-      const newPlace = await findPlace(mapCenter.lat, mapCenter.lng);
-      if (newPlace) {
-        const [cityName, countryName] = newPlace.name.split("||");
+      const geocodingResult = await findPlace(mapCenter.lat, mapCenter.lng);
+      if (geocodingResult) {
+        const [cityName, countryName] = geocodingResult.name.split("||");
+        // Convert GeocodingResult to PlannedPlaceViewModel
+        const plannedPlace: PlannedPlaceViewModel = {
+          id: geocodingResult.id,
+          name: cityName,
+          latitude: geocodingResult.lat,
+          longitude: geocodingResult.lng,
+          photos: geocodingResult.photos?.map((p) => ({
+            photoReference: p.photoReference,
+            width: p.width,
+            height: p.height,
+            attributions: p.attributions,
+          })),
+          plannedAttractions: [],
+          plannedRestaurants: [],
+        };
         setDraftPlace({
-          place: { ...newPlace, name: cityName },
+          place: plannedPlace,
           lat: mapCenter.lat,
           lng: mapCenter.lng,
           country: countryName,
@@ -136,7 +169,7 @@ export function useMapSearch({ mapCenter, mapZoom }: UseMapSearchProps) {
       !!mapCenter &&
       calculateDistance(
         { lat: mapCenter.lat, lng: mapCenter.lng },
-        { lat: Number(selectedPlace.lat), lng: Number(selectedPlace.lng) }
+        { lat: selectedPlace.latitude, lng: selectedPlace.longitude }
       ) > NEW_TRIP_POINT_THRESHOLD_METERS);
 
   const showSearchButton =

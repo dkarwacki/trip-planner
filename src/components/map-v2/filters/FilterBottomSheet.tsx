@@ -159,8 +159,11 @@ export function FilterBottomSheet({ isOpen, onClose, filters, onApply, className
 
                 {localFilters.showHighQualityOnly && (
                   <div className="pl-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Minimum score</label>
+                    <label htmlFor="min-score-select" className="block text-sm font-medium text-gray-700 mb-2">
+                      Minimum score
+                    </label>
                     <select
+                      id="min-score-select"
                       value={localFilters.minScore}
                       onChange={(e) =>
                         setLocalFilters({

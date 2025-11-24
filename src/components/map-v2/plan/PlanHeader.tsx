@@ -4,7 +4,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Share, Plus } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { PlannedPlace } from "../types";
@@ -12,10 +12,9 @@ import type { PlannedPlace } from "../types";
 interface PlanHeaderProps {
   places: PlannedPlace[];
   onShare?: () => void;
-  onCreatePlan?: () => void;
 }
 
-export function PlanHeader({ places, onShare, onCreatePlan }: PlanHeaderProps) {
+export function PlanHeader({ places, onShare }: PlanHeaderProps) {
   // Count hubs (unique places)
   const hubCount = places.length;
 
@@ -54,30 +53,13 @@ export function PlanHeader({ places, onShare, onCreatePlan }: PlanHeaderProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={onShare}>
-                  <Share className="h-4 w-4" />
+                <Button variant="outline" size="sm" className="h-8 gap-2" onClick={onShare}>
+                  <ExternalLink className="h-4 w-4" />
+                  Share
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
+              <TooltipContent className="z-[150]">
                 <p>Share plan (Coming Soon)</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  className="h-8 bg-blue-600 hover:bg-blue-700 flex items-center gap-1.5"
-                  onClick={onCreatePlan}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Create</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Create exportable plan</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

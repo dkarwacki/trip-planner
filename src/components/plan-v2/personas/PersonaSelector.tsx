@@ -3,7 +3,7 @@ import { PersonaChip } from "./PersonaChip";
 import { getAllPersonas, type PersonaType } from "@/domain/plan/models/Persona";
 import type { PersonaSelectorProps } from "../types";
 import { Loader2 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 
 /**
  * PersonaSelector - Desktop persona selector

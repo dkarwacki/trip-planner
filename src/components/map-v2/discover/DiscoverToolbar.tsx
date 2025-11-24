@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 interface DiscoverToolbarProps {
   filters: FilterState;
   onFilterChange: (filters: Partial<FilterState>) => void;
-  onClearFilters: () => void;
+  onClearFilters?: () => void;
   className?: string;
 }
 
@@ -152,7 +152,11 @@ export function DiscoverToolbar({ filters, onFilterChange, onClearFilters, class
             {hasQualityFilters && (
               <button
                 onClick={() => {
-                  onFilterChange({ showHighQualityOnly: false });
+                  if (onClearFilters) {
+                    onClearFilters();
+                  } else {
+                    onFilterChange({ showHighQualityOnly: false });
+                  }
                   setFilterOpen(false);
                 }}
                 className={cn(

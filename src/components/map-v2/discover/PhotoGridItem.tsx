@@ -3,14 +3,14 @@
  */
 
 import React, { useState } from "react";
-import type { Attraction } from "@/domain/map/models";
+import type { DiscoveryItemViewModel } from "@/lib/map-v2/types";
 import { Plus, CheckCircle2, Utensils, Landmark, MapPin } from "lucide-react";
 import { LazyImage } from "../shared/LazyImage";
 import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
 import { getGoogleMapsUrl } from "@/lib/common/google-maps";
 
 interface PhotoGridItemProps {
-  place: Attraction;
+  place: DiscoveryItemViewModel;
   score: number;
   isAdded?: boolean;
   isHighlighted?: boolean;
@@ -86,8 +86,8 @@ export const PhotoGridItem = React.memo(function PhotoGridItem({
       <LazyImage
         photoReference={photoReference}
         alt={place.name}
-        lat={place.location.lat}
-        lng={place.location.lng}
+        lat={place.latitude}
+        lng={place.longitude}
         placeName={place.name}
         size="medium"
         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -136,7 +136,7 @@ export const PhotoGridItem = React.memo(function PhotoGridItem({
           href={getGoogleMapsUrl({
             name: place.name,
             placeId: place.id,
-            location: place.location,
+            location: { lat: place.latitude, lng: place.longitude },
           })}
           target="_blank"
           rel="noopener noreferrer"

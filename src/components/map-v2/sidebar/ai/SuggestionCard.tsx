@@ -52,11 +52,14 @@ export const SuggestionCard = React.memo(
 
     const handleGoogleMapsClick = (e: React.MouseEvent) => {
       e.stopPropagation(); // Prevent card click
-      if (!isGeneralTip && suggestion.placeName) {
+      if (!isGeneralTip && suggestion.placeName && suggestion.attractionData) {
         openInGoogleMaps({
           name: suggestion.placeName,
           placeId: suggestion.placeId || undefined,
-          location: suggestion.attractionData?.location,
+          location: {
+            lat: suggestion.attractionData.latitude,
+            lng: suggestion.attractionData.longitude,
+          },
         });
       }
     };
@@ -242,8 +245,8 @@ export const SuggestionCard = React.memo(
               isOpen={isLightboxOpen}
               onClose={() => setIsLightboxOpen(false)}
               placeName={suggestion.placeName || "Place"}
-              lat={suggestion.attractionData.location.lat}
-              lng={suggestion.attractionData.location.lng}
+              lat={suggestion.attractionData.latitude}
+              lng={suggestion.attractionData.longitude}
               size="large"
             />
           )}

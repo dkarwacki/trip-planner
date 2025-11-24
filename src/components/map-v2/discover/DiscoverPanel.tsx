@@ -1,6 +1,5 @@
 /**
  * Discover panel - main container for browsing nearby attractions and restaurants
- * Implements Stage 3.1 of the UX implementation plan
  */
 
 import React, { useRef, useLayoutEffect, useCallback } from "react";
