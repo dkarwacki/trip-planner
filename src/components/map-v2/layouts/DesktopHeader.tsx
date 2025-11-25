@@ -13,13 +13,17 @@ import { useMapStore } from "../stores/mapStore";
 interface DesktopHeaderProps {
   saveStatus: SaveStatus;
   onRetrySync?: () => void;
+  tripId?: string;
 }
 
-export function DesktopHeader({ saveStatus, onRetrySync }: DesktopHeaderProps) {
+export function DesktopHeader({ saveStatus, onRetrySync, tripId }: DesktopHeaderProps) {
   const conversationId = useMapStore((state) => state.conversationId);
-  const tripId = useMapStore((state) => state.tripId);
+  const tripIdFromStore = useMapStore((state) => state.tripId);
   const setConversationId = useMapStore((state) => state.setConversationId);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+
+  // Use store value if available, otherwise fall back to prop (prevents race condition)
+  const effectiveTripId = tripIdFromStore || tripId;
 
   const handleConversationClick = async () => {
     if (conversationId) {
@@ -29,7 +33,7 @@ export function DesktopHeader({ saveStatus, onRetrySync }: DesktopHeaderProps) {
     }
 
     // No conversation exists, create one
-    if (!tripId) {
+    if (!effectiveTripId) {
       console.error("No trip ID available");
       return;
     }
@@ -44,7 +48,7 @@ export function DesktopHeader({ saveStatus, onRetrySync }: DesktopHeaderProps) {
         body: JSON.stringify({
           title: "Trip Planning Chat",
           personas: ["general_tourist"],
-          trip_id: tripId,
+          trip_id: effectiveTripId,
         }),
       });
 

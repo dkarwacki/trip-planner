@@ -21,7 +21,7 @@ export const useMapStore = create<MapStore>()(
         ...createUISlice(...a),
       }),
       {
-        name: "map-storage", // Renamed from map-v2-storage to be cleaner
+        name: "map-storage",
         storage: createJSONStorage(() => sessionStorage),
         partialize: (state) => ({
           // Persist UI prefs only

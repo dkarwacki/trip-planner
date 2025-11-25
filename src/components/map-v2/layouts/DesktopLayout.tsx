@@ -18,7 +18,7 @@ interface DesktopLayoutProps {
   tripId?: string;
 }
 
-export function DesktopLayout({ mapId }: DesktopLayoutProps) {
+export function DesktopLayout({ mapId, tripId }: DesktopLayoutProps) {
   // Selectors
   const activeMode = useMapStore((state) => state.activeMode);
   const sidebarCollapsed = useMapStore((state) => state.sidebarCollapsed);
@@ -59,7 +59,7 @@ export function DesktopLayout({ mapId }: DesktopLayoutProps) {
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50">
       {/* Header */}
-      <DesktopHeader saveStatus={saveStatus} onRetrySync={handleRetrySync} />
+      <DesktopHeader saveStatus={saveStatus} onRetrySync={handleRetrySync} tripId={tripId} />
 
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">

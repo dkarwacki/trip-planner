@@ -14,7 +14,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      include: ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
+      include: ["react", "react-dom", "@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
     },
   },
   adapter: node({

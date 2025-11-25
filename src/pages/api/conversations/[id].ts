@@ -7,6 +7,7 @@ import {
   UpdateConversationResponseSchema,
   DeleteConversationResponseSchema,
 } from "@/infrastructure/plan/api/schemas";
+import { DeleteConversationWithTrip } from "@/application/plan";
 import { AppRuntime } from "@/infrastructure/common/runtime";
 import { DEV_USER_ID } from "@/utils/consts";
 
@@ -150,8 +151,7 @@ export const DELETE: APIRoute = async ({ params }) => {
   }
 
   const program = Effect.gen(function* () {
-    const conversationRepo = yield* ConversationRepository;
-    yield* conversationRepo.delete(DEV_USER_ID, id);
+    yield* DeleteConversationWithTrip(DEV_USER_ID, id);
 
     return DeleteConversationResponseSchema.parse({
       id,

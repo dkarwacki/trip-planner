@@ -113,7 +113,7 @@ export function MobileLayout({ conversationId }: LayoutProps) {
     },
   });
 
-  // Update conversation title when itinerary changes
+  // Update conversation title when itinerary has places
   useEffect(() => {
     if (!activeConversationId || places.length === 0) return;
 
@@ -129,6 +129,34 @@ export function MobileLayout({ conversationId }: LayoutProps) {
       (currentConv.title === "Trip to ..." || currentConv.title.startsWith("Trip to "))
     ) {
       // Prevent infinite loops by checking if we just tried to update to this title
+      if (lastTitleUpdate.current?.id === activeConversationId && lastTitleUpdate.current?.title === newTitle) {
+        return;
+      }
+
+      lastTitleUpdate.current = { id: activeConversationId, title: newTitle };
+      updateTitle(activeConversationId, newTitle);
+    }
+  }, [activeConversationId, places, conversations, updateTitle]);
+
+  // Handle empty trip case - revert title to "Trip to ..." but only for auto-generated titles
+  useEffect(() => {
+    if (!activeConversationId) return;
+
+    const currentConv = conversations.find((c) => c.id === activeConversationId);
+    if (!currentConv) return;
+
+    // Only update if:
+    // 1. Places array is empty
+    // 2. Current title starts with "Trip to " (auto-generated, not custom)
+    // 3. Current title is not already "Trip to ..."
+    if (
+      places.length === 0 &&
+      currentConv.title.startsWith("Trip to ") &&
+      currentConv.title !== "Trip to ..."
+    ) {
+      const newTitle = "Trip to ...";
+
+      // Prevent infinite loops
       if (lastTitleUpdate.current?.id === activeConversationId && lastTitleUpdate.current?.title === newTitle) {
         return;
       }

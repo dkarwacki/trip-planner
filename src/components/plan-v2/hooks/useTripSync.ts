@@ -48,7 +48,7 @@ export function useTripSync(options: UseTripSyncOptions): UseTripSyncReturn {
   const syncTrip = useCallback(
     async (places: ItineraryPlace[]): Promise<void> => {
       // Guard clauses
-      if (!enabled || !conversationId || places.length === 0) {
+      if (!enabled || !conversationId) {
         return;
       }
 
@@ -68,11 +68,13 @@ export function useTripSync(options: UseTripSyncOptions): UseTripSyncReturn {
         const existingTrip = await getTripForConversation(conversationId);
 
         if (existingTrip) {
-          // Update existing trip
+          // Update existing trip (even if empty - preserves trip record)
           await updateTrip(existingTrip.id, domainPlaces);
         } else {
-          // Create new trip linked to conversation
-          await createTrip(domainPlaces, conversationId);
+          // Only create new trip if places exist
+          if (domainPlaces.length > 0) {
+            await createTrip(domainPlaces, conversationId);
+          }
         }
 
         setSyncStatus("saved");
