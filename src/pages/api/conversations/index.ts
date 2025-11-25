@@ -82,14 +82,16 @@ export const POST: APIRoute = async ({ request }) => {
       userId: DEV_USER_ID,
       title,
       personas,
-      messages: [
-        {
-          id: crypto.randomUUID(),
-          role: "user" as const,
-          content: initial_message,
-          timestamp: nowTimestamp,
-        },
-      ],
+      messages: initial_message
+        ? [
+            {
+              id: crypto.randomUUID(),
+              role: "user" as const,
+              content: initial_message,
+              timestamp: nowTimestamp,
+            },
+          ]
+        : [],
       createdAt: now,
       updatedAt: now,
     };

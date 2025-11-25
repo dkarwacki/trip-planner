@@ -37,13 +37,14 @@ export function DesktopHeader({ saveStatus, onRetrySync }: DesktopHeaderProps) {
     setIsCreatingConversation(true);
 
     try {
-      // Create new conversation
+      // Create new conversation with trip association
       const createResponse = await fetch("/api/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: "Trip Planning Chat",
           personas: ["general_tourist"],
+          trip_id: tripId,
         }),
       });
 
@@ -53,17 +54,6 @@ export function DesktopHeader({ saveStatus, onRetrySync }: DesktopHeaderProps) {
 
       const conversation = await createResponse.json();
       const newConversationId = conversation.id;
-
-      // Associate conversation with trip
-      const updateResponse = await fetch(`/api/trips/${tripId}/conversation`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversation_id: newConversationId }),
-      });
-
-      if (!updateResponse.ok) {
-        throw new Error("Failed to associate conversation with trip");
-      }
 
       // Update store
       setConversationId(newConversationId);

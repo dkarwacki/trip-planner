@@ -151,8 +151,9 @@ export const CreateConversationCommandSchema = z.object({
   personas: z.array(PersonaTypeSchema).min(1, "At least one persona is required").max(8, "Maximum 8 personas allowed"),
   initial_message: z
     .string()
-    .min(1, "Initial message is required")
-    .max(2000, "Message must be 2000 characters or less"),
+    .min(1, "Initial message must not be empty if provided")
+    .max(2000, "Message must be 2000 characters or less")
+    .optional(),
   trip_id: UUIDSchema.optional(),
 });
 
