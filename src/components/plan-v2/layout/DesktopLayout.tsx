@@ -9,11 +9,11 @@ import { usePersonas } from "../hooks/usePersonas";
 import { useChatMessages } from "../hooks/useChatMessages";
 import { useItinerary } from "../hooks/useItinerary";
 import { useConversation } from "../hooks/useConversation";
-import { useAutoSave } from "../hooks/useAutoSave";
+import { useTripSync } from "../hooks/useTripSync";
 import { useUnsavedChangesWarning } from "../hooks/useUnsavedChangesWarning";
 import { useStateRecovery } from "../hooks/useStateRecovery";
 import { useScreenReaderAnnouncement } from "../hooks/useScreenReaderAnnouncement";
-import type { LayoutProps } from "../types";
+import type { LayoutProps, ItineraryPlace } from "../types";
 import type { PlaceSuggestion } from "@/domain/plan/models/ChatMessage";
 import type { ConversationId } from "@/domain/plan/models/ConversationHistory";
 import { ConversationId as ConversationIdBrand } from "@/domain/plan/models/ConversationHistory";
@@ -136,28 +136,11 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
     }
   }, [activeConversationId, places, conversations, updateTitle]);
 
-  // Auto-save for messages and personas
-  const { saveStatus, scheduleSave } = useAutoSave(
-    activeConversationId && messages.length > 0
-      ? { conversationId: activeConversationId, messages, personas: selectedPersonas }
-      : null,
-    {
-      saveFn: async (data) => {
-        await saveMessages(data.conversationId, data.messages);
-        // Persona changes are already saved via usePersonas hook
-      },
-      debounceMs: 750,
-      maxRetries: 3,
-      enabled: !!activeConversationId,
-    }
-  );
-
-  // Trigger auto-save when messages or personas change (but not during conversation creation)
-  useEffect(() => {
-    if (activeConversationId && messages.length > 0 && !isCreatingConversation) {
-      scheduleSave();
-    }
-  }, [messages, selectedPersonas, activeConversationId, isCreatingConversation, scheduleSave]);
+  // Trip sync for itinerary changes
+  const { syncStatus: tripSyncStatus, syncTrip } = useTripSync({
+    conversationId: activeConversationId,
+    enabled: !!activeConversationId,
+  });
 
   // Warn before leaving with unsaved changes
   useUnsavedChangesWarning({
@@ -247,30 +230,54 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [activeConversationId]); // Re-run when active conversation changes
 
-  // Announce save status changes
+  // Announce trip sync status changes
   useEffect(() => {
-    if (saveStatus === "saved") {
-      announce("Your changes have been saved");
-    } else if (saveStatus === "error") {
-      announce("Failed to save your changes. Please try again.");
+    if (tripSyncStatus === "saved") {
+      announce("Your trip has been saved");
+    } else if (tripSyncStatus === "error") {
+      announce("Failed to save your trip. Please try again.");
     }
-  }, [saveStatus, announce]);
+  }, [tripSyncStatus, announce]);
 
   const handleSendMessage = async (content: string) => {
     await sendMessage(content, selectedPersonas);
   };
 
-  const handleAddPlace = (place: PlaceSuggestion) => {
+  const handleAddPlace = async (place: PlaceSuggestion) => {
     addPlace(place);
     announce(`${place.name} added to your itinerary`);
+
+    // Immediate trip sync
+    const newPlace = {
+      id: place.id || place.name,
+      name: place.name,
+      description: place.description,
+      coordinates: {
+        lat: place.lat || 0,
+        lng: place.lng || 0,
+      },
+      photos: place.photos,
+    };
+    await syncTrip([...places, newPlace]);
   };
 
-  const handleRemovePlace = (placeId: string) => {
+  const handleRemovePlace = async (placeId: string) => {
     const place = places.find((p) => p.id === placeId);
     removePlace(placeId);
     if (place) {
       announce(`${place.name} removed from your itinerary`);
     }
+
+    // Immediate trip sync
+    const updatedPlaces = places.filter((p) => p.id !== placeId);
+    await syncTrip(updatedPlaces);
+  };
+
+  const handleReorderPlaces = async (newPlaces: ItineraryPlace[]) => {
+    reorderPlaces(newPlaces);
+
+    // Immediate trip sync
+    await syncTrip(newPlaces);
   };
 
   const handleExportToMap = async () => {
@@ -464,7 +471,7 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Header with save status */}
       <PlanHeader
-        saveStatus={saveStatus}
+        saveStatus={tripSyncStatus}
         conversationId={activeConversationId ? String(activeConversationId) : undefined}
       />
 
@@ -530,7 +537,7 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
         >
           <ItineraryPanel
             places={places}
-            onReorder={reorderPlaces}
+            onReorder={handleReorderPlaces}
             onRemove={handleRemovePlace}
             onExportToMap={handleExportToMap}
             isCollapsed={isRightCollapsed}
