@@ -34,8 +34,10 @@ export const PhotoGridItem = React.memo(function PhotoGridItem({
   const placeType = getPlaceTypeCategory(place.types);
 
   const getScoreBadgeColor = (score: number) => {
-    if (score >= 90) return "bg-green-600/90";
-    if (score >= 80) return "bg-blue-600/90";
+    // With new weights (Quality 50%, Persona 10%, Diversity 20%, Confidence 20%),
+    // 70+ is great (requires persona match), 60+ is good
+    if (score >= 70) return "bg-green-600/90";
+    if (score >= 60) return "bg-blue-600/90";
     return "bg-gray-600/90";
   };
 

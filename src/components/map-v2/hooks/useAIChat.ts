@@ -21,6 +21,7 @@ interface UseAIChatReturn {
 // Raw API response types for AI suggestions
 interface ScoreBreakdown {
   qualityScore: number;
+  personaScore?: number;
   diversityScore?: number;
   confidenceScore: number;
 }
@@ -64,6 +65,7 @@ function rawAttractionToDiscoveryItem(
 ): DiscoveryItemViewModel {
   // Extract scores from breakdown if available
   const qualityScore = raw.breakdown?.qualityScore;
+  const personaScore = raw.breakdown?.personaScore;
   const diversityScore = raw.breakdown?.diversityScore;
   const confidenceScore = raw.breakdown?.confidenceScore;
 
@@ -88,6 +90,7 @@ function rawAttractionToDiscoveryItem(
     })),
     score: raw.score ?? qualityScore ?? 0,
     qualityScore,
+    personaScore,
     diversityScore,
     confidenceScore,
     scoresExplanation: raw.breakdown ? JSON.stringify(raw.breakdown) : undefined,
@@ -294,7 +297,14 @@ export function useAIChat(): UseAIChatReturn {
           const photoReference = s.attractionData.photos?.[0]?.photoReference || s.photos?.[0]?.photoReference;
 
           // Use domain-calculated score if available, otherwise fallback to simple rating calculation
-          const score = s.attractionData.score ?? (s.attractionData.rating || 0) * 20;
+          const score =
+            s.attractionData.score ??
+            (() => {
+              console.warn(
+                `[AI Suggestions] Missing domain score for ${s.attractionData.name}, falling back to rating × 20`
+              );
+              return (s.attractionData.rating || 0) * 20;
+            })();
 
           return {
             id: `suggestion-${s.attractionData.id}-${Date.now()}-${index}`,

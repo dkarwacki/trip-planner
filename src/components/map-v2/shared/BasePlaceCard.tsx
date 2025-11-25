@@ -20,6 +20,7 @@ export interface BasePlaceCardProps {
   score?: number;
   breakdown?: {
     qualityScore: number;
+    personaScore?: number;
     diversityScore?: number;
     confidenceScore: number;
   };

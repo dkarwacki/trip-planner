@@ -343,7 +343,7 @@ const enrichSuggestionsWithAttractionData = (
                   return Option.none();
                 }
 
-                const scoreData = scoredAttractions.get(attractionData.name);
+                const scoreData = scoredAttractions.get(attractionData.id);
 
                 return Option.some({
                   ...suggestion,
@@ -393,9 +393,9 @@ const executeToolCall = (
             limit: args.limit ?? 15,
           });
 
-          // Store scores for later enrichment
+          // Store scores for later enrichment (using ID for reliable lookup)
           result.forEach((item) => {
-            scoredAttractions.set(item.attraction.name, {
+            scoredAttractions.set(String(item.attraction.id), {
               score: item.score,
               breakdown: item.breakdown,
             });
@@ -413,9 +413,9 @@ const executeToolCall = (
             limit: args.limit ?? 10,
           });
 
-          // Store scores for later enrichment
+          // Store scores for later enrichment (using ID for reliable lookup)
           result.forEach((item) => {
-            scoredAttractions.set(item.attraction.name, {
+            scoredAttractions.set(String(item.attraction.id), {
               score: item.score,
               breakdown: item.breakdown,
             });

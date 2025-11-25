@@ -49,9 +49,6 @@ function photoToViewModel(dto: PhotoDTO, lat?: number, lng?: number): PhotoViewM
  * Adds itemType discriminator for unified discovery handling
  */
 function attractionToViewModel(dto: AttractionDTO): AttractionViewModel {
-  // Calculate combined score from individual scores if available
-  const score = dto.quality_score ?? 0;
-
   return {
     id: dto.id,
     googlePlaceId: dto.google_place_id,
@@ -64,9 +61,10 @@ function attractionToViewModel(dto: AttractionDTO): AttractionViewModel {
     vicinity: dto.vicinity ?? "",
     photos: dto.photos?.map((p) => photoToViewModel(p, dto.latitude, dto.longitude)),
 
-    // Scores
-    score,
+    // Scores - use the actual calculated score from backend
+    score: dto.score ?? 0,
     qualityScore: dto.quality_score ?? undefined,
+    personaScore: dto.persona_score ?? undefined,
     diversityScore: dto.diversity_score ?? undefined,
     confidenceScore: dto.confidence_score ?? undefined,
     scoresExplanation: dto.scores_explanation ? JSON.stringify(dto.scores_explanation) : undefined,
@@ -81,9 +79,6 @@ function attractionToViewModel(dto: AttractionDTO): AttractionViewModel {
  * Adds itemType discriminator for unified discovery handling
  */
 function restaurantToViewModel(dto: RestaurantDTO): RestaurantViewModel {
-  // Calculate combined score from individual scores if available
-  const score = dto.quality_score ?? 0;
-
   return {
     id: dto.id,
     googlePlaceId: dto.google_place_id,
@@ -96,9 +91,10 @@ function restaurantToViewModel(dto: RestaurantDTO): RestaurantViewModel {
     vicinity: dto.vicinity ?? "",
     photos: dto.photos?.map((p) => photoToViewModel(p, dto.latitude, dto.longitude)),
 
-    // Scores
-    score,
+    // Scores - use the actual calculated score from backend
+    score: dto.score ?? 0,
     qualityScore: dto.quality_score ?? undefined,
+    personaScore: dto.persona_score ?? undefined,
     diversityScore: dto.diversity_score ?? undefined,
     confidenceScore: dto.confidence_score ?? undefined,
 

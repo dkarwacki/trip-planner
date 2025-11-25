@@ -12,10 +12,10 @@ interface ScoreExplanationProps {
  * Used in tooltip when hovering over the help icon in ScoreBadge
  */
 export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps) {
-  const qualityWeight = isAttraction ? "60%" : "70%";
-  const diversityWeight = "25%";
-  const confidenceWeight = isAttraction ? "15%" : "30%";
-  const personaWeight = "up to +30%";
+  const qualityWeight = isAttraction ? "50%" : "70%";
+  const personaWeight = "10%";
+  const diversityWeight = "20%";
+  const confidenceWeight = isAttraction ? "20%" : "30%";
 
   return (
     <div className="space-y-3 text-xs">
@@ -28,20 +28,32 @@ export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps)
         <div>
           <p className="font-semibold mb-1">Quality Score ({qualityWeight} weight)</p>
           <ul className="space-y-0.5 text-muted-foreground">
-            <li>• Normalized rating from 0-10 scale</li>
-            <li>• Higher ratings = better quality</li>
-            <li>• Formula: (rating ÷ 5) × 10</li>
+            <li>• Based on rating and review count</li>
+            <li>• Higher ratings with more reviews score better</li>
+            <li>• Formula: rating (60%) + log₁₀(reviews) (40%)</li>
           </ul>
         </div>
+
+        {/* Persona Score (attractions only) */}
+        {isAttraction && (
+          <div>
+            <p className="font-semibold mb-1">Persona Score ({personaWeight} weight)</p>
+            <ul className="space-y-0.5 text-muted-foreground">
+              <li>• Matches your travel style preferences</li>
+              <li>• 100 points if attraction matches your persona</li>
+              <li>• 10 points if no match or no persona selected</li>
+            </ul>
+          </div>
+        )}
 
         {/* Diversity Score (attractions only) */}
         {isAttraction && (
           <div>
             <p className="font-semibold mb-1">Diversity Score ({diversityWeight} weight)</p>
             <ul className="space-y-0.5 text-muted-foreground">
-              <li>• Rewards unique/rare place types</li>
-              <li>• Adds variety to recommendations</li>
-              <li>• Score: 8.0 for diverse places</li>
+              <li>• Rewards places with unique/rare types</li>
+              <li>• Based on rarest type the place has</li>
+              <li>• Adds variety to your recommendations</li>
             </ul>
           </div>
         )}
@@ -50,27 +62,18 @@ export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps)
         <div>
           <p className="font-semibold mb-1">Confidence Score ({confidenceWeight} weight)</p>
           <ul className="space-y-0.5 text-muted-foreground">
-            <li>• Based on review volume</li>
-            <li>• More reviews = higher confidence</li>
-            <li>• Formula: min(10, log₁₀(reviews + 1) × 3)</li>
-          </ul>
-        </div>
-
-        {/* Persona Boost */}
-        <div>
-          <p className="font-semibold mb-1">Persona Boost ({personaWeight} bonus)</p>
-          <ul className="space-y-0.5 text-muted-foreground">
-            <li>• Matches your travel style</li>
-            <li>• AI-based personalization</li>
-            <li>• Applied as final boost to total</li>
+            <li>• Based on review volume reliability</li>
+            <li>• High confidence: &gt;100 reviews</li>
+            <li>• Medium confidence: 20-100 reviews</li>
           </ul>
         </div>
 
         {/* Formula */}
         <div className="pt-1 border-t border-border">
           <p className="text-muted-foreground italic">
-            Overall Score = {qualityWeight} Quality + {isAttraction && `${diversityWeight} Diversity + `}
-            {confidenceWeight} Confidence {personaWeight && `+ ${personaWeight} Persona`}
+            Overall Score = {qualityWeight} Quality +{" "}
+            {isAttraction && `${personaWeight} Persona + ${diversityWeight} Diversity + `}
+            {confidenceWeight} Confidence
           </p>
         </div>
       </div>

@@ -9,6 +9,7 @@ interface ScoreBadgeProps {
   /** Score breakdown */
   breakdown?: {
     qualityScore: number;
+    personaScore?: number;
     diversityScore?: number;
     confidenceScore: number;
   };
@@ -84,15 +85,19 @@ export function ScoreBadge({
   }, [showBreakdown]);
 
   // Determine badge color and label based on score (0-100 scale)
+  // With new weights, 70+ is great (requires persona match), 60+ is good
   const getScoreColor = (s: number) => {
-    if (s >= 90) return { bg: "bg-green-600", text: "text-white", label: "Exceptional" };
-    return { bg: "bg-blue-600", text: "text-white", label: "Recommended" };
+    if (s >= 70) return { bg: "bg-green-600", text: "text-white", label: "Exceptional" };
+    if (s >= 60) return { bg: "bg-blue-600", text: "text-white", label: "Recommended" };
+    return { bg: "bg-gray-600", text: "text-white", label: "Good" };
   };
 
   const { bg, text, label } = getScoreColor(score);
 
   // Don't render if score is too low
-  if (score < 70) {
+  // With new weights (Quality 50%, Persona 10%, Diversity 20%, Confidence 20%),
+  // places without persona match can only score max 70, so threshold lowered to 50
+  if (score < 50) {
     return null;
   }
 
@@ -149,6 +154,14 @@ export function ScoreBadge({
                     {breakdown.qualityScore !== undefined ? formatScore(breakdown.qualityScore) : "N/A"}
                   </span>
                 </div>
+
+                {/* Persona */}
+                {breakdown.personaScore !== undefined && isAttraction && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Persona:</span>
+                    <span className="font-medium">{formatScore(breakdown.personaScore)}</span>
+                  </div>
+                )}
 
                 {/* Diversity */}
                 {breakdown.diversityScore !== undefined && isAttraction && (

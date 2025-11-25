@@ -10,6 +10,7 @@ interface ScoreBadgeProps {
   score: number;
   breakdown: {
     qualityScore: number;
+    personaScore: number;
     diversityScore: number;
     confidenceScore: number;
   };
@@ -60,6 +61,12 @@ export function ScoreBadge({ score, breakdown, type }: ScoreBadgeProps) {
                 <span>Quality Score:</span>
                 <span className="font-medium">{breakdown.qualityScore}</span>
               </div>
+              {type === "attractions" && (
+                <div className="flex justify-between text-xs">
+                  <span>Persona Score:</span>
+                  <span className="font-medium">{breakdown.personaScore}</span>
+                </div>
+              )}
               {type === "attractions" && (
                 <div className="flex justify-between text-xs">
                   <span>Diversity Score:</span>

@@ -27,6 +27,19 @@ export function ScoreExplanation({ type }: ScoreExplanationProps) {
           </ul>
         </div>
 
+        {"persona" in explanations && (
+          <div>
+            <p className="font-semibold mb-1">
+              {explanations.persona.title} ({explanations.persona.weight})
+            </p>
+            <ul className="space-y-0.5 text-muted-foreground">
+              {explanations.persona.description.map((item, idx) => (
+                <li key={idx}>• {item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {"diversity" in explanations && (
           <div>
             <p className="font-semibold mb-1">
@@ -54,6 +67,7 @@ export function ScoreExplanation({ type }: ScoreExplanationProps) {
         <div className="pt-1 border-t border-border">
           <p className="text-muted-foreground italic">
             Overall Score = {Math.round(weights.quality * 100)}% Quality +{" "}
+            {"persona" in weights && `${Math.round(weights.persona * 100)}% Persona + `}
             {"diversity" in weights && `${Math.round(weights.diversity * 100)}% Diversity + `}
             {Math.round(weights.confidence * 100)}% Confidence
           </p>

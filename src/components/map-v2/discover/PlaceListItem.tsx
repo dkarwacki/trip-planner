@@ -41,8 +41,10 @@ export const PlaceListItem = React.memo(function PlaceListItem({
   const priceLevel = "priceLevel" in place && place.priceLevel ? "💰".repeat(place.priceLevel) : "";
 
   const getScoreBadgeColor = (score: number) => {
-    if (score >= 90) return "text-green-600";
-    if (score >= 80) return "text-blue-600";
+    // With new weights (Quality 50%, Persona 10%, Diversity 20%, Confidence 20%),
+    // 70+ is great (requires persona match), 60+ is good
+    if (score >= 70) return "text-green-600";
+    if (score >= 60) return "text-blue-600";
     return "text-gray-600";
   };
 

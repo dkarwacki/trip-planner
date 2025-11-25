@@ -102,9 +102,10 @@ Get intelligent recommendations tailored to your travel plan using conversationa
   - Details dialog shows 1 high-quality photo (800px, aspect 4:3) with click-to-expand lightbox for all photos
   - Graceful fallback when photos unavailable or fail to load
 - Smart scoring system:
-  - **Quality Score (60% for attractions, 70% for restaurants):** rating (60%) + log₁₀(reviews) (40%)
-  - **Diversity Score (25% for attractions only):** Rewards places with unique/rare types
-  - **Confidence Score (15% for attractions, 30% for restaurants):** Based on review volume reliability
+  - **Quality Score (50% for attractions, 70% for restaurants):** rating (60%) + log₁₀(reviews) (40%)
+  - **Persona Score (10% for attractions only):** 100 points if attraction matches your travel style, 0 otherwise
+  - **Diversity Score (20% for attractions only):** Rewards places with unique/rare types
+  - **Confidence Score (20% for attractions, 30% for restaurants):** Based on review volume reliability
     - High confidence: >100 reviews
     - Medium confidence: 20-100 reviews
     - Low confidence: <20 reviews
@@ -124,8 +125,9 @@ Get intelligent recommendations tailored to your travel plan using conversationa
   - Open/closed status positioned below address for better information flow
   - Checkmark indicator for already-planned items
 - **Persona-aware scoring:** Results personalized based on user's travel style preferences
-  - 30% boost for attractions matching persona (e.g., Art Enthusiast → museums, galleries)
+  - 10% of score weight on persona matching for attractions
   - Eight personas: General Tourist, Nature Lover, Art Enthusiast, Foodie, Adventure Seeker, Digital Nomad, History Buff, Photography Enthusiast
+  - Persona score is additive component of total 0-100 score, not a multiplier
 
 - Google Places API (Nearby Search + Place Details)
 

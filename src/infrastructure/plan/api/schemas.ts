@@ -302,9 +302,10 @@ export const AttractionOnlySchema = z
     latitude: LatitudeSchema,
     longitude: LongitudeSchema,
     photos: z.array(PhotoSchema).optional(),
-    quality_score: z.number().min(0).max(1).nullable(),
-    diversity_score: z.number().min(0).max(1).nullable(),
-    confidence_score: z.number().min(0).max(1).nullable(),
+    quality_score: z.number().min(0).max(100).nullable(),
+    persona_score: z.number().min(0).max(100).nullable(),
+    diversity_score: z.number().min(0).max(100).nullable(),
+    confidence_score: z.number().min(0).max(100).nullable(),
   })
   .transform((data) => ({
     ...data,
@@ -331,9 +332,10 @@ export const RestaurantSchema = z
     latitude: LatitudeSchema,
     longitude: LongitudeSchema,
     photos: z.array(PhotoSchema).optional(),
-    quality_score: z.number().min(0).max(1).nullable(),
-    diversity_score: z.number().min(0).max(1).nullable(),
-    confidence_score: z.number().min(0).max(1).nullable(),
+    quality_score: z.number().min(0).max(100).nullable(),
+    persona_score: z.number().min(0).max(100).nullable(),
+    diversity_score: z.number().min(0).max(100).nullable(),
+    confidence_score: z.number().min(0).max(100).nullable(),
   })
   .transform((data) => ({
     ...data,

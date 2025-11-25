@@ -8,9 +8,9 @@ export type ScoreLevel = "exceptional" | "excellent" | "good" | "hidden";
 export interface ScoreBreakdown {
   total: number;
   quality: number;
+  persona?: number;
   diversity?: number;
   confidence: number;
-  personaBoost?: number;
 }
 
 export interface ScoreColor {
@@ -22,20 +22,24 @@ export interface ScoreColor {
 /**
  * Calculate unified place score (0-10)
  *
- * Components:
- * - Quality (60-70%): Based on rating and review volume
- * - Diversity (25% for attractions): Uniqueness boost
- * - Confidence (15-30%): Based on review count
- * - Persona boost (30%): Match with user travel style
+ * Components for attractions:
+ * - Quality (50%): Based on rating and review volume
+ * - Persona (10%): Match with user travel style (100 if match, 0 if not)
+ * - Diversity (20%): Uniqueness of place types
+ * - Confidence (20%): Based on review count
+ *
+ * Components for restaurants:
+ * - Quality (70%): Based on rating and review volume
+ * - Confidence (30%): Based on review count
  */
 export function calculatePlaceScore(params: {
   rating: number;
   totalReviews: number;
   isDiverse?: boolean;
-  personaMatch?: number; // 0-1
+  personaMatch?: boolean; // true if matches persona
   isAttraction?: boolean;
 }): ScoreBreakdown {
-  const { rating, totalReviews, isDiverse = false, personaMatch = 0, isAttraction = true } = params;
+  const { rating, totalReviews, isDiverse = false, personaMatch = false, isAttraction = true } = params;
 
   // Quality score: Normalize rating (0-5) to 0-10
   const quality = (rating / 5) * 10;
@@ -43,33 +47,28 @@ export function calculatePlaceScore(params: {
   // Confidence: Based on review volume (logarithmic scale)
   const confidence = Math.min(10, Math.log10(totalReviews + 1) * 3);
 
-  // Diversity bonus for attractions
-  const diversity = isAttraction && isDiverse ? 8.0 : undefined;
+  // Diversity score for attractions (0-10)
+  const diversity = isAttraction && isDiverse ? 10.0 : isAttraction ? 0 : undefined;
 
-  // Persona boost
-  const personaBoost = personaMatch > 0 ? personaMatch * 3 : undefined;
+  // Persona score for attractions (1.0 or 10.0, which is 10 or 100 on 0-100 scale)
+  const persona = isAttraction ? (personaMatch ? 10.0 : 1.0) : undefined;
 
-  // Calculate total with weighted average
-  const qualityWeight = isAttraction && isDiverse ? 0.6 : 0.7;
-  const diversityWeight = isAttraction && isDiverse ? 0.25 : 0;
-  const confidenceWeight = isAttraction && isDiverse ? 0.15 : 0.3;
-
-  let total = quality * qualityWeight + confidence * confidenceWeight;
-
-  if (diversity !== undefined) {
-    total += diversity * diversityWeight;
-  }
-
-  if (personaBoost !== undefined) {
-    total = Math.min(10, total + personaBoost * 0.3);
+  // Calculate total with weighted average based on type
+  let total: number;
+  if (isAttraction) {
+    // Attractions: Quality 50%, Persona 10%, Diversity 20%, Confidence 20%
+    total = quality * 0.5 + (persona ?? 0) * 0.1 + (diversity ?? 0) * 0.2 + confidence * 0.2;
+  } else {
+    // Restaurants: Quality 70%, Confidence 30%
+    total = quality * 0.7 + confidence * 0.3;
   }
 
   return {
     total: Math.round(total * 10) / 10, // Round to 1 decimal
     quality: Math.round(quality * 10) / 10,
-    diversity,
+    persona: persona !== undefined ? Math.round(persona * 10) / 10 : undefined,
+    diversity: diversity !== undefined ? Math.round(diversity * 10) / 10 : undefined,
     confidence: Math.round(confidence * 10) / 10,
-    personaBoost,
   };
 }
 

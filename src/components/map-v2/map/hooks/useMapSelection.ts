@@ -39,6 +39,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
         score: number;
         breakdown?: {
           qualityScore: number;
+          personaScore?: number;
           diversityScore?: number;
           confidenceScore: number;
         };
@@ -46,35 +47,39 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     >();
 
     for (const place of places) {
-      // Process attractions
+      // Process attractions - use stored scores or calculate weighted score
       place.plannedAttractions.forEach((attraction) => {
-        const score =
-          attraction.qualityScore && attraction.diversityScore && attraction.confidenceScore
-            ? (attraction.qualityScore + attraction.diversityScore + attraction.confidenceScore) / 3
-            : 0;
+        // Weighted score: Quality 50%, Persona 10%, Diversity 20%, Confidence 20%
+        const qualityScore = attraction.qualityScore || 0;
+        const personaScore = attraction.personaScore || 0;
+        const diversityScore = attraction.diversityScore || 0;
+        const confidenceScore = attraction.confidenceScore || 0;
+        const score = qualityScore * 0.5 + personaScore * 0.1 + diversityScore * 0.2 + confidenceScore * 0.2;
+
         map.set(attraction.id, {
           attraction,
-          score: Math.round(score),
+          score: Math.round(score * 10) / 10,
           breakdown: {
-            qualityScore: attraction.qualityScore || 0,
-            diversityScore: attraction.diversityScore || 0,
-            confidenceScore: attraction.confidenceScore || 0,
+            qualityScore,
+            personaScore,
+            diversityScore,
+            confidenceScore,
           },
         });
       });
 
-      // Process restaurants
+      // Process restaurants - Quality 70%, Confidence 30%
       place.plannedRestaurants.forEach((restaurant) => {
-        const score =
-          restaurant.qualityScore && restaurant.confidenceScore
-            ? (restaurant.qualityScore + restaurant.confidenceScore) / 2
-            : 0;
+        const qualityScore = restaurant.qualityScore || 0;
+        const confidenceScore = restaurant.confidenceScore || 0;
+        const score = qualityScore * 0.7 + confidenceScore * 0.3;
+
         map.set(restaurant.id, {
           attraction: restaurant,
-          score: Math.round(score),
+          score: Math.round(score * 10) / 10,
           breakdown: {
-            qualityScore: restaurant.qualityScore || 0,
-            confidenceScore: restaurant.confidenceScore || 0,
+            qualityScore,
+            confidenceScore,
           },
         });
       });
@@ -116,6 +121,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
         photos: discoveryItem.photos,
         priceLevel: discoveryItem.itemType === "restaurant" ? discoveryItem.priceLevel : undefined,
         qualityScore: discoveryItem.qualityScore,
+        personaScore: discoveryItem.personaScore,
         diversityScore: discoveryItem.diversityScore,
         confidenceScore: discoveryItem.confidenceScore,
       };
@@ -151,6 +157,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
           discoveryItem.qualityScore !== undefined && discoveryItem.confidenceScore !== undefined
             ? {
                 qualityScore: discoveryItem.qualityScore,
+                personaScore: discoveryItem.personaScore,
                 diversityScore: discoveryItem.diversityScore,
                 confidenceScore: discoveryItem.confidenceScore,
               }
@@ -176,6 +183,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
           discoveryItem.qualityScore !== undefined && discoveryItem.confidenceScore !== undefined
             ? {
                 qualityScore: discoveryItem.qualityScore,
+                personaScore: discoveryItem.personaScore,
                 diversityScore: discoveryItem.diversityScore,
                 confidenceScore: discoveryItem.confidenceScore,
               }

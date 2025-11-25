@@ -36,19 +36,19 @@ const calculateConfidenceScore = (attraction: Attraction): number => {
   return 40;
 };
 
-const calculatePersonaBoost = (attraction: Attraction, persona?: PersonaType): number => {
+const calculatePersonaScore = (attraction: Attraction, persona?: PersonaType): number => {
   const personaKey = personaTypeToKey(persona);
 
-  // Skip boost if no persona or if persona is FOODIE_TRAVELER (restaurants have their own tab)
+  // If no persona or FOODIE_TRAVELER (restaurants have their own tab), return 10 (baseline)
   if (!personaKey || personaKey === "FOODIE_TRAVELER") {
-    return 1.0; // No boost
+    return 10;
   }
 
   const preferredTypes = PERSONA_FILTER_TYPES[personaKey] as readonly string[];
   const hasPreferredType = attraction.types.some((type: string) => (preferredTypes as string[]).includes(type));
 
-  // 30% boost for matches based on persona preferences
-  return hasPreferredType ? 1.3 : 1.0;
+  // 100 points for matches, 10 for non-matches
+  return hasPreferredType ? 100 : 10;
 };
 
 export const scoreAttractions = (attractions: Attraction[], persona?: PersonaType): AttractionScore[] => {
@@ -61,23 +61,22 @@ export const scoreAttractions = (attractions: Attraction[], persona?: PersonaTyp
 
   const scored = attractions.map((attraction) => {
     const qualityScore = calculateQualityScore(attraction);
+    const personaScore = calculatePersonaScore(attraction, persona);
     const diversityScore = calculateDiversityScore(attraction, typeFrequency);
     const confidenceScore = calculateConfidenceScore(attraction);
-    const personaBoost = calculatePersonaBoost(attraction, persona);
 
-    const baseScore =
+    const score =
       qualityScore * ATTRACTIONS_SCORING_CONFIG.weights.quality +
+      personaScore * ATTRACTIONS_SCORING_CONFIG.weights.persona +
       diversityScore * ATTRACTIONS_SCORING_CONFIG.weights.diversity +
       confidenceScore * ATTRACTIONS_SCORING_CONFIG.weights.confidence;
-
-    // Apply persona boost to final score
-    const score = baseScore * personaBoost;
 
     return {
       attraction,
       score: Math.round(score * 10) / 10,
       breakdown: {
         qualityScore: Math.round(qualityScore * 10) / 10,
+        personaScore: Math.round(personaScore * 10) / 10,
         diversityScore: Math.round(diversityScore * 10) / 10,
         confidenceScore: Math.round(confidenceScore * 10) / 10,
       },

@@ -130,9 +130,11 @@ export const AttractionSchema = z
     latitude: LatitudeSchema,
     longitude: LongitudeSchema,
     photos: z.array(PhotoSchema),
-    quality_score: z.number().min(0).max(1).nullable(),
-    diversity_score: z.number().min(0).max(1).nullable(),
-    confidence_score: z.number().min(0).max(1).nullable(),
+    score: z.number().min(0).max(100).nullable(), // Total calculated score (0-100)
+    quality_score: z.number().min(0).max(100).nullable(),
+    persona_score: z.number().min(0).max(100).nullable(),
+    diversity_score: z.number().min(0).max(100).nullable(),
+    confidence_score: z.number().min(0).max(100).nullable(),
     scores_explanation: ScoreExplanationSchema.optional(), // Optional transparency
   })
   .transform((data) => ({
@@ -193,9 +195,11 @@ export const RestaurantSchema = z
     latitude: LatitudeSchema,
     longitude: LongitudeSchema,
     photos: z.array(PhotoSchema),
-    quality_score: z.number().min(0).max(1).nullable(),
-    diversity_score: z.number().min(0).max(1).nullable(),
-    confidence_score: z.number().min(0).max(1).nullable(),
+    score: z.number().min(0).max(100).nullable(), // Total calculated score (0-100)
+    quality_score: z.number().min(0).max(100).nullable(),
+    persona_score: z.number().min(0).max(100).nullable(),
+    diversity_score: z.number().min(0).max(100).nullable(),
+    confidence_score: z.number().min(0).max(100).nullable(),
   })
   .transform((data) => ({
     ...data,
@@ -389,6 +393,7 @@ const SuggestionSchema = z
         breakdown: z
           .object({
             qualityScore: z.number(),
+            personaScore: z.number().optional(),
             diversityScore: z.number().optional(),
             confidenceScore: z.number(),
           })

@@ -25,7 +25,7 @@ const validateRequest = (body: unknown) =>
  * Converts nested location and branded types to flat DTO structure
  */
 const attractionToDTO = (scored: import("@/domain/map/models/AttractionScore").AttractionScore) => {
-  const { attraction, breakdown } = scored;
+  const { attraction, score, breakdown } = scored;
   return {
     id: String(attraction.id), // Unwrap PlaceId branded type
     google_place_id: "", // Not available in domain model
@@ -38,7 +38,9 @@ const attractionToDTO = (scored: import("@/domain/map/models/AttractionScore").A
     latitude: Number(attraction.location.lat), // Unwrap Latitude and flatten
     longitude: Number(attraction.location.lng), // Unwrap Longitude and flatten
     photos: attraction.photos || [],
+    score: score, // Total calculated score
     quality_score: breakdown.qualityScore,
+    persona_score: breakdown.personaScore,
     diversity_score: breakdown.diversityScore,
     confidence_score: breakdown.confidenceScore,
   };

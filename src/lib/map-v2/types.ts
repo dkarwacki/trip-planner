@@ -54,6 +54,7 @@ interface BaseDiscoveryItemViewModel {
   // Score fields
   score: number;
   qualityScore?: number;
+  personaScore?: number;
   diversityScore?: number;
   confidenceScore?: number;
   scoresExplanation?: string; // Stringified JSON of score breakdown
@@ -108,6 +109,7 @@ export interface PlannedPOIViewModel {
 
   // Scores (optional, not always available in trip data)
   qualityScore?: number;
+  personaScore?: number;
   diversityScore?: number;
   confidenceScore?: number;
 }

@@ -93,7 +93,7 @@ The application serves eight primary personas:
 - Place ID and coordinates are required to display the place on the map and discover nearby attractions
 - Error messages displayed if validation fails or place ID and coordinates cannot be obtained
 - Failed places are not added to itinerary
-- Persona-influenced recommendations apply to place and destination suggestions only
+- Persona influences both place suggestions in chat and attraction scoring on map
 
 ### 3.5 Itinerary Building
 
@@ -112,8 +112,8 @@ The application serves eight primary personas:
 - Places from itinerary appear in order on the map
 - Discovery of local attractions and restaurants near the starting point places from chat
 - This is where users discover why certain places were suggested - exploring the rich surrounding area of attractions and restaurants
-- Quality/diversity/confidence scoring for attractions and restaurants
-- Discovery is personalized based on user's travel style preferences (e.g., Art Enthusiast gets more museum suggestions)
+- Quality/persona/diversity/confidence scoring for attractions and quality/confidence scoring for restaurants
+- Discovery is personalized based on user's travel style preferences
 - Advanced Conversational AI on the map for refining suggestions and finding specific types of places
 - Visual score badges with explanations for attractions and restaurants
 - This is where detailed planning of attractions and restaurants happens
@@ -222,8 +222,9 @@ The application serves eight primary personas:
   - Text input field accepts natural language queries
   - AI responds with places and destinations (cities, landmarks, beaches, trails, etc.)
   - Places are suggested as starting points or exploration hubs chosen for their nearby attraction potential
-  - Attractions and restaurants are not suggested in chat
-  - If asked about attractions or restaurants, AI directs user to map interface
+- Attractions and restaurants are not suggested in chat
+- If asked about attractions or restaurants, AI directs user to map interface
+- Persona preferences influence attraction scoring on map
   - AI responds with concise, actionable lists
   - Responses reflect selected personas
   - Chat history is maintained during session
@@ -362,7 +363,8 @@ The application serves eight primary personas:
 - Description: As a user, I want to see quality scores for attractions and restaurants on the map to make informed decisions
 - Acceptance Criteria:
   - Score badges displayed for each attraction and restaurant
-  - Scores show quality, diversity, and confidence metrics
+  - Attraction scores show quality, persona, diversity, and confidence metrics
+  - Restaurant scores show quality and confidence metrics
   - Click score for detailed explanation
   - Scores only appear in map interface, not in chat
   - Scores apply to attractions and restaurants, not places

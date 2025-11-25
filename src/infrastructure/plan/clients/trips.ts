@@ -55,6 +55,7 @@ interface TripDetailResponse {
         attributions: string[];
       }[];
       quality_score: number | null;
+      persona_score: number | null;
       diversity_score: number | null;
       confidence_score: number | null;
     }[];
@@ -77,6 +78,7 @@ interface TripDetailResponse {
         attributions: string[];
       }[];
       quality_score: number | null;
+      persona_score: number | null;
       diversity_score: number | null;
       confidence_score: number | null;
     }[];

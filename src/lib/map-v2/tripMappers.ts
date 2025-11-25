@@ -54,6 +54,7 @@ export function poiToDAO(poi: PlannedPOIViewModel): AttractionDAO {
     photos: poi.photos?.map(placePhotoToDAO),
     editorialSummary: undefined,
     qualityScore: poi.qualityScore,
+    personaScore: poi.personaScore,
     diversityScore: poi.diversityScore,
     confidenceScore: poi.confidenceScore,
   };
@@ -73,6 +74,7 @@ export function poiFromDAO(dao: AttractionDAO): PlannedPOIViewModel {
     priceLevel: dao.priceLevel,
     photos: dao.photos?.map(placePhotoFromDAO),
     qualityScore: dao.qualityScore,
+    personaScore: dao.personaScore,
     diversityScore: dao.diversityScore,
     confidenceScore: dao.confidenceScore,
   };
@@ -144,6 +146,7 @@ function poiDTOToAttractionDAO(poi: AttractionOnlyDTO | RestaurantDTO): Attracti
     photos: poi.photos?.map(placePhotoFromDAO),
     editorialSummary: undefined,
     qualityScore: poi.quality_score ?? undefined,
+    personaScore: poi.persona_score ?? undefined,
     diversityScore: poi.diversity_score ?? undefined,
     confidenceScore: poi.confidence_score ?? undefined,
   };

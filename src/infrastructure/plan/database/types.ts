@@ -69,6 +69,7 @@ export interface AttractionDAO {
   photos?: PlacePhotoDAO[];
   editorialSummary?: string;
   qualityScore?: number;
+  personaScore?: number;
   diversityScore?: number;
   confidenceScore?: number;
 }

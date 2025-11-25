@@ -127,9 +127,9 @@ export const SuggestionCard = React.memo(
               {suggestion.score !== null && suggestion.score > 0 && (
                 <div
                   className={`absolute top-2 right-2 px-2 py-1 rounded-md text-sm font-bold shadow-lg ${
-                    suggestion.score >= 90
+                    suggestion.score >= 70
                       ? "bg-green-600 text-white"
-                      : suggestion.score >= 80
+                      : suggestion.score >= 60
                         ? "bg-blue-600 text-white"
                         : "bg-gray-600 text-white"
                   }`}

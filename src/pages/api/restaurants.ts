@@ -25,7 +25,7 @@ const validateRequest = (body: unknown) =>
  * Restaurants use same AttractionScore structure as attractions
  */
 const restaurantToDTO = (scored: import("@/domain/map/models/AttractionScore").AttractionScore) => {
-  const { attraction, breakdown } = scored;
+  const { attraction, score, breakdown } = scored;
   return {
     id: String(attraction.id),
     google_place_id: "",
@@ -39,7 +39,9 @@ const restaurantToDTO = (scored: import("@/domain/map/models/AttractionScore").A
     latitude: Number(attraction.location.lat),
     longitude: Number(attraction.location.lng),
     photos: attraction.photos || [],
+    score: score, // Total calculated score
     quality_score: breakdown.qualityScore,
+    persona_score: breakdown.personaScore,
     diversity_score: breakdown.diversityScore,
     confidence_score: breakdown.confidenceScore,
   };

@@ -34,6 +34,7 @@ export const scoreRestaurants = (restaurants: Attraction[]): AttractionScore[] =
       score: Math.round(score * 10) / 10,
       breakdown: {
         qualityScore: Math.round(qualityScore * 10) / 10,
+        personaScore: 0,
         diversityScore: 0,
         confidenceScore: Math.round(confidenceScore * 10) / 10,
       },
