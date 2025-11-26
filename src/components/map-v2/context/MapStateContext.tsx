@@ -3,8 +3,7 @@
  * Handles trip data loading and auto-save setup
  */
 
-// @refresh reset
-import React, { createContext, useEffect, type ReactNode } from "react";
+import { createContext, useEffect, type ReactNode } from "react";
 import { useMapStore } from "../stores/mapStore";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { plannedPlacesFromDAOs, tripPlaceDTOsToPlaceDAOs } from "@/lib/map-v2/tripMappers";
