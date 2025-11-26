@@ -101,6 +101,9 @@ export function ScoreBadge({
     return null;
   }
 
+  // Detect if persona scoring was excluded based on breakdown structure
+  const excludePersona = breakdown?.personaScore === undefined;
+
   const sizeClasses = {
     sm: "px-2 py-0.5 text-xs",
     md: "px-2.5 py-1 text-sm",
@@ -126,7 +129,7 @@ export function ScoreBadge({
         onMouseLeave={handleHide}
       >
         {showExplanation ? (
-          <ScoreExplanation isAttraction={isAttraction} />
+          <ScoreExplanation isAttraction={isAttraction} excludePersona={excludePersona} />
         ) : (
           <>
             <div className="mb-2 flex items-center justify-between border-b border-border pb-2">

@@ -1,7 +1,8 @@
 import type { Attraction, AttractionScore } from "@/domain/map/models";
-import { ATTRACTIONS_SCORING_CONFIG } from "./config";
+import { ATTRACTIONS_SCORING_CONFIG, getAttractionScoringWeights } from "./config";
 import { PERSONA_FILTER_TYPES } from "@/infrastructure/common/google-maps/constants";
 import type { PersonaType } from "@/domain/plan/models";
+import { PERSONA_TYPES } from "@/domain/plan/models/Persona";
 import { personaTypeToKey } from "./utils";
 
 const calculateQualityScore = (attraction: Attraction): number => {
@@ -51,7 +52,20 @@ const calculatePersonaScore = (attraction: Attraction, persona?: PersonaType): n
   return hasPreferredType ? 100 : 10;
 };
 
-export const scoreAttractions = (attractions: Attraction[], persona?: PersonaType): AttractionScore[] => {
+const shouldExcludePersonaScoring = (personas: PersonaType[]): boolean => {
+  return personas.includes(PERSONA_TYPES.GENERAL_TOURIST);
+};
+
+const calculateBestPersonaMatch = (attraction: Attraction, personas: PersonaType[]): number => {
+  if (personas.length === 0) return 10;
+
+  // Try each persona and return highest score
+  const scores = personas.map((persona) => calculatePersonaScore(attraction, persona));
+
+  return Math.max(...scores);
+};
+
+export const scoreAttractions = (attractions: Attraction[], personas: PersonaType[]): AttractionScore[] => {
   const typeFrequency = new Map<string, number>();
   attractions.forEach((attr) => {
     attr.types.forEach((type: string) => {
@@ -59,27 +73,37 @@ export const scoreAttractions = (attractions: Attraction[], persona?: PersonaTyp
     });
   });
 
+  const excludePersona = shouldExcludePersonaScoring(personas);
+  const weights = getAttractionScoringWeights(excludePersona);
+
   const scored = attractions.map((attraction) => {
     const qualityScore = calculateQualityScore(attraction);
-    const personaScore = calculatePersonaScore(attraction, persona);
+    const personaScore = excludePersona ? 0 : calculateBestPersonaMatch(attraction, personas);
     const diversityScore = calculateDiversityScore(attraction, typeFrequency);
     const confidenceScore = calculateConfidenceScore(attraction);
 
     const score =
-      qualityScore * ATTRACTIONS_SCORING_CONFIG.weights.quality +
-      personaScore * ATTRACTIONS_SCORING_CONFIG.weights.persona +
-      diversityScore * ATTRACTIONS_SCORING_CONFIG.weights.diversity +
-      confidenceScore * ATTRACTIONS_SCORING_CONFIG.weights.confidence;
+      qualityScore * weights.quality +
+      personaScore * weights.persona +
+      diversityScore * weights.diversity +
+      confidenceScore * weights.confidence;
 
     return {
       attraction,
       score: Math.round(score * 10) / 10,
-      breakdown: {
-        qualityScore: Math.round(qualityScore * 10) / 10,
-        personaScore: Math.round(personaScore * 10) / 10,
-        diversityScore: Math.round(diversityScore * 10) / 10,
-        confidenceScore: Math.round(confidenceScore * 10) / 10,
-      },
+      breakdown: excludePersona
+        ? {
+            qualityScore: Math.round(qualityScore * 10) / 10,
+            // personaScore omitted entirely
+            diversityScore: Math.round(diversityScore * 10) / 10,
+            confidenceScore: Math.round(confidenceScore * 10) / 10,
+          }
+        : {
+            qualityScore: Math.round(qualityScore * 10) / 10,
+            personaScore: Math.round(personaScore * 10) / 10,
+            diversityScore: Math.round(diversityScore * 10) / 10,
+            confidenceScore: Math.round(confidenceScore * 10) / 10,
+          },
     };
   });
 

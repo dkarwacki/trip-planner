@@ -9,6 +9,6 @@ export const getTopAttractions = (query: GetAttractionsQuery) =>
     const cacheKey = Data.struct({ lat: query.lat, lng: query.lng, radius: query.radius });
     const attractions = yield* cache.get(cacheKey);
 
-    const scored = scoreAttractions(attractions);
+    const scored = scoreAttractions(attractions, query.personas);
     return scored.slice(0, query.limit);
   });

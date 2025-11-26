@@ -5,7 +5,7 @@ export interface AttractionScore {
   score: number;
   breakdown: {
     qualityScore: number;
-    personaScore: number;
+    personaScore?: number;
     diversityScore: number;
     confidenceScore: number;
   };

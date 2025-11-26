@@ -6,6 +6,9 @@ import { ValidationError } from "@/infrastructure/common/http/validation";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
 import { UnexpectedError } from "@/domain/common/errors";
+import { UserPersonasRepository } from "@/infrastructure/plan/database";
+import { PERSONA_TYPES, PersonaType } from "@/domain/plan/models";
+import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -40,7 +43,7 @@ const attractionToDTO = (scored: import("@/domain/map/models/AttractionScore").A
     photos: attraction.photos || [],
     score: score, // Total calculated score
     quality_score: breakdown.qualityScore,
-    persona_score: breakdown.personaScore,
+    persona_score: breakdown.personaScore ?? null, // null if undefined
     diversity_score: breakdown.diversityScore,
     confidence_score: breakdown.confidenceScore,
   };
@@ -60,7 +63,20 @@ export const POST: APIRoute = async ({ request }) => {
 
   const program = Effect.gen(function* () {
     const dto = yield* validateRequest(body);
-    const query = toDomain.getAttractions(dto);
+
+    // Fetch user personas from database
+    const personasRepo = yield* UserPersonasRepository;
+    const userPersonasData = yield* personasRepo.find(DEV_USER_ID);
+
+    // Use DB personas or fallback to general_tourist
+    const personas = userPersonasData?.personaTypes.map((p) => PersonaType(p)) ?? [PERSONA_TYPES.GENERAL_TOURIST];
+
+    // Map to domain with personas
+    const query = {
+      ...toDomain.getAttractions(dto),
+      personas, // Add personas to query
+    };
+
     const domainAttractions = yield* getTopAttractions(query);
 
     // Convert domain objects to DTOs

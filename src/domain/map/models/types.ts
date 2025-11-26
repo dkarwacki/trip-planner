@@ -12,6 +12,7 @@
  */
 
 import type { Latitude, Longitude, PlacePhoto } from "@/domain/common/models";
+import type { PersonaType } from "@/domain/plan/models";
 
 /**
  * Conversation message for AI context
@@ -98,6 +99,7 @@ export interface GetAttractionsQuery {
   lng: Longitude;
   radius: number;
   limit: number;
+  personas: PersonaType[];
 }
 
 /**

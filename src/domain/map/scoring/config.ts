@@ -73,3 +73,20 @@ export const RESTAURANTS_SCORING_CONFIG = {
     },
   },
 } as const;
+
+/**
+ * Calculate scoring weights based on whether persona scoring is excluded
+ * When general_tourist is present, persona weight (10%) is moved to quality
+ */
+export const getAttractionScoringWeights = (excludePersona: boolean) => {
+  if (excludePersona) {
+    return {
+      quality: 0.6, // 50% → 60% (absorb persona weight)
+      persona: 0, // 10% → 0%
+      diversity: 0.2, // 20% → 20%
+      confidence: 0.2, // 20% → 20%
+    };
+  }
+
+  return ATTRACTIONS_SCORING_CONFIG.weights;
+};

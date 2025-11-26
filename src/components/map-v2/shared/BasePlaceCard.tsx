@@ -2,7 +2,7 @@ import React from "react";
 import { MapPin, Utensils, Landmark, CheckCircle2, Plus, Check, Loader2, X, Map } from "lucide-react";
 import { LazyImage } from "./LazyImage";
 import { ScoreBadge } from "./ScoreBadge";
-import { getPlaceTypeCategory } from "@/lib/map-v2/placeTypeUtils";
+import { getPlaceTypeCategory, isAttraction } from "@/lib/map-v2/placeTypeUtils";
 
 export interface BasePlaceCardProps {
   place: {
@@ -146,7 +146,13 @@ export function BasePlaceCard({
         {/* Score Badge - Top Right (Shifted if Close button exists) */}
         {showScore && score !== undefined && score > 0 && (
           <div className={`absolute top-2 ${onClose ? "right-12" : "right-2"}`}>
-            <ScoreBadge score={score} breakdown={breakdown} size="sm" showTooltip={showScoreTooltip} />
+            <ScoreBadge
+              score={score}
+              breakdown={breakdown}
+              size="sm"
+              showTooltip={showScoreTooltip}
+              isAttraction={isAttraction(place.types || [])}
+            />
           </div>
         )}
       </div>

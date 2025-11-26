@@ -1,13 +1,19 @@
 import * as React from "react";
-import { ATTRACTIONS_SCORING_CONFIG, RESTAURANTS_SCORING_CONFIG } from "@/domain/map/scoring";
+import {
+  ATTRACTIONS_SCORING_CONFIG,
+  RESTAURANTS_SCORING_CONFIG,
+  getAttractionScoringWeights,
+} from "@/domain/map/scoring";
 
 interface ScoreExplanationProps {
   type: "attractions" | "restaurants";
+  excludePersona?: boolean;
 }
 
-export function ScoreExplanation({ type }: ScoreExplanationProps) {
+export function ScoreExplanation({ type, excludePersona = false }: ScoreExplanationProps) {
   const config = type === "attractions" ? ATTRACTIONS_SCORING_CONFIG : RESTAURANTS_SCORING_CONFIG;
-  const { explanations, weights } = config;
+  const weights = type === "attractions" ? getAttractionScoringWeights(excludePersona) : config.weights;
+  const { explanations } = config;
 
   return (
     <div className="space-y-3 text-xs">
@@ -27,7 +33,7 @@ export function ScoreExplanation({ type }: ScoreExplanationProps) {
           </ul>
         </div>
 
-        {"persona" in explanations && (
+        {type === "attractions" && !excludePersona && (
           <div>
             <p className="font-semibold mb-1">
               {explanations.persona.title} ({explanations.persona.weight})
@@ -40,7 +46,7 @@ export function ScoreExplanation({ type }: ScoreExplanationProps) {
           </div>
         )}
 
-        {"diversity" in explanations && (
+        {type === "attractions" && (
           <div>
             <p className="font-semibold mb-1">
               {explanations.diversity.title} ({explanations.diversity.weight})
@@ -67,8 +73,8 @@ export function ScoreExplanation({ type }: ScoreExplanationProps) {
         <div className="pt-1 border-t border-border">
           <p className="text-muted-foreground italic">
             Overall Score = {Math.round(weights.quality * 100)}% Quality +{" "}
-            {"persona" in weights && `${Math.round(weights.persona * 100)}% Persona + `}
-            {"diversity" in weights && `${Math.round(weights.diversity * 100)}% Diversity + `}
+            {"persona" in weights && weights.persona > 0 && `${Math.round(weights.persona * 100)}% Persona + `}
+            {type === "attractions" && `${Math.round(weights.diversity * 100)}% Diversity + `}
             {Math.round(weights.confidence * 100)}% Confidence
           </p>
         </div>

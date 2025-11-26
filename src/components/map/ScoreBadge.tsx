@@ -10,7 +10,7 @@ interface ScoreBadgeProps {
   score: number;
   breakdown: {
     qualityScore: number;
-    personaScore: number;
+    personaScore?: number;
     diversityScore: number;
     confidenceScore: number;
   };
@@ -20,6 +20,7 @@ interface ScoreBadgeProps {
 export function ScoreBadge({ score, breakdown, type }: ScoreBadgeProps) {
   const [showExplanation, setShowExplanation] = useState(false);
   const isHighScore = score > HIGH_SCORE_THRESHOLD;
+  const excludePersona = breakdown.personaScore === undefined;
 
   return (
     <TooltipProvider disableHoverableContent={false}>
@@ -42,7 +43,7 @@ export function ScoreBadge({ score, breakdown, type }: ScoreBadgeProps) {
         </TooltipTrigger>
         <TooltipContent side="left" className="w-64">
           {showExplanation ? (
-            <ScoreExplanation type={type} />
+            <ScoreExplanation type={type} excludePersona={excludePersona} />
           ) : (
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 mb-2">
@@ -61,7 +62,7 @@ export function ScoreBadge({ score, breakdown, type }: ScoreBadgeProps) {
                 <span>Quality Score:</span>
                 <span className="font-medium">{breakdown.qualityScore}</span>
               </div>
-              {type === "attractions" && (
+              {type === "attractions" && breakdown.personaScore !== undefined && (
                 <div className="flex justify-between text-xs">
                   <span>Persona Score:</span>
                   <span className="font-medium">{breakdown.personaScore}</span>

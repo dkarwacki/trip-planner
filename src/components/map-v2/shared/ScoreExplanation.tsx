@@ -3,6 +3,8 @@ import * as React from "react";
 interface ScoreExplanationProps {
   /** Whether this is for an attraction (has diversity) or restaurant */
   isAttraction?: boolean;
+  /** Whether to exclude persona scoring (general_tourist present) */
+  excludePersona?: boolean;
 }
 
 /**
@@ -11,8 +13,8 @@ interface ScoreExplanationProps {
  * Shows scoring components, weights, and calculation formula
  * Used in tooltip when hovering over the help icon in ScoreBadge
  */
-export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps) {
-  const qualityWeight = isAttraction ? "50%" : "70%";
+export function ScoreExplanation({ isAttraction = true, excludePersona = false }: ScoreExplanationProps) {
+  const qualityWeight = excludePersona ? "60%" : isAttraction ? "50%" : "70%";
   const personaWeight = "10%";
   const diversityWeight = "20%";
   const confidenceWeight = isAttraction ? "20%" : "30%";
@@ -35,7 +37,7 @@ export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps)
         </div>
 
         {/* Persona Score (attractions only) */}
-        {isAttraction && (
+        {isAttraction && !excludePersona && (
           <div>
             <p className="font-semibold mb-1">Persona Score ({personaWeight} weight)</p>
             <ul className="space-y-0.5 text-muted-foreground">
@@ -71,8 +73,8 @@ export function ScoreExplanation({ isAttraction = true }: ScoreExplanationProps)
         {/* Formula */}
         <div className="pt-1 border-t border-border">
           <p className="text-muted-foreground italic">
-            Overall Score = {qualityWeight} Quality +{" "}
-            {isAttraction && `${personaWeight} Persona + ${diversityWeight} Diversity + `}
+            Overall Score = {qualityWeight} Quality + {isAttraction && !excludePersona && `${personaWeight} Persona + `}
+            {isAttraction && `${diversityWeight} Diversity + `}
             {confidenceWeight} Confidence
           </p>
         </div>
