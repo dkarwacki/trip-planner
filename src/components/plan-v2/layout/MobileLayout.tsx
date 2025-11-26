@@ -81,6 +81,13 @@ export function MobileLayout({ conversationId }: LayoutProps) {
   } = useChatMessages({
     conversationId: activeConversationId,
     onCreateConversation: async (messages, personas) => {
+      // Safety check: ensure there's at least one user message
+      const hasUserMessage = messages.some((msg) => msg.role === "user");
+      if (!hasUserMessage) {
+        // Cannot create conversation without user messages - return null
+        return null;
+      }
+
       // Generate title based on itinerary or default
       let title = "Trip to ...";
       if (places.length > 0) {
@@ -149,11 +156,7 @@ export function MobileLayout({ conversationId }: LayoutProps) {
     // 1. Places array is empty
     // 2. Current title starts with "Trip to " (auto-generated, not custom)
     // 3. Current title is not already "Trip to ..."
-    if (
-      places.length === 0 &&
-      currentConv.title.startsWith("Trip to ") &&
-      currentConv.title !== "Trip to ..."
-    ) {
+    if (places.length === 0 && currentConv.title.startsWith("Trip to ") && currentConv.title !== "Trip to ...") {
       const newTitle = "Trip to ...";
 
       // Prevent infinite loops

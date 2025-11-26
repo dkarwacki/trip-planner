@@ -256,10 +256,13 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
       if (isFinite(lat) && isFinite(lng)) {
         map.panTo({ lat, lng });
 
-        // Optionally zoom in if too far out
+        // Zoom to level 14 to match attraction click behavior
+        // Use setTimeout to ensure panTo completes before zooming
         const currentZoom = map.getZoom() || 0;
         if (currentZoom < 14) {
-          map.setZoom(14);
+          setTimeout(() => {
+            map.setZoom(14);
+          }, 100);
         }
       }
     }

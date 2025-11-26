@@ -131,6 +131,13 @@ export function useChatMessages(options: UseChatMessagesOptions = {}): UseChatMe
         try {
           // If this is the first message pair and no conversation exists, create one
           if (needsConversationCreation.current && onCreateConversation) {
+            // Safety check: ensure there's at least one user message before creating conversation
+            const hasUserMessage = updatedMessages.some((msg) => msg.role === "user");
+            if (!hasUserMessage) {
+              // Cannot create conversation without user messages - skip creation
+              return;
+            }
+
             // Signal that conversation creation is in progress to prevent auto-save race
             // MUST be called BEFORE setMessages to prevent auto-save from running
             onCreationStateChange?.(true);
@@ -172,7 +179,7 @@ export function useChatMessages(options: UseChatMessagesOptions = {}): UseChatMe
         setIsLoading(false);
       }
     },
-    [messages, conversationId, onCreateConversation, onSaveMessages]
+    [messages, conversationId, onCreateConversation, onSaveMessages, onCreationStateChange]
   );
 
   const clearMessages = useCallback(() => {
