@@ -283,8 +283,13 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     }
   }, [map, selectedPlaceId, places, centerRequestTimestamp]);
 
-  // Close card when marker moves outside viewport
+  // Close card when marker moves outside viewport (Desktop only)
+  // Mobile cards are fullscreen and don't need this check
   useEffect(() => {
+    // Skip on mobile - this prevents race conditions when switching tabs
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) return;
+
     if (!expandedCardPlaceId || !expandedAttraction) return;
 
     const lat = expandedAttraction.attraction.latitude;
