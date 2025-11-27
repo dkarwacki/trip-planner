@@ -48,7 +48,9 @@ export const DiscoveryMarker = React.memo(
               flex items-center justify-center w-7 h-7 rounded-full shadow-lg border-2 transition-colors
               ${
                 isSelected
-                  ? "bg-blue-600 border-white text-white"
+                  ? isRestaurant
+                    ? "bg-orange-500 border-white text-white"
+                    : "bg-blue-600 border-white text-white"
                   : isRestaurant
                     ? "bg-white border-orange-500 text-orange-600 hover:bg-orange-50"
                     : "bg-white border-blue-600 text-blue-600 hover:bg-blue-50"
@@ -58,8 +60,14 @@ export const DiscoveryMarker = React.memo(
             {isRestaurant ? <Utensils className="w-4 h-4" /> : <Landmark className="w-4 h-4" />}
           </div>
 
-          {/* Pulse effect for selected marker */}
-          {isSelected && <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-30 -z-10" />}
+          {/* Pulse effect for selected marker - orange for restaurants, blue for attractions */}
+          {isSelected && (
+            <div
+              className={`absolute inset-0 rounded-full animate-ping opacity-30 -z-10 ${
+                isRestaurant ? "bg-orange-500" : "bg-blue-400"
+              }`}
+            />
+          )}
         </div>
       </AdvancedMarker>
     );

@@ -19,7 +19,7 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({ activeTab, onTabChange, planItemCount = 0 }: MobileBottomNavProps) {
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-[60] border-t border-gray-200 bg-white"
+      className="fixed bottom-0 left-0 right-0 z-[100] border-t border-gray-200 bg-white"
       style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
     >
       <div className="flex h-[60px] items-center justify-around">

@@ -12,6 +12,7 @@ import { ExpandedPlaceCard } from "./ExpandedPlaceCard";
 import { useMapState } from "./hooks/useMapState";
 import { useMapSearch } from "./hooks/useMapSearch";
 import { useMapSelection } from "./hooks/useMapSelection";
+import { useMapStore } from "../stores/mapStore";
 
 /**
  * Interactive layer component for markers, search button, and map state
@@ -20,6 +21,9 @@ import { useMapSelection } from "./hooks/useMapSelection";
 export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.maps.Map) => void }) {
   // 1. Map State Hook
   const { map, mapCenter, mapZoom, viewportSize, isDesktop } = useMapState();
+
+  // Get setSelectedPlace from useMapStore to clear hub selection
+  const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
 
   // 2. Search Logic Hook
   const {
@@ -110,6 +114,21 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
     }
   }, [map, onMapLoad]);
 
+  // Close card on map click (Mobile only, since desktop has backdrop)
+  useEffect(() => {
+    if (!map || isDesktop) return;
+
+    const listener = map.addListener("click", () => {
+      if (expandedCardPlaceId) {
+        closeCard();
+      }
+    });
+
+    return () => {
+      google.maps.event.removeListener(listener);
+    };
+  }, [map, isDesktop, expandedCardPlaceId, closeCard]);
+
   // Filter discovery results to exclude items already in the plan
   // Memoized to prevent creating new array on every render
   const filteredDiscoveryResults = useMemo(
@@ -137,7 +156,10 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
           places={filteredDiscoveryResults}
           hoveredMarkerId={hoveredMarkerId}
           selectedPlaceId={selectedPlaceId}
+          highlightedPlaceId={expandedCardPlaceId}
           onMarkerClick={(id) => {
+            // Clear hub marker selection when clicking discovery marker
+            setSelectedPlace(null);
             setHighlightedPlace(id);
             setExpandedCard(id);
           }}
@@ -176,8 +198,8 @@ export function MapInteractiveLayer({ onMapLoad }: { onMapLoad?: (map: google.ma
       {/* Adjust Location Card (when adjusting) */}
       {isAdjustingLocation && <AdjustLocationCard onConfirm={handleFinishAdjustment} onCancel={handleCancelDraft} />}
 
-      {/* Map Backdrop (when card is expanded) */}
-      <MapBackdrop isVisible={!!expandedCardPlaceId} onClick={closeCard} />
+      {/* Map Backdrop (when card is expanded) - Desktop only */}
+      {isDesktop && <MapBackdrop isVisible={!!expandedCardPlaceId} onClick={closeCard} />}
 
       {/* Hover Preview Card (Desktop only) - Replaces HoverMiniCard with ExpandedPlaceCard logic */}
       {isDesktop && hoveredAttraction && !expandedCardPlaceId && (

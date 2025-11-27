@@ -73,11 +73,13 @@ export const ExpandedPlaceCard = React.memo(
     const getCardPosition = () => {
       if (isMobile) {
         return {
-          bottom: "0",
+          bottom: "calc(76px + env(safe-area-inset-bottom))", // Above bottom nav (60px + 16px padding)
           left: "0",
           right: "0",
-          maxHeight: "80vh",
+          maxHeight: "85vh", // Increased from 80vh
+          height: "auto",
           borderRadius: "1.5rem 1.5rem 0 0",
+          pointerEvents: "auto" as React.CSSProperties["pointerEvents"], // Ensure card is interactive
         };
       }
 
@@ -152,10 +154,10 @@ export const ExpandedPlaceCard = React.memo(
 
     return (
       <>
-        {/* Backdrop for mobile */}
-        {isMobile && (
+        {/* Backdrop for mobile - REMOVED to allow map interaction */}
+        {/* {isMobile && (
           <div
-            className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+            className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-[55] transition-opacity duration-300 ${
               isVisible ? "opacity-100" : "opacity-0"
             }`}
             onClick={onClose}
@@ -166,15 +168,22 @@ export const ExpandedPlaceCard = React.memo(
             tabIndex={0}
             aria-label="Close details"
           />
-        )}
+        )} */}
 
         <div
           ref={cardRef}
           className={`
-            fixed bg-white shadow-2xl z-50 overflow-hidden flex flex-col
-            transition-all duration-50 ease-out
-            ${isMobile ? "transform translate-y-full" : "rounded-xl border border-gray-200 opacity-0 scale-95"}
-            ${isVisible ? (isMobile ? "translate-y-0" : "opacity-100 scale-100") : ""}
+            fixed bg-white shadow-2xl z-[70] overflow-hidden flex flex-col
+            transition-all duration-300 ease-out
+            ${
+              isMobile
+                ? isVisible
+                  ? "translate-y-0"
+                  : "translate-y-full"
+                : isVisible
+                  ? "opacity-100 scale-100 rounded-xl border border-gray-200"
+                  : "opacity-0 scale-95 rounded-xl border border-gray-200"
+            }
           `}
           style={getCardPosition()}
           role="dialog"

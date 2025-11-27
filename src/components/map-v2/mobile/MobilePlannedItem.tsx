@@ -16,8 +16,10 @@ interface MobilePlannedItemProps {
 
 export function MobilePlannedItem({ item, category }: MobilePlannedItemProps) {
   const removePlace = useMapStore((state) => state.removePlace);
-  const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
+
   const setMobileTab = useMapStore((state) => state.setMobileTab);
+  const setExpandedCard = useMapStore((state) => state.setExpandedCard);
+  const setHighlightedPlace = useMapStore((state) => state.setHighlightedPlace);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Swipe-to-delete hook
@@ -34,7 +36,9 @@ export function MobilePlannedItem({ item, category }: MobilePlannedItemProps) {
       return;
     }
     // Pan map to location and switch to Map tab
-    setSelectedPlace(item.id);
+    // We want to show the card, so we use setExpandedCard
+    setHighlightedPlace(item.id);
+    setExpandedCard(item.id);
     setMobileTab("map");
   };
 

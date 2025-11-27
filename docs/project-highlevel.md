@@ -1,8 +1,8 @@
-# TripGenie - AI-Powered Trip Planner
+# TripPlanner - AI-Powered Trip Planner
 
 ## Problem
 
-Planowanie angażujących wycieczek jest trudne i czasochłonne. TripGenie wykorzystuje AI do personalizowanych rekomendacji miejsc zgodnych z preferencjami użytkownika, umożliwiając łatwe tworzenie szczegółowych planów podróży.
+Planowanie angażujących wycieczek jest trudne i czasochłonne. TripPlanner wykorzystuje AI do personalizowanych rekomendacji miejsc zgodnych z preferencjami użytkownika, umożliwiając łatwe tworzenie szczegółowych planów podróży.
 
 ## Rozwiązanie
 

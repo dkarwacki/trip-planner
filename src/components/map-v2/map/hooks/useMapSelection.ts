@@ -211,33 +211,40 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
 
     // Find the attraction in discovery results (Discover/AI mode) or planned items (Plan mode)
     const discoveryItem = filteredDiscoveryResults.find((item) => item.id === expandedCardPlaceId);
+    let targetLocation: { lat: number; lng: number } | null = null;
 
     if (discoveryItem) {
-      map.panTo({ lat: discoveryItem.latitude, lng: discoveryItem.longitude });
+      targetLocation = { lat: discoveryItem.latitude, lng: discoveryItem.longitude };
+    } else {
+      // If not found in filtered results, search in planned items
+      for (const place of places) {
+        const found =
+          place.plannedAttractions.find((a) => a.id === expandedCardPlaceId) ||
+          place.plannedRestaurants.find((r) => r.id === expandedCardPlaceId);
+
+        if (found) {
+          targetLocation = { lat: found.latitude, lng: found.longitude };
+          break;
+        }
+      }
+    }
+
+    if (targetLocation) {
+      map.panTo(targetLocation);
+
+      // Mobile adjustment: Offset map so marker is at top 1/4 of screen
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        const offset = window.innerHeight * 0.25;
+        setTimeout(() => {
+          map.panBy(0, offset);
+        }, 100);
+      }
 
       // Optionally zoom in if too far out
       const currentZoom = map.getZoom() || 0;
       if (currentZoom < 14) {
         map.setZoom(14);
-      }
-      return;
-    }
-
-    // If not found in filtered results, search in planned items
-    for (const place of places) {
-      const found =
-        place.plannedAttractions.find((a) => a.id === expandedCardPlaceId) ||
-        place.plannedRestaurants.find((r) => r.id === expandedCardPlaceId);
-
-      if (found) {
-        map.panTo({ lat: found.latitude, lng: found.longitude });
-
-        // Optionally zoom in if too far out
-        const currentZoom = map.getZoom() || 0;
-        if (currentZoom < 14) {
-          map.setZoom(14);
-        }
-        return;
       }
     }
   }, [map, expandedCardPlaceId, filteredDiscoveryResults, places]);
@@ -256,8 +263,16 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
       if (isFinite(lat) && isFinite(lng)) {
         map.panTo({ lat, lng });
 
+        // Mobile adjustment: Offset map so marker is at top 1/4 of screen
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+          const offset = window.innerHeight * 0.25;
+          setTimeout(() => {
+            map.panBy(0, offset);
+          }, 100);
+        }
+
         // Zoom to level 14 to match attraction click behavior
-        // Use setTimeout to ensure panTo completes before zooming
         const currentZoom = map.getZoom() || 0;
         if (currentZoom < 14) {
           setTimeout(() => {

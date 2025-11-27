@@ -32,12 +32,6 @@ export function PlaceCardGrid({ places, onNavigateToMap }: PlaceCardGridProps) {
       if (element) {
         scrolledIdRef.current = highlightedPlaceId;
         element.scrollIntoView({ behavior: "smooth", block: "center" });
-        // Clear highlight after scroll completes
-        const timeout = setTimeout(() => {
-          setHighlightedPlace(null);
-          scrolledIdRef.current = null;
-        }, 2000);
-        return () => clearTimeout(timeout);
       }
     } else if (!highlightedPlaceId) {
       scrolledIdRef.current = null;
