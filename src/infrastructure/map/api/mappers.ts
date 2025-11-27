@@ -30,6 +30,7 @@ import type {
   GetPhotoQuery,
 } from "@/domain/map/models";
 import { Latitude, Longitude } from "@/domain/common/models";
+import { PersonaType } from "@/domain/plan/models";
 
 /**
  * Map infrastructure DTOs to domain commands/queries
@@ -106,6 +107,7 @@ export const toDomain = {
       content: msg.content,
     })),
     userMessage: dto.userMessage,
+    personas: dto.personas.map((p) => PersonaType(p)),
   }),
 
   /**

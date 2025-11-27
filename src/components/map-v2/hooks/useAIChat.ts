@@ -8,6 +8,7 @@ import { useMapStore } from "../stores/mapStore";
 import type { AIMessage, AISuggestion } from "../types";
 import { getPhotoUrl } from "@/lib/common/photo-utils";
 import type { PlannedPOIViewModel, DiscoveryItemViewModel } from "@/lib/map-v2/types";
+import { usePersonas } from "@/components/plan-v2/hooks/usePersonas";
 
 interface UseAIChatReturn {
   sendMessage: (message: string) => Promise<void>;
@@ -123,6 +124,9 @@ export function useAIChat(): UseAIChatReturn {
   const addRestaurantToPlace = useMapStore((state) => state.addRestaurantToPlace);
   const addDiscoveryResults = useMapStore((state) => state.addDiscoveryResults);
 
+  // Get user personas for personalized recommendations
+  const { selectedPersonas } = usePersonas();
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addingPlaceIds, setAddingPlaceIds] = useState<Set<string>>(new Set());
@@ -231,6 +235,7 @@ export function useAIChat(): UseAIChatReturn {
             },
             conversationHistory,
             userMessage: content,
+            personas: selectedPersonas, // User's persona preferences for personalized recommendations
           }),
         });
 
@@ -401,7 +406,7 @@ export function useAIChat(): UseAIChatReturn {
         setIsLoading(false);
       }
     },
-    [context, conversation, addAIMessage, addDiscoveryResults, places]
+    [context, conversation, addAIMessage, addDiscoveryResults, places, selectedPersonas]
   );
 
   // Add suggestion to plan (optimistic update)

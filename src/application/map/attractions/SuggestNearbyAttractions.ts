@@ -184,7 +184,7 @@ export const suggestNearbyAttractions = (cmd: SuggestNearbyAttractionsCommand) =
     // Process tool calls until model is ready to provide final answer
     while (response.toolCalls && response.toolCalls.length > 0 && iterations < maxToolCallIterations) {
       iterations++;
-      response = yield* handleToolCallIteration(messages, response, openai, cmd.mapCoordinates, scoredAttractions);
+      response = yield* handleToolCallIteration(messages, response, openai, cmd, scoredAttractions);
     }
 
     if (!response.content) {
@@ -261,7 +261,7 @@ const handleToolCallIteration = (
   messages: ChatCompletionMessageParam[],
   response: ChatCompletionResponse,
   openai: IOpenAIClient,
-  mapCoordinates: { lat: Latitude; lng: Longitude },
+  cmd: SuggestNearbyAttractionsCommand,
   scoredAttractions: Map<
     string,
     { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }
@@ -273,7 +273,7 @@ const handleToolCallIteration = (
     }
 
     const toolResults = yield* Effect.all(
-      response.toolCalls.map((toolCall) => executeToolCall(toolCall, mapCoordinates, scoredAttractions)),
+      response.toolCalls.map((toolCall) => executeToolCall(toolCall, cmd, scoredAttractions)),
       { concurrency: 3 }
     );
 
@@ -371,7 +371,7 @@ const enrichSuggestionsWithAttractionData = (
 
 const executeToolCall = (
   toolCall: ToolCall,
-  mapCoordinates: { lat: Latitude; lng: Longitude },
+  cmd: SuggestNearbyAttractionsCommand,
   scoredAttractions: Map<
     string,
     { score: number; breakdown: { qualityScore: number; diversityScore?: number; confidenceScore: number } }
@@ -387,10 +387,11 @@ const executeToolCall = (
         case "searchAttractions": {
           // Override coordinates with mapCoordinates - AI thinks it's choosing, but we use map center
           const result = yield* getTopAttractions({
-            lat: mapCoordinates.lat,
-            lng: mapCoordinates.lng,
+            lat: cmd.mapCoordinates.lat,
+            lng: cmd.mapCoordinates.lng,
             radius: args.radius ?? 2000,
             limit: args.limit ?? 15,
+            personas: cmd.personas, // Use personas from command for personalized scoring
           });
 
           // Store scores for later enrichment (using ID for reliable lookup)
@@ -407,8 +408,8 @@ const executeToolCall = (
         case "searchRestaurants": {
           // Override coordinates with mapCoordinates - AI thinks it's choosing, but we use map center
           const result = yield* getTopRestaurants({
-            lat: mapCoordinates.lat,
-            lng: mapCoordinates.lng,
+            lat: cmd.mapCoordinates.lat,
+            lng: cmd.mapCoordinates.lng,
             radius: args.radius ?? 2000,
             limit: args.limit ?? 10,
           });

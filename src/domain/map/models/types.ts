@@ -123,6 +123,7 @@ export interface SuggestNearbyAttractionsCommand {
   };
   conversationHistory: ConversationMessage[];
   userMessage?: string;
+  personas: PersonaType[];
 }
 
 // ============================================================================

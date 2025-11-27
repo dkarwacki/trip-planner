@@ -34,7 +34,13 @@ export const POST: APIRoute = async ({ request }) => {
     program.pipe(
       Effect.catchAllDefect((defect) =>
         Effect.gen(function* () {
-          yield* Effect.logError("Unexpected error in /api/attractions/suggest", { defect });
+          // Better defect serialization for debugging
+          const defectInfo =
+            defect instanceof Error
+              ? { name: defect.name, message: defect.message, stack: defect.stack }
+              : { value: String(defect), type: typeof defect };
+
+          yield* Effect.logError("Unexpected error in /api/attractions/suggest", { defect: defectInfo });
           return yield* Effect.fail(new UnexpectedError("Internal server error", defect));
         })
       ),

@@ -363,6 +363,7 @@ export const SuggestNearbyAttractionsCommandSchema = z.object({
   }),
   conversationHistory: z.array(ConversationMessageSchema).default([]),
   userMessage: z.string().optional(),
+  personas: z.array(z.string()).default([]), // Array of persona type strings
 });
 
 /**
