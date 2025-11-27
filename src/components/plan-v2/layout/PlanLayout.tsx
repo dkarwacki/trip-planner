@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { DesktopLayout } from "./DesktopLayout";
 import { MobileLayout } from "./MobileLayout";
 import type { LayoutProps } from "../types";
+import { useResponsive } from "@/components/map-v2/hooks/useResponsive";
 
 /**
  * PlanLayout - Main layout orchestrator
@@ -12,19 +13,7 @@ import type { LayoutProps } from "../types";
  * - Handles conversation loading from URL params
  */
 export function PlanLayout({ conversationId }: LayoutProps) {
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detect mobile viewport
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // md breakpoint
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  const { isMobile } = useResponsive();
 
   // Render appropriate layout based on viewport
   if (isMobile) {

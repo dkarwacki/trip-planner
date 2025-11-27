@@ -14,6 +14,7 @@ import type { DiscoveryItemViewModel, PlannedPOIViewModel } from "@/lib/map-v2/t
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { BasePlaceCard } from "../shared/BasePlaceCard";
 import { getGoogleMapsUrl } from "@/lib/common/google-maps";
+import { useResponsive } from "../hooks/useResponsive";
 
 interface ExpandedPlaceCardProps {
   attraction: DiscoveryItemViewModel | PlannedPOIViewModel;
@@ -53,7 +54,7 @@ export const ExpandedPlaceCard = React.memo(
     const [isVisible, setIsVisible] = useState(false);
 
     // Mobile detection
-    const isMobile = viewportSize.width < 768;
+    const { isMobile } = useResponsive();
 
     // Animation on mount
     useEffect(() => {

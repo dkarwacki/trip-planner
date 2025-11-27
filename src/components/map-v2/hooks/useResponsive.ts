@@ -5,6 +5,8 @@
  */
 
 import { useState, useEffect } from "react";
+const MOBILE_BREAKPOINT = 768;
+const DESKTOP_BREAKPOINT = 1024;
 
 export interface ResponsiveState {
   isMobile: boolean;
@@ -14,14 +16,13 @@ export interface ResponsiveState {
 }
 
 function getResponsiveState(width: number): ResponsiveState {
-  // Tailwind breakpoints:
   // sm: 640px
   // md: 768px
   // lg: 1024px
 
-  const isMobile = width < 640;
-  const isTablet = width >= 640 && width < 1024;
-  const isDesktop = width >= 1024;
+  const isMobile = width < MOBILE_BREAKPOINT;
+  const isTablet = width >= MOBILE_BREAKPOINT && width < DESKTOP_BREAKPOINT;
+  const isDesktop = width >= DESKTOP_BREAKPOINT;
 
   // Determine platform (priority: desktop > tablet > mobile)
   let platform: "mobile" | "tablet" | "desktop";

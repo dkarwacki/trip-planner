@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { useMapStore, filterDiscoveryResults } from "../../stores/mapStore";
 import type { PlannedPOIViewModel } from "@/lib/map-v2/types";
+import { useResponsive } from "../../hooks/useResponsive";
 
 interface UseMapSelectionProps {
   map: google.maps.Map | null;
@@ -16,6 +17,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
   const filters = useMapStore((state) => state.filters);
   const activeMode = useMapStore((state) => state.activeMode);
   const centerRequestTimestamp = useMapStore((state) => state.centerRequestTimestamp);
+  const { isMobile } = useResponsive();
 
   const setSelectedPlace = useMapStore((state) => state.setSelectedPlace);
   const setHoveredMarker = useMapStore((state) => state.setHoveredMarker);
@@ -233,7 +235,6 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
       map.panTo(targetLocation);
 
       // Mobile adjustment: Offset map so marker is at top 1/4 of screen
-      const isMobile = window.innerWidth < 768;
       if (isMobile) {
         const offset = window.innerHeight * 0.25;
         setTimeout(() => {
@@ -247,7 +248,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
         map.setZoom(14);
       }
     }
-  }, [map, expandedCardPlaceId, filteredDiscoveryResults, places]);
+  }, [map, expandedCardPlaceId, filteredDiscoveryResults, places, isMobile]);
 
   // Center and zoom map on selected hub place (numbered markers)
   useEffect(() => {
@@ -264,7 +265,6 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
         map.panTo({ lat, lng });
 
         // Mobile adjustment: Offset map so marker is at top 1/4 of screen
-        const isMobile = window.innerWidth < 768;
         if (isMobile) {
           const offset = window.innerHeight * 0.25;
           setTimeout(() => {
@@ -281,13 +281,12 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
         }
       }
     }
-  }, [map, selectedPlaceId, places, centerRequestTimestamp]);
+  }, [map, selectedPlaceId, places, centerRequestTimestamp, isMobile]);
 
   // Close card when marker moves outside viewport (Desktop only)
   // Mobile cards are fullscreen and don't need this check
   useEffect(() => {
     // Skip on mobile - this prevents race conditions when switching tabs
-    const isMobile = window.innerWidth < 768;
     if (isMobile) return;
 
     if (!expandedCardPlaceId || !expandedAttraction) return;
@@ -299,7 +298,7 @@ export function useMapSelection({ map, mapCenter }: Omit<UseMapSelectionProps, "
     if (!isVisible) {
       closeCard();
     }
-  }, [mapCenter, expandedCardPlaceId, expandedAttraction, isPositionInViewport, closeCard]);
+  }, [mapCenter, expandedCardPlaceId, expandedAttraction, isPositionInViewport, closeCard, isMobile]);
 
   const isInPlan = (attractionId: string) => {
     return places.some(
