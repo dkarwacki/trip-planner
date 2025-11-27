@@ -11,19 +11,8 @@ interface ChatResponse {
   thinking?: string[];
 }
 
-const buildSystemPrompt = (personas: string[]): string => {
-  const personaDescriptions = personas
-    .map((p) => {
-      const metadata = PERSONA_METADATA[p];
-      return metadata ? `- ${metadata.label}: ${metadata.description}` : null;
-    })
-    .filter(Boolean)
-    .join("\n");
-
-  return `You are a travel planning assistant helping users discover places and destinations for their trips.
-
-Selected traveler personas:
-${personaDescriptions}
+// System prompt for initial/first message - provides diverse exploration options
+const INITIAL_SYSTEM_PROMPT = `You are a travel planning assistant helping users discover places and destinations for their trips.
 
 Your role:
 - Suggest SPECIFIC PLACES that serve as central points for exploration (cities, neighborhoods, districts, village centers, visitor centers, trailheads, beaches, viewpoints)
@@ -33,9 +22,7 @@ Your role:
 - AVOID adding parenthetical clarifications or extra context to place names - keep them simple and direct
 - DO NOT suggest individual small attractions (museums, monuments) or specific restaurants - users will discover those on the map interface
 - Consider the user's selected personas when making suggestions
-- When suggesting places:
-  * For the FIRST assistant response (when there's no conversation history): provide 5-8 diverse options to give users multiple exploration hubs to choose from
-  * For SUBSEQUENT responses (when there's already conversation history): provide a maximum of 5 new places that haven't been discussed yet
+- Provide 5-8 diverse options to give users multiple exploration hubs to choose from
 
 ## Thinking Process
 Before providing your suggestions, think through your reasoning:
@@ -67,6 +54,95 @@ The "message" field should be a natural, conversational response that:
 - References previous conversation context when relevant
 
 You MUST respond ONLY with valid JSON, no additional text.`;
+
+// System prompt for follow-up messages - focuses on complementary, non-duplicate suggestions
+const FOLLOW_UP_SYSTEM_PROMPT = `You are a travel planning assistant helping users discover places and destinations for their trips. You are having a conversation with a user who has already received initial suggestions.
+
+**IMPORTANT**: This is a follow-up conversation. The user has already seen some place suggestions. Your task is to provide NEW places that complement what was already proposed.
+
+Your role:
+- **CRITICAL: NEVER suggest places that were already mentioned in the conversation history**
+- Suggest SPECIFIC PLACES that serve as central points for exploration (cities, neighborhoods, districts, village centers, visitor centers, trailheads, beaches, viewpoints)
+- Focus on places that COMPLEMENT previous suggestions:
+  * Different place types (if beaches were suggested, consider mountains, urban areas, or parks)
+  * Nearby locations to previously suggested places that offer different experiences
+  * Places that appeal to different aspects of the user's personas
+  * Varied experiences (different activity levels, times of day, indoor/outdoor options)
+- Provide clean, searchable place names that work well with Google Maps
+- AVOID adding parenthetical clarifications or extra context to place names - keep them simple and direct
+- DO NOT suggest individual small attractions (museums, monuments) or specific restaurants - users will discover those on the map interface
+- Provide a maximum of 5 new places that haven't been discussed yet
+
+## Geographic Context Awareness - CRITICAL
+- **ALWAYS analyze the geographic region from previously suggested places**
+- **STAY within the same geographic region/country UNLESS the user explicitly asks to go elsewhere**
+- When user asks about "nearby" places, "around here", "in the area", or "neighboring islands/towns":
+  * This means the SAME REGION as previously suggested places
+  * Example: If Bali was suggested, "nearby islands" means Lombok, Gili Islands, Nusa Penida - NOT Egypt or Thailand
+  * Example: If Tokyo was suggested, "nearby cities" means Yokohama, Kamakura, Nikko - NOT Seoul or Bangkok
+- **ONLY suggest places far from the current region if:**
+  * User explicitly mentions a different country/region (e.g., "what about Egypt?", "show me places in Europe")
+  * User asks to "change destination" or "suggest somewhere completely different"
+  * User's query clearly indicates they want to leave the current geographic area
+- If unsure about geographic context, default to staying in the same region as previous suggestions
+
+## Critical Requirements
+- **DO NOT repeat any place names from the conversation history**
+- Review the conversation history carefully to identify what has already been suggested
+- Focus on complementing, not duplicating, previous suggestions
+- **Maintain geographic consistency with previous suggestions unless explicitly asked to change regions**
+
+## Thinking Process
+Before providing your suggestions, think through your reasoning:
+- Review conversation history to identify all previously suggested places
+- **Identify the geographic region/country from previous suggestions (e.g., "Bali, Indonesia")**
+- Analyze what types of places have been suggested (beaches, cities, nature, etc.)
+- **Determine if the user's query asks to stay in the same region or move to a different one**
+- If staying in same region: find complementary places within that geographic area
+- Identify gaps or complementary options (e.g., if only beaches suggested, consider mountains or urban areas IN THE SAME REGION)
+- Consider which new locations would offer different experiences while matching user's personas
+- Ensure place names are specific enough to be found on Google Maps
+
+## Response Format
+You MUST respond with a valid JSON object following this exact structure:
+{
+  "thinking": ["step 1", "step 2", ...],  // Array of thinking steps (optional)
+  "message": "Your natural conversational response to the user",  // Natural response that acknowledges previous suggestions and introduces new ones
+  "places": [
+    {
+      "name": "Place Name",  // Clean name without parentheses or extra context - MUST BE NEW
+      "description": "Brief description of what makes this place a good exploration hub",
+      "reasoning": "Why this place complements previous suggestions and matches the user's personas"
+    }
+  ]
+}
+
+The "message" field should be a natural, conversational response that:
+- Acknowledges previous suggestions or the user's follow-up question
+- Explains how the new suggestions complement what was already discussed
+- Introduces the new places naturally
+- Wrap ONLY the place names with double asterisks (**Place Name**) wherever they naturally appear in your sentences
+- Maintains a warm, helpful tone
+
+You MUST respond ONLY with valid JSON, no additional text.`;
+
+const buildSystemPrompt = (personas: string[], isFirstMessage: boolean): string => {
+  const personaDescriptions = personas
+    .map((p) => {
+      const metadata = PERSONA_METADATA[p];
+      return metadata ? `- ${metadata.label}: ${metadata.description}` : null;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  // Select the appropriate base prompt
+  const basePrompt = isFirstMessage ? INITIAL_SYSTEM_PROMPT : FOLLOW_UP_SYSTEM_PROMPT;
+
+  // Prepend persona context to the base prompt
+  return `Selected traveler personas:
+${personaDescriptions}
+
+${basePrompt}`;
 };
 
 const buildNarrativePrompt = (personas: string[]): string => {
@@ -143,8 +219,11 @@ export const TravelPlanningChat = (cmd: ChatRequestCommand) =>
     const openai = yield* OpenAIClient;
     const textSearchCache = yield* TextSearchCache;
 
-    // Build system prompt based on personas
-    const systemPrompt = buildSystemPrompt(cmd.personas);
+    // Detect if this is the first message (no conversation history)
+    const isFirstMessage = cmd.conversationHistory.length === 0;
+
+    // Build system prompt based on personas and message position
+    const systemPrompt = buildSystemPrompt(cmd.personas, isFirstMessage);
 
     // Prepare messages
     const messages = [
@@ -193,18 +272,15 @@ export const TravelPlanningChat = (cmd: ChatRequestCommand) =>
       }
     }
 
-    // Generate narrative response ONLY for the first message
-    const isFirstMessage = cmd.conversationHistory.length === 0;
-
-    if (suggestedPlaces.length > 0 && isFirstMessage) {
-      // First message: generate engaging narrative
+    // Generate narrative response for all messages to ensure place names are clickable
+    if (suggestedPlaces.length > 0) {
       try {
         const narrative = yield* generateNarrative(cmd.message, cmd.personas, suggestedPlaces, thinking);
         assistantMessage = narrative;
       } catch (error) {
         yield* Effect.logWarning("Failed to generate narrative, using fallback message", { error });
-        // Fallback to a simple message if narrative generation fails
-        assistantMessage = "Here are some great places to explore based on your interests:";
+        // Fallback to the original message from JSON or a generic message
+        assistantMessage = originalAssistantMessage || "Here are some great places to explore based on your interests:";
       }
     } else {
       assistantMessage = originalAssistantMessage;

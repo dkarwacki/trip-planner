@@ -86,7 +86,7 @@ export function AssistantMessage({
         <div className="max-w-[90%] space-y-1">
           <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-2.5">
             <div>
-              {isFirstMessage && message.suggestedPlaces && message.suggestedPlaces.length > 0 ? (
+              {message.suggestedPlaces && message.suggestedPlaces.length > 0 ? (
                 <NarrativeDisplay
                   content={message.content}
                   suggestedPlaces={message.suggestedPlaces}

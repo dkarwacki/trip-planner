@@ -56,8 +56,8 @@ export function ItineraryList({ places, onReorder, onRemove }: ItineraryListProp
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={places.map((p) => p.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-2" role="list" aria-label="Itinerary places">
-          {places.map((place) => (
-            <ItineraryItem key={place.id} place={place} onRemove={onRemove} />
+          {places.map((place, index) => (
+            <ItineraryItem key={place.id} place={place} order={index + 1} onRemove={onRemove} />
           ))}
         </div>
       </SortableContext>

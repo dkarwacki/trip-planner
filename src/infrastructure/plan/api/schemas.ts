@@ -73,6 +73,7 @@ export const GetUserPersonasResponseSchema = z.object({
 /**
  * Simple conversation message schema for chat history input
  * Used in ChatRequestCommandSchema (no ID or timestamp, just role and content)
+ * Includes optional suggestedPlaces to provide geographic context for follow-up questions
  */
 export const ConversationMessageInputSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),

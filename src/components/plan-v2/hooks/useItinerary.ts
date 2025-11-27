@@ -37,7 +37,6 @@ function placeToItineraryPlace(place: Place): ItineraryPlace {
   return {
     id: place.id,
     name: place.name,
-    description: undefined,
     coordinates: {
       lat: place.lat,
       lng: place.lng,
@@ -80,7 +79,6 @@ export function useItinerary(): UseItineraryReturn {
     const newPlace: ItineraryPlace = {
       id: suggestion.id || suggestion.name,
       name: suggestion.name,
-      description: suggestion.description,
       coordinates: {
         lat: suggestion.lat || 0,
         lng: suggestion.lng || 0,

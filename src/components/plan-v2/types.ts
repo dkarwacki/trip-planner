@@ -11,7 +11,6 @@ export type SaveStatus = "idle" | "saving" | "saved" | "error";
 export interface ItineraryPlace {
   id: string;
   name: string;
-  description?: string;
   coordinates: {
     lat: number;
     lng: number;

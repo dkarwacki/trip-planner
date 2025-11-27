@@ -1,133 +1,102 @@
-import React, { useState } from "react";
+import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, X, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, X, MapPin } from "lucide-react";
 import { PhotoBlock } from "../shared/PhotoBlock";
-import PhotoLightbox from "@/components/PhotoLightbox";
 import type { ItineraryPlace } from "../types";
-
-/**
- * Parse markdown-style bold text (**text**)
- */
-function parseBoldText(text: string): React.ReactNode[] {
-  const parts: React.ReactNode[] = [];
-  const segments = text.split(/(\*\*[^*]+\*\*)/g);
-
-  segments.forEach((segment, index) => {
-    if (segment.startsWith("**") && segment.endsWith("**")) {
-      // This is bold text
-      const boldText = segment.slice(2, -2).trim();
-      parts.push(
-        <span key={`bold-${index}`} className="font-semibold">
-          {boldText}
-        </span>
-      );
-    } else if (segment.trim()) {
-      // Regular text
-      parts.push(<span key={`text-${index}`}>{segment}</span>);
-    }
-  });
-
-  return parts;
-}
 
 interface ItineraryItemProps {
   place: ItineraryPlace;
+  order: number;
   onRemove: (placeId: string) => void;
 }
 
 /**
- * ItineraryItem - Single place card with drag handle
+ * ItineraryItem - Single place card with timeline node and drag handle
  *
  * Features:
+ * - Timeline node with numbered circle (serves as drag handle)
  * - Photo thumbnail
- * - Place name and coordinates
- * - Drag handle (via @dnd-kit/sortable)
- * - Remove button with confirmation
+ * - Place name and Google Maps link
+ * - Remove button with hover reveal
  * - Accessible keyboard support
  */
-export function ItineraryItem({ place, onRemove }: ItineraryItemProps) {
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-
+export function ItineraryItem({ place, order, onRemove }: ItineraryItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: place.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
-  const handleRemove = () => {
-    if (window.confirm(`Remove ${place.name} from your itinerary?`)) {
-      onRemove(place.id);
-    }
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onRemove(place.id);
   };
+
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${place.coordinates.lat},${place.coordinates.lng}`;
 
   return (
-    <>
-      <div ref={setNodeRef} style={style} className="group flex gap-3 rounded-lg border bg-card p-3 hover:bg-accent/50">
-        {/* Drag handle */}
-        <button
+    <div ref={setNodeRef} style={style} className={`relative flex gap-4 ${isDragging ? "opacity-50 z-50" : ""}`}>
+      {/* Timeline Node */}
+      <div className="flex-shrink-0 flex flex-col items-center pt-2">
+        <div
           {...attributes}
           {...listeners}
-          className="flex-shrink-0 cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
-          aria-label="Drag to reorder"
+          data-sortable-handle
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-white border-2 border-gray-400 text-xs font-medium text-gray-500 shadow-sm cursor-grab hover:border-gray-600 hover:text-gray-700 active:cursor-grabbing z-10"
         >
-          <GripVertical size={20} />
-        </button>
-
-        {/* Photo */}
-        <div className="flex-shrink-0">
-          <PhotoBlock
-            photos={place.photos}
-            alt={place.name}
-            lat={place.coordinates.lat}
-            lng={place.coordinates.lng}
-            placeName={place.name}
-            className="h-16 w-16 rounded-md"
-            onClick={place.photos && place.photos.length > 0 ? () => setIsLightboxOpen(true) : undefined}
-          />
+          {order}
         </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <h4 className="truncate font-medium text-sm">{place.name}</h4>
-          {place.description && (
-            <p className="line-clamp-1 text-xs text-muted-foreground">{parseBoldText(place.description)}</p>
-          )}
-          <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin size={10} />
-            <span className="truncate">
-              {place.coordinates.lat.toFixed(4)}, {place.coordinates.lng.toFixed(4)}
-            </span>
-          </div>
-        </div>
-
-        {/* Remove button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 flex-shrink-0 opacity-0 group-hover:opacity-100"
-          onClick={handleRemove}
-          aria-label={`Remove ${place.name}`}
-        >
-          <X size={16} />
-        </Button>
       </div>
 
-      {/* Photo Lightbox */}
-      {place.photos && place.photos.length > 0 && (
-        <PhotoLightbox
-          photos={place.photos}
-          initialIndex={0}
-          isOpen={isLightboxOpen}
-          onClose={() => setIsLightboxOpen(false)}
-          placeName={place.name}
-          lat={place.coordinates.lat}
-          lng={place.coordinates.lng}
-        />
-      )}
-    </>
+      {/* Card Content */}
+      <div className="flex-1 rounded-lg bg-white shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 overflow-hidden group">
+        <div className="flex p-3 gap-3">
+          {/* Left Thumbnail */}
+          <div className="w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-100 relative">
+            {place.photos && place.photos.length > 0 ? (
+              <PhotoBlock
+                photos={place.photos}
+                alt={place.name}
+                lat={place.coordinates.lat}
+                lng={place.coordinates.lng}
+                placeName={place.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300">
+                <Search className="h-6 w-6" />
+              </div>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 flex flex-col justify-center min-w-0">
+            <div className="flex justify-between items-start">
+              <h4 className="text-sm font-medium text-gray-900 truncate pr-2">{place.name}</h4>
+              <button
+                onClick={handleRemove}
+                className="text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                aria-label="Remove place"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* View on Google Maps link */}
+            <a
+              href={googleMapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+            >
+              <MapPin size={12} />
+              View on Google Maps
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
