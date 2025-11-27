@@ -9,6 +9,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMapStore } from "../stores/mapStore";
 import { GripVertical, ChevronRight, ChevronDown, Search } from "lucide-react";
 import { MobilePlannedItemList } from "./MobilePlannedItemList";
+import { LazyImage } from "../shared/LazyImage";
 import type { PlannedPlaceViewModel, PlannedPOIViewModel } from "@/lib/map-v2/types";
 
 interface MobilePlanItemCardProps {
@@ -51,6 +52,9 @@ export function MobilePlanItemCard({
   // Get actual attractions and restaurants from place data
   const attractions: PlannedPOIViewModel[] = place.plannedAttractions || [];
   const restaurants: PlannedPOIViewModel[] = place.plannedRestaurants || [];
+
+  // Get first attraction's photo for banner
+  const bannerPhoto = attractions[0]?.photos?.[0];
 
   const placeName = place.name || "Unknown Place";
   const placeLocation = ""; // PlannedPlaceViewModel doesn't have vicinity field
@@ -108,13 +112,32 @@ export function MobilePlanItemCard({
           {order}
         </div>
 
-        {/* TODO: Add banner photo when available */}
+        {/* Banner photo */}
+        {bannerPhoto ? (
+          <LazyImage
+            photoReference={bannerPhoto.photoReference}
+            alt={attractions[0]?.name || "Place photo"}
+            lat={attractions[0]?.latitude || 0}
+            lng={attractions[0]?.longitude || 0}
+            placeName={attractions[0]?.name || ""}
+            size="small"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5" />
+        )}
       </button>
 
       {/* Card content with more padding for mobile */}
       <div className="p-4">
         {/* Place name and location - tap to toggle expand */}
-        <button onClick={() => onToggleExpand(place.id)} className="w-full text-left">
+        <button
+          onClick={() => {
+            onToggleExpand(place.id);
+            centerOnPlace(place.id);
+          }}
+          className="w-full text-left"
+        >
           <h3 className="text-lg font-semibold text-foreground mb-1">{placeName}</h3>
           {placeLocation && <p className="text-sm text-muted-foreground">{placeLocation}</p>}
         </button>
@@ -145,7 +168,7 @@ export function MobilePlanItemCard({
               {expandedSections.attractions && (
                 <div className="mt-2">
                   {attractions.length > 0 ? (
-                    <MobilePlannedItemList items={attractions} category="attractions" />
+                    <MobilePlannedItemList items={attractions} category="attractions" placeId={place.id} />
                   ) : (
                     <p className="text-sm text-muted-foreground italic py-3 px-2">No attractions added yet</p>
                   )}
@@ -170,7 +193,7 @@ export function MobilePlanItemCard({
               {expandedSections.restaurants && (
                 <div className="mt-2">
                   {restaurants.length > 0 ? (
-                    <MobilePlannedItemList items={restaurants} category="restaurants" />
+                    <MobilePlannedItemList items={restaurants} category="restaurants" placeId={place.id} />
                   ) : (
                     <p className="text-sm text-muted-foreground italic py-3 px-2">No restaurants added yet</p>
                   )}

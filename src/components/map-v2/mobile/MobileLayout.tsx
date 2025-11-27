@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileHeader } from "./MobileHeader";
 import { MapView } from "./MapView";
@@ -53,6 +53,15 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
     handleSendMessage,
     handleAddSuggestion,
   } = useMobileAIChat(selectedPlace as PlannedPlaceViewModel | null);
+
+  // Effect to re-center map when switching to map tab with selected place
+  useEffect(() => {
+    if (activeTab === "map" && selectedPlaceId) {
+      // Trigger centerOnPlace to update centerRequestTimestamp
+      const centerOnPlace = useMapStore.getState().centerOnPlace;
+      centerOnPlace(selectedPlaceId);
+    }
+  }, [activeTab, selectedPlaceId]);
 
   const handleOpenChat = () => {
     handleOpenAIChat();

@@ -92,7 +92,6 @@ export function useMobileNavigation() {
     setActiveTab("map");
     setMobileTab("map");
 
-    // Longer timeout to ensure map is fully loaded before centering
     setTimeout(() => {
       const store = useMapStore.getState();
       store.setHighlightedPlace(attractionId);
