@@ -4,6 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Search, X, MapPin } from "lucide-react";
 import { PhotoBlock } from "../shared/PhotoBlock";
 import type { ItineraryPlace } from "../types";
+import { getGoogleMapsUrl } from "@/lib/common/google-maps";
 
 interface ItineraryItemProps {
   place: ItineraryPlace;
@@ -33,8 +34,6 @@ export function ItineraryItem({ place, order, onRemove }: ItineraryItemProps) {
     e.stopPropagation();
     onRemove(place.id);
   };
-
-  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${place.coordinates.lat},${place.coordinates.lng}`;
 
   return (
     <div ref={setNodeRef} style={style} className={`relative flex gap-4 ${isDragging ? "opacity-50 z-50" : ""}`}>
@@ -85,13 +84,19 @@ export function ItineraryItem({ place, order, onRemove }: ItineraryItemProps) {
             </div>
 
             {/* View on Google Maps link */}
+            {/* View on Google Maps link */}
             <a
-              href={googleMapsUrl}
+              href={getGoogleMapsUrl({
+                name: place.name,
+                placeId: place.id,
+                location: { lat: place.coordinates.lat, lng: place.coordinates.lng },
+              })}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-1 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
             >
-              <MapPin size={12} />
+              <MapPin className="w-3 h-3" />
               View on Google Maps
             </a>
           </div>
