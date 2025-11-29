@@ -90,7 +90,8 @@ export function MobileChatInput({
       className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 transition-transform duration-200"
       style={{
         transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : "none",
-        paddingBottom: "env(safe-area-inset-bottom)",
+        // Account for MobileBottomNav height (60px) + safe-area-inset-bottom + padding (16px)
+        paddingBottom: "calc(76px + env(safe-area-inset-bottom))",
       }}
     >
       {/* Suggested prompts - wrap to multiple lines */}
@@ -122,12 +123,13 @@ export function MobileChatInput({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder={placeholder}
-          className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed overflow-y-auto"
+          className="flex-1 resize-none rounded-xl border-2 border-gray-300 px-4 py-3 text-base focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 overflow-hidden bg-white"
           rows={1}
           maxLength={500}
           style={{
             // Prevent zoom on iOS when focusing input
             fontSize: "16px",
+            minHeight: "48px",
           }}
         />
         <button

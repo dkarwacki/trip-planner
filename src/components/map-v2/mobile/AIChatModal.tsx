@@ -101,10 +101,10 @@ export function AIChatModal({
     >
       {/* Modal container */}
       <div
-        className="w-full h-full bg-white flex flex-col animate-in slide-in-from-bottom duration-300"
+        className="w-full bg-white flex flex-col animate-in slide-in-from-bottom duration-300"
         style={{
-          maxHeight: "100vh",
-          height: "100vh",
+          height: "calc(100vh - 55px - env(safe-area-inset-bottom))",
+          maxHeight: "calc(100vh - 55px - env(safe-area-inset-bottom))",
         }}
       >
         {/* Header with context */}
