@@ -7,15 +7,17 @@ import React, { useEffect } from "react";
 import { MapCanvas } from "../map/MapCanvas";
 import { FilterButton } from "./FilterButton";
 import { FilterBottomSheet } from "../filters/FilterBottomSheet";
+import { FloatingAIButton } from "./FloatingAIButton";
 import { useMapStore } from "../stores/mapStore";
 import { getPersistedFilters, persistFilters } from "@/lib/map-v2/filterPersistence";
 
 interface MapViewProps {
   mapId?: string;
   onMapLoad?: (map: google.maps.Map) => void;
+  onOpenChat?: () => void;
 }
 
-export function MapView({ mapId, onMapLoad }: MapViewProps) {
+export function MapView({ mapId, onMapLoad, onOpenChat }: MapViewProps) {
   const filters = useMapStore((state) => state.filters);
   const filterSheetOpen = useMapStore((state) => state.filterSheetOpen);
   const setFilterSheetOpen = useMapStore((state) => state.setFilterSheetOpen);
@@ -60,12 +62,19 @@ export function MapView({ mapId, onMapLoad }: MapViewProps) {
         onApply={handleApplyFilters}
       />
 
-      {/* Floating Filter Button */}
+      {/* Floating Buttons */}
       <div className="pointer-events-none fixed inset-0 z-30">
-        {/* Filter Button - Bottom Left */}
+        {/* Filter Button */}
         <div className="pointer-events-auto absolute bottom-[92px] left-4">
           <FilterButton />
         </div>
+
+        {/* AI Button */}
+        {onOpenChat && (
+          <div className="pointer-events-auto absolute bottom-[92px] left-[76px]">
+            <FloatingAIButton onOpenChat={onOpenChat} />
+          </div>
+        )}
       </div>
     </div>
   );

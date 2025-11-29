@@ -5,7 +5,6 @@ import { MapView } from "./MapView";
 import { DiscoverView } from "./DiscoverView";
 import { PlanView } from "./PlanView";
 import { SearchOverlay } from "./SearchOverlay";
-import { FloatingAIButton } from "./FloatingAIButton";
 import { AIChatModal } from "./AIChatModal";
 import { useMapStore } from "../stores/mapStore";
 import { useMobileAIChat } from "./hooks/useMobileAIChat";
@@ -21,7 +20,6 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
   // Selectors
   const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
   const places = useMapStore((state) => state.places);
-  const bottomSheetOpen = useMapStore((state) => state.bottomSheetOpen);
 
   const planItems = places;
   const selectedPlace = selectedPlaceId ? places.find((p) => p.id === selectedPlaceId) : null;
@@ -89,7 +87,7 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
         <div className="relative h-full w-full">
           {activeTab === "map" && (
             <div className="absolute inset-0 animate-in fade-in duration-150">
-              <MapView mapId={mapId} onMapLoad={setMapInstance} />
+              <MapView mapId={mapId} onMapLoad={setMapInstance} onOpenChat={handleOpenChat} />
             </div>
           )}
           {activeTab === "discover" && (
@@ -114,14 +112,6 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
 
       {/* Search Overlay */}
       <SearchOverlay isOpen={showSearch} onClose={() => setShowSearch(false)} onPlaceSelect={handlePlaceSelect} />
-
-      {/* Floating AI Button - positioned next to Filter Button */}
-      <FloatingAIButton
-        onOpenChat={handleOpenChat}
-        isLoading={isLoadingAI}
-        hidden={aiChatModalOpen || bottomSheetOpen}
-        className="fixed bottom-[92px] left-[76px] z-40"
-      />
 
       {/* AI Chat Modal */}
       <AIChatModal
