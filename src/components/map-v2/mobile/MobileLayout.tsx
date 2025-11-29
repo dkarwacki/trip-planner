@@ -115,11 +115,12 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
       {/* Search Overlay */}
       <SearchOverlay isOpen={showSearch} onClose={() => setShowSearch(false)} onPlaceSelect={handlePlaceSelect} />
 
-      {/* Floating AI Button - hidden when modal is open or bottom sheet is expanded */}
+      {/* Floating AI Button - positioned next to Filter Button */}
       <FloatingAIButton
         onOpenChat={handleOpenChat}
         isLoading={isLoadingAI}
         hidden={aiChatModalOpen || bottomSheetOpen}
+        className="fixed bottom-[92px] left-[76px] z-40"
       />
 
       {/* AI Chat Modal */}

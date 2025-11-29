@@ -9,7 +9,7 @@
  * - Positioned 16px from edges with safe-area-inset awareness
  */
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/common/utils";
 
@@ -19,28 +19,12 @@ interface FloatingAIButtonProps {
   hidden?: boolean;
 }
 
-export function FloatingAIButton({ onOpenChat, isLoading = false, hidden = false }: FloatingAIButtonProps) {
-  const [mounted, setMounted] = useState(false);
-  const [shouldPulse, setShouldPulse] = useState(false);
-
-  // Entrance animation
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Periodic pulse animation (every 4 seconds)
-  useEffect(() => {
-    if (hidden || isLoading) return;
-
-    const pulseInterval = setInterval(() => {
-      setShouldPulse(true);
-      setTimeout(() => setShouldPulse(false), 600);
-    }, 4000);
-
-    return () => clearInterval(pulseInterval);
-  }, [hidden, isLoading]);
-
+export function FloatingAIButton({
+  onOpenChat,
+  isLoading = false,
+  hidden = false,
+  className,
+}: FloatingAIButtonProps & { className?: string }) {
   if (hidden) {
     return null;
   }
@@ -50,33 +34,17 @@ export function FloatingAIButton({ onOpenChat, isLoading = false, hidden = false
       onClick={onOpenChat}
       disabled={isLoading}
       className={cn(
-        "fixed z-40 flex h-14 w-14 items-center justify-center rounded-full",
-        "bg-blue-600 text-white shadow-lg transition-all duration-200",
-        "hover:bg-blue-700 hover:shadow-xl",
+        "flex h-12 w-12 items-center justify-center rounded-full",
+        "bg-white text-gray-700 shadow-md transition-all duration-200",
+        "hover:bg-gray-50 hover:shadow-lg",
         "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/50",
         "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed",
-        // Position: bottom-right with safe-area-inset
-        "right-4 bottom-20",
-        // Entrance animation
-        mounted ? "scale-100 opacity-100" : "scale-0 opacity-0",
-        // Pulse animation
-        shouldPulse && "animate-[pulse_600ms_ease-in-out]"
+        className
       )}
-      style={{
-        bottom: "calc(60px + 20px + env(safe-area-inset-bottom))",
-      }}
       aria-label="Get AI suggestions"
     >
-      {/* Pulsing ring effect */}
-      {shouldPulse && !isLoading && (
-        <span
-          className="absolute inset-0 rounded-full bg-blue-600 opacity-75 animate-ping"
-          style={{ animationDuration: "600ms", animationIterationCount: "1" }}
-        />
-      )}
-
       {/* Icon */}
-      {isLoading ? <Loader2 className="relative h-6 w-6 animate-spin" /> : <Sparkles className="relative h-6 w-6" />}
+      {isLoading ? <Loader2 className="relative h-5 w-5 animate-spin" /> : <Sparkles className="relative h-5 w-5" />}
     </button>
   );
 }
