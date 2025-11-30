@@ -50,7 +50,6 @@ export const SuggestionCard = React.memo(
       }
     };
 
-
     const handleCardKeyDown = (e: React.KeyboardEvent) => {
       // Handle Enter or Space key for accessibility
       if ((e.key === "Enter" || e.key === " ") && !isGeneralTip) {

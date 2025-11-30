@@ -481,6 +481,20 @@ The application serves eight primary personas:
   - User understands the two-stage workflow
   - Helpful and friendly tone maintained
 
+### US-024
+
+- ID: US-024
+- Title: Welcome Page Experience
+- Description: As a user, I want a welcome page that explains the application's value and provides clear entry points to the main features
+- Acceptance Criteria:
+  - Welcome page is accessible at root URL ("/")
+  - Page showcases how the application works (two-stage workflow: Plan & Map)
+  - Clear "Start Planning" button redirecting to /plan
+  - Clear "Explore Map" button redirecting to /map
+  - If user is not logged in, clicking either button redirects to /login first
+  - After successful login, user is redirected to the originally requested page (/plan or /map)
+  - Visual design aligns with the application's premium aesthetic
+
 ## 6. Success Metrics
 
 ### Metrics

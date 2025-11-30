@@ -1,107 +1,16 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import HeroSection from "../components/common/HeroSection.astro";
+import { FeatureGrid } from "../components/common/FeatureGrid";
+import Footer from "../components/common/Footer.astro";
 
 export const prerender = false;
 ---
 
-<Layout title="Trip Planner">
-  <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-    <div class="container mx-auto px-4 py-16 max-w-4xl">
-      <div class="text-center mb-12">
-        <h1 class="text-5xl font-bold text-gray-900 mb-4">Welcome to Trip Planner</h1>
-        <p class="text-xl text-gray-600 mb-8">Plan your perfect trip with AI-powered place recommendations</p>
-      </div>
-
-      <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-        <a
-          href="/plan"
-          class="group p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border-2 border-transparent hover:border-blue-500"
-        >
-          <div class="flex items-center gap-4 mb-3">
-            <div
-              class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6 text-blue-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                ></path>
-              </svg>
-            </div>
-            <h2 class="text-2xl font-semibold text-gray-900">Start Planning</h2>
-          </div>
-          <p class="text-gray-600">Chat with AI to discover amazing places and build your itinerary</p>
-        </a>
-
-        <a
-          href="/map"
-          class="group p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border-2 border-transparent hover:border-green-500"
-        >
-          <div class="flex items-center gap-4 mb-3">
-            <div
-              class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6 text-green-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                ></path>
-              </svg>
-            </div>
-            <h2 class="text-2xl font-semibold text-gray-900">Explore Map</h2>
-          </div>
-          <p class="text-gray-600">Interactive map to explore, plan, and visualize your trip</p>
-        </a>
-      </div>
-
-      <div class="mt-16 text-center">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">How It Works</h3>
-        <div class="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-          <div class="p-4">
-            <div
-              class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600 font-bold"
-            >
-              1
-            </div>
-            <h4 class="font-medium text-gray-900 mb-2">Select Your Style</h4>
-            <p class="text-sm text-gray-600">Choose travel personas that match your interests</p>
-          </div>
-          <div class="p-4">
-            <div
-              class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600 font-bold"
-            >
-              2
-            </div>
-            <h4 class="font-medium text-gray-900 mb-2">Chat with AI</h4>
-            <p class="text-sm text-gray-600">Get personalized place recommendations</p>
-          </div>
-          <div class="p-4">
-            <div
-              class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600 font-bold"
-            >
-              3
-            </div>
-            <h4 class="font-medium text-gray-900 mb-2">Explore on Map</h4>
-            <p class="text-sm text-gray-600">Discover attractions and restaurants nearby</p>
-          </div>
-        </div>
-      </div>
-    </div>
+<Layout title="Trip Planner - AI-Powered Travel Planning">
+  <div class="min-h-screen flex flex-col">
+    <HeroSection />
+    <FeatureGrid client:load />
+    <Footer />
   </div>
 </Layout>

@@ -1,0 +1,51 @@
+---
+// No props needed - static content
+---
+
+<section class="relative min-h-[600px] flex items-center justify-center overflow-hidden">
+  <!-- Animated gradient background -->
+  <div class="absolute inset-0 bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 animate-gradient"></div>
+
+  <!-- Content -->
+  <div class="relative z-10 container mx-auto px-4 text-center max-w-4xl">
+    <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 tracking-tight">
+      Plan your perfect trip with AI
+    </h1>
+    <p class="text-xl md:text-2xl text-gray-600 mb-10 max-w-2xl mx-auto">
+      Discover personalized destinations and explore attractions tailored to your travel style
+    </p>
+
+    <!-- CTAs -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+      <a
+        href="/login?redirect=/plan"
+        class="inline-flex items-center justify-center h-12 px-8 rounded-lg bg-gray-900 text-white font-semibold shadow-lg hover:bg-gray-800 transition-all hover:scale-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-900/20"
+      >
+        Start Planning
+      </a>
+      <a
+        href="/login?redirect=/map"
+        class="inline-flex items-center justify-center h-12 px-8 rounded-lg border-2 border-gray-900 text-gray-900 font-semibold hover:bg-gray-900 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-900/20"
+      >
+        Explore Map
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  @keyframes gradient {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 15s ease infinite;
+  }
+</style>
