@@ -1,10 +1,12 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import ChatPage from "../components/plan/ChatPage";
+import Layout from "@/layouts/Layout.astro";
+import { PlanPage } from "@/components/plan/PlanPage";
 
 export const prerender = false;
+
+const conversationId = Astro.url.searchParams.get("conversationId");
 ---
 
-<Layout title="Trip Planner - Chat">
-  <ChatPage client:load />
+<Layout title="Trip Planner">
+  <PlanPage client:only="react" conversationId={conversationId} />
 </Layout>

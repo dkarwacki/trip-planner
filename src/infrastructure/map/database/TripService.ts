@@ -1,7 +1,7 @@
 /**
- * Trip Service for Map-v2
+ * Trip Service for Map
  *
- * Purpose: High-level service for trip management operations used by map-v2
+ * Purpose: High-level service for trip management operations used by map
  * - Auto-create trips for map sessions
  * - Load existing trips
  * - Handle trip switching

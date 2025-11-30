@@ -1,7 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import MapPlanner from "../components/map/MapPlanner";
+import { MapPlanner } from "../components/map";
 
+// Disable SSR for this fully interactive page
 export const prerender = false;
 
 // Get API key for map display
@@ -18,11 +19,12 @@ if (!apiKey) {
 // Optional: Get Map ID for AdvancedMarkerElement support
 const mapId = import.meta.env.GOOGLE_MAPS_MAP_ID;
 
-// Get tripId and conversationId from URL params if present
-const tripId = Astro.url.searchParams.get("tripId");
-const conversationId = Astro.url.searchParams.get("conversationId");
+// Extract URL parameters
+const { searchParams } = Astro.url;
+const tripId = searchParams.get("tripId") || undefined;
+const conversationId = searchParams.get("conversationId") || undefined;
 ---
 
-<Layout title="Map Planner">
-  <MapPlanner client:load apiKey={apiKey} mapId={mapId} tripId={tripId} conversationId={conversationId} />
+<Layout title="Trip Planner - Map">
+  <MapPlanner client:only="react" apiKey={apiKey} mapId={mapId} tripId={tripId} conversationId={conversationId} />
 </Layout>

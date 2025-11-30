@@ -25,7 +25,7 @@ import {
   LatitudeSchema,
   LongitudeSchema,
 } from "@/infrastructure/common/api/schemas";
-import { NEARBY_SEARCH_RADIUS_METERS } from "@/lib/map-v2/search-constants";
+import { NEARBY_SEARCH_RADIUS_METERS } from "@/lib/map/search-constants";
 
 // ============================================================================
 // Place Schemas
