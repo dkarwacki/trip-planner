@@ -11,6 +11,58 @@ interface ChatResponse {
   thinking?: string[];
 }
 
+// JSON Schema for main chat response with strict mode
+const MAIN_CHAT_RESPONSE_SCHEMA = {
+  name: "travel_chat_response",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      thinking: {
+        type: "array",
+        items: { type: "string" },
+        description: "Step-by-step reasoning. Can be empty if no reasoning needed.",
+      },
+      message: {
+        type: "string",
+        description: "Natural conversational response with **Place Name** markers",
+      },
+      places: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            description: { type: "string" },
+            reasoning: { type: "string" },
+          },
+          required: ["name", "description", "reasoning"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["thinking", "message", "places"],
+    additionalProperties: false,
+  },
+} as const;
+
+// JSON Schema for narrative response with strict mode
+const NARRATIVE_RESPONSE_SCHEMA = {
+  name: "narrative_response",
+  strict: true,
+  schema: {
+    type: "object",
+    properties: {
+      narrative: {
+        type: "string",
+        description: "Flowing narrative with **Place Name** markers",
+      },
+    },
+    required: ["narrative"],
+    additionalProperties: false,
+  },
+} as const;
+
 // System prompt for initial/first message - provides diverse exploration options
 const INITIAL_SYSTEM_PROMPT = `You are a travel planning assistant helping users discover places and destinations for their trips.
 
@@ -35,7 +87,7 @@ Before providing your suggestions, think through your reasoning:
 ## Response Format
 You MUST respond with a valid JSON object following this exact structure:
 {
-  "thinking": ["step 1", "step 2", ...],  // Array of thinking steps (optional)
+  "thinking": ["step 1", "step 2", ...],  // Array of thinking steps (can be empty)
   "message": "Your natural conversational response to the user",  // Natural response that references conversation history when appropriate
   "places": [
     {
@@ -106,7 +158,7 @@ Before providing your suggestions, think through your reasoning:
 ## Response Format
 You MUST respond with a valid JSON object following this exact structure:
 {
-  "thinking": ["step 1", "step 2", ...],  // Array of thinking steps (optional)
+  "thinking": ["step 1", "step 2", ...],  // Array of thinking steps (can be empty)
   "message": "Your natural conversational response to the user",  // Natural response that acknowledges previous suggestions and introduces new ones
   "places": [
     {
@@ -168,10 +220,12 @@ Your role:
 - Keep each description concise but engaging
 - Write all place descriptions as one continuous narrative paragraph
 
-CRITICAL: Wrap place names with **double asterisks** so they become clickable links. Return ONLY the narrative text, not JSON.
+CRITICAL: Wrap place names with **double asterisks** so they become clickable links. You MUST respond with valid JSON: { "narrative": "your text here" }
 
 Example output:
-Start your adventure in **Piotrkowska Street**, one of the longest commercial streets in Europe, where you'll find a vibrant mix of historical architecture and bustling cafes. Just a short walk away, **Manufaktura** offers a fantastic blend of shopping, dining, and cultural attractions in a beautifully revitalized 19th-century factory complex.`;
+{
+  "narrative": "Start your adventure in **Piotrkowska Street**, one of the longest commercial streets in Europe, where you'll find a vibrant mix of historical architecture and bustling cafes. Just a short walk away, **Manufaktura** offers a fantastic blend of shopping, dining, and cultural attractions in a beautifully revitalized 19th-century factory complex."
+}`;
 };
 
 const formatPlacesForNarrative = (places: PlaceSuggestion[]): string => {
@@ -192,7 +246,7 @@ const generateNarrative = (userMessage: string, personas: string[], places: Plac
     const thinkingContext =
       thinking.length > 0 ? `\n\nReasoning process:\n${thinking.map((t, i) => `${i + 1}. ${t}`).join("\n")}` : "";
 
-    // Make OpenAI call for plain text narrative
+    // Make OpenAI call for JSON narrative
     const response = yield* openai.chatCompletion({
       messages: [
         { role: "system" as const, content: narrativePrompt },
@@ -203,11 +257,22 @@ const generateNarrative = (userMessage: string, personas: string[], places: Plac
       ],
       temperature: 0.8, // Slightly higher for more creative narrative
       maxTokens: 10000,
+      responseFormat: {
+        type: "json_schema",
+        json_schema: NARRATIVE_RESPONSE_SCHEMA,
+      },
     });
 
-    // Return the narrative directly
+    // Parse the narrative from JSON wrapper
     if (response.content && response.content.trim()) {
-      return response.content.trim();
+      try {
+        const parsed = JSON.parse(response.content);
+        if (parsed.narrative && typeof parsed.narrative === "string") {
+          return parsed.narrative.trim();
+        }
+      } catch (error) {
+        yield* Effect.logWarning("Failed to parse narrative JSON, using fallback", { error });
+      }
     }
 
     yield* Effect.logWarning("No content in narrative response");
@@ -237,7 +302,8 @@ export const TravelPlanningChat = (cmd: ChatRequestCommand) =>
       temperature: 0.7,
       maxTokens: 10000,
       responseFormat: {
-        type: "json_object",
+        type: "json_schema",
+        json_schema: MAIN_CHAT_RESPONSE_SCHEMA,
       },
       reasoningEffort: "high",
     });
