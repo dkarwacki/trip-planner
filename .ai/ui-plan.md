@@ -31,10 +31,50 @@ The application is divided into two distinct zones:
 ### 2.2 Login View
 
 - **Path**: `/login`
-- **Purpose**: Secure user authentication.
-- **Key Information**: Login form (Email/Password, Social Providers), Sign Up toggle.
-- **Key Components**: AuthForm (**Supabase Auth UI** or custom), Branding Header.
-- **UX/Auth**: Public access. Clean, distraction-free layout.
+- **Purpose**: User authentication with email/password or Google OAuth.
+- **Key Information**: Email/password fields, Google OAuth button, "Forgot password?" and "Sign up" links, `?redirect=` query parameter handling.
+- **Key Components**: `AuthLayout`, `AuthFormInput`, `GoogleOAuthButton`.
+- **UX/Auth**: Public access. Redirects to `?redirect` param or `/` after successful login.
+
+### 2.2.5 Signup View
+
+- **Path**: `/signup`
+- **Purpose**: User registration with email/password or Google OAuth.
+- **Key Information**: Email, password, password confirmation fields, password requirements (8 chars + special char), Google OAuth button, link to `/login`.
+- **Key Components**: `AuthLayout`, `AuthFormInput`, `PasswordStrengthIndicator`, `GoogleOAuthButton`.
+- **UX/Auth**: Public access. Auto-login and redirect to `/` after successful signup.
+
+### 2.2.6 Password Reset Request View
+
+- **Path**: `/reset-password`
+- **Purpose**: Request password reset email.
+- **Key Information**: Email field, generic success message (security best practice), link back to `/login`.
+- **Key Components**: `AuthLayout`, `AuthFormInput`, `SuccessMessage`.
+- **UX/Auth**: Public access. Always shows success message regardless of email existence.
+
+### 2.2.7 Password Reset Confirmation View
+
+- **Path**: `/update-password`
+- **Purpose**: Complete password reset with new password.
+- **Key Information**: New password and confirmation fields, password strength indicator, token validation (1 hour expiry).
+- **Key Components**: `AuthLayout`, `AuthFormInput`, `PasswordStrengthIndicator`, `SuccessMessage`.
+- **UX/Auth**: Public access (via email link). Redirects to `/login` after successful reset.
+
+### 2.2.8 OAuth Callback View
+
+- **Path**: `/auth/callback`
+- **Purpose**: Handle OAuth provider callbacks (Google).
+- **Key Information**: Full-page loading spinner, automatic redirect processing.
+- **Key Components**: `LoadingSpinner`, `ErrorMessage`.
+- **UX/Auth**: Public access. Automatically redirects to `?redirect` param or `/` after processing.
+
+### 2.2.9 Email Verification Callback (Optional)
+
+- **Path**: `/verify-email`
+- **Purpose**: Handle email verification link clicks.
+- **Key Information**: Token validation (24 hour expiry), success/error messages.
+- **Key Components**: `LoadingSpinner`, `SuccessMessage`, `ErrorMessage`.
+- **UX/Auth**: Public access (via email link). Auto-redirect to `/` after verification.
 
 ### 2.3 Plan View (Chat) - **COMPLETED**
 
@@ -56,7 +96,7 @@ The application is divided into two distinct zones:
 - **Purpose**: User account management.
 - **Key Information**: User details (Name, Email), Password Reset, Default Personas.
 - **Key Components**:
-  - `UserProfile`: Avatar, Name, Email.
+  - `UserProfile`: User icon, Name, Email.
   - `SecuritySettings`: Password reset form.
   - `PersonaSettings`: Default persona configuration.
 - **UX/Auth**: Protected. Full-screen view on mobile.
@@ -92,14 +132,41 @@ The application is divided into two distinct zones:
   - **Tabs**:
     1.  **Chat** (`/plan`): Icon: MessageSquare.
     2.  **Map** (`/map`): Icon: Map.
-    3.  **Profile** (`/profile`): Icon: User.
+    3.  **Profile**: Icon: User.
   - **Behavior**: Active tab highlighted. Tapping active tab scrolls to top/resets view.
+- **User Menu (Mobile - Vaul Drawer)**:
+  - **Trigger**: Tap "Profile" tab in bottom navigation
+  - **Drawer Menu** (Vaul component):
+    - Animated drawer slides up from bottom
+    - Max-height: 40vh, rounded top corners
+    - Header: User icon (24px) + name + email
+    - Menu items (large tap targets, 48px min height):
+      1. "View Profile" → Navigate to `/profile` page
+      2. "Logout" (red text with LogOut icon) → Logout and redirect to `/`
+    - Tap outside or swipe down to close
+    - Backdrop dims rest of screen when open
+  - **Behavior**:
+    - Shows loading skeleton while user data loads
+    - Drawer closes after clicking menu item
 
 ### Desktop Layout
 
 - **Top Navigation Bar**:
   - **Left**: Logo.
-  - **Right**: Nav Links (Plan, Map, Trips), **Profile Button** (Avatar/Icon).
+  - **Right**: Nav Links (Plan, Map, Trips), **User Menu** (User icon + Dropdown).
+- **User Menu (Desktop)**:
+  - **Trigger**: Click user icon (20px, from lucide-react)
+  - **Dropdown Menu** (shadcn/ui DropdownMenu component):
+    - Right-aligned dropdown
+    - Header: User name + email
+    - Menu items:
+      1. "Profile" → Navigate to `/profile`
+      2. "Logout" (red text with LogOut icon) → Logout and redirect to `/`
+    - Click outside to close
+  - **Behavior**:
+    - Clicking user icon opens/closes dropdown
+    - Logout clears Supabase session + Zustand auth state
+    - Shows loading skeleton while user data loads
 - **Content Area**:
   - **Plan**: Split view (Chat left, Itinerary right).
   - **Map**: Full screen map with floating panels.
@@ -110,6 +177,27 @@ The application is divided into two distinct zones:
 - **State Persistence**:
   - When switching from Map -> Chat -> Map, the map viewport and selected place are restored from Zustand store.
   - Itinerary data is synced via React Query cache.
+
+### Protected Route Middleware
+
+- **Implementation**: Astro middleware in `src/middleware/index.ts`
+  - Checks Supabase session on all requests
+  - **Protected routes** (require auth): `/plan`, `/map`, `/profile`
+  - **Public routes** (no auth): `/`, `/login`, `/signup`, `/reset-password`, `/update-password`, `/auth/callback`, `/verify-email`
+- **Loading Strategy**: Page-specific skeleton loaders
+  - `/plan` → Chat skeleton (message bubbles, itinerary skeleton)
+  - `/map` → Map skeleton (gray map placeholder + panel skeletons)
+  - `/profile` → Profile skeleton (avatar placeholder, form fields)
+  - Prevents flash of unauthorized content
+  - Auth check completes in <300ms (barely noticeable)
+- **Behavior**:
+  - Unauthenticated on protected route → `redirect('/login?redirect={current-path}')`
+  - Authenticated on auth pages (login/signup) → `redirect('/')` (avoid showing login to logged-in users)
+  - Session attached to `context.locals.user` for page access
+  - Middleware runs before page render (server-side)
+- **Error Handling**:
+  - Session validation fails → Clear cookies, redirect to login
+  - API errors during check → Assume unauthenticated, redirect to login
 
 ## 5. Key Components
 
@@ -130,3 +218,57 @@ The application is divided into two distinct zones:
 
 - `PersonaToggle`: Switch/Checkbox for default settings.
 - `AuthForm`: Reused for Login/Profile settings where applicable.
+
+### 5.5 Authentication Components
+
+**Shared Layout Components**:
+
+- `AuthLayout`: Centered card wrapper (440px max-width, 32px padding) for all auth pages
+  - Reused across: Login, Signup, Password Reset pages
+  - Consistent branding header with logo
+
+**Form Components**:
+
+- `AuthFormInput`: Reusable form input with inline error display
+  - Props: type, label, error message, value, onChange
+  - Shows red error text below field
+  - Used for: email, password, password confirmation
+- `PasswordStrengthIndicator`: Visual feedback for password requirements
+  - Shows: 8 chars minimum + 1 special character requirement
+  - Color codes: Red (weak), Yellow (medium), Green (strong)
+  - Used in: Signup, Password Reset Confirmation
+- `FormErrorMessage`: Inline error message component (red text)
+- `GoogleOAuthButton`: Reusable OAuth button
+  - Text variants: "Sign in with Google" / "Sign up with Google"
+  - Loading state: Spinner + "Redirecting to Google..."
+  - Consistent Google branding
+
+**UI Components**:
+
+- `UserMenuDropdown`: Desktop dropdown menu (shadcn/ui DropdownMenu)
+  - Trigger: User icon (20px, lucide-react User icon)
+  - Header: Name + email
+  - Menu items: Profile link, Logout button (red)
+- `UserMenuDrawer`: Mobile drawer menu (Vaul)
+  - Slides up from bottom, max-height 40vh
+  - Header: User icon (24px) + name + email
+  - Menu items: View Profile, Logout (red)
+- `EmailVerificationBanner`: Dismissible banner for unverified emails
+  - Per-session dismiss (Zustand sessionStorage)
+  - Shows: "Please verify your email" + "Resend" button
+  - Only shown if: email unverified AND not dismissed this session
+- `SessionExpiredToast`: Toast notification for expired sessions
+  - Message: "Your session has expired. Redirecting to login..."
+  - Auto-dismiss after 3 seconds
+  - Appears: Top-right corner
+
+**Skeleton Loaders**:
+
+- `ChatSkeleton`: For `/plan` protected route loading
+  - Message bubbles + itinerary list skeleton
+- `MapSkeleton`: For `/map` protected route loading
+  - Gray map placeholder + panel skeletons
+- `ProfileSkeleton`: For `/profile` protected route loading
+  - Form field skeletons
+
+**Related User Stories**: US-025 through US-035
