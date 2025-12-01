@@ -55,9 +55,23 @@ The application serves eight primary personas:
 ### 3.1 Authentication and User Management
 
 - Supabase Auth integration for user authentication (required for all access)
-- User profile storage including name and email
+- Authentication methods supported:
+  - Email and password signup/login
+  - Google OAuth (Sign in with Google)
+- User profile storage including name, email
 - Persistent storage of persona selections per user account
-- Session management and secure access control
+- Session management with HTTP-only cookies
+- Session persistence across browser tabs and refreshes
+- Automatic session refresh before expiration
+- Protected route access control:
+  - `/plan` and `/map` require authentication
+  - Unauthenticated access redirects to `/login?redirect={original-page}`
+  - Landing page (`/`) is publicly accessible
+- Logout functionality clearing sessions and client state
+- Password reset flow via email for email/password accounts
+- Optional email verification (non-blocking for app access)
+- Session expiration handling with graceful redirect and message
+- User profile display in navigation with avatar and menu
 
 ### 3.2 Persona Selection
 
@@ -149,7 +163,13 @@ The application serves eight primary personas:
 - Basic itinerary management (add/remove) with ordered sequence
 - Scoring system for attractions and restaurants on map interface only
 - Map export and history
-- Supabase authentication
+- Authentication and session management:
+  - Email/password authentication with signup and login
+  - Google OAuth (Sign in with Google)
+  - Password reset flow via email
+  - Session management with HTTP-only cookies
+  - Protected route access control
+  - Optional email verification (non-blocking)
 - Desktop and mobile responsive design
 - Server-side logging
 
@@ -159,7 +179,13 @@ The application serves eight primary personas:
 - Travel logistics (transportation, reservations, budget tracking)
 - Offline mode functionality
 - Advanced personalization and learning algorithms
-- Third-party authentication providers beyond Supabase
+- Additional authentication features:
+  - Additional OAuth providers (GitHub, Apple, Facebook, etc.) - can be added later
+  - Two-factor authentication (2FA) or multi-factor authentication (MFA)
+  - Account deletion or deactivation
+  - OAuth account linking (merging email and Google accounts)
+  - Enterprise SSO or SAML authentication
+  - Phone number authentication
 - Custom persona creation
 - Research workspaces
 - Collaboration features
@@ -495,6 +521,189 @@ The application serves eight primary personas:
   - After successful login, user is redirected to the originally requested page (/plan or /map)
   - Visual design aligns with the application's premium aesthetic
 
+### US-025
+
+- ID: US-025
+- Title: Sign Up with Email and Password
+- Description: As a new user, I want to create an account using my email and password so that I can access the application and save my trip plans
+- Acceptance Criteria:
+  - Signup form accessible at `/signup` route
+  - Email field validates proper email format
+  - Password field enforces minimum security requirements (min 8 characters total and 1 special character)
+  - Password confirmation field matches password
+  - Email verification is optional (users can access app immediately after signup)
+  - Successful signup creates user record in Supabase Auth
+  - User is automatically logged in after successful signup
+  - User is redirected to `/` after signup
+  - Existing email shows clear error message
+  - Form shows loading state during submission
+  - Login link available for users who already have an account
+
+### US-026
+
+- ID: US-026
+- Title: Sign Up with Google OAuth
+- Description: As a new user, I want to sign up using my Google account so that I can quickly access the application without managing another password
+- Acceptance Criteria:
+  - "Sign up with Google" button visible on signup page
+  - Clicking the button initiates Google OAuth flow
+  - OAuth redirects to Google authorization page
+  - After Google authorization, user returns to application
+  - User record created in Supabase Auth with Google provider
+  - User is automatically logged in after OAuth completion
+  - User profile populated with Google name and email
+  - User is redirected to `/` after successful OAuth
+  - Failed OAuth shows clear error message
+  - Existing Google account logs in instead of creating duplicate
+
+### US-027
+
+- ID: US-027
+- Title: Login with Email and Password
+- Description: As a returning user, I want to log in using my email and password so that I can access my saved trip plans and preferences
+- Acceptance Criteria:
+  - Login form accessible at `/login` route
+  - Email and password fields available
+  - Successful login redirects to originally requested page (via ?redirect= parameter)
+  - If no redirect parameter, user goes to `/`
+  - Invalid credentials show clear error message
+  - Form shows loading state during submission
+  - "Forgot password?" link available
+  - Signup link available for new users
+  - Session persists across browser restarts if "Remember me" selected
+
+### US-028
+
+- ID: US-028
+- Title: Login with Google OAuth
+- Description: As a returning user, I want to log in using my Google account so that I can quickly access my saved trip plans
+- Acceptance Criteria:
+  - "Sign in with Google" button visible on login page
+  - Clicking button initiates Google OAuth flow
+  - OAuth redirects to Google authorization page
+  - After Google authorization, user returns to application
+  - User is logged in with existing Google-linked account
+  - User is redirected to originally requested page (via ?redirect= parameter)
+  - If no redirect parameter, user goes to `/plan`
+  - Failed OAuth shows clear error message
+  - Non-existent Google account redirects to signup flow
+
+### US-029
+
+- ID: US-029
+- Title: Access Protected Routes
+- Description: As an unauthenticated user, I want to be redirected to the login page when accessing protected features so that I understand I need to sign in
+- Acceptance Criteria:
+  - Accessing `/plan` without authentication redirects to `/login?redirect=/plan`
+  - Accessing `/map` without authentication redirects to `/login?redirect=/map`
+  - Landing page (`/`) is publicly accessible without authentication
+  - After successful login, user is redirected back to originally requested page
+  - Redirect parameter is preserved through OAuth flows
+  - API endpoints return 401 Unauthorized for unauthenticated requests
+  - Protected pages show loading state while checking authentication
+  - Authentication check happens before page content renders
+
+### US-030
+
+- ID: US-030
+- Title: Maintain User Session
+- Description: As a logged-in user, I want my session to persist across page refreshes and browser tabs so that I don't have to log in repeatedly
+- Acceptance Criteria:
+  - User session stored in HTTP-only cookies via Supabase Auth
+  - Session persists across page refreshes
+  - Session persists across browser tabs
+  - Session is shared across multiple tabs (same browser)
+  - Session automatically refreshes before expiration
+  - Expired session redirects user to login page
+  - User sees loading state while session is being validated
+  - Session restoration is automatic and seamless
+  - No manual token management required from user
+
+### US-031
+
+- ID: US-031
+- Title: Log Out
+- Description: As a logged-in user, I want to securely log out of my account so that others cannot access my trip plans on a shared device
+- Acceptance Criteria:
+  - Logout button available in user menu/navigation
+  - Clicking logout clears Supabase session
+  - Logout clears all authentication cookies
+  - Logout clears client-side user state (Zustand store)
+  - User is redirected to landing page (`/`) after logout
+  - Logout shows confirmation message (optional)
+  - After logout, accessing protected routes redirects to login
+  - Logout works from any page in the application
+  - Logout is instant (no unnecessary delays)
+
+### US-032
+
+- ID: US-032
+- Title: View User Profile in Navigation
+- Description: As a logged-in user, I want to see my profile information in the navigation so that I know I'm logged in and can access account options
+- Acceptance Criteria:
+  - User's name or email displayed in navigation header
+  - User avatar shown if available (Google profile picture or initials)
+  - User menu dropdown accessible from navigation
+  - User menu contains logout option
+  - User menu contains link to profile/settings (if implemented)
+  - User indicator visible on all authenticated pages
+  - Loading state shown while user data is being fetched
+  - Navigation adapts for mobile and desktop views
+  - Clicking user indicator opens menu (desktop) or navigates to profile (mobile)
+
+### US-033
+
+- ID: US-033
+- Title: Handle Session Expiration
+- Description: As a user with an expired session, I want to be redirected to login with a clear message so that I understand why I need to re-authenticate
+- Acceptance Criteria:
+  - Expired session detected on page load
+  - Expired session detected on API requests
+  - User redirected to `/login` when session expires
+  - Redirect includes original page as ?redirect= parameter
+  - Clear message displayed: "Your session has expired. Please log in again."
+  - Message auto-dismisses after 5 seconds
+  - After re-login, user returns to the page they were on
+  - In-progress work (current trip/conversation) is preserved if possible
+  - API endpoints return 401 for expired sessions
+  - Session expiration is handled gracefully without data loss
+
+### US-034
+
+- ID: US-034
+- Title: Password Reset Flow
+- Description: As a user who forgot my password, I want to reset it via email so that I can regain access to my account
+- Acceptance Criteria:
+  - "Forgot password?" link available on login page
+  - Link navigates to `/reset-password` page
+  - Email input field for password reset request
+  - Submitting email sends password reset link via Supabase Auth
+  - Success message shown regardless of email existence (security)
+  - Password reset email contains secure token link
+  - Clicking email link navigates to password reset form
+  - Password reset form validates new password requirements
+  - Successful password reset shows confirmation
+  - User is redirected to login page after reset
+  - Reset links expire after 1 hour
+  - Used reset links cannot be reused
+
+### US-035
+
+- ID: US-035
+- Title: Email Verification (Optional)
+- Description: As a new user who signed up with email, I optionally want to verify my email address so that I can confirm account ownership
+- Acceptance Criteria:
+  - Email verification is not required to access the application
+  - Verification email sent after signup (optional)
+  - User can access all features without verifying email
+  - Banner or notification shows "Please verify your email" for unverified users
+  - Banner is dismissible and does not block functionality
+  - Clicking "Resend verification email" sends another verification link
+  - Clicking verification link in email confirms email address
+  - Verified status shown in user profile/settings
+  - Verification banner hidden after email is verified
+  - Verification emails expire after 24 hours
+
 ## 6. Success Metrics
 
 ### Metrics
@@ -502,6 +711,12 @@ The application serves eight primary personas:
 - User Adoption: 25+ testers have used the application
 - Flow Completion: ≥50% of users complete the full flow (preferences → chat → map)
 - Engagement: Average of ≥3 saved places per trip plan
+- Authentication Metrics:
+  - User signup conversion rate (visitors → signups)
+  - OAuth vs email/password signup ratio
+  - Return user rate (users who log in more than once)
+  - Average session duration
+  - Failed login attempt rate (< 5% target)
 
 ### Future Tracking (Post-MVP)
 
