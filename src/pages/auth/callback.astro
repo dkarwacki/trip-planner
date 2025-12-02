@@ -1,0 +1,35 @@
+---
+/**
+ * OAuth Callback Handler
+ *
+ * Handles OAuth and magic link callbacks from Supabase.
+ * Exchanges the code for a session and redirects appropriately.
+ */
+
+export const prerender = false;
+
+const { supabase } = Astro.locals;
+const code = Astro.url.searchParams.get("code");
+const redirectTo = Astro.url.searchParams.get("redirect") ?? "/";
+const errorParam = Astro.url.searchParams.get("error");
+const errorDescription = Astro.url.searchParams.get("error_description");
+
+// Handle OAuth error from provider
+if (errorParam) {
+  console.error("[auth/callback] OAuth error:", errorParam, errorDescription);
+  return Astro.redirect(`/login?error=${encodeURIComponent(errorDescription ?? errorParam)}`);
+}
+
+// Exchange code for session if present
+if (code) {
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (error) {
+    console.error("[auth/callback] Code exchange error:", error);
+    return Astro.redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  }
+}
+
+// Redirect to intended destination (or home)
+return Astro.redirect(redirectTo);
+---

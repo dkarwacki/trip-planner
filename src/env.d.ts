@@ -17,10 +17,22 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
+/**
+ * User data available in Astro.locals after middleware authentication
+ */
+export interface AuthUser {
+  id: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+  emailVerified: boolean;
+}
+
 declare global {
   namespace App {
     interface Locals {
       supabase: SupabaseClient<Database>;
+      user?: AuthUser;
     }
   }
 }

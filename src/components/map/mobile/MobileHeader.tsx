@@ -8,6 +8,7 @@ import { Search, ArrowLeft, Menu, Clock, MessageCircle, Loader2 } from "lucide-r
 import { cn } from "@/lib/common/utils";
 import { TripSelector } from "../shared/TripSelector";
 import { useMapStore } from "../stores/mapStore";
+import { UserMenuDrawer, type AuthUser } from "@/components/auth";
 
 interface MobileHeaderProps {
   onSearchClick: () => void;
@@ -15,6 +16,7 @@ interface MobileHeaderProps {
   showBackButton?: boolean;
   onBackClick?: () => void;
   backLabel?: string;
+  user?: AuthUser;
 }
 
 export function MobileHeader({
@@ -23,6 +25,7 @@ export function MobileHeader({
   showBackButton = false,
   onBackClick,
   backLabel = "Back to Planning",
+  user,
 }: MobileHeaderProps) {
   const conversationId = useMapStore((state) => state.conversationId);
   const tripId = useMapStore((state) => state.tripId);
@@ -156,6 +159,9 @@ export function MobileHeader({
               <span className="hidden sm:inline">{backLabel}</span>
             </button>
           )}
+
+          {/* User Menu */}
+          {user && <UserMenuDrawer user={user} />}
         </div>
       </div>
     </header>

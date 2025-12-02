@@ -8,7 +8,6 @@ import { UnexpectedError } from "@/domain/common/errors";
 import type { Place } from "@/domain/common/models";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import { TripId, ConversationId } from "@/domain/plan/models";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -96,10 +95,18 @@ function tripDAOToDetailDTO(dao: TripDAO): TripDetailDTO {
  * GET /api/trips
  * List all user trips (newest first)
  */
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const program = Effect.gen(function* () {
     const repo = yield* TripRepository;
-    const trips = yield* repo.findAll(DEV_USER_ID);
+    const trips = yield* repo.findAll(user.id);
 
     const response: TripListResponseDTO = {
       trips: trips.map((trip) => ({
@@ -145,7 +152,15 @@ export const GET: APIRoute = async () => {
  * Create new trip from Place[] data (migration-compatible)
  * Accepts: { title, places: Place[], conversation_id? }
  */
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const body = await request.json();
   const { title, places, conversation_id } = body;
 
@@ -160,7 +175,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const tripDAO: TripDAO = {
       id: tripId,
-      userId: DEV_USER_ID,
+      userId: user.id,
       title: title || "Untitled Trip",
       placesData,
       conversationId: conversation_id || null,
@@ -168,10 +183,10 @@ export const POST: APIRoute = async ({ request }) => {
       updatedAt: new Date().toISOString(),
     };
 
-    yield* repo.create(DEV_USER_ID, tripDAO);
+    yield* repo.create(user.id, tripDAO);
 
     // Fetch and return the created trip
-    const createdTrip = yield* repo.findById(DEV_USER_ID, tripId);
+    const createdTrip = yield* repo.findById(user.id, tripId);
     return tripDAOToDetailDTO(createdTrip);
   });
 

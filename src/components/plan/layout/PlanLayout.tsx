@@ -12,13 +12,13 @@ import { useResponsive } from "@/components/map/hooks/useResponsive";
  * - Manages global state for the plan view
  * - Handles conversation loading from URL params
  */
-export function PlanLayout({ conversationId }: LayoutProps) {
+export function PlanLayout({ conversationId, user }: LayoutProps) {
   const { isMobile } = useResponsive();
 
   // Render appropriate layout based on viewport
   if (isMobile) {
-    return <MobileLayout conversationId={conversationId} />;
+    return <MobileLayout conversationId={conversationId} user={user} />;
   }
 
-  return <DesktopLayout conversationId={conversationId} />;
+  return <DesktopLayout conversationId={conversationId} user={user} />;
 }

@@ -3,6 +3,7 @@ import type { ChatMessage, PlaceSuggestion } from "@/domain/plan/models/ChatMess
 import type { ConversationId } from "@/domain/plan/models/ConversationHistory";
 import type { TripId } from "@/domain/plan/models/TripHistory";
 import type { PlacePhoto } from "@/domain/common/models";
+import type { AuthUser } from "@/components/auth/stores/types";
 
 // UI State types
 
@@ -57,6 +58,7 @@ export interface ConversationState {
 
 export interface LayoutProps {
   conversationId?: string | null;
+  user?: AuthUser;
 }
 
 export interface ChatInterfaceProps {

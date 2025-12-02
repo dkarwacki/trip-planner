@@ -7,7 +7,6 @@ import { AppRuntime } from "@/infrastructure/common/runtime";
 import { UnexpectedError } from "@/domain/common/errors";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import { TripId, ConversationId } from "@/domain/plan/models";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -75,7 +74,15 @@ function tripDAOToDetailDTO(dao: TripDAO): TripDetailDTO {
  * Get trip for conversation (one-to-one relationship)
  * Returns null if no trip found
  */
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const conversationId = params.conversationId;
 
   if (!conversationId) {
@@ -87,7 +94,7 @@ export const GET: APIRoute = async ({ params }) => {
 
   const program = Effect.gen(function* () {
     const repo = yield* TripRepository;
-    const trip = yield* repo.findByConversationId(DEV_USER_ID, conversationId);
+    const trip = yield* repo.findByConversationId(user.id, conversationId);
 
     // Return null if no trip found (not an error)
     if (!trip) {

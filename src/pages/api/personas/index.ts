@@ -10,7 +10,6 @@ import { ValidationError } from "@/infrastructure/common/http/validation";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
 import { UnexpectedError } from "@/domain/common/errors";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -30,15 +29,23 @@ const validateRequest = (body: unknown) =>
  * Load user's persona preferences
  * Returns empty array if none set
  */
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const program = Effect.gen(function* () {
     const repo = yield* UserPersonasRepository;
-    const data = yield* repo.find(DEV_USER_ID);
+    const data = yield* repo.find(user.id);
 
     // If no personas found, return empty array
     if (!data) {
       const emptyResponse: GetUserPersonasResponseDTO = {
-        user_id: DEV_USER_ID,
+        user_id: user.id,
         persona_types: [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -87,13 +94,21 @@ export const GET: APIRoute = async () => {
  * Update user's persona preferences
  * Creates or updates (upsert)
  */
-export const PUT: APIRoute = async ({ request }) => {
+export const PUT: APIRoute = async ({ request, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const body = await request.json();
 
   const program = Effect.gen(function* () {
     const dto = yield* validateRequest(body);
     const repo = yield* UserPersonasRepository;
-    yield* repo.save(DEV_USER_ID, dto.persona_types);
+    yield* repo.save(user.id, dto.persona_types);
 
     return { success: true };
   });

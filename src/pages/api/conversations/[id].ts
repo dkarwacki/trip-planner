@@ -9,7 +9,6 @@ import {
 } from "@/infrastructure/plan/api/schemas";
 import { DeleteConversationWithTrip } from "@/application/plan";
 import { AppRuntime } from "@/infrastructure/common/runtime";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -17,7 +16,15 @@ export const prerender = false;
  * GET /api/conversations/:id
  * Get single conversation with full message history
  */
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const { id } = params;
 
   if (!id) {
@@ -29,7 +36,7 @@ export const GET: APIRoute = async ({ params }) => {
 
   const program = Effect.gen(function* () {
     const conversationRepo = yield* ConversationRepository;
-    const conversation = yield* conversationRepo.findById(DEV_USER_ID, id);
+    const conversation = yield* conversationRepo.findById(user.id, id);
     const domainConversation = toSavedConversation(conversation);
 
     return domainConversation;
@@ -65,7 +72,15 @@ export const GET: APIRoute = async ({ params }) => {
  * PUT /api/conversations/:id
  * Update conversation metadata (title only)
  */
-export const PUT: APIRoute = async ({ params, request }) => {
+export const PUT: APIRoute = async ({ params, request, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const { id } = params;
 
   if (!id) {
@@ -98,10 +113,10 @@ export const PUT: APIRoute = async ({ params, request }) => {
     const conversationRepo = yield* ConversationRepository;
 
     // Update with new title
-    yield* conversationRepo.updateTitle(DEV_USER_ID, id, title);
+    yield* conversationRepo.updateTitle(user.id, id, title);
 
     // Get updated conversation
-    const updatedConversation = yield* conversationRepo.findById(DEV_USER_ID, id);
+    const updatedConversation = yield* conversationRepo.findById(user.id, id);
 
     return UpdateConversationResponseSchema.parse({
       id: updatedConversation.id,
@@ -140,7 +155,15 @@ export const PUT: APIRoute = async ({ params, request }) => {
  * DELETE /api/conversations/:id
  * Delete conversation
  */
-export const DELETE: APIRoute = async ({ params }) => {
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const { id } = params;
 
   if (!id) {
@@ -151,7 +174,7 @@ export const DELETE: APIRoute = async ({ params }) => {
   }
 
   const program = Effect.gen(function* () {
-    yield* DeleteConversationWithTrip(DEV_USER_ID, id);
+    yield* DeleteConversationWithTrip(user.id, id);
 
     return DeleteConversationResponseSchema.parse({
       id,

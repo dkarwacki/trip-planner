@@ -4,7 +4,6 @@ import { TripRepository } from "@/infrastructure/plan/database";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
 import { UnexpectedError } from "@/domain/common/errors";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -12,7 +11,15 @@ export const prerender = false;
  * PUT /api/trips/:id/conversation
  * Associate a conversation with a trip
  */
-export const PUT: APIRoute = async ({ params, request }) => {
+export const PUT: APIRoute = async ({ params, request, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const tripId = params.id;
 
   if (!tripId) {
@@ -34,7 +41,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
   const program = Effect.gen(function* () {
     const repo = yield* TripRepository;
-    yield* repo.updateConversationId(DEV_USER_ID, tripId, conversation_id);
+    yield* repo.updateConversationId(user.id, tripId, conversation_id);
 
     return {
       id: tripId,

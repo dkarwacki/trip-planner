@@ -6,7 +6,6 @@ import { AppRuntime } from "@/infrastructure/common/runtime";
 import { UnexpectedError } from "@/domain/common/errors";
 import type { Place } from "@/domain/common/models";
 import { TripId } from "@/domain/plan/models";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -128,7 +127,15 @@ function tripDAOToDetailDTO(dao: TripDAO) {
  * GET /api/trips/:id
  * Get single trip with full place data
  */
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const tripId = params.id;
 
   if (!tripId) {
@@ -140,7 +147,7 @@ export const GET: APIRoute = async ({ params }) => {
 
   const program = Effect.gen(function* () {
     const repo = yield* TripRepository;
-    const trip = yield* repo.findById(DEV_USER_ID, tripId);
+    const trip = yield* repo.findById(user.id, tripId);
     return tripDAOToDetailDTO(trip);
   });
 
@@ -173,7 +180,15 @@ export const GET: APIRoute = async ({ params }) => {
  * Update trip places (auto-save from map)
  * Accepts: { places: Place[] }
  */
-export const PUT: APIRoute = async ({ params, request }) => {
+export const PUT: APIRoute = async ({ params, request, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const tripId = params.id;
 
   if (!tripId) {
@@ -192,7 +207,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
     // Convert Place[] to PlaceDAO[]
     const placesData = placesToPlaceDAOs(places);
 
-    yield* repo.updatePlaces(DEV_USER_ID, tripId, placesData);
+    yield* repo.updatePlaces(user.id, tripId, placesData);
 
     return {
       id: TripId(tripId),
@@ -228,7 +243,15 @@ export const PUT: APIRoute = async ({ params, request }) => {
  * DELETE /api/trips/:id
  * Delete trip
  */
-export const DELETE: APIRoute = async ({ params }) => {
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const tripId = params.id;
 
   if (!tripId) {
@@ -240,7 +263,7 @@ export const DELETE: APIRoute = async ({ params }) => {
 
   const program = Effect.gen(function* () {
     const repo = yield* TripRepository;
-    yield* repo.delete(DEV_USER_ID, tripId);
+    yield* repo.delete(user.id, tripId);
 
     return {
       id: TripId(tripId),

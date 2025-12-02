@@ -17,6 +17,7 @@ import type {
   NoResultsError,
   GeocodingError,
 } from "@/domain/map/errors";
+import type { AuthenticationError, RegistrationError, PasswordResetError } from "@/domain/auth/errors";
 
 type AppError =
   | ValidationError
@@ -33,7 +34,10 @@ type AppError =
   | AgentError
   | InvalidToolCallError
   | ModelResponseError
-  | UnexpectedError;
+  | UnexpectedError
+  | AuthenticationError
+  | RegistrationError
+  | PasswordResetError;
 
 export const toHttpResponse = (error: AppError, successData?: Record<string, unknown>): Response => {
   if ("_tag" in error) {
@@ -188,6 +192,48 @@ export const toHttpResponse = (error: AppError, successData?: Record<string, unk
           }),
           {
             status: 502,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+      // Auth errors
+      case "AuthenticationError":
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: error.message,
+            code: error.code,
+          }),
+          {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+      case "RegistrationError": {
+        const status = error.code === "email_already_exists" ? 409 : 400;
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: error.message,
+            code: error.code,
+          }),
+          {
+            status,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      case "PasswordResetError":
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: error.message,
+            code: error.code,
+          }),
+          {
+            status: 400,
             headers: { "Content-Type": "application/json" },
           }
         );

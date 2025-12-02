@@ -3,7 +3,6 @@ import { Effect, Runtime } from "effect";
 import { ConversationRepository } from "@/infrastructure/plan/database/repositories";
 import { AppRuntime } from "@/infrastructure/common/runtime";
 import { UpdateConversationMessagesCommandSchema } from "@/infrastructure/plan/api/schemas";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -11,7 +10,15 @@ export const prerender = false;
  * PUT /api/conversations/:id/messages
  * Update conversation messages (bulk update for auto-save)
  */
-export const PUT: APIRoute = async ({ params, request }) => {
+export const PUT: APIRoute = async ({ params, request, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const { id } = params;
 
   if (!id) {
@@ -64,7 +71,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
     }));
 
     // Update messages in database
-    yield* conversationRepo.updateMessages(DEV_USER_ID, id, messagesDAO);
+    yield* conversationRepo.updateMessages(user.id, id, messagesDAO);
 
     return {
       id,

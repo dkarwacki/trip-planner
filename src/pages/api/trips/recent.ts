@@ -3,7 +3,6 @@ import { Effect, Runtime } from "effect";
 import { TripService } from "@/infrastructure/map/database";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -11,10 +10,18 @@ export const prerender = false;
  * GET /api/trips/recent
  * Get recent trips for trip selector (limit 10, ordered by updated_at DESC)
  */
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const program = Effect.gen(function* () {
     const service = yield* TripService;
-    const trips = yield* service.getRecentTrips(DEV_USER_ID);
+    const trips = yield* service.getRecentTrips(user.id);
 
     return trips.map((trip) => ({
       id: trip.id,

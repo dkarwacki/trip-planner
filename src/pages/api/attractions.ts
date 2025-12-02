@@ -8,7 +8,6 @@ import { AppRuntime } from "@/infrastructure/common/runtime";
 import { UnexpectedError } from "@/domain/common/errors";
 import { UserPersonasRepository } from "@/infrastructure/plan/database";
 import { PERSONA_TYPES, PersonaType } from "@/domain/plan/models";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -49,7 +48,15 @@ const attractionToDTO = (scored: import("@/domain/map/models/AttractionScore").A
   };
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   let body;
   try {
     body = await request.json();
@@ -66,7 +73,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Fetch user personas from database
     const personasRepo = yield* UserPersonasRepository;
-    const userPersonasData = yield* personasRepo.find(DEV_USER_ID);
+    const userPersonasData = yield* personasRepo.find(user.id);
 
     // Use DB personas or fallback to general_tourist
     const personas = userPersonasData?.personaTypes.map((p) => PersonaType(p)) ?? [PERSONA_TYPES.GENERAL_TOURIST];

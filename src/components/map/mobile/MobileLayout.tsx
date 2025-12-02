@@ -10,13 +10,15 @@ import { useMapStore } from "../stores/mapStore";
 import { useMobileAIChat } from "./hooks/useMobileAIChat";
 import { useMobileNavigation } from "./hooks/useMobileNavigation";
 import type { PlannedPlaceViewModel } from "@/lib/map/types";
+import type { AuthUser } from "@/components/auth";
 
 interface MobileLayoutProps {
   mapId?: string;
   tripId?: string;
+  user?: AuthUser;
 }
 
-export function MobileLayout({ mapId }: MobileLayoutProps) {
+export function MobileLayout({ mapId, user }: MobileLayoutProps) {
   // Selectors
   const selectedPlaceId = useMapStore((state) => state.selectedPlaceId);
   const places = useMapStore((state) => state.places);
@@ -74,7 +76,12 @@ export function MobileLayout({ mapId }: MobileLayoutProps) {
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-gray-50">
       {/* Header */}
-      <MobileHeader onSearchClick={() => setShowSearch(true)} showBackButton={false} onBackClick={handleBackClick} />
+      <MobileHeader
+        onSearchClick={() => setShowSearch(true)}
+        showBackButton={false}
+        onBackClick={handleBackClick}
+        user={user}
+      />
 
       {/* Main Content Area */}
       <main

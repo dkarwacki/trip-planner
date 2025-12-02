@@ -34,7 +34,7 @@ import { AnimatePresence } from "framer-motion";
  * - Right sidebar: Itinerary panel (collapsible)
  * - Top: PlanHeader
  */
-export function DesktopLayout({ conversationId }: LayoutProps) {
+export function DesktopLayout({ conversationId, user }: LayoutProps) {
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
   const [isRightCollapsed, setIsRightCollapsed] = useState(false);
 
@@ -504,6 +504,7 @@ export function DesktopLayout({ conversationId }: LayoutProps) {
       <PlanHeader
         saveStatus={tripSyncStatus}
         conversationId={activeConversationId ? String(activeConversationId) : undefined}
+        user={user}
       />
 
       {/* Main content area - 3 columns */}

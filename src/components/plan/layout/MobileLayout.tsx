@@ -25,6 +25,7 @@ import { createTrip, updateTrip, getTripForConversation } from "@/infrastructure
 import { clearCurrentItinerary } from "@/lib/common/storage";
 import { PlaceId, Latitude, Longitude } from "@/domain/common/models";
 import type { Place } from "@/domain/common/models";
+import { UserMenuDrawer } from "@/components/auth";
 
 /**
  * MobileLayout - Mobile-optimized layout with bottom navigation
@@ -35,7 +36,7 @@ import type { Place } from "@/domain/common/models";
  * - Bottom: Navigation tabs
  * - Drawers: Slide up for Plan and Sessions
  */
-export function MobileLayout({ conversationId }: LayoutProps) {
+export function MobileLayout({ conversationId, user }: LayoutProps) {
   const [activeTab, setActiveTab] = useState<MobileTab>("chat");
 
   // Dialog state
@@ -502,8 +503,13 @@ export function MobileLayout({ conversationId }: LayoutProps) {
     <div className="flex h-screen flex-col bg-background">
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b px-4">
-        <h1 className="text-lg font-semibold">Trip Planner</h1>
-        <SaveStatusIndicator status={tripSyncStatus} />
+        <a href="/" className="text-lg font-semibold">
+          Trip Planner
+        </a>
+        <div className="flex items-center gap-3">
+          <SaveStatusIndicator status={tripSyncStatus} />
+          {user && <UserMenuDrawer user={user} />}
+        </div>
       </div>
 
       {/* Main content area - changes based on active tab */}

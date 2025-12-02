@@ -23,8 +23,18 @@ const mapId = import.meta.env.GOOGLE_MAPS_MAP_ID;
 const { searchParams } = Astro.url;
 const tripId = searchParams.get("tripId") || undefined;
 const conversationId = searchParams.get("conversationId") || undefined;
+
+// User is guaranteed by middleware - if we reach here, user exists
+const user = Astro.locals.user;
 ---
 
 <Layout title="Trip Planner - Map">
-  <MapPlanner client:only="react" apiKey={apiKey} mapId={mapId} tripId={tripId} conversationId={conversationId} />
+  <MapPlanner
+    client:only="react"
+    apiKey={apiKey}
+    mapId={mapId}
+    tripId={tripId}
+    conversationId={conversationId}
+    user={user}
+  />
 </Layout>

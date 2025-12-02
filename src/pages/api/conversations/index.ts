@@ -4,7 +4,6 @@ import { ConversationRepository, TripRepository } from "@/infrastructure/plan/da
 import { toSavedConversation } from "@/infrastructure/plan/database/types";
 import { CreateConversationCommandSchema } from "@/infrastructure/plan/api/schemas";
 import { AppRuntime } from "@/infrastructure/common/runtime";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -12,12 +11,20 @@ export const prerender = false;
  * GET /api/conversations
  * List all user conversations (newest first)
  */
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const program = Effect.gen(function* () {
     // Get the repository service instance
     const conversationRepo = yield* ConversationRepository;
 
-    const conversations = yield* conversationRepo.findAll(DEV_USER_ID);
+    const conversations = yield* conversationRepo.findAll(user.id);
 
     const domainConversations = conversations.map((conv) => toSavedConversation(conv));
 
@@ -52,7 +59,15 @@ export const GET: APIRoute = async () => {
  * POST /api/conversations
  * Create new conversation with initial message
  */
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const body = await request.json();
 
   // Validate request body
@@ -79,7 +94,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const conversationData = {
       id: conversationId,
-      userId: DEV_USER_ID,
+      userId: user.id,
       title,
       personas,
       messages: initial_message
@@ -97,20 +112,20 @@ export const POST: APIRoute = async ({ request }) => {
     };
 
     const conversationRepo = yield* ConversationRepository;
-    yield* conversationRepo.create(DEV_USER_ID, conversationData);
+    yield* conversationRepo.create(user.id, conversationData);
 
     // If tripId provided, link trip to conversation
     if (trip_id) {
       const tripRepo = yield* TripRepository;
 
       // Verify trip exists and belongs to user
-      yield* tripRepo.findById(DEV_USER_ID, trip_id);
+      yield* tripRepo.findById(user.id, trip_id);
 
       // Link trip to conversation
-      yield* tripRepo.updateConversationId(DEV_USER_ID, trip_id, conversationId);
+      yield* tripRepo.updateConversationId(user.id, trip_id, conversationId);
     }
 
-    const conversation = yield* conversationRepo.findById(DEV_USER_ID, conversationId);
+    const conversation = yield* conversationRepo.findById(user.id, conversationId);
     const domainConversation = toSavedConversation(conversation);
 
     return domainConversation;

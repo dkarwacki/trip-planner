@@ -5,8 +5,11 @@ import { PlanPage } from "@/components/plan/PlanPage";
 export const prerender = false;
 
 const conversationId = Astro.url.searchParams.get("conversationId");
+
+// User is guaranteed by middleware - if we reach here, user exists
+const user = Astro.locals.user;
 ---
 
 <Layout title="Trip Planner">
-  <PlanPage client:only="react" conversationId={conversationId} />
+  <PlanPage client:only="react" conversationId={conversationId} user={user} />
 </Layout>

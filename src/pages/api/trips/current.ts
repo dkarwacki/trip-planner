@@ -3,7 +3,6 @@ import { Effect, Runtime } from "effect";
 import { TripService } from "@/infrastructure/map/database";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
-import { DEV_USER_ID } from "@/utils/consts";
 
 export const prerender = false;
 
@@ -12,10 +11,18 @@ export const prerender = false;
  * Get current trip or create a new one if none exists
  * Returns the most recently updated trip, or creates a new one
  */
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const program = Effect.gen(function* () {
     const service = yield* TripService;
-    const trip = yield* service.getCurrentOrCreate(DEV_USER_ID);
+    const trip = yield* service.getCurrentOrCreate(user.id);
 
     return {
       id: trip.id,

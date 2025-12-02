@@ -3,7 +3,6 @@ import { Effect, Runtime } from "effect";
 import { TripService } from "@/infrastructure/map/database";
 import { toHttpResponse } from "@/infrastructure/common/http/response-mappers";
 import { AppRuntime } from "@/infrastructure/common/runtime";
-import { DEV_USER_ID } from "@/utils/consts";
 import type { PlaceDAO } from "@/infrastructure/plan/database/types";
 
 export const prerender = false;
@@ -12,7 +11,15 @@ export const prerender = false;
  * PUT /api/trips/:id/places
  * Update trip places (for auto-save)
  */
-export const PUT: APIRoute = async ({ params, request }) => {
+export const PUT: APIRoute = async ({ params, request, locals }) => {
+  const user = locals.user;
+  if (!user) {
+    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const tripId = params.id;
 
   if (!tripId) {
@@ -58,7 +65,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
   const program = Effect.gen(function* () {
     const service = yield* TripService;
-    yield* service.updateTripPlaces(DEV_USER_ID, tripId, places, title);
+    yield* service.updateTripPlaces(user.id, tripId, places, title);
 
     return {
       success: true,

@@ -12,13 +12,15 @@ import { FloatingPlaceSearch } from "../map/FloatingPlaceSearch";
 import { DiscoverMode } from "../modes/DiscoverMode";
 import { PlanMode } from "../modes/PlanMode";
 import { AIMode } from "../modes/AIMode";
+import type { AuthUser } from "@/components/auth";
 
 interface DesktopLayoutProps {
   mapId?: string;
   tripId?: string;
+  user?: AuthUser;
 }
 
-export function DesktopLayout({ mapId, tripId }: DesktopLayoutProps) {
+export function DesktopLayout({ mapId, tripId, user }: DesktopLayoutProps) {
   // Selectors
   const activeMode = useMapStore((state) => state.activeMode);
   const sidebarCollapsed = useMapStore((state) => state.sidebarCollapsed);
@@ -59,7 +61,7 @@ export function DesktopLayout({ mapId, tripId }: DesktopLayoutProps) {
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50">
       {/* Header */}
-      <DesktopHeader saveStatus={saveStatus} onRetrySync={handleRetrySync} tripId={tripId} />
+      <DesktopHeader saveStatus={saveStatus} onRetrySync={handleRetrySync} tripId={tripId} user={user} />
 
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
