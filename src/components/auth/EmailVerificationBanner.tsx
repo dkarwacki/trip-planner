@@ -40,19 +40,19 @@ export function EmailVerificationBanner({ email }: EmailVerificationBannerProps)
   };
 
   return (
-    <div className="flex items-center justify-between gap-4 bg-amber-500/10 border border-amber-500/30 px-4 py-3 rounded-lg">
+    <div className="flex items-center justify-between gap-4 bg-amber-50 border border-amber-200 px-4 py-3 rounded-lg">
       <div className="flex items-center gap-3">
-        <Mail className="h-5 w-5 text-amber-400 flex-shrink-0" />
-        <p className="text-sm text-amber-200">
+        <Mail className="h-5 w-5 text-amber-600 flex-shrink-0" />
+        <p className="text-sm text-amber-800">
           Please verify your email address.{" "}
           {resendSuccess ? (
-            <span className="text-green-400">Verification email sent!</span>
+            <span className="text-green-600">Verification email sent!</span>
           ) : (
             <button
               type="button"
               onClick={handleResend}
               disabled={isResending}
-              className="text-amber-400 hover:text-amber-300 underline disabled:opacity-50"
+              className="text-amber-700 hover:text-amber-900 underline disabled:opacity-50"
             >
               {isResending ? (
                 <>
@@ -69,7 +69,7 @@ export function EmailVerificationBanner({ email }: EmailVerificationBannerProps)
       <Button
         variant="ghost"
         size="sm"
-        className="h-6 w-6 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/20"
+        className="h-6 w-6 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-100"
         onClick={dismissEmailVerification}
         aria-label="Dismiss"
       >
@@ -78,3 +78,7 @@ export function EmailVerificationBanner({ email }: EmailVerificationBannerProps)
     </div>
   );
 }
+
+
+
+

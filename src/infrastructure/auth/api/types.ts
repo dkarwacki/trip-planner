@@ -70,3 +70,5 @@ export type AuthErrorResponseDTO = z.infer<typeof AuthErrorResponseSchema>;
  * Generic success response
  */
 export type GenericSuccessResponseDTO = z.infer<typeof GenericSuccessResponseSchema>;
+
+

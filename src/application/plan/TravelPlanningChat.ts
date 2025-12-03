@@ -305,7 +305,7 @@ export const TravelPlanningChat = (cmd: ChatRequestCommand) =>
         type: "json_schema",
         json_schema: MAIN_CHAT_RESPONSE_SCHEMA,
       },
-      reasoningEffort: "high",
+      reasoningEffort: "medium",
     });
 
     // Log reasoning if provided by the model

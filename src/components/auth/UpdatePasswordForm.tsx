@@ -75,11 +75,11 @@ export function UpdatePasswordForm() {
     return (
       <AuthLayout title="Password updated" description="Your password has been changed successfully">
         <div className="flex flex-col items-center space-y-4 py-4">
-          <CheckCircle className="h-12 w-12 text-green-400" />
-          <p className="text-center text-sm text-slate-400">You can now sign in with your new password.</p>
+          <CheckCircle className="h-12 w-12 text-green-600" />
+          <p className="text-center text-sm text-muted-foreground">You can now sign in with your new password.</p>
           <a
             href="/login?reset=true"
-            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             Sign in
           </a>
@@ -118,7 +118,7 @@ export function UpdatePasswordForm() {
           required
         />
 
-        <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500" disabled={isLoading}>
+        <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700" disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Update password
         </Button>
@@ -126,3 +126,7 @@ export function UpdatePasswordForm() {
     </AuthLayout>
   );
 }
+
+
+
+

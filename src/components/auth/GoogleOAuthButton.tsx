@@ -47,7 +47,7 @@ export function GoogleOAuthButton({ redirectTo = "/", supabaseUrl, supabaseKey }
     <Button
       type="button"
       variant="outline"
-      className="w-full border-slate-600 bg-slate-700/30 text-white hover:bg-slate-700/50 hover:text-white"
+      className="w-full"
       onClick={handleGoogleSignIn}
       disabled={isLoading}
     >
@@ -77,3 +77,7 @@ export function GoogleOAuthButton({ redirectTo = "/", supabaseUrl, supabaseKey }
     </Button>
   );
 }
+
+
+
+

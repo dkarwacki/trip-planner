@@ -26,33 +26,21 @@ export function UserMenuDropdown({ user }: UserMenuDropdownProps) {
     await logout();
   };
 
-  // Get initials for avatar
-  const getInitials = () => {
-    if (user.name) {
-      return user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    return user.email[0].toUpperCase();
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-9 w-9 rounded-full bg-slate-700 hover:bg-slate-600">
+        <Button variant="outline" size="sm" className="flex items-center gap-1.5">
           {user.avatar ? (
-            <img src={user.avatar} alt={user.name ?? user.email} className="h-full w-full rounded-full object-cover" />
+            <img src={user.avatar} alt={user.name ?? user.email} className="h-5 w-5 rounded-full object-cover" />
           ) : (
-            <span className="text-sm font-medium text-white">{getInitials()}</span>
+            <User className="h-4 w-4" />
           )}
+          <span>Profile</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 border-slate-700 bg-slate-800" align="end" sideOffset={8}>
+      <DropdownMenuContent className="w-56" align="end" sideOffset={8}>
         <div className="flex items-center gap-3 px-2 py-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-700">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
             {user.avatar ? (
               <img
                 src={user.avatar}
@@ -60,19 +48,16 @@ export function UserMenuDropdown({ user }: UserMenuDropdownProps) {
                 className="h-full w-full rounded-full object-cover"
               />
             ) : (
-              <User className="h-4 w-4 text-slate-300" />
+              <User className="h-4 w-4 text-muted-foreground" />
             )}
           </div>
           <div className="flex flex-col">
-            {user.name && <span className="text-sm font-medium text-white">{user.name}</span>}
-            <span className="text-xs text-slate-400">{user.email}</span>
+            {user.name && <span className="text-sm font-medium text-foreground">{user.name}</span>}
+            <span className="text-xs text-muted-foreground">{user.email}</span>
           </div>
         </div>
-        <DropdownMenuSeparator className="bg-slate-700" />
-        <DropdownMenuItem
-          className="cursor-pointer text-red-400 focus:bg-red-500/10 focus:text-red-400"
-          onClick={handleLogout}
-        >
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           Sign out
         </DropdownMenuItem>

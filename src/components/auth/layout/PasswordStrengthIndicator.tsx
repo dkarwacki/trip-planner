@@ -32,15 +32,19 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-slate-400">Password requirements:</p>
+      <p className="text-xs text-muted-foreground">Password requirements:</p>
       <ul className="space-y-1">
         {requirements.map((req) => (
           <li key={req.label} className="flex items-center gap-2 text-xs">
-            {req.met ? <Check className="h-3.5 w-3.5 text-green-400" /> : <X className="h-3.5 w-3.5 text-slate-500" />}
-            <span className={cn(req.met ? "text-green-400" : "text-slate-500")}>{req.label}</span>
+            {req.met ? <Check className="h-3.5 w-3.5 text-green-600" /> : <X className="h-3.5 w-3.5 text-muted-foreground" />}
+            <span className={cn(req.met ? "text-green-600" : "text-muted-foreground")}>{req.label}</span>
           </li>
         ))}
       </ul>
     </div>
   );
 }
+
+
+
+

@@ -17,12 +17,12 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ title, description, children, footer }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
       <div className="w-full max-w-[440px]">
-        <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm shadow-2xl">
+        <Card className="border bg-card shadow-lg">
           <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-2xl font-bold tracking-tight text-white">{title}</CardTitle>
-            {description && <CardDescription className="text-slate-400">{description}</CardDescription>}
+            <CardTitle className="text-2xl font-bold tracking-tight">{title}</CardTitle>
+            {description && <CardDescription>{description}</CardDescription>}
           </CardHeader>
           <CardContent className="space-y-4">{children}</CardContent>
           {footer && <div className="px-6 pb-6">{footer}</div>}
@@ -31,3 +31,7 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
     </div>
   );
 }
+
+
+
+

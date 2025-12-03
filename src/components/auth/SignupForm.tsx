@@ -85,9 +85,9 @@ export function SignupForm({ supabaseUrl, supabaseKey }: SignupFormProps) {
       title="Create an account"
       description="Start planning your next adventure"
       footer={
-        <p className="text-center text-sm text-slate-400">
+        <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <a href="/login" className="text-blue-400 hover:text-blue-300 hover:underline">
+          <a href="/login" className="text-blue-600 hover:text-blue-700 hover:underline">
             Sign in
           </a>
         </p>
@@ -132,25 +132,25 @@ export function SignupForm({ supabaseUrl, supabaseKey }: SignupFormProps) {
           required
         />
 
-        <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500" disabled={isLoading}>
+        <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700" disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Create account
         </Button>
 
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full bg-slate-600" />
+            <Separator className="w-full" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-slate-800/50 px-2 text-slate-400">Or continue with</span>
+            <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
           </div>
         </div>
 
         <GoogleOAuthButton redirectTo="/" supabaseUrl={supabaseUrl} supabaseKey={supabaseKey} />
 
-        <p className="text-center text-xs text-slate-500">
-          By creating an account, you agree to our <span className="text-blue-400">Terms of Service</span> and{" "}
-          <span className="text-blue-400">Privacy Policy</span>
+        <p className="text-center text-xs text-muted-foreground">
+          By creating an account, you agree to our <span className="text-blue-600">Terms of Service</span> and{" "}
+          <span className="text-blue-600">Privacy Policy</span>
         </p>
       </form>
     </AuthLayout>

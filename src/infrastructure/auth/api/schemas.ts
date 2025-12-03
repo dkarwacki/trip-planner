@@ -128,3 +128,5 @@ export const GenericSuccessResponseSchema = z.object({
   success: z.literal(true),
   message: z.string().optional(),
 });
+
+

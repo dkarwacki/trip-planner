@@ -61,3 +61,5 @@ export const createSupabaseServerInstance = (context: SupabaseServerContext) => 
 };
 
 export type SupabaseServerClient = ReturnType<typeof createSupabaseServerInstance>;
+
+

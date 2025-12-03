@@ -15,7 +15,7 @@ export function FormErrorMessage({ message }: FormErrorMessageProps) {
 
   return (
     <div
-      className="flex items-center gap-2 rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+      className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
       role="alert"
     >
       <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -23,3 +23,7 @@ export function FormErrorMessage({ message }: FormErrorMessageProps) {
     </div>
   );
 }
+
+
+
+

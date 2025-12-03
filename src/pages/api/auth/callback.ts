@@ -35,3 +35,5 @@ export const GET: APIRoute = async ({ url, locals, redirect }) => {
   // Redirect to intended destination (or home)
   return redirect(redirectTo);
 };
+
+
