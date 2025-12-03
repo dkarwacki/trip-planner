@@ -82,7 +82,7 @@ export function LoginForm({ redirectTo = "/", error: initialError, supabaseUrl, 
 
   return (
     <AuthLayout
-      title="Good to see you again!"
+      title="Ready to explore?"
       description="Sign in to pick up where you left off."
       footer={
         <p className="text-center text-sm text-muted-foreground">
