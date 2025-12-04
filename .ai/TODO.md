@@ -1,2 +1,0 @@
-1. when i log out and log in i dont see attractions added to the planed places in the /map view, i think they are either not properly save in db or not properly read from it after log out/log in
-2. when i hover over place and click on photo it shows lightbox with the photo but it dissapear in a sec, clicking should first highlight that place and then show lightbox
