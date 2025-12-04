@@ -12,18 +12,13 @@ import { AuthLayout, AuthFormInput, FormErrorMessage, PasswordStrengthIndicator 
 import { GoogleOAuthButton } from "./GoogleOAuthButton";
 import { SignupCommandSchema } from "@/infrastructure/auth/api/schemas";
 
-interface SignupFormProps {
-  supabaseUrl: string;
-  supabaseKey: string;
-}
-
 interface FormErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
 }
 
-export function SignupForm({ supabaseUrl, supabaseKey }: SignupFormProps) {
+export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -146,7 +141,7 @@ export function SignupForm({ supabaseUrl, supabaseKey }: SignupFormProps) {
           </div>
         </div>
 
-        <GoogleOAuthButton redirectTo="/" supabaseUrl={supabaseUrl} supabaseKey={supabaseKey} />
+        <GoogleOAuthButton redirectTo="/" />
 
         <p className="text-center text-xs text-muted-foreground">
           By creating an account, you agree to our <span className="text-blue-600">Terms of Service</span> and{" "}

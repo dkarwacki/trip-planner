@@ -1,56 +1,33 @@
 /**
  * Google OAuth Button
  *
- * Button to initiate Google OAuth sign-in.
+ * Button to initiate Google OAuth sign-in via server-side endpoint.
+ * Uses server-side OAuth initiation to ensure PKCE code verifier
+ * is stored in cookies (accessible during code exchange).
+ *
+ * @see https://supabase.com/docs/guides/auth/sessions/pkce-flow
  */
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 interface GoogleOAuthButtonProps {
   redirectTo?: string;
-  supabaseUrl: string;
-  supabaseKey: string;
 }
 
-export function GoogleOAuthButton({ redirectTo = "/", supabaseUrl, supabaseKey }: GoogleOAuthButtonProps) {
+export function GoogleOAuthButton({ redirectTo = "/" }: GoogleOAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     setIsLoading(true);
-
-    try {
-      // Create Supabase client for OAuth
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/api/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
-        },
-      });
-
-      if (error) {
-        console.error("Google OAuth error:", error);
-        setIsLoading(false);
-      }
-      // If successful, browser will redirect to Google
-    } catch (err) {
-      console.error("Google OAuth error:", err);
-      setIsLoading(false);
-    }
+    // Redirect to server endpoint that initiates OAuth with proper PKCE
+    // The server-side Supabase client stores the code verifier in cookies
+    window.location.href = `/api/auth/google?redirect=${encodeURIComponent(redirectTo)}`;
   };
 
   return (
-    <Button
-      type="button"
-      variant="outline"
-      className="w-full"
-      onClick={handleGoogleSignIn}
-      disabled={isLoading}
-    >
+    <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
       {isLoading ? (
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       ) : (
@@ -77,7 +54,3 @@ export function GoogleOAuthButton({ redirectTo = "/", supabaseUrl, supabaseKey }
     </Button>
   );
 }
-
-
-
-

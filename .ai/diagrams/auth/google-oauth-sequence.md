@@ -5,10 +5,10 @@ This sequence diagram illustrates the complete Google OAuth authentication flow 
 ## Overview
 
 The flow uses Supabase Auth with server-side rendering (SSR) via Astro. Key components:
-- **GoogleOAuthButton** - React component initiating OAuth
-- **Supabase SDK** - Client-side auth SDK (dynamically imported)
+- **GoogleOAuthButton** - React component that redirects to server OAuth endpoint
+- **OAuth Endpoint** - `/api/auth/google` initiates OAuth with PKCE (verifier in cookie)
 - **Google OAuth** - External identity provider
-- **Callback API** - `/api/auth/callback` endpoint handling code exchange
+- **Callback Endpoint** - `/api/auth/callback` exchanges code for session
 - **Supabase Server** - Server-side client with httpOnly cookie management
 
 ## Sequence Diagram
@@ -44,72 +44,71 @@ sequenceDiagram
     actor User
     participant Browser
     participant OAuthBtn as GoogleOAuthButton
-    participant SDK as Supabase SDK
-    participant Google as Google OAuth
-    participant Callback as /api/auth/callback
+    participant OAuthAPI as /api/auth/google
     participant Server as Supabase Server
-    participant Auth as Supabase Auth
+    participant Google as Google OAuth
+    participant SupaAuth as Supabase Auth
+    participant Callback as /api/auth/callback
 
-    Note over User, Auth: OAuth Initiation Phase
+    Note over User, Callback: OAuth Initiation Phase
 
     User->>+OAuthBtn: Click "Continue with Google"
     OAuthBtn->>OAuthBtn: setIsLoading(true)
+    OAuthBtn->>-Browser: Redirect to /api/auth/google?redirect=/
     
-    OAuthBtn->>+SDK: Dynamic import @supabase/supabase-js
-    SDK-->>-OAuthBtn: createClient(url, key)
+    Browser->>+OAuthAPI: GET /api/auth/google?redirect=/
+    Note over OAuthAPI: Middleware creates Supabase server client
     
-    OAuthBtn->>+SDK: signInWithOAuth({provider: "google"})
-    Note right of SDK: redirectTo: /api/auth/callback?redirect=/
-    SDK->>SDK: Generate OAuth URL
-    SDK-->>-OAuthBtn: OAuth URL
+    OAuthAPI->>+Server: signInWithOAuth({provider: "google"})
+    Note right of Server: PKCE verifier stored in cookie via setAll()
+    Server-->>-OAuthAPI: OAuth URL + verifier cookie
     
-    OAuthBtn->>Browser: window.location redirect
-    deactivate OAuthBtn
+    OAuthAPI-->>-Browser: HTTP 302 Redirect to Google
 
-    Note over User, Auth: Google Authentication Phase
+    Note over User, Callback: Google Authentication Phase
 
     Browser->>+Google: Navigate to OAuth consent page
     Google-->>User: Display consent screen
     
     alt User Authorizes
         User->>Google: Grant access
-        Google-->>-Browser: Redirect: /api/auth/callback?code=XXX
+        Google-->>-Browser: Redirect to Supabase Auth
+        Browser->>+SupaAuth: GET /auth/v1/callback?code=XXX
+        SupaAuth-->>-Browser: Redirect to /api/auth/callback?code=XXX
     else User Denies
         User->>Google: Deny access
-        Google-->>Browser: Redirect: /api/auth/callback?error=access_denied
+        Google-->>Browser: Redirect with error=access_denied
         Browser->>Callback: GET with error param
         Callback-->>Browser: Redirect to /login?error=...
         Browser-->>User: Show login page with error
     end
 
-    Note over User, Auth: Code Exchange Phase (Happy Path)
+    Note over User, Callback: Code Exchange Phase (Happy Path)
 
     Browser->>+Callback: GET /api/auth/callback?code=XXX&redirect=/
-    
-    Note over Callback, Server: Middleware creates Supabase server client
-    Callback->>+Server: createSupabaseServerInstance(context)
-    Server-->>-Callback: supabase client
+    Note over Callback: Middleware creates Supabase server client
     
     Callback->>Callback: Extract code, redirect params
     
     Callback->>+Server: exchangeCodeForSession(code)
-    Server->>+Auth: Validate authorization code
-    Auth->>Auth: Verify code, create session
-    Auth-->>-Server: Session tokens (access, refresh)
+    Note right of Server: PKCE verifier retrieved from cookie via getAll()
+    Server->>+SupaAuth: Validate code with verifier
+    SupaAuth->>SupaAuth: Verify code, create session
+    SupaAuth-->>-Server: Session tokens (access, refresh)
     
-    Note right of Server: setAll() callback sets httpOnly cookies
-    Server->>Server: Set session cookies via setAll()
+    Note right of Server: setAll() sets httpOnly session cookies
+    Server->>Server: Set session cookies
     Server-->>-Callback: Session created
     
     Callback-->>-Browser: HTTP 302 Redirect to destination
 
-    Note over User, Auth: Session Validation Phase
+    Note over User, Callback: Session Validation Phase
 
     Browser->>+Callback: GET / (final destination)
     Note over Callback: Middleware intercepts request
     Callback->>+Server: auth.getUser()
-    Server->>+Auth: Validate JWT
-    Auth-->>-Server: User data
+    Server->>+SupaAuth: Validate JWT
+    SupaAuth-->>-Server: User data
     Server-->>-Callback: User authenticated
     Callback->>Callback: Set locals.user
     Callback-->>-Browser: Render protected page
@@ -120,18 +119,37 @@ sequenceDiagram
 
 ## Key Implementation Details
 
-### OAuth Initiation (`GoogleOAuthButton.tsx`)
+### OAuth Button (`GoogleOAuthButton.tsx`)
 
 ```typescript
-const { createClient } = await import("@supabase/supabase-js");
-const supabase = createClient(supabaseUrl, supabaseKey);
+const handleGoogleSignIn = () => {
+  setIsLoading(true);
+  // Redirect to server endpoint that initiates OAuth with proper PKCE
+  window.location.href = `/api/auth/google?redirect=${encodeURIComponent(redirectTo)}`;
+};
+```
 
-await supabase.auth.signInWithOAuth({
-  provider: "google",
-  options: {
-    redirectTo: `${window.location.origin}/api/auth/callback?redirect=${redirectTo}`,
-  },
-});
+### Server OAuth Initiation (`/api/auth/google.ts`)
+
+```typescript
+export const GET: APIRoute = async ({ url, locals, redirect }) => {
+  const { supabase } = locals;
+  const redirectTo = url.searchParams.get("redirect") ?? "/";
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${url.origin}/api/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
+    },
+  });
+
+  if (error || !data.url) {
+    return redirect(`/login?error=${encodeURIComponent(error?.message ?? "OAuth failed")}`);
+  }
+
+  // PKCE verifier automatically stored in cookie by @supabase/ssr
+  return redirect(data.url);
+};
 ```
 
 ### Callback Handler (`/api/auth/callback.ts`)
@@ -141,6 +159,7 @@ const code = url.searchParams.get("code");
 const redirectTo = url.searchParams.get("redirect") ?? "/";
 
 if (code) {
+  // PKCE verifier automatically retrieved from cookie by @supabase/ssr
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return redirect(`/login?error=${encodeURIComponent(error.message)}`);
@@ -163,23 +182,30 @@ export const cookieOptions: CookieOptionsWithName = {
 
 ## Security Considerations
 
-1. **httpOnly Cookies**: Session tokens are not accessible via JavaScript (XSS protection)
-2. **Server-Side Validation**: `auth.getUser()` validates JWT with Supabase server (not just decoding)
-3. **PKCE Flow**: Supabase uses PKCE (Proof Key for Code Exchange) for OAuth security
+1. **Server-Side PKCE**: OAuth initiated server-side ensures PKCE verifier is stored in httpOnly cookies (not localStorage)
+2. **httpOnly Cookies**: Session tokens and PKCE verifier are not accessible via JavaScript (XSS protection)
+3. **Server-Side Validation**: `auth.getUser()` validates JWT with Supabase server (not just decoding)
 4. **SameSite Cookies**: `lax` setting provides CSRF protection while allowing OAuth redirects
+
+## Why Server-Side OAuth Initiation?
+
+Per [Supabase PKCE documentation](https://supabase.com/docs/guides/auth/sessions/pkce-flow):
+> "The code verifier is created and stored locally when the Auth flow is first initiated. That means the code exchange must be initiated on the same browser and device where the flow was started."
+
+Client-side OAuth initiation stores the PKCE verifier in `localStorage`, but the server callback cannot access `localStorage`. By initiating OAuth server-side via `@supabase/ssr`, the verifier is stored in httpOnly cookies, making it accessible during server-side code exchange.
 
 ## Error Scenarios
 
 | Error | Trigger | User Experience |
 |-------|---------|-----------------|
 | User denies access | User clicks "Deny" on Google consent | Redirected to /login with error message |
-| Code exchange fails | Invalid/expired code | Redirected to /login with error message |
-| Network error | Connection issues | Loading state remains, console error logged |
+| Code exchange fails | Invalid/expired code or PKCE verifier | Redirected to /login with error message |
+| OAuth initiation fails | Supabase configuration issue | Redirected to /login with error message |
 
 ## Related Files
 
-- `src/components/auth/GoogleOAuthButton.tsx` - OAuth initiation component
+- `src/components/auth/GoogleOAuthButton.tsx` - Redirects to server OAuth endpoint
+- `src/pages/api/auth/google.ts` - Server-side OAuth initiation with PKCE
 - `src/pages/api/auth/callback.ts` - Code exchange endpoint
-- `src/infrastructure/auth/supabase-server.ts` - Server client factory
+- `src/infrastructure/auth/supabase-server.ts` - Server client factory with cookie handling
 - `src/middleware/index.ts` - Session validation middleware
-

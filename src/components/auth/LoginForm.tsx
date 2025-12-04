@@ -15,8 +15,6 @@ import { LoginCommandSchema } from "@/infrastructure/auth/api/schemas";
 interface LoginFormProps {
   redirectTo?: string;
   error?: string;
-  supabaseUrl: string;
-  supabaseKey: string;
 }
 
 interface FormErrors {
@@ -24,7 +22,7 @@ interface FormErrors {
   password?: string;
 }
 
-export function LoginForm({ redirectTo = "/", error: initialError, supabaseUrl, supabaseKey }: LoginFormProps) {
+export function LoginForm({ redirectTo = "/", error: initialError }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
@@ -138,7 +136,7 @@ export function LoginForm({ redirectTo = "/", error: initialError, supabaseUrl, 
           </div>
         </div>
 
-        <GoogleOAuthButton redirectTo={redirectTo} supabaseUrl={supabaseUrl} supabaseKey={supabaseKey} />
+        <GoogleOAuthButton redirectTo={redirectTo} />
       </form>
     </AuthLayout>
   );

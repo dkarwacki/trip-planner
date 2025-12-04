@@ -7,20 +7,8 @@ export const prerender = false;
 // Get redirect URL from query params
 const redirectTo = Astro.url.searchParams.get("redirect") ?? "/";
 const error = Astro.url.searchParams.get("error") ?? undefined;
-
-// Get Supabase config for OAuth
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseKey = import.meta.env.SUPABASE_KEY;
 ---
 
 <Layout title="Sign In - Trip Planner">
-  <LoginForm client:load redirectTo={redirectTo} error={error} supabaseUrl={supabaseUrl} supabaseKey={supabaseKey} />
+  <LoginForm client:load redirectTo={redirectTo} error={error} />
 </Layout>
-
-
-
-
-
-
-
-

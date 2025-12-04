@@ -18,6 +18,7 @@
 - `POST /api/auth/login` - Email/password authentication
 - `POST /api/auth/signup` - User registration
 - `POST /api/auth/logout` - Session termination
+- `GET /api/auth/google` - OAuth initiation (server-side PKCE)
 - `GET /api/auth/callback` - OAuth code exchange
 - `POST /api/auth/reset-password` - Password reset request
 - `POST /api/auth/update-password` - New password submission
@@ -42,7 +43,7 @@
 ### Authentication Flows
 1. **Login**: Form → Validate → API → Supabase Auth → Cookies → Redirect
 2. **Signup**: Form → Validate → API → Supabase Auth → Email verification → Auto-login
-3. **OAuth**: Button → Supabase OAuth → Google → Callback → Code exchange → Cookies
+3. **OAuth**: Button → Server API (PKCE) → Google → Supabase → Callback → Code exchange → Cookies
 4. **Logout**: Button → Store action → API → Clear cookies → Redirect
 5. **Password Reset**: Request form → API → Email → Click link → Update form → API
 
@@ -74,7 +75,8 @@
 | AuthLayout | Centered card wrapper for all auth pages |
 | LoginForm | Email/password form with Zod validation |
 | SignupForm | Registration form with password strength indicator |
-| GoogleOAuthButton | Initiates OAuth flow via client Supabase |
+| GoogleOAuthButton | Redirects to server OAuth endpoint |
+| /api/auth/google | Server-side OAuth initiation with PKCE |
 | ResetPasswordForm | Email input for password reset request |
 | UpdatePasswordForm | New password entry after email link click |
 | UserMenuDropdown | Desktop authenticated user menu |
@@ -140,7 +142,7 @@ flowchart TB
             • New password
             • Confirm password"]:::component
             GoogleBtn["GoogleOAuthButton
-            • OAuth initiation
+            • Redirect to /api/auth/google
             • Loading state"]:::component
             VerifyBanner["EmailVerificationBanner
             • Resend link
@@ -208,10 +210,15 @@ flowchart TB
         • Call Supabase signOut
         • Clear cookies"]:::api
         
+        GoogleAPI["GET /api/auth/google
+        • Server-side OAuth init
+        • PKCE verifier in cookie
+        • Redirect to Google"]:::api
+        
         CallbackAPI["GET /api/auth/callback
         • Extract code param
-        • Exchange for session
-        • Handle errors"]:::api
+        • PKCE verifier from cookie
+        • Exchange for session"]:::api
         
         ResetAPI["POST /api/auth/reset-password
         • Validate email
@@ -360,12 +367,15 @@ flowchart TB
     VerifyBanner -->|"POST resend"| ResendAPI
     
     %% ========================================
-    %% CONNECTIONS - OAuth Flow
+    %% CONNECTIONS - OAuth Flow (Server-Side PKCE)
     %% ========================================
-    GoogleBtn -->|"1. signInWithOAuth"| SupabaseAuth
-    SupabaseAuth -->|"2. Redirect"| GoogleOAuth
-    GoogleOAuth -->|"3. Redirect with code"| CallbackAPI
-    CallbackAPI -->|"4. exchangeCodeForSession"| SupabaseAuth
+    GoogleBtn -->|"1. Redirect"| GoogleAPI
+    GoogleAPI -->|"2. signInWithOAuth + PKCE"| ServerClient
+    ServerClient -->|"3. OAuth URL"| GoogleAPI
+    GoogleAPI -->|"4. Redirect to Google"| GoogleOAuth
+    GoogleOAuth -->|"5. Redirect to Supabase"| SupabaseAuth
+    SupabaseAuth -->|"6. Redirect with code"| CallbackAPI
+    CallbackAPI -->|"7. exchangeCodeForSession"| ServerClient
 
     %% ========================================
     %% CONNECTIONS - Logout
@@ -386,6 +396,7 @@ flowchart TB
     LoginAPI --> ServerClient
     SignupAPI --> ServerClient
     LogoutAPI --> ServerClient
+    GoogleAPI --> ServerClient
     CallbackAPI --> ServerClient
     ResetAPI --> ServerClient
     UpdateAPI --> ServerClient
@@ -456,13 +467,15 @@ flowchart TB
 6. Browser redirects, middleware validates session
 7. `locals.user` populated, passed to components via props
 
-### Google OAuth
+### Google OAuth (Server-Side PKCE)
 1. User clicks `GoogleOAuthButton`
-2. Client Supabase initiates `signInWithOAuth`
-3. Browser redirects to Google
-4. Google redirects to `/api/auth/callback?code=XXX`
-5. API exchanges code for session
-6. Cookies set, user redirected to destination
+2. Browser redirects to `/api/auth/google`
+3. Server initiates OAuth via Supabase (PKCE verifier stored in cookie)
+4. Browser redirects to Google consent page
+5. Google redirects to Supabase Auth
+6. Supabase redirects to `/api/auth/callback?code=XXX`
+7. Server exchanges code for session (PKCE verifier from cookie)
+8. Session cookies set, user redirected to destination
 
 ### Password Reset
 1. User requests reset at `/reset-password`
