@@ -16,7 +16,7 @@ Rules for creating C4 model architecture diagrams using PlantUML with the @C4-Pl
 
 ## File Structure
 
-- **Place diagrams in** `.ai/diagrams/<feature-name>/c4/` directory
+- **Place diagrams in** `.cursor/diagrams/<feature-name>/c4/` directory
 - **Use numbered prefixes** for diagram files to indicate hierarchy and reading order:
   - `1-context.puml` - System Context (Level 1)
   - `2-container.puml` - Container Diagram (Level 2)
@@ -229,4 +229,4 @@ Before finalizing diagrams, verify:
 
 ## Example Diagrams
 
-See example implementation: `@.ai/diagrams/cast/c4/`
+See example implementation: `@.cursor/diagrams/cast/c4/`

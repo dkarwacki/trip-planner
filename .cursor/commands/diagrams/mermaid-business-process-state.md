@@ -16,7 +16,7 @@ You may refer to the following files or sources to understand the process implem
 
 Your task is to analyze the business process, the source code, and the provided context, then produce a comprehensive Mermaid state diagram representing the entity's lifecycle states and transitions. All diagram labels must be in English.
 
-**Important:** Follow @.ai/commands/mermaid-state-rules.md for Mermaid syntax, styling, and best practices throughout this process.
+**Important:** Follow @.cursor/commands/mermaid-state-rules.md for Mermaid syntax, styling, and best practices throughout this process.
 
 ## When to Use State Diagrams
 
@@ -164,7 +164,7 @@ Processing --> Failed:::error
 
 ## Step 4: Review
 
-After generating the diagram, review against @.ai/commands/mermaid-state-rules.md to ensure:
+After generating the diagram, review against @.cursor/commands/mermaid-state-rules.md to ensure:
 
 ### Completeness
 - [ ] All states in the lifecycle are represented

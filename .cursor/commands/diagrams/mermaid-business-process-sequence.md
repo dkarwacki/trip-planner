@@ -16,7 +16,7 @@ You may refer to the following files or sources to understand the process implem
 
 Your task is to analyze the business process, the source code, and the provided context, then produce a comprehensive Mermaid sequence diagram representing the interactions between participants. All diagram labels must be in English.
 
-**Important:** Follow @.ai/commands/mermaid-sequence-rules.md for Mermaid syntax, styling, and best practices throughout this process.
+**Important:** Follow @.cursor/commands/mermaid-sequence-rules.md for Mermaid syntax, styling, and best practices throughout this process.
 
 ## When to Use Sequence Diagrams
 
@@ -128,7 +128,7 @@ Apply dark theme styling for visibility:
 
 ## Step 4: Review
 
-After generating the diagram, review against @.ai/commands/mermaid-sequence-rules.md to ensure:
+After generating the diagram, review against @.cursor/commands/mermaid-sequence-rules.md to ensure:
 
 ### Completeness
 - [ ] All participants are declared and have at least one interaction

@@ -16,7 +16,7 @@ You may refer to the following files or sources to understand the process implem
 
 Your task is to analyze the business process, the source code, and the provided context, then produce a comprehensive Mermaid diagram representing the full workflow. All diagram labels must be in English.
 
-**Important:** Follow @.ai/commands/mermaid-flowchart-rules.md for Mermaid syntax, styling, and best practices throughout this process.
+**Important:** Follow @.cursor/commands/mermaid-flowchart-rules.md for Mermaid syntax, styling, and best practices throughout this process.
 
 ## Step 1: Architecture Analysis
 
@@ -52,7 +52,7 @@ Include the following elements:
 - Subgraphs grouping elements by layer or responsibility
 - Dependencies on other workflows or modules
 
-**Apply @.ai/commands/mermaid-flowchart-rules.md** for:
+**Apply @.cursor/commands/mermaid-flowchart-rules.md** for:
 - Arrow types (sync vs async flows)
 - Node shapes for different component types
 - Styling classes and color coding
@@ -60,7 +60,7 @@ Include the following elements:
 
 ## Step 3: Review
 
-After generating the diagram, review against @.ai/commands/mermaid-flowchart-rules.md to ensure:
+After generating the diagram, review against @.cursor/commands/mermaid-flowchart-rules.md to ensure:
 - Correct Mermaid syntax and rendering
 - Complete data flow paths (no disconnected queues or dead ends)
 - Appropriate abstraction level for the diagram's purpose
