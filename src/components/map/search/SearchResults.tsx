@@ -27,7 +27,7 @@ export function SearchResults({
 }: SearchResultsProps) {
   if (isLoading) {
     return (
-      <div className={cn("px-4 py-3", className)}>
+      <div className={cn("px-4 py-3", className)} data-testid="search-results-loading">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />
           <span>Searching...</span>
@@ -41,7 +41,7 @@ export function SearchResults({
   }
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-2", className)} data-testid="search-results">
       <div className="px-3 py-2">
         <h3 className="text-xs font-semibold text-gray-500 uppercase">Suggestions</h3>
       </div>
@@ -61,6 +61,7 @@ export function SearchResults({
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
               index === selectedIndex && "bg-blue-50"
             )}
+            data-testid="search-result-item"
           >
             <MapPin
               className={cn(
@@ -74,11 +75,15 @@ export function SearchResults({
                   "text-sm font-medium truncate",
                   index === selectedIndex ? "text-blue-900" : "text-gray-900"
                 )}
+                data-testid="search-result-name"
               >
                 {suggestion.mainText}
               </div>
               {suggestion.secondaryText && (
-                <div className={cn("text-xs truncate", index === selectedIndex ? "text-blue-700" : "text-gray-500")}>
+                <div
+                  className={cn("text-xs truncate", index === selectedIndex ? "text-blue-700" : "text-gray-500")}
+                  data-testid="search-result-address"
+                >
                   {suggestion.secondaryText}
                 </div>
               )}

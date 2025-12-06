@@ -1,13 +1,21 @@
-## Guidelines for E2E with PLAYWRIGHT
+# E2E Test Generation Command
 
-- Initialize configuration only with Chromium/Desktop Chrome browser
-- Use browser contexts for isolating test environments
-- Implement the Page Object Model for maintainable tests
-- Use locators for resilient element selection
-- Leverage API testing for backend validation
-- Implement visual comparison with expect(page).toHaveScreenshot()
-- Use the codegen tool for test recording
-- Leverage trace viewer for debugging test failures
-- Implement test hooks for setup and teardown
-- Use expect assertions with specific matchers
-- Leverage parallel execution for faster test runs
+Generate Playwright E2E tests following project conventions.
+
+## Quick Reference
+
+See @.cursor/rules/playwright-e2e.mdc for complete guidelines.
+
+## Key Rules
+
+- **Use Page Object Model** - extend `BasePage`, define locators in constructor
+- **Use `getByTestId()` ONLY** - never CSS selectors or XPath
+- **Add `data-testid` to components** - kebab-case naming
+- **Group by viewport** - separate `test.describe` for desktop/mobile
+- **Auth is automatic** - setup project handles login
+
+## File Locations
+
+- Tests: `e2e/*.spec.ts`
+- Page Objects: `e2e/pages/{Name}Page.ts`
+- Export from: `e2e/pages/index.ts`

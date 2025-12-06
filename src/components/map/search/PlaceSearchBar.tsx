@@ -123,7 +123,7 @@ export function PlaceSearchBar({
         onPlaceSelect(placeDetails);
       }
     },
-    [fetchPlaceDetails, onPlaceSelect]
+    [fetchPlaceDetails, onPlaceSelect, clearSuggestions]
   );
 
   // Handle suggestion selection
@@ -189,7 +189,7 @@ export function PlaceSearchBar({
   const sizeClasses = size === "lg" ? "py-3.5 text-base" : "py-2.5 text-sm";
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative", className)} data-testid="place-search-bar">
       {/* Search Input */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -215,6 +215,7 @@ export function PlaceSearchBar({
           aria-controls="search-dropdown"
           aria-expanded={isOpen}
           autoComplete="off"
+          data-testid="place-search-input"
         />
         {inputValue && (
           <button
@@ -227,6 +228,7 @@ export function PlaceSearchBar({
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             )}
             aria-label="Clear search"
+            data-testid="place-search-clear-button"
           >
             <X className="h-4 w-4" />
           </button>
@@ -244,6 +246,7 @@ export function PlaceSearchBar({
             "max-h-[400px] overflow-y-auto",
             "z-[55]"
           )}
+          data-testid="place-search-dropdown"
         >
           <div className="py-2">
             {/* Recent Searches */}

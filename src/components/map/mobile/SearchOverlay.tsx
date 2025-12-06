@@ -134,7 +134,10 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
   if (!isOpen) return null;
 
   return (
-    <div className={cn("fixed inset-0 z-50 bg-white", "animate-in slide-in-from-bottom duration-200")}>
+    <div
+      className={cn("fixed inset-0 z-[150] bg-white", "animate-in slide-in-from-bottom duration-200")}
+      data-testid="mobile-search-overlay"
+    >
       <div className="flex h-full flex-col">
         {/* Header */}
         <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 bg-white">
@@ -146,6 +149,7 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             )}
             aria-label="Close search"
+            data-testid="mobile-search-close-button"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -166,6 +170,7 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
               )}
               aria-label="Search for a place"
               autoComplete="off"
+              data-testid="mobile-search-input"
             />
             {inputValue && (
               <button
@@ -177,6 +182,7 @@ export function SearchOverlay({ isOpen, onClose, onPlaceSelect }: SearchOverlayP
                   "transition-colors"
                 )}
                 aria-label="Clear search"
+                data-testid="mobile-search-clear-button"
               >
                 <X className="h-5 w-5" />
               </button>

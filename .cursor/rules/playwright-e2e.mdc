@@ -1,0 +1,126 @@
+---
+description: Playwright E2E testing patterns and conventions for this project
+globs: e2e/**/*.ts, e2e/**/*.spec.ts
+alwaysApply: false
+---
+
+# Playwright E2E Testing Guidelines
+
+## Project Structure
+
+- **Test files** go in `e2e/` directory with `.spec.ts` extension
+- **Page Objects** go in `e2e/pages/` directory with `{Name}Page.ts` naming
+- **Auth setup** lives in `e2e/auth.setup.ts` - runs before all tests
+- **Export all Page Objects** from `e2e/pages/index.ts`
+
+## Page Object Model Pattern
+
+- **ALWAYS extend BasePage** for shared functionality
+- **Define locators in constructor** using `readonly` properties
+- **Use `getByTestId()` for element selection** - NEVER use CSS selectors or XPath
+- **Name methods descriptively**: `typeInDesktopSearch()`, `waitForSuggestions()`, `gotoMap()`
+- **Return Locator for element getters**, use `async` for actions
+
+```typescript
+export class ExamplePage extends BasePage {
+  readonly submitButton: Locator;
+  
+  constructor(page: Page) {
+    super(page);
+    this.submitButton = page.getByTestId("submit-button");
+  }
+  
+  async submit(): Promise<void> {
+    await this.submitButton.click();
+  }
+}
+```
+
+## Test ID Conventions
+
+- **ALWAYS use `data-testid` attributes** in components for test selectors
+- **Use kebab-case** for test IDs: `login-email-input`, `place-search-bar`
+- **Add test IDs inside components**, not on external usage
+- **Naming patterns**:
+  - Containers: `{component-name}` (e.g., `login-form`, `map-desktop-layout`)
+  - Inputs: `{context}-{type}-input` (e.g., `login-email-input`)
+  - Buttons: `{action}-button` (e.g., `login-submit-button`)
+  - Results: `{component}-item` (e.g., `search-result-item`)
+
+## Test Structure
+
+- **Use `test.describe()` for grouping** related tests by feature or viewport
+- **Use `test.beforeEach()` for setup** - instantiate Page Objects here
+- **Reference test case IDs** in describe block names when applicable
+- **Add JSDoc comments** explaining what the test validates
+
+```typescript
+test.describe("Feature Name - TC-XXX-001", () => {
+  let page: PageObject;
+  
+  test.beforeEach(async ({ page }) => {
+    pageObject = new PageObject(page);
+    await pageObject.goto();
+  });
+  
+  test("should do something specific", async () => {
+    // Arrange, Act, Assert pattern
+  });
+});
+```
+
+## Authentication
+
+- **Auth runs once via setup project** - saves state to `playwright/.auth/user.json`
+- **All tests use stored auth state** - no login needed in individual tests
+- **Credentials from environment variables**: `E2E_USERNAME`, `E2E_PASSWORD`
+- **Wait for form AND inputs** before interacting - see [React/Astro Hydration](#reactastro-hydration)
+
+## Viewport Testing
+
+- **Desktop is default** from playwright.config.ts (Desktop Chrome)
+- **Set mobile viewport explicitly** in tests: `await page.setViewportSize({ width: 390, height: 844 })`
+- **Create separate describe blocks** for desktop and mobile tests
+- **Page Objects should support both** with viewport-specific methods when needed
+
+## React/Astro Hydration
+
+This project uses Astro with React islands. HTML may render before React hydrates, causing timing issues.
+
+- **ALWAYS wait for inputs before filling** - handles React hydration timing:
+  ```typescript
+  await this.emailInput.waitFor({ state: "visible" });
+  await this.emailInput.clear();
+  await this.emailInput.fill(value);
+  ```
+- **Clear inputs before filling** - handles edge cases where values persist
+- **Use `networkidle` for form submissions** that trigger navigation:
+  ```typescript
+  await page.waitForURL(url => !url.pathname.includes("/login"), {
+    waitUntil: "networkidle",
+  });
+  ```
+- **Wait for containers, then inputs** - form visible ≠ inputs ready
+
+## Assertions
+
+- **Use `expect()` with specific matchers**: `toBeVisible()`, `toHaveURL()`, `toHaveValue()`
+- **Wait for elements before asserting**: `await expect(locator).toBeVisible()`
+- **Use `.waitFor()` for dynamic content**: `await dropdown.waitFor({ state: "visible" })`
+- **Avoid arbitrary timeouts** - use proper waits instead of `page.waitForTimeout()`
+
+## Running Tests
+
+```bash
+npm run test:e2e          # Run all tests
+npm run test:e2e:ui       # Interactive UI mode
+npm run test:e2e:debug    # Debug mode with inspector
+npx playwright test file  # Run specific file
+```
+
+## Configuration
+
+- **Only Chromium/Desktop Chrome** browser (per project guidelines)
+- **Auth state stored** in `playwright/.auth/user.json`
+- **Screenshots on failure** - saved to `test-results/`
+- **Traces on retry** - for debugging failed tests

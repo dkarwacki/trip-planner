@@ -1,8 +1,18 @@
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 /**
  * Playwright configuration for E2E tests.
  * @see https://playwright.dev/docs/test-configuration
+ *
+ * Authentication:
+ * Tests require authentication. Set these environment variables in .env:
+ * - E2E_USERNAME: Test user email
+ * - E2E_PASSWORD: Test user password
+ * - E2E_USERNAME_ID: Test user UUID (for database cleanup)
  */
 export default defineConfig({
   // Directory containing test files
@@ -40,9 +50,28 @@ export default defineConfig({
 
   // Configure projects for Chromium/Desktop Chrome only (as per guidelines)
   projects: [
+    // Setup project - runs authentication
+    {
+      name: "setup",
+      testMatch: /.*\.setup\.ts/,
+      teardown: "cleanup",
+    },
+
+    // Teardown project - cleans up test data
+    {
+      name: "cleanup",
+      testMatch: /global\.teardown\.ts/,
+    },
+
+    // Main tests project - depends on setup
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Use authenticated state from setup
+        storageState: "playwright/.auth/user.json",
+      },
+      dependencies: ["setup"],
     },
   ],
 

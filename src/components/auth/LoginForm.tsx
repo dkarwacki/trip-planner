@@ -91,7 +91,7 @@ export function LoginForm({ redirectTo = "/", error: initialError }: LoginFormPr
         </p>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
         {formError && <FormErrorMessage message={formError} />}
 
         <AuthFormInput
@@ -103,6 +103,7 @@ export function LoginForm({ redirectTo = "/", error: initialError }: LoginFormPr
           error={errors.email}
           autoComplete="email"
           required
+          data-testid="login-email-input"
         />
 
         <AuthFormInput
@@ -114,6 +115,7 @@ export function LoginForm({ redirectTo = "/", error: initialError }: LoginFormPr
           error={errors.password}
           autoComplete="current-password"
           required
+          data-testid="login-password-input"
         />
 
         <div className="text-right">
@@ -122,7 +124,12 @@ export function LoginForm({ redirectTo = "/", error: initialError }: LoginFormPr
           </a>
         </div>
 
-        <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700" disabled={isLoading}>
+        <Button
+          type="submit"
+          className="w-full bg-blue-600 text-white hover:bg-blue-700"
+          disabled={isLoading}
+          data-testid="login-submit-button"
+        >
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Sign in
         </Button>
