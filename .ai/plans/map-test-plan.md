@@ -12,6 +12,7 @@
 ## Scope
 
 **In Scope:**
+
 - Map rendering and interaction (zoom, pan, markers)
 - Discovery feature (nearby search, scoring, filtering)
 - AI suggestions (chat, tool-calling, suggestions display)
@@ -23,6 +24,7 @@
 - Error handling and edge cases
 
 **Out of Scope:**
+
 - Google Maps API internal behavior (mocked)
 - OpenAI/OpenRouter API internal behavior (mocked)
 - Supabase internal operations (mocked)
@@ -36,6 +38,7 @@
 ### Category 1: Map Initialization & Rendering
 
 **TC-MAP-001: Map Canvas Initial Render**
+
 - Priority: High
 - Preconditions: Valid Google Maps API key configured
 - Steps:
@@ -47,6 +50,7 @@
   - `gestureHandling: "greedy"` applied for touch support
 
 **TC-MAP-002: Map with Trip ID Parameter**
+
 - Priority: High
 - Preconditions: Existing trip with places in database
 - Steps:
@@ -58,6 +62,7 @@
   - Plan slice populated with trip data
 
 **TC-MAP-003: Map with Conversation ID Parameter**
+
 - Priority: High
 - Preconditions: Existing conversation linked to a trip
 - Steps:
@@ -69,6 +74,7 @@
   - Active mode set to "plan"
 
 **TC-MAP-004: Map with Invalid Trip ID**
+
 - Priority: Medium
 - Preconditions: None
 - Steps:
@@ -79,6 +85,7 @@
   - User-friendly error message displayed
 
 **TC-MAP-005: Hub Place Markers Rendering**
+
 - Priority: High
 - Preconditions: Trip with multiple places loaded
 - Steps:
@@ -90,6 +97,7 @@
   - Marker size is 36px (unselected)
 
 **TC-MAP-006: Selected Marker Visual State**
+
 - Priority: Medium
 - Preconditions: Places loaded on map
 - Steps:
@@ -101,6 +109,7 @@
   - Other markers remain at 36px
 
 **TC-MAP-007: Discovery Markers Layer Visibility**
+
 - Priority: High
 - Preconditions: Discovery results available
 - Steps:
@@ -116,6 +125,7 @@
 ### Category 2: Discovery Feature Flow
 
 **TC-DISC-001: Auto-fetch on Place Selection**
+
 - Priority: High
 - Preconditions: Map loaded with at least one place
 - Steps:
@@ -128,6 +138,7 @@
   - Discovery results stored in DiscoverSlice
 
 **TC-DISC-002: Attractions API Request Validation**
+
 - Priority: High
 - Preconditions: Valid coordinates
 - Steps:
@@ -140,6 +151,7 @@
   - Response includes scored attractions
 
 **TC-DISC-003: Scoring Algorithm Validation**
+
 - Priority: High
 - Preconditions: Raw attractions data available
 - Steps:
@@ -152,6 +164,7 @@
   - Confidence score based on review thresholds × 20% weight
 
 **TC-DISC-004: General Tourist Persona Scoring**
+
 - Priority: Medium
 - Preconditions: User has `general_tourist` persona selected
 - Steps:
@@ -163,6 +176,7 @@
   - No specific type matching applied
 
 **TC-DISC-005: Attractions Cache Hit**
+
 - Priority: High
 - Preconditions: Previous request made for same location
 - Steps:
@@ -174,6 +188,7 @@
   - Response time significantly faster
 
 **TC-DISC-006: Attractions Cache Miss (TTL Expired)**
+
 - Priority: Medium
 - Preconditions: Cache entry exists but older than 30 minutes
 - Steps:
@@ -185,6 +200,7 @@
   - Cache updated with new data
 
 **TC-DISC-007: Discovery Cache Persistence**
+
 - Priority: Medium
 - Preconditions: Discovery results fetched
 - Steps:
@@ -197,6 +213,7 @@
   - Cache includes timestamps for validation
 
 **TC-DISC-008: Category Filter - Attractions Only**
+
 - Priority: High
 - Preconditions: Mixed attractions/restaurants in results
 - Steps:
@@ -207,6 +224,7 @@
   - Restaurant types: `restaurant`, `food`, `cafe`, `bar`, `bakery` excluded
 
 **TC-DISC-009: Category Filter - Restaurants Only**
+
 - Priority: High
 - Preconditions: Mixed attractions/restaurants in results
 - Steps:
@@ -217,6 +235,7 @@
   - Attractions excluded from view
 
 **TC-DISC-010: Quality Score Filter**
+
 - Priority: High
 - Preconditions: Results with varying scores
 - Steps:
@@ -227,6 +246,7 @@
   - Filter formula: `score >= minScore * 10`
 
 **TC-DISC-011: Result Sorting Order**
+
 - Priority: Medium
 - Preconditions: Filtered results available
 - Steps:
@@ -237,6 +257,7 @@
   - Restaurants sorted second (by score descending)
 
 **TC-DISC-012: Filter Persistence Per Place**
+
 - Priority: Medium
 - Preconditions: Multiple places with different filter states
 - Steps:
@@ -252,6 +273,7 @@
 ### Category 3: AI Suggestions Feature
 
 **TC-AI-001: Initial AI Message Send**
+
 - Priority: High
 - Preconditions: Place selected, AI mode active
 - Steps:
@@ -263,6 +285,7 @@
   - Payload includes: place, mapCoordinates, conversationHistory, userMessage, personas
 
 **TC-AI-002: Place Context Building**
+
 - Priority: High
 - Preconditions: Place with planned attractions/restaurants
 - Steps:
@@ -274,6 +297,7 @@
   - Last 10 conversation messages included
 
 **TC-AI-003: Tool-Calling Loop Execution**
+
 - Priority: High
 - Preconditions: AI request made
 - Steps:
@@ -285,6 +309,7 @@
   - Coordinates overridden with `mapCoordinates` (AI doesn't control location)
 
 **TC-AI-004: Initial Suggestion Requirements**
+
 - Priority: High
 - Preconditions: First AI request for a place
 - Steps:
@@ -296,6 +321,7 @@
   - Suggestions include priority badges
 
 **TC-AI-005: Priority Badge Display**
+
 - Priority: Medium
 - Preconditions: AI suggestions returned
 - Steps:
@@ -307,6 +333,7 @@
   - "hidden gem" badge for special finds
 
 **TC-AI-006: Follow-up Message Handling**
+
 - Priority: High
 - Preconditions: Initial suggestions received
 - Steps:
@@ -318,6 +345,7 @@
   - Already-planned items excluded
 
 **TC-AI-007: AI Suggestions Added to Discovery**
+
 - Priority: High
 - Preconditions: AI suggestions returned
 - Steps:
@@ -329,6 +357,7 @@
   - Suggestions appear in discovery panel
 
 **TC-AI-008: Chain-of-Thought Display**
+
 - Priority: Medium
 - Preconditions: AI response includes `_thinking` array
 - Steps:
@@ -340,6 +369,7 @@
   - Reasoning helps user understand suggestions
 
 **TC-AI-009: AI Error Handling**
+
 - Priority: High
 - Preconditions: AI API returns error
 - Steps:
@@ -351,6 +381,7 @@
   - Chat remains functional for retry
 
 **TC-AI-010: Optimistic UI for Adding Suggestions**
+
 - Priority: Medium
 - Preconditions: AI suggestion displayed
 - Steps:
@@ -366,6 +397,7 @@
 ### Category 4: Trip Persistence & Auto-Save
 
 **TC-TRIP-001: Auto-Save Trigger on Dirty State**
+
 - Priority: High
 - Preconditions: Trip loaded, changes made
 - Steps:
@@ -377,6 +409,7 @@
   - PUT request to `/api/trips/${tripId}/places`
 
 **TC-TRIP-002: Save Status Progression**
+
 - Priority: Medium
 - Preconditions: Auto-save triggered
 - Steps:
@@ -388,6 +421,7 @@
   - UI reflects each status change
 
 **TC-TRIP-003: Trip Title Auto-Update**
+
 - Priority: Medium
 - Preconditions: Trip with default "Trip to ..." title
 - Steps:
@@ -399,6 +433,7 @@
   - Custom titles not overwritten
 
 **TC-TRIP-004: Load Trip by ID**
+
 - Priority: High
 - Preconditions: Valid trip ID
 - Steps:
@@ -410,6 +445,7 @@
   - Data converted to `PlannedPlaceViewModel[]`
 
 **TC-TRIP-005: Load Trip by Conversation ID**
+
 - Priority: High
 - Preconditions: Valid conversation ID
 - Steps:
@@ -421,6 +457,7 @@
   - Conversation ID linked to new trip
 
 **TC-TRIP-006: Load Current Trip (Default)**
+
 - Priority: High
 - Preconditions: User has previous trips
 - Steps:
@@ -432,6 +469,7 @@
   - Trip ID stored in plan slice
 
 **TC-TRIP-007: Save Error Handling**
+
 - Priority: High
 - Preconditions: Network failure during save
 - Steps:
@@ -444,6 +482,7 @@
   - Data not lost (stays in local state)
 
 **TC-TRIP-008: Place Data Conversion**
+
 - Priority: Medium
 - Preconditions: Places in plan slice
 - Steps:
@@ -459,6 +498,7 @@
 ### Category 5: Place Autocomplete
 
 **TC-AUTO-001: Autocomplete Debounce**
+
 - Priority: High
 - Preconditions: Search input focused
 - Steps:
@@ -470,6 +510,7 @@
   - Debounce prevents API spam
 
 **TC-AUTO-002: Autocomplete Suggestions Display**
+
 - Priority: High
 - Preconditions: Valid search query entered
 - Steps:
@@ -481,6 +522,7 @@
   - Each result shows name and address
 
 **TC-AUTO-003: Place Selection and Details Fetch**
+
 - Priority: High
 - Preconditions: Autocomplete results shown
 - Steps:
@@ -492,6 +534,7 @@
   - lat/lng extracted (handles both function and property access)
 
 **TC-AUTO-004: Request Cancellation on New Input**
+
 - Priority: Medium
 - Preconditions: Autocomplete request in progress
 - Steps:
@@ -503,6 +546,7 @@
   - No race condition issues
 
 **TC-AUTO-005: Mobile Search Overlay**
+
 - Priority: Medium
 - Preconditions: Mobile viewport
 - Steps:
@@ -514,6 +558,7 @@
   - Results show in overlay
 
 **TC-AUTO-006: Recent Searches Display**
+
 - Priority: Low
 - Preconditions: Previous searches made
 - Steps:
@@ -529,6 +574,7 @@
 ### Category 6: Search This Area Feature
 
 **TC-AREA-001: Search Area Button Appearance**
+
 - Priority: High
 - Preconditions: Discovery results loaded for a location
 - Steps:
@@ -540,6 +586,7 @@
   - Button shows "Search this area"
 
 **TC-AREA-002: Search Area Button Hidden Near Searched Areas**
+
 - Priority: Medium
 - Preconditions: Multiple areas previously searched
 - Steps:
@@ -552,6 +599,7 @@
   - Avoids redundant searches
 
 **TC-AREA-003: Search Area Trigger**
+
 - Priority: High
 - Preconditions: Search area button visible
 - Steps:
@@ -567,6 +615,7 @@
 ### Category 7: Mobile Experience
 
 **TC-MOB-001: Three-Tab Navigation**
+
 - Priority: High
 - Preconditions: Mobile viewport (< 768px)
 - Steps:
@@ -578,6 +627,7 @@
   - Safe-area padding applied: `calc(16px + env(safe-area-inset-bottom))`
 
 **TC-MOB-002: Tab Persistence to Session Storage**
+
 - Priority: Medium
 - Preconditions: Mobile layout active
 - Steps:
@@ -588,6 +638,7 @@
   - Plan tab remains selected after refresh
 
 **TC-MOB-003: URL Tab Sync on Mount**
+
 - Priority: Medium
 - Preconditions: None
 - Steps:
@@ -598,6 +649,7 @@
   - URL param takes precedence over sessionStorage
 
 **TC-MOB-004: Plan Tab Badge Count**
+
 - Priority: Medium
 - Preconditions: Items in plan
 - Steps:
@@ -608,6 +660,7 @@
   - Badge updates as items added/removed
 
 **TC-MOB-005: Place Select Navigation Flow**
+
 - Priority: High
 - Preconditions: Mobile discover view
 - Steps:
@@ -619,6 +672,7 @@
   - Zoom set to 13 if needed
 
 **TC-MOB-006: AI Chat Modal**
+
 - Priority: Medium
 - Preconditions: Mobile map view
 - Steps:
@@ -630,6 +684,7 @@
   - MobileSuggestionCard for results
 
 **TC-MOB-007: Discover View Drawer**
+
 - Priority: Medium
 - Preconditions: Mobile discover tab
 - Steps:
@@ -645,6 +700,7 @@
 ### Category 8: Desktop Sidebar Experience
 
 **TC-DESK-001: Collapsed Sidebar State**
+
 - Priority: Medium
 - Preconditions: Desktop viewport
 - Steps:
@@ -656,6 +712,7 @@
   - Mode icons visible: Discover, Plan, AI
 
 **TC-DESK-002: Expanded Sidebar State**
+
 - Priority: Medium
 - Preconditions: Desktop viewport
 - Steps:
@@ -667,6 +724,7 @@
   - Active mode panel rendered
 
 **TC-DESK-003: Auto-Expand on Mode Click**
+
 - Priority: Medium
 - Preconditions: Sidebar collapsed
 - Steps:
@@ -678,6 +736,7 @@
   - Smooth transition animation
 
 **TC-DESK-004: Mode Tab Switching**
+
 - Priority: High
 - Preconditions: Desktop layout, sidebar expanded
 - Steps:
@@ -694,6 +753,7 @@
 ### Category 9: Plan Management (Drag & Drop)
 
 **TC-PLAN-001: Add Place to Plan**
+
 - Priority: High
 - Preconditions: Discovery results available
 - Steps:
@@ -705,6 +765,7 @@
   - UI updates immediately
 
 **TC-PLAN-002: Remove Place from Plan**
+
 - Priority: High
 - Preconditions: Places in plan
 - Steps:
@@ -716,6 +777,7 @@
   - Associated POIs also removed
 
 **TC-PLAN-003: Add Attraction to Place**
+
 - Priority: High
 - Preconditions: Place in plan, discovery result available
 - Steps:
@@ -727,6 +789,7 @@
   - `isDirty` set to true
 
 **TC-PLAN-004: Drag and Drop Reorder**
+
 - Priority: High
 - Preconditions: Multiple places in plan
 - Steps:
@@ -739,6 +802,7 @@
   - `isDirty` set to true
 
 **TC-PLAN-005: Mobile Drag and Drop**
+
 - Priority: Medium
 - Preconditions: Mobile layout, items in plan
 - Steps:
@@ -754,6 +818,7 @@
 ### Category 10: Expanded Place Card
 
 **TC-CARD-001: Place Card Display on Hover**
+
 - Priority: Medium
 - Preconditions: Markers on map
 - Steps:
@@ -765,6 +830,7 @@
   - Card shows place details
 
 **TC-CARD-002: Place Card Actions**
+
 - Priority: Medium
 - Preconditions: Place card visible
 - Steps:
@@ -780,42 +846,52 @@
 ## Edge Cases and Boundary Conditions
 
 **EC-001: Zero Discovery Results**
+
 - Scenario: Search in area with no attractions
 - Expected: EmptyState component displays with appropriate message
 
 **EC-002: Maximum Places Limit**
+
 - Scenario: Attempt to add more than max allowed places
 - Expected: Graceful handling, user notification if limit exists
 
 **EC-003: Very Long Place Names**
+
 - Scenario: Place with 100+ character name
 - Expected: Text truncated with ellipsis, no layout breaking
 
 **EC-004: Invalid Coordinates in URL**
+
 - Scenario: `/map?lat=invalid&lng=invalid`
 - Expected: Fallback to default view, no crash
 
 **EC-005: Concurrent Auto-Save Requests**
+
 - Scenario: Rapid changes triggering multiple saves
 - Expected: Debounce prevents concurrent requests, only latest state saved
 
 **EC-006: Session Storage Full**
+
 - Scenario: sessionStorage quota exceeded
 - Expected: Graceful degradation, core functionality continues
 
 **EC-007: Google Maps API Rate Limit**
+
 - Scenario: Excessive API calls
 - Expected: Error handling, cache helps prevent this
 
 **EC-008: OpenAI API Timeout**
+
 - Scenario: AI suggestion request times out
 - Expected: Loading indicator, timeout error message, retry option
 
 **EC-009: Offline Mode**
+
 - Scenario: Network connection lost during use
 - Expected: Cached data still accessible, error on new requests, save retried when online
 
 **EC-010: Large Conversation History**
+
 - Scenario: AI chat with 50+ messages
 - Expected: Only last 10 messages sent to API, history still viewable
 
@@ -824,27 +900,35 @@
 ## Integration Testing
 
 **INT-001: Discovery → Plan Integration**
+
 - Verify: Adding discovery item updates plan slice and triggers auto-save
 
 **INT-002: Plan → Map Markers Integration**
+
 - Verify: Plan changes reflect immediately in PlannedItemMarkers
 
 **INT-003: AI → Discovery Integration**
+
 - Verify: AI suggestions appear in discovery panel via `addDiscoveryResults`
 
 **INT-004: Autocomplete → Place Selection Integration**
+
 - Verify: Selecting autocomplete result adds place, triggers discovery fetch
 
 **INT-005: Trip Load → State Hydration**
+
 - Verify: Loading trip populates all relevant slices (Plan, Discover cache, UI mode)
 
 **INT-006: Mobile ↔ Desktop State Sync**
+
 - Verify: State consistent when resizing between breakpoints
 
 **INT-007: Filter → Map Markers Integration**
+
 - Verify: Filtered discovery results reflect in DiscoveryMarkersLayer
 
 **INT-008: URL Parameters → Context Provider**
+
 - Verify: tripId/conversationId params correctly handled by MapStateContext
 
 ---
@@ -852,6 +936,7 @@
 ## Dependencies
 
 ### External Services (Mocked for Testing)
+
 - Google Maps JavaScript API (`@googlemaps/js-api-loader`)
 - Google Places API (nearby search, autocomplete, place details)
 - Google Geocoding API
@@ -859,6 +944,7 @@
 - Supabase Database
 
 ### Internal Dependencies
+
 - Zustand store (mapStore with all slices)
 - Effect runtime (`AppRuntime`)
 - Shared UI components (Shadcn/ui)
@@ -866,6 +952,7 @@
 - Infrastructure cache layers
 
 ### Feature Dependencies
+
 - Authentication (user context for personas)
 - Plan page (conversation linking)
 
@@ -874,12 +961,14 @@
 ## Test Data Requirements
 
 ### Places Data
+
 - At least 5 pre-created places with varying:
   - Coordinates (different continents)
   - Names (short, long, special characters)
   - Photos (0, 1, multiple)
-  
+
 ### Trips Data
+
 - Trip with no places (empty)
 - Trip with 1 place
 - Trip with 5+ places
@@ -887,6 +976,7 @@
 - Trip with default "Trip to..." title
 
 ### Discovery Data
+
 - Attraction responses with varying:
   - Scores (0-100 range)
   - Types (museum, park, restaurant, café)
@@ -894,19 +984,21 @@
   - Ratings (1.0 to 5.0)
 
 ### AI Suggestions Data
+
 - Initial suggestion response (5 attractions, 2 restaurants)
 - Follow-up response (filtered results)
 - Response with `_thinking` chain-of-thought
 - Tool-calling response requiring multiple iterations
 
 ### User Data
+
 - User with no personas
 - User with `general_tourist` persona
 - User with specific personas (history, food, adventure)
 
 ### Personas
+
 - general_tourist (no type matching)
 - history_culture (matches museums, monuments)
 - food_wine (matches restaurants, cafés)
 - adventure (matches parks, outdoor)
-

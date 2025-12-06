@@ -78,7 +78,3 @@ export function EmailVerificationBanner({ email }: EmailVerificationBannerProps)
     </div>
   );
 }
-
-
-
-

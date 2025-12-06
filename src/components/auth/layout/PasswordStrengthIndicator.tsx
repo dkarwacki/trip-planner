@@ -36,7 +36,11 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
       <ul className="space-y-1">
         {requirements.map((req) => (
           <li key={req.label} className="flex items-center gap-2 text-xs">
-            {req.met ? <Check className="h-3.5 w-3.5 text-green-600" /> : <X className="h-3.5 w-3.5 text-muted-foreground" />}
+            {req.met ? (
+              <Check className="h-3.5 w-3.5 text-green-600" />
+            ) : (
+              <X className="h-3.5 w-3.5 text-muted-foreground" />
+            )}
             <span className={cn(req.met ? "text-green-600" : "text-muted-foreground")}>{req.label}</span>
           </li>
         ))}
@@ -44,7 +48,3 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
     </div>
   );
 }
-
-
-
-

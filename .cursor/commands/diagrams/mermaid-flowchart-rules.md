@@ -75,11 +75,13 @@ alwaysApply: false
 ## Styling Best Practices
 
 - **Always initialize dark theme** for dark background compatibility:
+
   ```
   %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#1e1e1e', 'primaryTextColor': '#fff', 'lineColor': '#888'}}}%%
   ```
 
 - **Apply high-contrast styling classes** (optimized for dark backgrounds):
+
   ```
   classDef actor fill:#00d4ff,stroke:#00ffff,stroke-width:3px,color:#000
   classDef process fill:#ffd700,stroke:#ffea00,stroke-width:2px,color:#000
@@ -93,16 +95,16 @@ alwaysApply: false
 
 - **Color scheme reference** (high-contrast for dark mode):
 
-  | Element | Fill Color | Purpose |
-  |---------|------------|---------|
-  | actor | `#00d4ff` (Cyan) | Human actors, users |
-  | process | `#ffd700` (Gold) | Processing steps, handlers |
-  | decision | `#ff69b4` (Hot Pink) | Decision diamonds |
-  | external | `#4fc3f7` (Light Blue) | External systems, APIs |
-  | database | `#69f0ae` (Bright Green) | Database, storage |
-  | queue | `#ffab40` (Orange) | Async queues, message bus |
-  | status | `#ce93d8` (Purple) | Status nodes, states |
-  | error | `#ff5252` (Red) | Error states, failures |
+  | Element  | Fill Color               | Purpose                    |
+  | -------- | ------------------------ | -------------------------- |
+  | actor    | `#00d4ff` (Cyan)         | Human actors, users        |
+  | process  | `#ffd700` (Gold)         | Processing steps, handlers |
+  | decision | `#ff69b4` (Hot Pink)     | Decision diamonds          |
+  | external | `#4fc3f7` (Light Blue)   | External systems, APIs     |
+  | database | `#69f0ae` (Bright Green) | Database, storage          |
+  | queue    | `#ffab40` (Orange)       | Async queues, message bus  |
+  | status   | `#ce93d8` (Purple)       | Status nodes, states       |
+  | error    | `#ff5252` (Red)          | Error states, failures     |
 
 - **Text color rules**:
   - Use `color:#000` (black text) for bright fills
@@ -117,4 +119,3 @@ alwaysApply: false
 - **NEVER create nodes that have no outgoing connections** (dead ends) unless they're explicit terminal states
 - **NEVER use implementation details as node names** - Use business/domain terminology
 - **AVOID showing every method call** - Abstract to the level appropriate for the diagram's purpose
-

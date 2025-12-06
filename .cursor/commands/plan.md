@@ -7,10 +7,11 @@ You should create detailed implementation plans through an interactive, iterativ
 When this command is invoked:
 
 1. **Check if parameters were provided**:
-    - If a file path or ticket reference was provided as a parameter, skip the default message
-    - Immediately read any provided files FULLY
+   - If a file path or ticket reference was provided as a parameter, skip the default message
+   - Immediately read any provided files FULLY
 
 2. **If no parameters provided**, respond with:
+
 ```
 I'll help you create a detailed implementation plan. Let me start by understanding what we're building.
 
@@ -29,20 +30,21 @@ Then wait for the user's input.
 ### Step 1: Context Gathering & Initial Analysis
 
 1. **Read all mentioned files immediately and FULLY**:
-    - Ticket files
-    - Research documents
-    - Related implementation plans
-    - Any JSON/data files mentioned
-    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
-    - **NEVER** read files partially - if a file is mentioned, read it completely
+   - Ticket files
+   - Research documents
+   - Related implementation plans
+   - Any JSON/data files mentioned
+   - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
+   - **NEVER** read files partially - if a file is mentioned, read it completely
 
 2. **Analyze and verify understanding**:
-    - Cross-reference the ticket requirements with actual code
-    - Identify any discrepancies or misunderstandings
-    - Note assumptions that need verification
-    - Determine true scope based on codebase reality
+   - Cross-reference the ticket requirements with actual code
+   - Identify any discrepancies or misunderstandings
+   - Note assumptions that need verification
+   - Determine true scope based on codebase reality
 
 3. **Present informed understanding and focused questions**:
+
    ```
    Based on the ticket and my research of the codebase, I understand we need to [accurate summary].
 
@@ -60,12 +62,13 @@ Then wait for the user's input.
    Only ask questions that you genuinely cannot answer through code investigation.
 
 4. **After getting initial clarifications:**:
-  
-  If the user corrects any misunderstanding:
-  - DO NOT just accept the correction
-  - Do a research to verify the correct information
-  - Read the specific files/directories they mention
-  - Only proceed once you've verified the facts yourself
+
+If the user corrects any misunderstanding:
+
+- DO NOT just accept the correction
+- Do a research to verify the correct information
+- Read the specific files/directories they mention
+- Only proceed once you've verified the facts yourself
 
 ## Important Guidelines
 
@@ -88,12 +91,14 @@ Then wait for the user's input.
 ## Common Patterns
 
 ### For New Features:
+
 - Research existing patterns first
 - Start with data model
 - Build backend logic
 - Add API endpoints
 
 ### For Refactoring:
+
 - Document current behavior
 - Plan incremental changes
 - Maintain backwards compatibility

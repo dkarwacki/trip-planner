@@ -21,6 +21,7 @@ Your task is to analyze the business process, the source code, and the provided 
 ## When to Use State Diagrams
 
 Use state diagrams when the business process involves:
+
 - **Entity lifecycle modeling** where an object transitions through distinct states (Order: Created → Paid → Shipped → Delivered)
 - **Reactive behavior** where the system responds to events and changes state
 - **State persistence** where the system needs to remember its current state
@@ -66,6 +67,7 @@ Before generating the diagram, perform an analysis and place it inside <state_an
 Include the following elements:
 
 ### State Declaration
+
 - **Use `stateDiagram-v2`** for modern syntax
 - **Declare states with descriptive names** using PascalCase for IDs
 - **Use state descriptions** for human-readable names when needed:
@@ -75,12 +77,14 @@ Include the following elements:
 - **Set direction** using `direction LR` or `direction TB` based on the flow
 
 ### Start and End States
+
 - **ALWAYS use `[*]` for start and end pseudo-states**
 - **Every diagram MUST have at least one start state**: `[*] --> InitialState`
 - **Show terminal states clearly**: `FinalState --> [*]`
 - **Multiple end states are valid** (success, failure, cancellation paths)
 
 ### Transitions
+
 - **Label ALL transitions** with the triggering event or condition
 - **Use consistent naming convention**:
   - Events: `camelCase` verbs (`submit`, `timeout`, `dataReceived`)
@@ -92,6 +96,7 @@ Include the following elements:
   ```
 
 ### Composite States
+
 - **Use composite states** to group related sub-states:
   ```
   state Authentication {
@@ -104,6 +109,7 @@ Include the following elements:
 - **Show transitions into/out of composite states** at the composite level
 
 ### Decision Points
+
 - **Use `<<choice>>` for conditional branching**:
   ```
   state checkResult <<choice>>
@@ -114,10 +120,12 @@ Include the following elements:
 - **ALWAYS provide all outcome paths** from choice states
 
 ### Parallel States
+
 - **Use `<<fork>>` and `<<join>>`** for concurrent execution when genuinely independent
 - **Use `--` separator** for concurrent regions within a single state
 
 ### Notes
+
 - **Add notes for business rules** that aren't obvious from transitions
 - **Position notes strategically** using `note right of` or `note left of`
 - **Don't over-annotate** simple states
@@ -127,7 +135,7 @@ Include the following elements:
 Apply dark theme styling for visibility:
 
 ```
-%%{init: {'theme': 'dark', 'themeVariables': { 
+%%{init: {'theme': 'dark', 'themeVariables': {
   'primaryColor': '#2d2d2d',
   'primaryTextColor': '#ffffff',
   'primaryBorderColor': '#00ffff',
@@ -153,6 +161,7 @@ classDef pending fill:#78909c,stroke:#b0bec5,stroke-width:2px,color:#fff,font-we
 ```
 
 **Apply styles using the `:::` operator or `class` statement:**
+
 ```
 [*] --> Created:::initial
 Created --> Processing:::processing
@@ -167,6 +176,7 @@ Processing --> Failed:::error
 After generating the diagram, review against @.cursor/commands/mermaid-state-rules.md to ensure:
 
 ### Completeness
+
 - [ ] All states in the lifecycle are represented
 - [ ] Every state (except terminal) has at least one outgoing transition
 - [ ] Every state (except initial) has at least one incoming transition
@@ -174,6 +184,7 @@ After generating the diagram, review against @.cursor/commands/mermaid-state-rul
 - [ ] Error/failure paths are included
 
 ### Clarity
+
 - [ ] States are named descriptively (no `State1`, `TempState`)
 - [ ] All transitions are labeled with triggering events/conditions
 - [ ] Composite states group logically related sub-states
@@ -181,6 +192,7 @@ After generating the diagram, review against @.cursor/commands/mermaid-state-rul
 - [ ] Diagram direction matches natural reading flow
 
 ### Syntax
+
 - [ ] Uses `stateDiagram-v2` declaration
 - [ ] State IDs use PascalCase without spaces
 - [ ] `[*]` used correctly for start/end states
@@ -188,6 +200,7 @@ After generating the diagram, review against @.cursor/commands/mermaid-state-rul
 - [ ] No orphaned or unreachable states
 
 ### Abstraction
+
 - [ ] All states are at the same level of detail
 - [ ] Implementation details are abstracted appropriately
 - [ ] Maximum 2-3 levels of composite state nesting
@@ -196,4 +209,3 @@ After generating the diagram, review against @.cursor/commands/mermaid-state-rul
 Reorganize or simplify if needed.
 
 Return the final diagram wrapped inside <mermaid_diagram> tags.
-

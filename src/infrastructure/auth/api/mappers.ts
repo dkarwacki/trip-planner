@@ -35,5 +35,3 @@ export const toDomain = {
     newPassword: dto.password,
   }),
 };
-
-

@@ -3,6 +3,7 @@
 You are tasked with conducting comprehensive research across the codebase to answer user questions.
 
 ## CRITICAL: YOUR ONLY JOB IS TO DOCUMENT AND EXPLAIN THE CODEBASE AS IT EXISTS TODAY
+
 - DO NOT suggest improvements or changes unless the user explicitly asks for them
 - DO NOT perform root cause analysis unless the user explicitly asks for them
 - DO NOT propose future enhancements unless the user explicitly asks for them
@@ -14,6 +15,7 @@ You are tasked with conducting comprehensive research across the codebase to ans
 ## Initial Setup:
 
 When this command is invoked, respond with:
+
 ```
 I'm ready to research the codebase. Please provide your research question or area of interest, and I'll analyze it thoroughly by exploring relevant components and connections.
 ```
@@ -23,122 +25,132 @@ Then wait for the user's research query.
 ## Steps to follow after receiving the research query:
 
 1. **Read any directly mentioned files first:**
-    - If the user mentions specific files (tickets, docs, JSON), read them FULLY first
-    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
-    - This ensures you have full context before decomposing the research
+   - If the user mentions specific files (tickets, docs, JSON), read them FULLY first
+   - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
+   - This ensures you have full context before decomposing the research
 
 2. **Analyze and decompose the research question:**
-    - Break down the user's query into composable research areas
-    - Take time to ultrathink about the underlying patterns, connections, and architectural implications the user might be seeking
-    - Identify specific components, patterns, or concepts to investigate
-    - Create a research plan to track all subtasks
-    - Consider which directories, files, or architectural patterns are relevant
+   - Break down the user's query into composable research areas
+   - Take time to ultrathink about the underlying patterns, connections, and architectural implications the user might be seeking
+   - Identify specific components, patterns, or concepts to investigate
+   - Create a research plan to track all subtasks
+   - Consider which directories, files, or architectural patterns are relevant
 
 3. **Ask user for comprehensive research:**
-    - Ask user multiple questions to research different aspects
+   - Ask user multiple questions to research different aspects
 
    **For codebase research:**
-    Step 1:
-    - Ask user to locate relevant files and organize them by purpose using @.ai/commands/research/codebase-locator.md
-    - Give user with a proper question that he can use to ask other agent to locate relevant files 
-    - Wait for user response
-    Step 2:
-    - Ask user to analyze implementation details, trace data flow, and explain technical workings with precise file:line references using @.ai/commands/research/codebase-analyzer.md
-    - Give user with a proper question that he can use to ask other agent to analyze implementation
-    - Wait for user response
-    Step 3:
-    - Ask user to locate similar implementations that can serve as templates or inspiration for new work using @.ai/commands/research/codebase-pattern-finder.md
-    - Give user with a proper question that he can use to ask other agent to find those patterns
-    - Wait for user response  
+   Step 1:
+   - Ask user to locate relevant files and organize them by purpose using @.ai/commands/research/codebase-locator.md
+   - Give user with a proper question that he can use to ask other agent to locate relevant files
+   - Wait for user response
+     Step 2:
+   - Ask user to analyze implementation details, trace data flow, and explain technical workings with precise file:line references using @.ai/commands/research/codebase-analyzer.md
+   - Give user with a proper question that he can use to ask other agent to analyze implementation
+   - Wait for user response
+     Step 3:
+   - Ask user to locate similar implementations that can serve as templates or inspiration for new work using @.ai/commands/research/codebase-pattern-finder.md
+   - Give user with a proper question that he can use to ask other agent to find those patterns
+   - Wait for user response
 
    **IMPORTANT**: User responses will not contain criticsm. They will describe what exists without suggesting improvements or identifying issues.
 
    **For web research (only if user explicitly asks):**
-    - Ask user to find relevant information from web sources using @.ai/commands/research/web-search-research.md
-    - Give user with a proper question that he can use to ask other agent to find relevant information in web
+   - Ask user to find relevant information from web sources using @.ai/commands/research/web-search-research.md
+   - Give user with a proper question that he can use to ask other agent to find relevant information in web
 
    The key is to ask user intelligently:
-    - Start with asking user to locate relevant files
-    - Then ask him to analyze codebase for most promising findings to document how they work
-    - User will know his job - just tell him what you're looking for
-    - Don't write detailed prompts about HOW to search - the user already know
+   - Start with asking user to locate relevant files
+   - Then ask him to analyze codebase for most promising findings to document how they work
+   - User will know his job - just tell him what you're looking for
+   - Don't write detailed prompts about HOW to search - the user already know
 
 4. **Wait for all user responses:**
-    - IMPORTANT: Wait for ALL user responses before proceeding
-    - Prioritize live codebase findings as primary source of truth
-    - Connect findings across different components
-    - Include specific file paths and line numbers for reference
-    - Highlight patterns, connections, and architectural decisions
-    - Answer the user's specific questions with concrete evidence
+   - IMPORTANT: Wait for ALL user responses before proceeding
+   - Prioritize live codebase findings as primary source of truth
+   - Connect findings across different components
+   - Include specific file paths and line numbers for reference
+   - Highlight patterns, connections, and architectural decisions
+   - Answer the user's specific questions with concrete evidence
 
 5. **Generate research document:**
-    - Save it in .ai/temp/YYYY-MM-DD-NT-[User's Question/Topic]-research.md
-    - Structure the document with YAML frontmatter followed by content:
-      ```markdown
-      ---
-      date: [Current date and time with timezone in ISO format]
-      git_commit: [Current commit hash]
-      branch: [Current branch name]
-      repository: [Repository name]
-      topic: "[User's Question/Topic]"
-      tags: [research, codebase, relevant-component-names]
-      status: complete
-      last_updated: [Current date in YYYY-MM-DD format]
-      last_updated_by: [Researcher name]
-      ---
- 
-      # Research: [User's Question/Topic]
- 
-      **Date**: [Current date and time with timezone]
-      **Researcher**: [Researcher name from thoughts status]
-      **Git Commit**: [Current commit hash]
-      **Branch**: [Current branch name]
-      **Repository**: [Repository name]
- 
-      ## Research Question
-      [Original user query]
- 
-      ## Summary
-      [High-level documentation of what was found, answering the user's question by describing what exists]
- 
-      ## Detailed Findings
- 
-      ### [Component/Area 1]
-      - Description of what exists ([file.ext:line](link))
-      - How it connects to other components
-      - Current implementation details (without evaluation)
- 
-      ### [Component/Area 2]
-      ...
- 
-      ## Code References
-      - `path/to/file.scala:123` - Description of what's there
-      - `another/file.scala:45-67` - Description of the code block
- 
-      ## Architecture Documentation
-      [Current patterns, conventions, and design implementations found in the codebase]
- 
-      ## Related Research
-      [Links to other research documents in thoughts/shared/research/]
- 
-      ## Open Questions
-      [Any areas that need further investigation]
-      ```
+   - Save it in .ai/temp/YYYY-MM-DD-NT-[User's Question/Topic]-research.md
+   - Structure the document with YAML frontmatter followed by content:
 
-7. **Sync and present findings:**
-    - Present a concise summary of findings to the user
-    - Include key file references for easy navigation
-    - Ask if they have follow-up questions or need clarification
+     ```markdown
+     ---
+     date: [Current date and time with timezone in ISO format]
+     git_commit: [Current commit hash]
+     branch: [Current branch name]
+     repository: [Repository name]
+     topic: "[User's Question/Topic]"
+     tags: [research, codebase, relevant-component-names]
+     status: complete
+     last_updated: [Current date in YYYY-MM-DD format]
+     last_updated_by: [Researcher name]
+     ---
 
-9. **Handle follow-up questions:**
-    - If the user has follow-up questions, append to the same research document
-    - Update the frontmatter fields `last_updated` and `last_updated_by` to reflect the update
-    - Add `last_updated_note: "Added follow-up research for [brief description]"` to frontmatter
-    - Add a new section: `## Follow-up Research [timestamp]`
-    - Ask user for comprehensive research as needed for additional investigation
-    - Continue updating the document and syncing
+     # Research: [User's Question/Topic]
+
+     **Date**: [Current date and time with timezone]
+     **Researcher**: [Researcher name from thoughts status]
+     **Git Commit**: [Current commit hash]
+     **Branch**: [Current branch name]
+     **Repository**: [Repository name]
+
+     ## Research Question
+
+     [Original user query]
+
+     ## Summary
+
+     [High-level documentation of what was found, answering the user's question by describing what exists]
+
+     ## Detailed Findings
+
+     ### [Component/Area 1]
+
+     - Description of what exists ([file.ext:line](link))
+     - How it connects to other components
+     - Current implementation details (without evaluation)
+
+     ### [Component/Area 2]
+
+     ...
+
+     ## Code References
+
+     - `path/to/file.scala:123` - Description of what's there
+     - `another/file.scala:45-67` - Description of the code block
+
+     ## Architecture Documentation
+
+     [Current patterns, conventions, and design implementations found in the codebase]
+
+     ## Related Research
+
+     [Links to other research documents in thoughts/shared/research/]
+
+     ## Open Questions
+
+     [Any areas that need further investigation]
+     ```
+
+6. **Sync and present findings:**
+   - Present a concise summary of findings to the user
+   - Include key file references for easy navigation
+   - Ask if they have follow-up questions or need clarification
+
+7. **Handle follow-up questions:**
+   - If the user has follow-up questions, append to the same research document
+   - Update the frontmatter fields `last_updated` and `last_updated_by` to reflect the update
+   - Add `last_updated_note: "Added follow-up research for [brief description]"` to frontmatter
+   - Add a new section: `## Follow-up Research [timestamp]`
+   - Ask user for comprehensive research as needed for additional investigation
+   - Continue updating the document and syncing
 
 ## Important notes:
+
 - Always run fresh codebase research - never rely solely on existing research documents
 - Focus on finding concrete file paths and line numbers for developer reference
 - Research documents should be self-contained with all necessary context
@@ -151,12 +163,12 @@ Then wait for the user's research query.
 - **NO RECOMMENDATIONS**: Only describe the current state of the codebase
 - **File reading**: Always read mentioned files FULLY (no limit/offset) before creating questions to the user
 - **Critical ordering**: Follow the numbered steps exactly
-    - ALWAYS read mentioned files first before asking user about anything (step 1)
-    - ALWAYS make comprehensive research asking user proper questions (step 4)
-    - NEVER write the research document with placeholder values
+  - ALWAYS read mentioned files first before asking user about anything (step 1)
+  - ALWAYS make comprehensive research asking user proper questions (step 4)
+  - NEVER write the research document with placeholder values
 - **Frontmatter consistency**:
-    - Always include frontmatter at the beginning of research documents
-    - Keep frontmatter fields consistent across all research documents
-    - Update frontmatter when adding follow-up research
-    - Use snake_case for multi-word field names (e.g., `last_updated`, `git_commit`)
-    - Tags should be relevant to the research topic and components studied
+  - Always include frontmatter at the beginning of research documents
+  - Keep frontmatter fields consistent across all research documents
+  - Update frontmatter when adding follow-up research
+  - Use snake_case for multi-word field names (e.g., `last_updated`, `git_commit`)
+  - Tags should be relevant to the research topic and components studied

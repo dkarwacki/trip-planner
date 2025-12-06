@@ -58,8 +58,8 @@ export function ResetPasswordForm() {
         <div className="flex flex-col items-center space-y-4 py-4">
           <CheckCircle className="h-12 w-12 text-green-600" />
           <p className="text-center text-sm text-muted-foreground">
-            If an account exists with <span className="font-medium text-foreground">{email}</span>, you will receive a password reset
-            link shortly.
+            If an account exists with <span className="font-medium text-foreground">{email}</span>, you will receive a
+            password reset link shortly.
           </p>
           <a href="/login" className="text-blue-600 hover:text-blue-700 hover:underline">
             Back to sign in
@@ -103,7 +103,3 @@ export function ResetPasswordForm() {
     </AuthLayout>
   );
 }
-
-
-
-

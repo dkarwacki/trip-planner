@@ -9,6 +9,7 @@ alwaysApply: false
 ## Diagram Declaration
 
 - **Start with `stateDiagram-v2`** for modern syntax:
+
   ```
   stateDiagram-v2
       [*] --> Active
@@ -16,20 +17,21 @@ alwaysApply: false
 
 - **Set diagram direction when needed**:
   - `direction LR` - Left to Right
-  - `direction RL` - Right to Left  
+  - `direction RL` - Right to Left
   - `direction TB` - Top to Bottom (default)
   - `direction BT` - Bottom to Top
 
 ## State Declaration
 
 - **Three ways to declare states**:
+
   ```
   %% Just an id
   stateId
-  
+
   %% Using state keyword with description
   state "Human readable description" as stateId
-  
+
   %% Using id with colon and description
   stateId : This is the description
   ```
@@ -74,6 +76,7 @@ alwaysApply: false
 ## Composite (Nested) States
 
 - **Use the `state` keyword with curly braces**:
+
   ```
   state Authentication {
       [*] --> EnteringCredentials
@@ -84,6 +87,7 @@ alwaysApply: false
   ```
 
 - **Name composite states on separate line**:
+
   ```
   state "Authentication Process" as Auth {
       [*] --> Login
@@ -93,11 +97,12 @@ alwaysApply: false
 - **Multi-level nesting is supported** but avoid deep nesting (max 2-3 levels)
 
 - **Transitions between composite states**:
+
   ```
   [*] --> First
   First --> Second
   First --> Third
-  
+
   state First {
       [*] --> fir
       fir --> [*]
@@ -113,6 +118,7 @@ alwaysApply: false
 ## Choice Pseudo-State (Decision Points)
 
 - **Use `<<choice>>` for conditional branching**:
+
   ```
   state if_state <<choice>>
   [*] --> IsPositive
@@ -127,12 +133,13 @@ alwaysApply: false
 ## Fork and Join (Parallel States)
 
 - **Use `<<fork>>` and `<<join>>` for concurrent execution**:
+
   ```
   state fork_state <<fork>>
   [*] --> fork_state
   fork_state --> State2
   fork_state --> State3
-  
+
   state join_state <<join>>
   State2 --> join_state
   State3 --> join_state
@@ -145,6 +152,7 @@ alwaysApply: false
 ## Concurrency (Parallel Regions)
 
 - **Use `--` separator for concurrent regions within a state**:
+
   ```
   state Active {
       [*] --> ChildState1
@@ -160,12 +168,13 @@ alwaysApply: false
 ## Notes
 
 - **Add notes to clarify states**:
+
   ```
   note right of StateA
       This is a note
       on multiple lines
   end note
-  
+
   note left of StateB : Single line note
   ```
 
@@ -185,18 +194,21 @@ alwaysApply: false
 ## Styling with classDef
 
 - **Define styles using `classDef`**:
+
   ```
   classDef movement font-style:italic
   classDef badEvent fill:#f00,color:white,font-weight:bold,stroke-width:2px,stroke:yellow
   ```
 
 - **Apply styles using `class` statement**:
+
   ```
   class Crash badEvent
   class Moving, Running movement
   ```
 
 - **Apply styles inline using `:::` operator**:
+
   ```
   [*] --> Active:::movement
   Active --> Crash:::badEvent
@@ -209,8 +221,9 @@ alwaysApply: false
 ## Styling Best Practices
 
 - **Always initialize dark theme** for dark background compatibility:
+
   ```
-  %%{init: {'theme': 'dark', 'themeVariables': { 
+  %%{init: {'theme': 'dark', 'themeVariables': {
     'primaryColor': '#2d2d2d',
     'primaryTextColor': '#ffffff',
     'primaryBorderColor': '#00ffff',
@@ -223,6 +236,7 @@ alwaysApply: false
   ```
 
 - **Recommended high-contrast style definitions** (optimized for dark backgrounds):
+
   ```
   classDef initial fill:#00ffff,stroke:#00ffff,stroke-width:3px,color:#000,font-weight:bold
   classDef active fill:#00ff88,stroke:#00ff88,stroke-width:3px,color:#000,font-weight:bold
@@ -236,16 +250,16 @@ alwaysApply: false
 
 - **Color scheme reference** (high-contrast neon colors for dark mode):
 
-  | State Type | Fill Color | Stroke | Text | Purpose |
-  |------------|------------|--------|------|---------|
-  | initial | `#00ffff` (Cyan) | `#00ffff` | Black | Entry/start states |
-  | active | `#00ff88` (Neon Green) | `#00ff88` | Black | Currently active states |
-  | waiting | `#ffdd00` (Bright Yellow) | `#ffdd00` | Black | Idle/waiting states |
-  | processing | `#ff9500` (Bright Orange) | `#ff9500` | Black | In-progress operations |
-  | success | `#00e5ff` (Electric Blue) | `#00e5ff` | Black | Successful completion |
-  | error | `#ff3366` (Hot Pink/Red) | `#ff3366` | White | Error/failure states |
-  | cancelled | `#bb86fc` (Bright Purple) | `#bb86fc` | Black | Cancelled/aborted states |
-  | pending | `#78909c` (Blue Gray) | `#b0bec5` | White | Pending/queued states |
+  | State Type | Fill Color                | Stroke    | Text  | Purpose                  |
+  | ---------- | ------------------------- | --------- | ----- | ------------------------ |
+  | initial    | `#00ffff` (Cyan)          | `#00ffff` | Black | Entry/start states       |
+  | active     | `#00ff88` (Neon Green)    | `#00ff88` | Black | Currently active states  |
+  | waiting    | `#ffdd00` (Bright Yellow) | `#ffdd00` | Black | Idle/waiting states      |
+  | processing | `#ff9500` (Bright Orange) | `#ff9500` | Black | In-progress operations   |
+  | success    | `#00e5ff` (Electric Blue) | `#00e5ff` | Black | Successful completion    |
+  | error      | `#ff3366` (Hot Pink/Red)  | `#ff3366` | White | Error/failure states     |
+  | cancelled  | `#bb86fc` (Bright Purple) | `#bb86fc` | Black | Cancelled/aborted states |
+  | pending    | `#78909c` (Blue Gray)     | `#b0bec5` | White | Pending/queued states    |
 
 - **Text color rules for maximum readability**:
   - Use `color:#000` (black text) for bright/neon fills (cyan, green, yellow, orange, blue, purple)
@@ -272,12 +286,14 @@ alwaysApply: false
 ## Common State Patterns
 
 - **Retry pattern**:
+
   ```
   Processing --> Processing : retry (attempts < max)
   Processing --> Failed : max retries exceeded
   ```
 
 - **Timeout pattern**:
+
   ```
   Waiting --> TimedOut : timeout
   Waiting --> Active : event received

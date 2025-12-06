@@ -1,6 +1,6 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "**/*"],
+  "include": [".astro/types.d.ts", "**/*", "tests/**/*", "e2e/**/*"],
   "exclude": ["dist"],
   "compilerOptions": {
     "jsx": "react-jsx",

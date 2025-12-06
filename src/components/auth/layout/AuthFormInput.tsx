@@ -35,7 +35,3 @@ export function AuthFormInput({ label, error, className, id, ...props }: AuthFor
     </div>
   );
 }
-
-
-
-

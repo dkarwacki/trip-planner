@@ -37,13 +37,3 @@ export interface AuthActions {
  * Complete auth store type
  */
 export type AuthStore = AuthState & AuthActions;
-
-
-
-
-
-
-
-
-
-

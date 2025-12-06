@@ -23,14 +23,14 @@ npm install @supabase/ssr @supabase/supabase-js
 
 ### 1.1 New Pages and Routes
 
-| Route | Type | Purpose |
-|-------|------|---------|
-| `/login` | Astro Page | Email/password and Google OAuth login |
-| `/signup` | Astro Page | User registration with email/password or Google |
-| `/reset-password` | Astro Page | Request password reset email |
-| `/update-password` | Astro Page | Set new password (from email link) |
-| `/auth/callback` | Astro Page | OAuth and magic link callback handler |
-| `/verify-email` | Astro Page | Email verification confirmation |
+| Route              | Type       | Purpose                                         |
+| ------------------ | ---------- | ----------------------------------------------- |
+| `/login`           | Astro Page | Email/password and Google OAuth login           |
+| `/signup`          | Astro Page | User registration with email/password or Google |
+| `/reset-password`  | Astro Page | Request password reset email                    |
+| `/update-password` | Astro Page | Set new password (from email link)              |
+| `/auth/callback`   | Astro Page | OAuth and magic link callback handler           |
+| `/verify-email`    | Astro Page | Email verification confirmation                 |
 
 ### 1.2 New Components Structure
 
@@ -66,11 +66,13 @@ stores/
 ### 1.3 Component Responsibilities
 
 **Astro Pages (`.astro`):**
+
 - Render the `AuthLayout` wrapper
 - Handle SSR redirect logic (e.g., redirect to `/` if already authenticated)
 - Pass initial props to React islands
 
 **React Components (`client:load`):**
+
 - Form state management and validation
 - API calls to auth endpoints
 - Loading/error states
@@ -78,19 +80,20 @@ stores/
 
 ### 1.4 Validation Rules and Error Messages
 
-| Field | Validation | Error Message |
-|-------|------------|---------------|
-| Email | Valid email format | "Please enter a valid email address" |
-| Password | Min 8 chars | "Password must be at least 8 characters" |
-| Password | 1 special char | "Password must contain at least 1 special character" |
-| Confirm Password | Match password | "Passwords do not match" |
-| Generic Auth | Supabase error | "Invalid email or password" |
-| OAuth Error | Provider error | "Authentication failed. Please try again." |
-| Session Expired | Token invalid | "Your session has expired. Please log in again." |
+| Field            | Validation         | Error Message                                        |
+| ---------------- | ------------------ | ---------------------------------------------------- |
+| Email            | Valid email format | "Please enter a valid email address"                 |
+| Password         | Min 8 chars        | "Password must be at least 8 characters"             |
+| Password         | 1 special char     | "Password must contain at least 1 special character" |
+| Confirm Password | Match password     | "Passwords do not match"                             |
+| Generic Auth     | Supabase error     | "Invalid email or password"                          |
+| OAuth Error      | Provider error     | "Authentication failed. Please try again."           |
+| Session Expired  | Token invalid      | "Your session has expired. Please log in again."     |
 
 ### 1.5 Key User Scenarios
 
 **Signup Flow:**
+
 1. User enters email, password, confirm password
 2. Client validates inputs (inline errors)
 3. Submit calls `POST /api/auth/signup`
@@ -98,6 +101,7 @@ stores/
 5. On error: display error message
 
 **Login Flow:**
+
 1. User enters email/password or clicks Google OAuth
 2. For email/password: `POST /api/auth/login`
 3. For OAuth: redirect to Supabase OAuth URL
@@ -105,6 +109,7 @@ stores/
 5. On session expired: redirect to `/login?expired=true`
 
 **Password Reset Flow:**
+
 1. User enters email on `/reset-password`
 2. Submit calls `POST /api/auth/reset-password`
 3. Always show generic success (security)
@@ -119,15 +124,15 @@ stores/
 
 **Location:** `src/pages/api/auth/`
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/auth/signup` | POST | Create new user account |
-| `/api/auth/login` | POST | Email/password authentication |
-| `/api/auth/logout` | POST | Clear session |
-| `/api/auth/reset-password` | POST | Send password reset email |
-| `/api/auth/update-password` | POST | Set new password with token |
-| `/api/auth/callback` | GET | Handle OAuth/magic link redirects |
-| `/api/auth/resend-verification` | POST | Resend verification email |
+| Endpoint                        | Method | Purpose                           |
+| ------------------------------- | ------ | --------------------------------- |
+| `/api/auth/signup`              | POST   | Create new user account           |
+| `/api/auth/login`               | POST   | Email/password authentication     |
+| `/api/auth/logout`              | POST   | Clear session                     |
+| `/api/auth/reset-password`      | POST   | Send password reset email         |
+| `/api/auth/update-password`     | POST   | Set new password with token       |
+| `/api/auth/callback`            | GET    | Handle OAuth/magic link redirects |
+| `/api/auth/resend-verification` | POST   | Resend verification email         |
 
 ### 2.2 Domain Layer
 
@@ -169,24 +174,27 @@ auth/
 const EmailSchema = z.string().email("Please enter a valid email address");
 
 // Password validation
-const PasswordSchema = z.string()
+const PasswordSchema = z
+  .string()
   .min(8, "Password must be at least 8 characters")
   .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least 1 special character");
 
 // Signup command
-export const SignupCommandSchema = z.object({
-  email: EmailSchema,
-  password: PasswordSchema,
-  confirmPassword: z.string()
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"]
-});
+export const SignupCommandSchema = z
+  .object({
+    email: EmailSchema,
+    password: PasswordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 // Login command
 export const LoginCommandSchema = z.object({
   email: EmailSchema,
-  password: z.string().min(1, "Password is required")
+  password: z.string().min(1, "Password is required"),
 });
 ```
 
@@ -222,6 +230,7 @@ export class AuthenticationError {
 ```
 
 **Update `response-mappers.ts`** to handle auth errors:
+
 - `AuthenticationError` -> 401 Unauthorized
 - `RegistrationError` -> 400 Bad Request (or 409 Conflict for duplicate email)
 - `PasswordResetError` -> 400 Bad Request
@@ -254,10 +263,7 @@ export interface ISupabaseAuthClient {
   setSession(accessToken: string, refreshToken: string): Effect<Session, AuthenticationError>;
 }
 
-export class SupabaseAuthClient extends Context.Tag("SupabaseAuthClient")<
-  SupabaseAuthClient,
-  ISupabaseAuthClient
->() {}
+export class SupabaseAuthClient extends Context.Tag("SupabaseAuthClient")<SupabaseAuthClient, ISupabaseAuthClient>() {}
 ```
 
 ### 3.2 Supabase Server Instance Helper
@@ -284,29 +290,20 @@ function parseCookieHeader(cookieHeader: string): { name: string; value: string 
   });
 }
 
-export const createSupabaseServerInstance = (context: {
-  headers: Headers;
-  cookies: AstroCookies;
-}) => {
+export const createSupabaseServerInstance = (context: { headers: Headers; cookies: AstroCookies }) => {
   // IMPORTANT: Use ONLY getAll and setAll for cookie management
   // DO NOT use individual get/set/remove methods
-  const supabase = createServerClient<Database>(
-    import.meta.env.SUPABASE_URL,
-    import.meta.env.SUPABASE_KEY,
-    {
-      cookieOptions,
-      cookies: {
-        getAll() {
-          return parseCookieHeader(context.headers.get("Cookie") ?? "");
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            context.cookies.set(name, value, options)
-          );
-        },
+  const supabase = createServerClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
+    cookieOptions,
+    cookies: {
+      getAll() {
+        return parseCookieHeader(context.headers.get("Cookie") ?? "");
       },
-    }
-  );
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => context.cookies.set(name, value, options));
+      },
+    },
+  });
 
   return supabase;
 };
@@ -340,47 +337,44 @@ const PUBLIC_PATHS = [
   "/api/auth/resend-verification",
 ];
 
-export const onRequest = defineMiddleware(
-  async ({ locals, cookies, url, request, redirect }, next) => {
-    const supabase = createSupabaseServerInstance({
-      cookies,
-      headers: request.headers,
-    });
+export const onRequest = defineMiddleware(async ({ locals, cookies, url, request, redirect }, next) => {
+  const supabase = createSupabaseServerInstance({
+    cookies,
+    headers: request.headers,
+  });
 
-    locals.supabase = supabase;
+  locals.supabase = supabase;
 
-    // IMPORTANT: Always call auth.getUser() - DO NOT skip this call
-    // DO NOT use getSession() - use getUser() for security
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  // IMPORTANT: Always call auth.getUser() - DO NOT skip this call
+  // DO NOT use getSession() - use getUser() for security
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (user) {
-      locals.user = {
-        id: user.id,
-        email: user.email!,
-        name: user.user_metadata?.full_name,
-        emailVerified: user.email_confirmed_at !== null,
-      };
-    }
-
-    // Check if path is public
-    const isPublicPath = PUBLIC_PATHS.includes(url.pathname) || 
-                         url.pathname.startsWith("/api/auth/");
-
-    // Redirect unauthenticated users from protected routes
-    if (!user && !isPublicPath) {
-      return redirect(`/login?redirect=${encodeURIComponent(url.pathname)}`);
-    }
-
-    // Redirect authenticated users away from auth pages
-    if (user && ["/login", "/signup"].includes(url.pathname)) {
-      return redirect("/");
-    }
-
-    return next();
+  if (user) {
+    locals.user = {
+      id: user.id,
+      email: user.email!,
+      name: user.user_metadata?.full_name,
+      emailVerified: user.email_confirmed_at !== null,
+    };
   }
-);
+
+  // Check if path is public
+  const isPublicPath = PUBLIC_PATHS.includes(url.pathname) || url.pathname.startsWith("/api/auth/");
+
+  // Redirect unauthenticated users from protected routes
+  if (!user && !isPublicPath) {
+    return redirect(`/login?redirect=${encodeURIComponent(url.pathname)}`);
+  }
+
+  // Redirect authenticated users away from auth pages
+  if (user && ["/login", "/signup"].includes(url.pathname)) {
+    return redirect("/");
+  }
+
+  return next();
+});
 ```
 
 ### 3.3 Update Astro Locals Types
@@ -436,24 +430,25 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       user: null,
       isAuthenticated: false,
       emailVerificationDismissed: false,
-      
-      setUser: (user) => set({ 
-        user, 
-        isAuthenticated: !!user
-      }),
-      
+
+      setUser: (user) =>
+        set({
+          user,
+          isAuthenticated: !!user,
+        }),
+
       logout: async () => {
         await fetch("/api/auth/logout", { method: "POST" });
         set({ user: null, isAuthenticated: false });
         window.location.href = "/";
       },
-      
-      dismissEmailVerification: () => set({ emailVerificationDismissed: true })
+
+      dismissEmailVerification: () => set({ emailVerificationDismissed: true }),
     }),
     {
       name: "auth-storage",
       storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({ emailVerificationDismissed: state.emailVerificationDismissed })
+      partialize: (state) => ({ emailVerificationDismissed: state.emailVerificationDismissed }),
     }
   )
 );
@@ -462,6 +457,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 ### 3.5 Passing User Data from Astro to React
 
 **Data Flow:**
+
 1. Middleware validates session via Supabase client and sets `context.locals.user`
 2. Astro pages access `Astro.locals.user` (already validated, no loading state needed)
 3. Astro pages pass user as props to React components
@@ -491,12 +487,12 @@ interface PlanPageProps {
 
 export function PlanPage({ user }: PlanPageProps) {
   const setUser = useAuthStore((state) => state.setUser);
-  
+
   // Initialize store with user from props (runs once on mount)
   useEffect(() => {
     setUser(user);
   }, [user, setUser]);
-  
+
   // Component renders immediately - no loading state needed
   // because middleware already validated the session
   return (
@@ -506,6 +502,7 @@ export function PlanPage({ user }: PlanPageProps) {
 ```
 
 **Key Benefits:**
+
 - No API call needed to fetch session (already validated in middleware)
 - No loading state for auth - user data is available immediately via SSR props
 - Single source of truth: middleware handles all session validation
@@ -537,10 +534,12 @@ return Astro.redirect(redirectTo);
 ### 3.7 Navigation Updates
 
 **Desktop Navigation** - Add `UserMenuDropdown` to existing navigation bar (right side):
+
 - Show user avatar/initials
 - Dropdown: Logout button
 
 **Mobile Navigation** - Integrate `UserMenuDrawer` with existing `src/components/common/MobileNavigation.tsx`:
+
 - User icon in navigation triggers Vaul drawer
 - Menu: Logout option
 
@@ -557,6 +556,7 @@ export const prerender = false;
 ```
 
 **Pages requiring `prerender = false`:**
+
 - `src/pages/login.astro`
 - `src/pages/signup.astro`
 - `src/pages/reset-password.astro`
@@ -567,6 +567,7 @@ export const prerender = false;
 ### 3.9 Protected Pages Updates
 
 Update `src/pages/plan.astro` and `src/pages/map.astro`:
+
 - Pass `user` from `Astro.locals` as props to React components
 - No loading state needed for auth - middleware handles protection
 - React components receive user data immediately via SSR props
@@ -575,36 +576,36 @@ Update `src/pages/plan.astro` and `src/pages/map.astro`:
 
 ## 4. Files to Create
 
-| File | Description |
-|------|-------------|
+| File                                         | Description                                                 |
+| -------------------------------------------- | ----------------------------------------------------------- |
 | `src/infrastructure/auth/supabase-server.ts` | Supabase server instance helper with proper cookie handling |
-| `src/pages/login.astro` | Login page (prerender = false) |
-| `src/pages/signup.astro` | Signup page (prerender = false) |
-| `src/pages/reset-password.astro` | Password reset request (prerender = false) |
-| `src/pages/update-password.astro` | New password form (prerender = false) |
-| `src/pages/auth/callback.astro` | OAuth callback handler (prerender = false) |
-| `src/pages/verify-email.astro` | Email verification handler (prerender = false) |
-| `src/pages/api/auth/*.ts` | Auth API endpoints (7 files) |
-| `src/domain/auth/**/*.ts` | Auth domain layer (6 files) |
-| `src/infrastructure/auth/**/*.ts` | Auth infrastructure (5 files) |
-| `src/application/auth/**/*.ts` | Auth use cases (5 files) |
-| `src/components/auth/**/*.tsx` | Auth React components (10+ files) |
+| `src/pages/login.astro`                      | Login page (prerender = false)                              |
+| `src/pages/signup.astro`                     | Signup page (prerender = false)                             |
+| `src/pages/reset-password.astro`             | Password reset request (prerender = false)                  |
+| `src/pages/update-password.astro`            | New password form (prerender = false)                       |
+| `src/pages/auth/callback.astro`              | OAuth callback handler (prerender = false)                  |
+| `src/pages/verify-email.astro`               | Email verification handler (prerender = false)              |
+| `src/pages/api/auth/*.ts`                    | Auth API endpoints (7 files)                                |
+| `src/domain/auth/**/*.ts`                    | Auth domain layer (6 files)                                 |
+| `src/infrastructure/auth/**/*.ts`            | Auth infrastructure (5 files)                               |
+| `src/application/auth/**/*.ts`               | Auth use cases (5 files)                                    |
+| `src/components/auth/**/*.tsx`               | Auth React components (10+ files)                           |
 
 ## 5. Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src/middleware/index.ts` | Add session check, route protection, user to locals |
-| `src/env.d.ts` | Add `user` to `App.Locals` |
-| `src/infrastructure/common/runtime.ts` | Add SupabaseAuthClient to AppLayer |
-| `src/infrastructure/common/http/response-mappers.ts` | Handle auth errors |
-| `src/pages/api/**/*.ts` | Replace DEV_USER_ID with context.locals.user.id |
-| `src/pages/plan.astro` | Pass user from Astro.locals as props to PlanPage |
-| `src/pages/map.astro` | Pass user from Astro.locals as props to MapPage |
-| `src/components/plan/PlanPage.tsx` | Accept user prop, initialize auth store |
-| `src/components/map/MapPlanner.tsx` | Accept user prop, initialize auth store |
-| `src/components/common/MobileNavigation.tsx` | Integrate UserMenuDrawer |
-| `src/layouts/Layout.astro` | Add desktop navigation header with user menu |
+| File                                                 | Changes                                             |
+| ---------------------------------------------------- | --------------------------------------------------- |
+| `src/middleware/index.ts`                            | Add session check, route protection, user to locals |
+| `src/env.d.ts`                                       | Add `user` to `App.Locals`                          |
+| `src/infrastructure/common/runtime.ts`               | Add SupabaseAuthClient to AppLayer                  |
+| `src/infrastructure/common/http/response-mappers.ts` | Handle auth errors                                  |
+| `src/pages/api/**/*.ts`                              | Replace DEV_USER_ID with context.locals.user.id     |
+| `src/pages/plan.astro`                               | Pass user from Astro.locals as props to PlanPage    |
+| `src/pages/map.astro`                                | Pass user from Astro.locals as props to MapPage     |
+| `src/components/plan/PlanPage.tsx`                   | Accept user prop, initialize auth store             |
+| `src/components/map/MapPlanner.tsx`                  | Accept user prop, initialize auth store             |
+| `src/components/common/MobileNavigation.tsx`         | Integrate UserMenuDrawer                            |
+| `src/layouts/Layout.astro`                           | Add desktop navigation header with user menu        |
 
 ## 6. Security Best Practices
 
@@ -634,4 +635,3 @@ Update `src/pages/plan.astro` and `src/pages/map.astro`:
 6. Auth React components
 7. Navigation updates (user menu)
 8. Update existing API endpoints to use real user ID
-

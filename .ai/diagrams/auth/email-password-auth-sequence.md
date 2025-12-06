@@ -5,6 +5,7 @@ This diagram illustrates the email/password authentication flow in the trip-plan
 ## Overview
 
 The authentication system is built on **Supabase Auth** with server-side rendering via **Astro**. Key characteristics:
+
 - Client-side validation with Zod schemas
 - Server-side validation and Supabase Auth integration
 - httpOnly cookies for session storage (XSS protection)
@@ -12,14 +13,14 @@ The authentication system is built on **Supabase Auth** with server-side renderi
 
 ## Participants
 
-| Participant | Type | Description |
-|-------------|------|-------------|
-| User | Actor | End user interacting with the browser |
-| AuthForm | Participant | React form component (LoginForm/SignupForm) |
-| API Route | Participant | Astro API endpoint (`/api/auth/*`) |
-| Middleware | Participant | Astro middleware for route protection |
-| Supabase | External | Supabase Auth service |
-| Cookies | Database | Browser httpOnly cookies |
+| Participant | Type        | Description                                 |
+| ----------- | ----------- | ------------------------------------------- |
+| User        | Actor       | End user interacting with the browser       |
+| AuthForm    | Participant | React form component (LoginForm/SignupForm) |
+| API Route   | Participant | Astro API endpoint (`/api/auth/*`)          |
+| Middleware  | Participant | Astro middleware for route protection       |
+| Supabase    | External    | Supabase Auth service                       |
+| Cookies     | Database    | Browser httpOnly cookies                    |
 
 <mermaid_diagram>
 
@@ -48,7 +49,7 @@ The authentication system is built on **Supabase Auth** with server-side renderi
 
 sequenceDiagram
     autonumber
-    
+
     actor User
     participant AuthForm as AuthForm<br/>(React)
     participant API as API Route<br/>(Astro)
@@ -59,22 +60,22 @@ sequenceDiagram
     %% ===== LOGIN FLOW =====
     rect rgb(30, 50, 70)
     Note over User,Cookies: LOGIN FLOW
-    
+
     User->>+AuthForm: Enter email & password
     AuthForm->>AuthForm: Validate with LoginCommandSchema (Zod)
-    
+
     alt Validation Failed
         AuthForm-->>User: Show field errors
     else Validation Passed
         AuthForm->>+API: POST /api/auth/login<br/>{email, password}
         API->>API: Validate with LoginCommandSchema
-        
+
         alt Server Validation Failed
             API-->>AuthForm: 400 {success: false, error, details}
             AuthForm-->>-User: Show validation errors
         else Server Validation Passed
             API->>+Supabase: signInWithPassword({email, password})
-            
+
             alt Invalid Credentials
                 Supabase-->>API: Error: Invalid login credentials
                 API-->>AuthForm: 401 {success: false, error: "Invalid credentials"}
@@ -92,22 +93,22 @@ sequenceDiagram
     %% ===== SIGNUP FLOW =====
     rect rgb(40, 55, 45)
     Note over User,Cookies: SIGNUP FLOW
-    
+
     User->>+AuthForm: Enter email, password, confirmPassword
     AuthForm->>AuthForm: Validate with SignupCommandSchema (Zod)<br/>+ password match check
-    
+
     alt Validation Failed
         AuthForm-->>User: Show field errors
     else Validation Passed
         AuthForm->>+API: POST /api/auth/signup<br/>{email, password, confirmPassword}
         API->>API: Validate with SignupCommandSchema
-        
+
         alt Server Validation Failed
             API-->>AuthForm: 400 {success: false, error, details}
             AuthForm-->>-User: Show validation errors
         else Server Validation Passed
             API->>+Supabase: signUp({email, password})
-            
+
             alt Email Already Exists
                 Supabase-->>API: Error: User already registered
                 API-->>AuthForm: 409 {success: false, code: EMAIL_ALREADY_EXISTS}
@@ -129,23 +130,23 @@ sequenceDiagram
     %% ===== SESSION VALIDATION (PROTECTED ROUTE) =====
     rect rgb(50, 40, 50)
     Note over User,Cookies: SESSION VALIDATION (Protected Routes)
-    
+
     User->>+MW: Request protected route (e.g., /plan)
     Cookies-->>MW: Send session cookies
     MW->>MW: createSupabaseServerInstance()<br/>Parse cookies with getAll()
     MW->>+Supabase: getUser() - Validate JWT
-    
+
     alt Invalid/Expired Session
         Supabase-->>-MW: {user: null}
         MW-->>User: 302 Redirect to /login?redirect=/plan
     else Valid Session
         Supabase-->>MW: {user}
         MW->>MW: Set locals.user & locals.supabase
-        
+
         opt User on /login or /signup
             MW-->>User: 302 Redirect to destination
         end
-        
+
         MW-->>-User: Continue to protected page
     end
     end
@@ -189,13 +190,13 @@ sequenceDiagram
 
 ## Security Considerations
 
-| Feature | Implementation |
-|---------|----------------|
-| XSS Protection | httpOnly cookies (not accessible via JavaScript) |
-| CSRF Protection | sameSite: "lax" cookie policy |
-| HTTPS Enforcement | secure: true in production |
-| JWT Validation | `getUser()` validates with Supabase server (not just `getSession()`) |
-| Password Security | Minimum 8 chars, requires special character |
+| Feature           | Implementation                                                       |
+| ----------------- | -------------------------------------------------------------------- |
+| XSS Protection    | httpOnly cookies (not accessible via JavaScript)                     |
+| CSRF Protection   | sameSite: "lax" cookie policy                                        |
+| HTTPS Enforcement | secure: true in production                                           |
+| JWT Validation    | `getUser()` validates with Supabase server (not just `getSession()`) |
+| Password Security | Minimum 8 chars, requires special character                          |
 
 ## Related Files
 
@@ -206,4 +207,3 @@ sequenceDiagram
 - `src/middleware/index.ts` - Route protection middleware
 - `src/infrastructure/auth/supabase-server.ts` - Supabase SSR client factory
 - `src/infrastructure/auth/api/schemas.ts` - Zod validation schemas
-

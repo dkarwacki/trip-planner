@@ -38,11 +38,11 @@ Your task is to generate a comprehensive test plan for this feature. Follow thes
    - List each implementation file and note what aspect of the feature it likely handles
    - Map the functionalities to the relevant files to understand what needs testing
    - Brainstorm test scenarios for:
-     * Core functionality (the main use cases)
-     * Edge cases and boundary conditions
-     * Error scenarios and exception handling
-     * Integration points between components
-     * Performance or security considerations if applicable
+     - Core functionality (the main use cases)
+     - Edge cases and boundary conditions
+     - Error scenarios and exception handling
+     - Integration points between components
+     - Performance or security considerations if applicable
    - Consider how different files interact and what integration tests are needed
    - It's OK for this section to be quite long.
 
@@ -70,17 +70,22 @@ Your task is to generate a comprehensive test plan for this feature. Follow thes
 Example structure (your actual content should be specific to the feature):
 
 <test_plan>
+
 ## Test Objectives
+
 [Clearly state what aspects of the feature need validation]
 
 ## Scope
+
 **In Scope**: [What will be tested]
 **Out of Scope**: [What won't be tested]
 
 ## Test Cases
 
 ### Category 1: [e.g., Core Functionality]
+
 **TC-001: [Test Case Name]**
+
 - Priority: High
 - Preconditions: [Setup required]
 - Steps:
@@ -91,18 +96,23 @@ Example structure (your actual content should be specific to the feature):
 [More test cases...]
 
 ### Category 2: [e.g., Error Handling]
+
 [Test cases...]
 
 ## Edge Cases and Boundary Conditions
+
 [Special scenarios...]
 
 ## Integration Testing
+
 [How this feature interacts with others...]
 
 ## Dependencies
+
 [Prerequisites and related features...]
 
 ## Test Data Requirements
+
 [Data needed for testing...]
 </test_plan>
 

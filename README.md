@@ -1,26 +1,47 @@
-# 10x Astro Starter
+# Trip Planner
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+A modern trip planning application built with Astro, React, and TypeScript following Clean Architecture principles.
 
 ## Tech Stack
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
+### Core
+
+- [Astro](https://astro.build/) v5 - Modern web framework with SSR mode
+- [React](https://react.dev/) v19 - UI library for interactive components
 - [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+- [Tailwind CSS](https://tailwindcss.com/) v4 - Utility-first CSS framework
+- [Shadcn/ui](https://ui.shadcn.com/) - Component library built on Radix UI
+
+### Backend & Data
+
+- [Effect](https://effect.website/) - Functional effect system for type-safe error handling
+- [Supabase](https://supabase.com/) - Authentication and database
+- [Zod](https://zod.dev/) - Schema validation
+
+### External Services
+
+- Google Maps API - Interactive maps and place data
+- OpenAI (via OpenRouter) - AI-powered trip planning chat
+
+### Testing
+
+- [Vitest](https://vitest.dev/) - Unit testing framework
+- [Playwright](https://playwright.dev/) - End-to-end testing
+- [Testing Library](https://testing-library.com/) - React component testing utilities
 
 ## Prerequisites
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+- Node.js v22+ (see `.nvmrc`)
+- npm
+- Supabase CLI (for local development)
 
 ## Getting Started
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
+git clone <repository-url>
+cd trip-planner
 ```
 
 2. Install dependencies:
@@ -29,65 +50,116 @@ cd 10x-astro-starter
 npm install
 ```
 
-3. Run the development server:
+3. Set up environment variables:
+
+```bash
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+4. Start the development server:
 
 ```bash
 npm run dev
 ```
 
-4. Build for production:
-
-```bash
-npm run build
-```
+This will start both Supabase and the Astro dev server.
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
+### Development
+
+- `npm run dev` - Start development server (Supabase + Astro)
+- `npm run dev:astro` - Start only Astro dev server
+- `npm run dev:supabase` - Start only Supabase
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
+
+### Code Quality
+
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues
+- `npm run format` - Format code with Prettier
+
+### Testing
+
+- `npm run test` - Run unit tests in watch mode
+- `npm run test:run` - Run unit tests once
+- `npm run test:watch` - Run unit tests in watch mode
+- `npm run test:ui` - Open Vitest UI
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run test:e2e` - Run E2E tests
+- `npm run test:e2e:ui` - Open Playwright UI
+- `npm run test:e2e:debug` - Debug E2E tests
+- `npm run test:e2e:report` - View E2E test report
 
 ## Project Structure
 
-```md
-.
-├── src/
-│ ├── layouts/ # Astro layouts
-│ ├── pages/ # Astro pages
-│ │ └── api/ # API endpoints
-│ ├── components/ # UI components (Astro & React)
-│ └── assets/ # Static assets
-├── public/ # Public assets
+The project follows **Clean Architecture** principles with feature-based organization:
+
+```
+src/
+├── domain/                 # Domain layer (pure business logic)
+│   ├── common/            # Shared domain logic
+│   ├── auth/              # Authentication domain
+│   ├── map/               # Map feature domain
+│   └── plan/              # Trip planning domain
+├── application/           # Application layer (use cases)
+│   ├── map/               # Map use cases
+│   └── plan/              # Planning use cases
+├── infrastructure/        # Infrastructure layer (external services)
+│   ├── common/            # Shared infrastructure
+│   ├── auth/              # Auth infrastructure
+│   ├── map/               # Map API clients, cache
+│   └── plan/              # Planning infrastructure
+├── components/            # UI components
+│   ├── ui/                # Shadcn/ui components
+│   ├── common/            # Shared components
+│   ├── auth/              # Auth components
+│   ├── map/               # Map feature components
+│   └── plan/              # Planning feature components
+├── pages/                 # Astro pages
+│   └── api/               # API endpoints
+├── layouts/               # Astro layouts
+├── lib/                   # Shared utilities
+├── middleware/            # Astro middleware
+└── styles/                # Global styles
+
+tests/
+├── setup.ts               # Vitest global setup
+├── vitest.d.ts            # TypeScript declarations
+└── unit/                  # Unit tests
+
+e2e/
+├── pages/                 # Page objects
+└── *.spec.ts              # E2E test files
 ```
 
-## AI Development Support
+## Testing
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
+### Unit Tests (Vitest)
 
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
+Unit tests are located in `tests/unit/` or co-located with source files using `*.test.ts` or `*.spec.ts` pattern.
 
-### Cursor IDE
+```bash
+# Run tests
+npm run test:run
 
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
+# Run with coverage
+npm run test:coverage
+```
 
-### GitHub Copilot
+### E2E Tests (Playwright)
 
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
+E2E tests use the Page Object Model pattern. Page objects are in `e2e/pages/`.
 
-### Windsurf
+```bash
+# Run E2E tests (starts dev server automatically)
+npm run test:e2e
 
-The `.windsurfrules` file contains AI configuration for Windsurf.
-
-## Contributing
-
-Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
+# Open Playwright UI for debugging
+npm run test:e2e:ui
+```
 
 ## License
 

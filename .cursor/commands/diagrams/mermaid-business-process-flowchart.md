@@ -43,6 +43,7 @@ Before generating the diagram, perform an analysis and place it inside <architec
 ## Step 2: Build the Diagram
 
 Include the following elements:
+
 - Full end-to-end business process
 - All major business steps in order
 - Components, services, and modules implementing each step
@@ -53,6 +54,7 @@ Include the following elements:
 - Dependencies on other workflows or modules
 
 **Apply @.cursor/commands/mermaid-flowchart-rules.md** for:
+
 - Arrow types (sync vs async flows)
 - Node shapes for different component types
 - Styling classes and color coding
@@ -61,6 +63,7 @@ Include the following elements:
 ## Step 3: Review
 
 After generating the diagram, review against @.cursor/commands/mermaid-flowchart-rules.md to ensure:
+
 - Correct Mermaid syntax and rendering
 - Complete data flow paths (no disconnected queues or dead ends)
 - Appropriate abstraction level for the diagram's purpose

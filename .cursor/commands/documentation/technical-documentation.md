@@ -63,9 +63,10 @@ The documentation MUST be written to: **DESTINATION**
 
 1. **Step Name**: Description
 2. **Step Name**: Description
-...
+   ...
 
 > **[DIAGRAM PLACEHOLDER]**
+>
 > - **Diagram Name:** [Name of diagram]
 > - **Diagram Type:** [Flowchart/Sequence Diagram/ERD/State Machine]
 > - **Description:** [What the diagram should show]
@@ -74,17 +75,18 @@ The documentation MUST be written to: **DESTINATION**
 
 [Document ALL validations performed in order]
 
-| Step | Validation | Method | Error Message | Description |
-|------|------------|--------|---------------|-------------|
-| 1 | ... | `methodName()` | `errorMessage` | ... |
+| Step | Validation | Method         | Error Message  | Description |
+| ---- | ---------- | -------------- | -------------- | ----------- |
+| 1    | ...        | `methodName()` | `errorMessage` | ...         |
 
 #### State Machine
 
 [If applicable, document all state transitions]
-
 ```
+
 State1 → State2 → State3 (trigger)
-       → State4 (alternative trigger)
+→ State4 (alternative trigger)
+
 ```
 
 > **[DIAGRAM PLACEHOLDER]**
@@ -113,11 +115,13 @@ State1 → State2 → State3 (trigger)
 [Document external service interactions if applicable]
 
 ```
+
 Handler
-    └─> ServiceA.method()
-        └─> ServiceB.method()
-            └─> External API
-```
+└─> ServiceA.method()
+└─> ServiceB.method()
+└─> External API
+
+````
 
 ### 2.2 Dependencies
 
@@ -156,34 +160,34 @@ config.path {
   field1 = defaultValue  # Description
   field2 = defaultValue  # Description
 }
-```
+````
 
 **Hardcoded Constants**
 
-| Constant | Value | Location |
-|----------|-------|----------|
-| ... | ... | `path/to/file.scala` |
+| Constant | Value | Location             |
+| -------- | ----- | -------------------- |
+| ...      | ...   | `path/to/file.scala` |
 
 **Rate Limiting** (if applicable)
 
-| Parameter | Value |
-|-----------|-------|
-| `limit` | ... |
-| `timeStep` | ... |
+| Parameter  | Value |
+| ---------- | ----- |
+| `limit`    | ...   |
+| `timeStep` | ...   |
 
 ### 3.3 Code Entry Points
 
 [Document where in the codebase this feature starts execution]
 
-| Entry Point | File | Description |
-|-------------|------|-------------|
-| `methodName()` | `path/to/file.scala` | ... |
+| Entry Point    | File                 | Description |
+| -------------- | -------------------- | ----------- |
+| `methodName()` | `path/to/file.scala` | ...         |
 
 **Scheduler Jobs** (if applicable)
 
 | Job | Schedule | Class |
-|-----|----------|-------|
-| ... | ... | ... |
+| --- | -------- | ----- |
+| ... | ...      | ...   |
 
 ---
 
@@ -208,9 +212,9 @@ config.path {
 
 **Metrics**
 
-| Metric | Description |
-|--------|-------------|
-| `metric-name` | ... |
+| Metric        | Description |
+| ------------- | ----------- |
+| `metric-name` | ...         |
 
 **Alerts**
 
@@ -223,8 +227,8 @@ config.path {
 ### 5.1 Common Issues
 
 | Issue | Cause | Resolution |
-|-------|-------|------------|
-| ... | ... | ... |
+| ----- | ----- | ---------- |
+| ...   | ...   | ...        |
 
 ### 5.2 Logs and Metrics
 
@@ -233,12 +237,14 @@ config.path {
 [Provide GCP Log Explorer queries for troubleshooting]
 
 General Logs:
+
 ```
 resource.type="k8s_container"
 textPayload=~"LogPrefix:"
 ```
 
 Error Logs:
+
 ```
 resource.type="k8s_container"
 textPayload=~"LogPrefix: Error"
@@ -272,8 +278,8 @@ SELECT * FROM table WHERE condition;
 ### 6.2 Backward Compatibility
 
 | Concern | Impact | Mitigation |
-|---------|--------|------------|
-| ... | ... | ... |
+| ------- | ------ | ---------- |
+| ...     | ...    | ...        |
 
 ### 6.3 Future Enhancements
 
@@ -290,10 +296,11 @@ SELECT * FROM table WHERE condition;
 
 ### Key Files
 
-| File | Purpose |
-|------|---------|
-| `path/to/file.scala` | ... |
-```
+| File                 | Purpose |
+| -------------------- | ------- |
+| `path/to/file.scala` | ...     |
+
+````
 
 ---
 
@@ -368,7 +375,7 @@ For diagrams:
 > - **Diagram Name:** [Descriptive name]
 > - **Diagram Type:** [Flowchart/Sequence Diagram/ERD/State Machine]
 > - **Description:** [What the diagram should illustrate]
-```
+````
 
 ---
 
@@ -394,4 +401,5 @@ Before completing documentation, verify:
 ## Example Reference
 
 For documentation style example, see:
+
 - @.ai/docs/subaccounts/subaccounts-technical-documentation.md

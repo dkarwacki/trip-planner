@@ -5,6 +5,7 @@ This sequence diagram illustrates the complete Google OAuth authentication flow 
 ## Overview
 
 The flow uses Supabase Auth with server-side rendering (SSR) via Astro. Key components:
+
 - **GoogleOAuthButton** - React component that redirects to server OAuth endpoint
 - **OAuth Endpoint** - `/api/auth/google` initiates OAuth with PKCE (verifier in cookie)
 - **Google OAuth** - External identity provider
@@ -40,7 +41,7 @@ The flow uses Supabase Auth with server-side rendering (SSR) via Astro. Key comp
 
 sequenceDiagram
     autonumber
-    
+
     actor User
     participant Browser
     participant OAuthBtn as GoogleOAuthButton
@@ -55,21 +56,21 @@ sequenceDiagram
     User->>+OAuthBtn: Click "Continue with Google"
     OAuthBtn->>OAuthBtn: setIsLoading(true)
     OAuthBtn->>-Browser: Redirect to /api/auth/google?redirect=/
-    
+
     Browser->>+OAuthAPI: GET /api/auth/google?redirect=/
     Note over OAuthAPI: Middleware creates Supabase server client
-    
+
     OAuthAPI->>+Server: signInWithOAuth({provider: "google"})
     Note right of Server: PKCE verifier stored in cookie via setAll()
     Server-->>-OAuthAPI: OAuth URL + verifier cookie
-    
+
     OAuthAPI-->>-Browser: HTTP 302 Redirect to Google
 
     Note over User, Callback: Google Authentication Phase
 
     Browser->>+Google: Navigate to OAuth consent page
     Google-->>User: Display consent screen
-    
+
     alt User Authorizes
         User->>Google: Grant access
         Google-->>-Browser: Redirect to Supabase Auth
@@ -87,19 +88,19 @@ sequenceDiagram
 
     Browser->>+Callback: GET /api/auth/callback?code=XXX&redirect=/
     Note over Callback: Middleware creates Supabase server client
-    
+
     Callback->>Callback: Extract code, redirect params
-    
+
     Callback->>+Server: exchangeCodeForSession(code)
     Note right of Server: PKCE verifier retrieved from cookie via getAll()
     Server->>+SupaAuth: Validate code with verifier
     SupaAuth->>SupaAuth: Verify code, create session
     SupaAuth-->>-Server: Session tokens (access, refresh)
-    
+
     Note right of Server: setAll() sets httpOnly session cookies
     Server->>Server: Set session cookies
     Server-->>-Callback: Session created
-    
+
     Callback-->>-Browser: HTTP 302 Redirect to destination
 
     Note over User, Callback: Session Validation Phase
@@ -174,9 +175,9 @@ return redirect(redirectTo);
 ```typescript
 export const cookieOptions: CookieOptionsWithName = {
   path: "/",
-  secure: import.meta.env.PROD,  // HTTPS only in production
-  httpOnly: true,                // Prevents XSS
-  sameSite: "lax",              // CSRF protection
+  secure: import.meta.env.PROD, // HTTPS only in production
+  httpOnly: true, // Prevents XSS
+  sameSite: "lax", // CSRF protection
 };
 ```
 
@@ -190,17 +191,18 @@ export const cookieOptions: CookieOptionsWithName = {
 ## Why Server-Side OAuth Initiation?
 
 Per [Supabase PKCE documentation](https://supabase.com/docs/guides/auth/sessions/pkce-flow):
+
 > "The code verifier is created and stored locally when the Auth flow is first initiated. That means the code exchange must be initiated on the same browser and device where the flow was started."
 
 Client-side OAuth initiation stores the PKCE verifier in `localStorage`, but the server callback cannot access `localStorage`. By initiating OAuth server-side via `@supabase/ssr`, the verifier is stored in httpOnly cookies, making it accessible during server-side code exchange.
 
 ## Error Scenarios
 
-| Error | Trigger | User Experience |
-|-------|---------|-----------------|
-| User denies access | User clicks "Deny" on Google consent | Redirected to /login with error message |
-| Code exchange fails | Invalid/expired code or PKCE verifier | Redirected to /login with error message |
-| OAuth initiation fails | Supabase configuration issue | Redirected to /login with error message |
+| Error                  | Trigger                               | User Experience                         |
+| ---------------------- | ------------------------------------- | --------------------------------------- |
+| User denies access     | User clicks "Deny" on Google consent  | Redirected to /login with error message |
+| Code exchange fails    | Invalid/expired code or PKCE verifier | Redirected to /login with error message |
+| OAuth initiation fails | Supabase configuration issue          | Redirected to /login with error message |
 
 ## Related Files
 

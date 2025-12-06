@@ -126,7 +126,3 @@ export function UpdatePasswordForm() {
     </AuthLayout>
   );
 }
-
-
-
-

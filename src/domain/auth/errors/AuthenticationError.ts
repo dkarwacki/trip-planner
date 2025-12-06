@@ -33,13 +33,3 @@ export class AuthenticationError {
     return new AuthenticationError("email_not_verified", "Please verify your email address before logging in.");
   }
 }
-
-
-
-
-
-
-
-
-
-

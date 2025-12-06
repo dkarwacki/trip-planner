@@ -46,6 +46,7 @@ Use the PlantUML standard library includes (requires PlantUML >= 1.2021.6):
 ```
 
 **Alternative**: Use versioned URLs for specific C4-PlantUML versions:
+
 ```plantuml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.9.0/C4_Container.puml
 ```
@@ -145,26 +146,31 @@ Rel(external, serviceB, "Response description", "Protocol")
 ## C4-PlantUML Element Reference
 
 ### Persons
+
 - `Person(alias, "Label", "Description")` - Internal user
 - `Person_Ext(alias, "Label", "Description")` - External user
 
 ### Systems
+
 - `System(alias, "Label", "Description")` - Internal system
 - `System_Ext(alias, "Label", "Description")` - External system
 - `System_Boundary(alias, "Label")` - System boundary container
 
 ### Containers
+
 - `Container(alias, "Label", "Technology", "Description")` - Generic container
 - `ContainerDb(alias, "Label", "Technology", "Description")` - Database
 - `ContainerQueue(alias, "Label", "Technology", "Description")` - Message queue
 - `Container_Boundary(alias, "Label")` - Container boundary
 
 ### Components
+
 - `Component(alias, "Label", "Technology", "Description")` - Generic component
 - `ComponentDb(alias, "Label", "Technology", "Description")` - Database component
 - `ComponentQueue(alias, "Label", "Technology", "Description")` - Queue component
 
 ### Relationships
+
 - `Rel(from, to, "Label", "Technology")` - Standard relationship
 - `Rel_Back(from, to, "Label", "Technology")` - Reverse direction
 - `Rel_U(from, to, "Label", "Technology")` - Upward
@@ -173,6 +179,7 @@ Rel(external, serviceB, "Response description", "Protocol")
 - `Rel_R(from, to, "Label", "Technology")` - Rightward
 
 ### Layout
+
 - `LAYOUT_WITH_LEGEND()` - Includes legend in diagram
 - `LAYOUT_LEFT_RIGHT()` - Horizontal layout
 - `LAYOUT_TOP_DOWN()` - Vertical layout (default)
@@ -202,6 +209,7 @@ Rel(external, serviceB, "Response description", "Protocol")
 ## Optional Features (from @C4-PlantUML)
 
 ### Sprites/Icons
+
 ```plantuml
 !define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
 !include DEVICONS/java.puml
@@ -210,6 +218,7 @@ Container(api, "API", "java", "Handles business logic", $sprite="java")
 ```
 
 ### Custom Tags
+
 ```plantuml
 AddElementTag("deprecated", $bgColor="#gray")
 Container(oldService, "Legacy Service", "Java", "Deprecated", $tags="deprecated")
@@ -218,6 +227,7 @@ Container(oldService, "Legacy Service", "Java", "Deprecated", $tags="deprecated"
 ## Quality Checklist
 
 Before finalizing diagrams, verify:
+
 - [ ] Correct C4 include statement for diagram type
 - [ ] `LAYOUT_WITH_LEGEND()` included for proper rendering
 - [ ] Meaningful title describing the diagram

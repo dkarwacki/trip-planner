@@ -37,4 +37,3 @@ export const GET: APIRoute = async ({ url, locals, redirect }) => {
   // Redirect to Google OAuth consent page
   return redirect(data.url);
 };
-

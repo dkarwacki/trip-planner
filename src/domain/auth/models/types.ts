@@ -69,13 +69,3 @@ export interface PasswordResetRequestCommand {
 export interface PasswordUpdateCommand {
   readonly newPassword: string;
 }
-
-
-
-
-
-
-
-
-
-
