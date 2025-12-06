@@ -91,6 +91,28 @@ The project follows **Clean Architecture** principles with clear separation of c
 - `./src/assets` - static internal assets
 - `./public` - public assets
 
+### Testing Structure
+
+Tests mirror the source structure in separate folders:
+
+- `./tests/` - Tests (Vitest)
+  - `setup.ts` - Vitest global setup
+  - `vitest.d.ts` - TypeScript declarations for test globals
+  - `./tests/domain/{feature}/` - Domain layer tests (pure functions, scoring, models)
+  - `./tests/application/{feature}/` - Use case tests with mocked dependencies
+  - `./tests/infrastructure/{feature}/` - Infrastructure tests with mocks
+
+- `./e2e/` - End-to-end tests (Playwright)
+  - `pages/` - Page Object Model classes
+  - `*.spec.ts` - E2E test files
+
+- `./src/components/**/*.test.tsx` - React component tests (co-located)
+
+**Test file naming:**
+- Tests: `{name}.test.ts`
+- E2E tests: `{name}.spec.ts`
+- Page objects: `{Name}Page.ts`
+
 When modifying the directory structure, always update this section.
 
 ## Available Scripts
@@ -100,6 +122,11 @@ When modifying the directory structure, always update this section.
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues
+- `npm run test` - Run unit tests in watch mode
+- `npm run test:run` - Run unit tests once
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run test:e2e` - Run E2E tests (start dev server first)
+- `npm run test:e2e:ui` - Open Playwright UI
 
 ## Coding practices
 

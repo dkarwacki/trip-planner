@@ -128,7 +128,9 @@ src/
 tests/
 ├── setup.ts               # Vitest global setup
 ├── vitest.d.ts            # TypeScript declarations
-└── unit/                  # Unit tests
+├── domain/                # Domain layer tests
+├── application/           # Use case tests
+└── infrastructure/        # Infrastructure tests
 
 e2e/
 ├── pages/                 # Page objects
@@ -139,7 +141,7 @@ e2e/
 
 ### Unit Tests (Vitest)
 
-Unit tests are located in `tests/unit/` or co-located with source files using `*.test.ts` or `*.spec.ts` pattern.
+Tests are located in `tests/` mirroring the source structure (`domain/`, `application/`, `infrastructure/`), or co-located with components using `*.test.tsx` pattern.
 
 ```bash
 # Run tests

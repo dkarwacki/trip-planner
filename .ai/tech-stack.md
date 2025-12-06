@@ -56,7 +56,27 @@
 ## Testing
 
 - **Vitest** - Unit testing framework
-- **Playwright** - End-to-end testing
+- **Playwright** - End-to-end testing (Chromium only)
+- **Testing Library** - React component testing utilities
+
+### Test Structure
+
+Tests mirror the source structure in separate folders:
+
+```
+tests/
+  setup.ts                   # Vitest global setup
+  vitest.d.ts                # TypeScript declarations
+  domain/{feature}/          # Domain tests (pure functions, scoring)
+  application/{feature}/     # Use case tests
+  infrastructure/{feature}/  # Infrastructure tests
+
+e2e/
+  pages/                     # Page Object Model classes
+  *.spec.ts                  # E2E test files
+
+src/components/**/*.test.tsx # Co-located component tests
+```
 
 ## Planned Integrations
 

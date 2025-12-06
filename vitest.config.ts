@@ -14,7 +14,10 @@ export default defineConfig({
     globals: true,
 
     // Include patterns for test files
-    include: ["src/**/*.{test,spec}.{ts,tsx}", "tests/unit/**/*.{test,spec}.{ts,tsx}"],
+    include: [
+      "src/components/**/*.{test,spec}.{ts,tsx}", // Co-located component tests
+      "tests/**/*.{test,spec}.{ts,tsx}", // All tests in tests folder
+    ],
 
     // Exclude patterns
     exclude: ["node_modules", "dist", "e2e/**/*"],
