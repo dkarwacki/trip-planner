@@ -33,3 +33,5 @@ export class RegistrationError {
     return new RegistrationError("registration_failed", message ?? "Registration failed. Please try again.");
   }
 }
+
+

@@ -24,3 +24,5 @@ export interface Session {
 export const isSessionExpired = (session: Session): boolean => {
   return Date.now() >= session.expiresAt * 1000;
 };
+
+

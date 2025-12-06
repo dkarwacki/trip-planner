@@ -15,7 +15,7 @@ alwaysApply: false
   - Keep comments concise - just the keyword, no descriptions
 
 - **Group tests hierarchically with describe blocks**
-  - Use descriptive names that reference requirements (e.g., `TC-DISC-003: Scoring Algorithm Validation`)
+  - Use descriptive names that reference requirements
   - Nest describe blocks to organize related test suites
   - Component-level → Feature-level → Scenario-level
 
