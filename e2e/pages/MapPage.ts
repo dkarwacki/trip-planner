@@ -1,4 +1,4 @@
-import { type Locator, type Page } from "@playwright/test";
+import { type Locator, type Page, expect } from "@playwright/test";
 import { BasePage } from "./BasePage";
 
 /**
@@ -34,6 +34,16 @@ export class MapPage extends BasePage {
   readonly discoverHeader: Locator;
   readonly selectedPlaceName: Locator;
 
+  // Discovery Panel Locators
+  readonly discoverPanel: Locator;
+  readonly discoverLoading: Locator;
+  readonly discoverEmptyState: Locator;
+  readonly discoverNoResults: Locator;
+  readonly discoverContent: Locator;
+  readonly placeCardGrid: Locator;
+  readonly placeCard: Locator;
+  readonly resultCount: Locator;
+
   constructor(page: Page) {
     super(page);
 
@@ -46,7 +56,7 @@ export class MapPage extends BasePage {
 
     // Mobile locators
     this.mobileLayout = page.getByTestId("map-mobile-layout");
-    this.mobileSearchButton = page.getByRole("button", { name: "Search" });
+    this.mobileSearchButton = page.getByTestId("mobile-search-button");
     this.mobileSearchOverlay = page.getByTestId("mobile-search-overlay");
     this.mobileSearchInput = page.getByTestId("mobile-search-input");
     this.mobileSearchCloseButton = page.getByTestId("mobile-search-close-button");
@@ -64,6 +74,16 @@ export class MapPage extends BasePage {
     // Discover header locators
     this.discoverHeader = page.getByTestId("discover-header");
     this.selectedPlaceName = page.getByTestId("selected-place-name");
+
+    // Discovery panel locators
+    this.discoverPanel = page.getByTestId("discover-panel");
+    this.discoverLoading = page.getByTestId("discover-loading");
+    this.discoverEmptyState = page.getByTestId("discover-empty-state");
+    this.discoverNoResults = page.getByTestId("discover-no-results");
+    this.discoverContent = page.getByTestId("discover-content");
+    this.placeCardGrid = page.getByTestId("place-card-grid");
+    this.placeCard = page.getByTestId("place-card");
+    this.resultCount = page.getByTestId("result-count");
   }
 
   /**
@@ -381,5 +401,77 @@ export class MapPage extends BasePage {
    */
   async waitForDiscoverHeader(): Promise<void> {
     await this.discoverHeader.waitFor({ state: "visible", timeout: 5000 });
+  }
+
+  /**
+   * Verify that the selected place name appears in the discover header
+   */
+  async verifySelectedPlaceInHeader(expectedName: string): Promise<void> {
+    await this.discoverHeader.waitFor({ state: "visible" });
+    const placeName = await this.selectedPlaceName.textContent();
+    expect(placeName).toContain(expectedName);
+  }
+
+  // ========================================
+  // Discovery Panel Methods
+  // ========================================
+
+  /**
+   * Wait for discovery loading state to appear
+   */
+  async waitForDiscoverLoading(): Promise<void> {
+    await this.discoverLoading.waitFor({ state: "visible", timeout: 2000 });
+  }
+
+  /**
+   * Wait for discovery loading to complete
+   * Handles race condition where loading might be too fast to catch
+   */
+  async waitForDiscoverLoadingToComplete(): Promise<void> {
+    try {
+      // Try to wait for loading to appear first
+      await this.discoverLoading.waitFor({ state: "visible", timeout: 1000 });
+      // Then wait for it to disappear
+      await this.discoverLoading.waitFor({ state: "hidden", timeout: 10000 });
+    } catch {
+      // Loading might have been too fast, that's fine
+      // Just verify we're not in loading state anymore
+      const isLoading = await this.discoverLoading.isVisible().catch(() => false);
+      if (isLoading) {
+        await this.discoverLoading.waitFor({ state: "hidden", timeout: 10000 });
+      }
+    }
+  }
+
+  /**
+   * Wait for discovery results to appear
+   * Verifies that place cards are displayed
+   */
+  async waitForDiscoveryResults(): Promise<void> {
+    await this.waitForDiscoverLoadingToComplete();
+    // Wait for either place card grid or first place card to appear
+    await this.placeCard.first().waitFor({ state: "visible", timeout: 5000 });
+  }
+
+  /**
+   * Get the number of discovery results displayed
+   */
+  async getDiscoverResultCount(): Promise<number> {
+    // Try to get count from result-count element first
+    try {
+      const countText = await this.resultCount.textContent();
+      if (countText) {
+        // Extract number from text like "12 results" or "Showing 5 of 20"
+        const match = countText.match(/(\d+)/);
+        if (match) {
+          return parseInt(match[1], 10);
+        }
+      }
+    } catch {
+      // Fall back to counting place cards
+    }
+
+    // Fall back to counting place card elements
+    return await this.placeCard.count();
   }
 }

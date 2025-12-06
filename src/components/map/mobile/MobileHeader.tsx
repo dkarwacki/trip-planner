@@ -108,6 +108,7 @@ export function MobileHeader({
             "hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           )}
           aria-label="Search"
+          data-testid="mobile-search-button"
         >
           <Search className="h-5 w-5" />
           <span className="text-sm font-medium">Search</span>

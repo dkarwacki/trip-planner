@@ -7,7 +7,7 @@ import { DiscoverPanel } from "../discover";
 
 export function DiscoverMode() {
   return (
-    <div data-testid="discover-mode">
+    <div className="h-full" data-testid="discover-mode">
       <DiscoverPanel />
     </div>
   );

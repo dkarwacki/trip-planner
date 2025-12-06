@@ -9,6 +9,7 @@ alwaysApply: false
 ## Project Structure
 
 - **Test files** go in `e2e/` directory with `.spec.ts` extension
+- **Organize tests by feature area** - group related test cases in same file (e.g., `map-autocomplete.spec.ts`, `map-discover.spec.ts`)
 - **Page Objects** go in `e2e/pages/` directory with `{Name}Page.ts` naming
 - **Auth setup** lives in `e2e/auth.setup.ts` - runs before all tests
 - **Export all Page Objects** from `e2e/pages/index.ts`
@@ -20,21 +21,8 @@ alwaysApply: false
 - **Use `getByTestId()` for element selection** - NEVER use CSS selectors or XPath
 - **Name methods descriptively**: `typeInDesktopSearch()`, `waitForSuggestions()`, `gotoMap()`
 - **Return Locator for element getters**, use `async` for actions
-
-```typescript
-export class ExamplePage extends BasePage {
-  readonly submitButton: Locator;
-  
-  constructor(page: Page) {
-    super(page);
-    this.submitButton = page.getByTestId("submit-button");
-  }
-  
-  async submit(): Promise<void> {
-    await this.submitButton.click();
-  }
-}
-```
+- **Group related locators** with comment sections (e.g., `// Authentication Locators`, `// Form Locators`)
+- **Organize methods by type**: action methods, wait methods, getter methods
 
 ## Test ID Conventions
 
@@ -51,23 +39,9 @@ export class ExamplePage extends BasePage {
 
 - **Use `test.describe()` for grouping** related tests by feature or viewport
 - **Use `test.beforeEach()` for setup** - instantiate Page Objects here
-- **Reference test case IDs** in describe block names when applicable
+- **Reference test case IDs** in describe block names: `"Feature Name - TC-XXX-001"`
 - **Add JSDoc comments** explaining what the test validates
-
-```typescript
-test.describe("Feature Name - TC-XXX-001", () => {
-  let page: PageObject;
-  
-  test.beforeEach(async ({ page }) => {
-    pageObject = new PageObject(page);
-    await pageObject.goto();
-  });
-  
-  test("should do something specific", async () => {
-    // Arrange, Act, Assert pattern
-  });
-});
-```
+- **Follow Arrange, Act, Assert pattern** in test bodies
 
 ## Authentication
 
@@ -87,19 +61,9 @@ test.describe("Feature Name - TC-XXX-001", () => {
 
 This project uses Astro with React islands. HTML may render before React hydrates, causing timing issues.
 
-- **ALWAYS wait for inputs before filling** - handles React hydration timing:
-  ```typescript
-  await this.emailInput.waitFor({ state: "visible" });
-  await this.emailInput.clear();
-  await this.emailInput.fill(value);
-  ```
+- **ALWAYS wait for inputs before filling** - use `waitFor({ state: "visible" })` before `fill()`
 - **Clear inputs before filling** - handles edge cases where values persist
-- **Use `networkidle` for form submissions** that trigger navigation:
-  ```typescript
-  await page.waitForURL(url => !url.pathname.includes("/login"), {
-    waitUntil: "networkidle",
-  });
-  ```
+- **Use `networkidle` for form submissions** that trigger navigation
 - **Wait for containers, then inputs** - form visible ≠ inputs ready
 
 ## Assertions
@@ -108,6 +72,31 @@ This project uses Astro with React islands. HTML may render before React hydrate
 - **Wait for elements before asserting**: `await expect(locator).toBeVisible()`
 - **Use `.waitFor()` for dynamic content**: `await dropdown.waitFor({ state: "visible" })`
 - **Avoid arbitrary timeouts** - use proper waits instead of `page.waitForTimeout()`
+
+## Race Condition Handling
+
+Fast async operations (loading states, API calls) may complete before tests can observe them.
+
+- **Check if loading is visible** with `.isVisible().catch(() => false)` before waiting
+- **Always verify final state** - use `expect(...).not.toBeVisible()` after operation completes
+- **Wait methods should handle race conditions** - try-catch with short timeout to catch loading, then verify it's gone if still visible
+
+## Network Request Verification
+
+- **Set up request listeners BEFORE triggering actions** - use `page.waitForRequest()` with URL matcher and timeout
+- **Verify parallel requests** - use `Promise.all()` with multiple `waitForRequest()` calls
+- **Validate request payloads** - use `request.postDataJSON()` to access body, then assert properties
+
+## State Verification Patterns
+
+- **Multiple possible valid states** - check each state with `.isVisible().catch(() => false)`, then assert at least one is true
+- **Conditional assertions based on state** - use `if/else` to verify different expectations per state
+- **Always verify loading is complete** - use `expect(loading).not.toBeVisible()` after state checks
+
+## Mobile-Specific Patterns
+
+- **Use `{ force: true }` for bottom navigation clicks** - Astro dev toolbar intercepts pointer events
+- **Switch to correct tab before verifying UI** - tab-specific elements only visible in their tab
 
 ## Running Tests
 
