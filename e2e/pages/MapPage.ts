@@ -21,9 +21,18 @@ export class MapPage extends BasePage {
   readonly mobileSearchCloseButton: Locator;
   readonly mobileSearchClearButton: Locator;
 
+  // Mobile Tab Navigation Locators
+  readonly mobileTabMap: Locator;
+  readonly mobileTabDiscover: Locator;
+  readonly mobileTabPlan: Locator;
+
   // Shared Search Results Locators
   readonly searchResults: Locator;
   readonly searchResultsLoading: Locator;
+
+  // Discover Header Locators
+  readonly discoverHeader: Locator;
+  readonly selectedPlaceName: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -43,9 +52,18 @@ export class MapPage extends BasePage {
     this.mobileSearchCloseButton = page.getByTestId("mobile-search-close-button");
     this.mobileSearchClearButton = page.getByTestId("mobile-search-clear-button");
 
+    // Mobile tab navigation locators
+    this.mobileTabMap = page.getByTestId("mobile-tab-map");
+    this.mobileTabDiscover = page.getByTestId("mobile-tab-discover");
+    this.mobileTabPlan = page.getByTestId("mobile-tab-plan");
+
     // Shared locators
     this.searchResults = page.getByTestId("search-results");
     this.searchResultsLoading = page.getByTestId("search-results-loading");
+
+    // Discover header locators
+    this.discoverHeader = page.getByTestId("discover-header");
+    this.selectedPlaceName = page.getByTestId("selected-place-name");
   }
 
   /**
@@ -174,6 +192,34 @@ export class MapPage extends BasePage {
   }
 
   // ========================================
+  // Mobile Tab Navigation Methods
+  // ========================================
+
+  /**
+   * Switch to discover tab on mobile
+   * Uses force: true to click through Astro dev toolbar overlay
+   */
+  async switchToDiscoverTab(): Promise<void> {
+    await this.mobileTabDiscover.click({ force: true });
+  }
+
+  /**
+   * Switch to map tab on mobile
+   * Uses force: true to click through Astro dev toolbar overlay
+   */
+  async switchToMapTab(): Promise<void> {
+    await this.mobileTabMap.click({ force: true });
+  }
+
+  /**
+   * Switch to plan tab on mobile
+   * Uses force: true to click through Astro dev toolbar overlay
+   */
+  async switchToPlanTab(): Promise<void> {
+    await this.mobileTabPlan.click({ force: true });
+  }
+
+  // ========================================
   // Unified Autocomplete Methods (auto-detect viewport)
   // ========================================
 
@@ -286,5 +332,54 @@ export class MapPage extends BasePage {
     } catch {
       // Loading indicator might not appear for cached results, that's fine
     }
+  }
+
+  // ========================================
+  // Place Selection Verification Methods
+  // ========================================
+
+  /**
+   * Wait for place selection to complete (search UI closes)
+   * Auto-detects desktop or mobile layout
+   */
+  async waitForPlaceSelection(): Promise<void> {
+    const isDesktop = await this.isDesktopLayout();
+
+    if (isDesktop) {
+      // Wait for dropdown to close
+      await this.desktopSearchDropdown.waitFor({ state: "hidden", timeout: 5000 });
+    } else {
+      // Wait for mobile overlay to close
+      await this.mobileSearchOverlay.waitFor({ state: "hidden", timeout: 5000 });
+    }
+  }
+
+  /**
+   * Get the selected place name from discover header
+   * Returns null if discover header is not visible
+   */
+  async getSelectedPlaceName(): Promise<string | null> {
+    try {
+      const isVisible = await this.discoverHeader.isVisible();
+      if (!isVisible) {
+        return null;
+      }
+
+      const text = await this.selectedPlaceName.textContent();
+      // Extract place name from "Selected: {placeName}" format
+      if (text && text.startsWith("Selected: ")) {
+        return text.replace("Selected: ", "").trim();
+      }
+      return text ? text.trim() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Wait for discover header to appear with place name
+   */
+  async waitForDiscoverHeader(): Promise<void> {
+    await this.discoverHeader.waitFor({ state: "visible", timeout: 5000 });
   }
 }

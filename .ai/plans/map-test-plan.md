@@ -509,7 +509,7 @@
   - Intermediate keystrokes don't trigger requests
   - Debounce prevents API spam
 
-**TC-AUTO-002: Autocomplete Suggestions Display**
+**TC-AUTO-002: Autocomplete Suggestions Display** [Implemented alread]
 
 - Priority: High
 - Preconditions: Valid search query entered
