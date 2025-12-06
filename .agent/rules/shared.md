@@ -24,6 +24,8 @@ trigger: always_on
 - Tailwind 4
 - Shadcn/ui
 - Effect
+- Vitest (unit tests)
+- Playwright (e2e tests)
 
 ## Project Structure
 

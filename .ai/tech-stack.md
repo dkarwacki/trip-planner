@@ -53,8 +53,11 @@
 - **Prettier** - Code formatting with Astro support
 - **Husky + lint-staged** - Pre-commit hooks
 
+## Testing
+
+- **Vitest** - Unit testing framework
+- **Playwright** - End-to-end testing
+
 ## Planned Integrations
 
 - **Supabase** - User authentication and database persistence (configured, not yet integrated)
-- **Vitest** - Unit testing framework
-- **Playwright** - End-to-end testing

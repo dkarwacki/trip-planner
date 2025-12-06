@@ -22,6 +22,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Tailwind 4
 - Shadcn/ui
 - Effect
+- Vitest (unit tests)
+- Playwright (e2e tests)
 
 ## Project Structure
 
