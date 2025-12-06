@@ -6,5 +6,9 @@
 import { DiscoverPanel } from "../discover";
 
 export function DiscoverMode() {
-  return <DiscoverPanel />;
+  return (
+    <div data-testid="discover-mode">
+      <DiscoverPanel />
+    </div>
+  );
 }

@@ -128,7 +128,7 @@ export function PlaceList({ places, onNavigateToMap }: PlaceListProps) {
   );
 
   return (
-    <div ref={containerRef} className="divide-y divide-gray-200">
+    <div ref={containerRef} className="divide-y divide-gray-200" data-testid="place-list">
       {places.map((place) => {
         const isAdded = isInPlan(place.id);
 

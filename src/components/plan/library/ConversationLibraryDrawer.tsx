@@ -22,10 +22,10 @@ export function ConversationLibraryDrawer({
   isLoading = false,
 }: ConversationLibraryProps) {
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" data-testid="conversation-library-drawer">
       {/* Header */}
-      <div className="border-b p-4">
-        <h2 className="mb-4 text-lg font-semibold">Chats</h2>
+      <div className="border-b p-4" data-testid="library-header">
+        <h2 className="mb-4 text-lg font-semibold" data-testid="library-title">Chats</h2>
         <NewConversationButton onClick={onNewConversation} disabled={isLoading} />
       </div>
 

@@ -83,6 +83,7 @@ export function PersonaChip({
         borderColor: isSelected ? "var(--color-primary)" : "var(--color-input)",
       }}
       transition={{ duration: 0.2 }}
+      data-testid={`persona-chip-${persona}`}
     >
       <span className="flex items-center gap-2">
         {IconComponent && <IconComponent size={iconSize} />}

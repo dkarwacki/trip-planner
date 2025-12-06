@@ -26,7 +26,7 @@ export default function PlanPanel() {
   // Empty state when no places in plan
   if (!hasPlaces) {
     return (
-      <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+      <div className="flex h-full flex-col items-center justify-center px-6 text-center" data-testid="plan-panel-empty">
         <div className="mb-4 rounded-full bg-muted p-6">
           <Backpack className="h-12 w-12 text-muted-foreground" />
         </div>
@@ -41,6 +41,7 @@ export default function PlanPanel() {
         <button
           onClick={() => setActiveMode("discover")}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          data-testid="go-to-discover-button"
         >
           Go to Discover
         </button>
@@ -54,7 +55,7 @@ export default function PlanPanel() {
   };
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-white" data-testid="plan-panel">
       {/* Header with stats and actions */}
       <PlanHeader places={places} onShare={handleShare} />
 

@@ -59,12 +59,12 @@ export function DesktopLayout({ mapId, tripId, user }: DesktopLayoutProps) {
   }, [activeMode]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50" data-testid="map-desktop-layout">
       {/* Header */}
       <DesktopHeader saveStatus={saveStatus} onRetrySync={handleRetrySync} tripId={tripId} user={user} />
 
       {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden" data-testid="map-main-content">
         {/* Dynamic Sidebar */}
         <DynamicSidebar
           activeMode={activeMode}
@@ -76,7 +76,7 @@ export function DesktopLayout({ mapId, tripId, user }: DesktopLayoutProps) {
         </DynamicSidebar>
 
         {/* Map Canvas */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative" data-testid="map-canvas-container">
           <MapCanvas mapId={mapId} onMapLoad={setMapInstance} />
           <FloatingPlaceSearch mapInstance={mapInstance} />
         </div>

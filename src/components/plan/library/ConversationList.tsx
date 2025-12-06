@@ -32,7 +32,7 @@ export function ConversationList({
 }: ConversationListProps) {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
+      <div className="flex items-center justify-center py-8" data-testid="conversation-list-loading">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -40,14 +40,14 @@ export function ConversationList({
 
   if (conversations.length === 0) {
     return (
-      <div className="py-8 text-center">
+      <div className="py-8 text-center" data-testid="conversation-list-empty">
         <p className="text-sm text-muted-foreground">No conversations yet. Start a new one to begin planning!</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2" role="list" aria-label="Conversation history">
+    <div className="space-y-2" role="list" aria-label="Conversation history" data-testid="conversation-list">
       {conversations.map((conversation) => (
         <ConversationListItem
           key={conversation.id}

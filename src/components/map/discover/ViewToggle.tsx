@@ -23,7 +23,7 @@ export function ViewToggle({ activeMode, onChange, variant = "default" }: ViewTo
   const isCompact = variant === "compact";
 
   return (
-    <div className={cn("flex items-center gap-1 bg-gray-100 rounded-lg", isCompact ? "p-0.5" : "p-1")}>
+    <div className={cn("flex items-center gap-1 bg-gray-100 rounded-lg", isCompact ? "p-0.5" : "p-1")} data-testid="view-toggle">
       {modes.map((mode) => (
         <button
           key={mode.id}
@@ -37,6 +37,7 @@ export function ViewToggle({ activeMode, onChange, variant = "default" }: ViewTo
           )}
           aria-label={`${mode.label} view`}
           aria-pressed={activeMode === mode.id}
+          data-testid={`view-toggle-${mode.id}`}
         >
           {mode.icon}
           {!isCompact && <span className="hidden sm:inline">{mode.label}</span>}

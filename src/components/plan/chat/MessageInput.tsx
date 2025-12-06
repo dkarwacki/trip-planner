@@ -53,7 +53,7 @@ export function MessageInput({ onSend, isLoading, disabled = false }: MessageInp
   const canSend = message.trim().length > 0 && !isLoading && !disabled;
 
   return (
-    <div className="flex items-end gap-2">
+    <div className="flex items-end gap-2" data-testid="message-input">
       <textarea
         ref={textareaRef}
         value={message}
@@ -64,6 +64,7 @@ export function MessageInput({ onSend, isLoading, disabled = false }: MessageInp
         rows={1}
         className="flex-1 max-h-[300px] h-10 resize-none overflow-hidden rounded-md border border-input bg-background px-4 py-2 text-sm leading-6 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="Message input"
+        data-testid="message-textarea"
       />
 
       <Button
@@ -72,6 +73,7 @@ export function MessageInput({ onSend, isLoading, disabled = false }: MessageInp
         size="icon"
         className="h-10 w-10 flex-shrink-0"
         aria-label="Send message"
+        data-testid="send-button"
       >
         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
       </Button>

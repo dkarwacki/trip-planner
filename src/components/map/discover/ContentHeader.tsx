@@ -25,9 +25,9 @@ export function ContentHeader({
   className,
 }: ContentHeaderProps) {
   return (
-    <div className={cn("flex items-center justify-between", className)}>
+    <div className={cn("flex items-center justify-between", className)} data-testid="content-header">
       {/* Result count */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-gray-600" data-testid="result-count">
         Showing {resultCount} of {totalCount} {filters.category === "all" ? "places" : filters.category}
       </div>
 

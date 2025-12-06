@@ -75,6 +75,7 @@ export function FloatingPlaceSearch({ mapInstance }: FloatingPlaceSearchProps) {
     <div
       className="pointer-events-none absolute z-[120]"
       style={{ top: "0.5rem", left: "12rem", width: "min(23rem, calc(100% - 13rem))" }}
+      data-testid="floating-place-search"
     >
       <div className="pointer-events-auto drop-shadow-lg">
         <PlaceSearchBar onPlaceSelect={handlePlaceSelect} placeholder="Search for a place..." size="md" />

@@ -32,18 +32,18 @@ export function ChatEmptyState({ selectedPersonas = [], onPersonaChange }: ChatE
   };
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center p-8 text-center overflow-y-auto">
-      <div className="mb-6 rounded-full bg-primary/10 p-6">
+    <div className="flex flex-1 flex-col items-center justify-center p-8 text-center overflow-y-auto" data-testid="chat-empty-state">
+      <div className="mb-6 rounded-full bg-primary/10 p-6" data-testid="empty-state-icon">
         <MessageCircle className="h-12 w-12 text-primary" />
       </div>
 
-      <h2 className="mb-2 text-2xl font-semibold">Start Planning Your Trip</h2>
-      <p className="mb-8 max-w-md text-muted-foreground">
+      <h2 className="mb-2 text-2xl font-semibold" data-testid="empty-state-title">Start Planning Your Trip</h2>
+      <p className="mb-8 max-w-md text-muted-foreground" data-testid="empty-state-description">
         Select your travel style and tell me about your dream destination.
       </p>
 
       <div className="w-full max-w-3xl mb-8">
-        <div className="flex flex-wrap justify-center gap-3">
+        <div className="flex flex-wrap justify-center gap-3" data-testid="persona-selector-grid">
           {allPersonas.map((persona) => {
             const isSelected = selectedPersonas.includes(persona.type);
             return (
@@ -69,7 +69,7 @@ export function ChatEmptyState({ selectedPersonas = [], onPersonaChange }: ChatE
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-muted-foreground" data-testid="example-prompt">
         Type your request below. For example: <br className="hidden sm:block" />
         &quot;I&apos;m planning a 7-day trip to Italy. Can you suggest some towns to visit in Tuscany?&quot;
       </p>

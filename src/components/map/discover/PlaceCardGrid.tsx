@@ -55,7 +55,7 @@ export function PlaceCardGrid({ places, onNavigateToMap }: PlaceCardGridProps) {
   }, [highlightedPlaceId, setHighlightedPlace]);
 
   return (
-    <div ref={containerRef} className="p-4 space-y-4">
+    <div ref={containerRef} className="p-4 space-y-4" data-testid="place-card-grid">
       {places.map((place) => {
         return (
           <div

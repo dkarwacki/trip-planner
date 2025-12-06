@@ -121,7 +121,7 @@ export function PhotoGrid({ places, onNavigateToMap }: PhotoGridProps) {
 
   if (placesWithPhotos.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-center p-8">
+      <div className="flex items-center justify-center h-64 text-center p-8" data-testid="photo-grid-empty">
         <div>
           <div className="text-4xl mb-2">📷</div>
           <p className="text-sm text-gray-600">No photos available for these places</p>
@@ -131,9 +131,9 @@ export function PhotoGrid({ places, onNavigateToMap }: PhotoGridProps) {
   }
 
   return (
-    <div ref={containerRef} className="p-4">
+    <div ref={containerRef} className="p-4" data-testid="photo-grid">
       {/* Simple 2-column grid (masonry would require a library like react-masonry-css) */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3" data-testid="photo-grid-container">
         {placesWithPhotos.map((place) => {
           const isAdded = isInPlan(place.id);
 

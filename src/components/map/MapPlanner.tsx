@@ -46,11 +46,13 @@ function MapPlannerInner({ apiKey, mapId, tripId, user }: MapPlannerProps) {
   // Wrap both layouts in a single APIProvider to avoid duplicate API loading
   return (
     <APIProvider apiKey={apiKey} libraries={["geometry", "places", "marker"]}>
-      {shouldShowDesktop ? (
-        <DesktopLayout mapId={mapId} tripId={tripId} user={user} />
-      ) : (
-        <MobileLayout mapId={mapId} tripId={tripId} user={user} />
-      )}
+      <div data-testid="map-planner">
+        {shouldShowDesktop ? (
+          <DesktopLayout mapId={mapId} tripId={tripId} user={user} />
+        ) : (
+          <MobileLayout mapId={mapId} tripId={tripId} user={user} />
+        )}
+      </div>
     </APIProvider>
   );
 }

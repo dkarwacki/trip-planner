@@ -26,9 +26,9 @@ export function ChatInterface({
   addedPlaceIds,
 }: ChatInterfaceProps) {
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden" data-testid="chat-interface">
       {/* Messages or empty state - scrollable area */}
-      <div className="flex flex-1 flex-col overflow-y-auto">
+      <div className="flex flex-1 flex-col overflow-y-auto" data-testid="chat-messages-container">
         {messages.length === 0 && !isLoading ? (
           <ChatEmptyState selectedPersonas={selectedPersonas} onPersonaChange={onPersonaChange} />
         ) : (
@@ -42,17 +42,17 @@ export function ChatInterface({
 
         {/* Error message with retry */}
         {error && (
-          <div className="px-4 py-2">
+          <div className="px-4 py-2" data-testid="chat-error-container">
             <ErrorDisplay message={error} onRetry={onRetry} size="sm" />
           </div>
         )}
       </div>
 
       {/* Message input - fixed at bottom */}
-      <div className="flex-shrink-0 border-t p-4 bg-background">
+      <div className="flex-shrink-0 border-t p-4 bg-background" data-testid="chat-input-container">
         <MessageInput onSend={onSendMessage} isLoading={isLoading} disabled={selectedPersonas.length === 0} />
         {selectedPersonas.length === 0 && (
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-xs text-muted-foreground" data-testid="persona-warning">
             Please select at least one travel style to start chatting
           </p>
         )}

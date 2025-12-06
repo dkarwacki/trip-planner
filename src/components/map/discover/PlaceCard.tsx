@@ -124,6 +124,7 @@ export const PlaceCard = React.memo(
           className={`transition-all duration-200 hover:scale-[1.01] ${
             isHighlighted ? "ring-2 ring-blue-200 rounded-xl" : ""
           }`}
+          data-testid="place-card"
         >
           <BasePlaceCard
             place={place}
@@ -146,6 +147,7 @@ export const PlaceCard = React.memo(
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                data-testid="view-on-google-maps"
               >
                 <MapPin className="w-4 h-4" />
                 View on Google Maps

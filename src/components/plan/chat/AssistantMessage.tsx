@@ -72,20 +72,20 @@ export function AssistantMessage({
   };
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3" data-testid="assistant-message">
       {/* Avatar */}
       <div className="flex-shrink-0">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10" data-testid="assistant-avatar">
           <Bot className="h-5 w-5 text-primary" />
         </div>
       </div>
 
       {/* Message content */}
-      <div className="flex-1 space-y-3">
+      <div className="flex-1 space-y-3" data-testid="assistant-message-content">
         {/* Main message */}
         <div className="max-w-[90%] space-y-1">
-          <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-2.5">
-            <div>
+          <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-2.5" data-testid="assistant-message-bubble">
+            <div data-testid="assistant-message-text">
               {message.suggestedPlaces && message.suggestedPlaces.length > 0 ? (
                 <NarrativeDisplay
                   content={message.content}
@@ -99,15 +99,15 @@ export function AssistantMessage({
 
             {/* Thinking process (inline, collapsed by default) */}
             {message.thinking && message.thinking.length > 0 && (
-              <Collapsible open={isThinkingExpanded} onOpenChange={setIsThinkingExpanded} className="mt-3">
+              <Collapsible open={isThinkingExpanded} onOpenChange={setIsThinkingExpanded} className="mt-3" data-testid="reasoning-section">
                 <div className="flex justify-end">
-                  <CollapsibleTrigger className="inline-flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+                  <CollapsibleTrigger className="inline-flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors" data-testid="reasoning-toggle">
                     <span>reasoning</span>
                     <ChevronDown className={`h-3 w-3 transition-transform ${isThinkingExpanded ? "rotate-180" : ""}`} />
                   </CollapsibleTrigger>
                 </div>
                 <CollapsibleContent>
-                  <div className="mt-2 space-y-1 text-xs text-muted-foreground/80">
+                  <div className="mt-2 space-y-1 text-xs text-muted-foreground/80" data-testid="reasoning-content">
                     {message.thinking.map((thought, idx) => (
                       <p key={idx} className="leading-relaxed">
                         • {thought}
@@ -118,12 +118,12 @@ export function AssistantMessage({
               </Collapsible>
             )}
           </div>
-          <p className="px-1 text-xs text-muted-foreground">{timestamp}</p>
+          <p className="px-1 text-xs text-muted-foreground" data-testid="assistant-message-timestamp">{timestamp}</p>
         </div>
 
         {/* Place suggestions */}
         {message.suggestedPlaces && message.suggestedPlaces.length > 0 && (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2" data-testid="place-suggestions-grid">
             {message.suggestedPlaces.map((place, idx) => {
               const placeId = place.id || place.name;
               return (

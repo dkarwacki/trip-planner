@@ -35,3 +35,42 @@ alwaysApply: false
 - Use aria-describedby to associate descriptive text with form inputs or complex elements
 - Implement aria-current for indicating the current item in a set, navigation, or process
 - Avoid redundant ARIA that duplicates the semantics of native HTML elements
+
+### Guidelines for Testing Selectors
+
+#### Test ID Best Practices
+
+- **ALWAYS add `data-testid` inside components**, not on external usage for maximum compatibility
+- **Use kebab-case naming** for all test IDs (e.g., `data-testid="feature-grid"`)
+- **Add test IDs to all interactive elements** (buttons, inputs, links, tabs, toggles)
+- **Add test IDs to key containers** (layouts, panels, modals, drawers)
+- **Add test IDs to state-dependent UI** (loading states, empty states, error displays)
+
+#### Test ID Naming Conventions
+
+- **Container elements**: `data-testid="component-name"` (e.g., `chat-interface`, `discover-panel`)
+- **Action buttons**: `data-testid="action-description-button"` (e.g., `send-button`, `add-to-plan-button`)
+- **State variants**: `data-testid="component-name-state"` (e.g., `discover-empty-state`, `conversation-list-loading`)
+- **Navigation tabs**: `data-testid="tab-name"` or `data-testid="mode-tab-name"` (e.g., `tab-chat`, `mode-tab-discover`)
+- **List items**: Parent has test ID, items identifiable through parent context
+- **Modal/Dialog**: `data-testid="modal-name-dialog"` (e.g., `save-conversation-dialog`, `delete-confirmation-dialog`)
+
+#### Examples
+
+Good:
+```tsx
+// Inside component definition
+export function ChatInterface() {
+  return (
+    <div data-testid="chat-interface">
+      <button data-testid="send-button">Send</button>
+    </div>
+  );
+}
+```
+
+Bad:
+```tsx
+// In parent component (reduces reusability)
+<ChatInterface data-testid="chat-interface" />
+```

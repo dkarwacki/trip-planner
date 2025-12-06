@@ -74,7 +74,7 @@ export function MobileLayout({ mapId, user }: MobileLayoutProps) {
   };
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-gray-50">
+    <div className="relative h-screen w-screen overflow-hidden bg-gray-50" data-testid="map-mobile-layout">
       {/* Header */}
       <MobileHeader
         onSearchClick={() => setShowSearch(true)}

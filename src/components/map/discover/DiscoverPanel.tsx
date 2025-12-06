@@ -78,7 +78,7 @@ export function DiscoverPanel() {
   const renderContent = React.useCallback(() => {
     if (!selectedPlaceId) {
       return (
-        <div className="flex items-center justify-center h-full p-8 text-center">
+        <div className="flex items-center justify-center h-full p-8 text-center" data-testid="discover-empty-state">
           <div>
             <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a place to explore</h3>
@@ -92,7 +92,7 @@ export function DiscoverPanel() {
 
     if (isLoadingDiscovery) {
       return (
-        <div className="flex items-center justify-center h-full">
+        <div className="flex items-center justify-center h-full" data-testid="discover-loading">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
             <p className="text-sm text-gray-600">Loading places...</p>
@@ -103,7 +103,7 @@ export function DiscoverPanel() {
 
     if (filteredResults.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <div className="flex flex-col items-center justify-center h-full p-8 text-center" data-testid="discover-no-results">
           <div className="text-4xl mb-4">🔍</div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No places found</h3>
           <p className="text-sm text-gray-600 mb-4">Try adjusting your filters or search a different area</p>
@@ -111,6 +111,7 @@ export function DiscoverPanel() {
             <button
               onClick={handleClearFilters}
               className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+              data-testid="clear-filters-button"
             >
               Clear Filters
             </button>
@@ -165,7 +166,7 @@ export function DiscoverPanel() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white" data-testid="discover-panel">
       {/* Header with place context and stats */}
       <DiscoverHeader
         selectedPlaceId={selectedPlaceId}
@@ -174,12 +175,12 @@ export function DiscoverPanel() {
       />
 
       {/* Compact toolbar with filters only */}
-      <div className="px-4 py-2 border-b border-gray-200">
+      <div className="px-4 py-2 border-b border-gray-200" data-testid="discover-toolbar-container">
         <DiscoverToolbar filters={filters} onFilterChange={handleFilterChange} onClearFilters={handleClearFilters} />
       </div>
 
       {/* Content header with result count and view toggle */}
-      <div className="px-4 py-2.5 border-b border-gray-200 bg-gray-50">
+      <div className="px-4 py-2.5 border-b border-gray-200 bg-gray-50" data-testid="content-header-container">
         <ContentHeader
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
@@ -191,7 +192,7 @@ export function DiscoverPanel() {
 
       {/* Scrollable content area */}
       <ScrollPreservationContext.Provider value={{ saveScrollPosition, restoreScrollPosition }}>
-        <div ref={scrollContainerCallback} className="flex-1 overflow-y-auto">
+        <div ref={scrollContainerCallback} className="flex-1 overflow-y-auto" data-testid="discover-content">
           {renderContent()}
         </div>
       </ScrollPreservationContext.Provider>

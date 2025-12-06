@@ -500,10 +500,10 @@ export function MobileLayout({ conversationId, user }: LayoutProps) {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-screen flex-col bg-background" data-testid="plan-page-mobile">
       {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b px-4">
-        <a href="/" className="text-lg font-semibold">
+      <div className="flex h-14 items-center justify-between border-b px-4" data-testid="mobile-header">
+        <a href="/" className="text-lg font-semibold" data-testid="logo-link">
           Trip Planner
         </a>
         <div className="flex items-center gap-3">
@@ -513,11 +513,11 @@ export function MobileLayout({ conversationId, user }: LayoutProps) {
       </div>
 
       {/* Main content area - changes based on active tab */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden" data-testid="mobile-main-content">
         {activeTab === "chat" && (
-          <div className="flex h-full flex-col overflow-hidden">
+          <div className="flex h-full flex-col overflow-hidden" data-testid="chat-tab-content">
             {/* Compact Persona Selector - fixed at top */}
-            <div className="flex-shrink-0 border-b px-4 py-2 bg-background">
+            <div className="flex-shrink-0 border-b px-4 py-2 bg-background" data-testid="persona-selector-container">
               <PersonaSelectorMobile selected={selectedPersonas} onChange={setPersonas} isLoading={personasLoading} />
             </div>
 
@@ -538,7 +538,7 @@ export function MobileLayout({ conversationId, user }: LayoutProps) {
         )}
 
         {activeTab === "plan" && (
-          <div className="h-full pb-safe">
+          <div className="h-full pb-safe" data-testid="plan-tab-content">
             <ItineraryDrawer
               places={places}
               onReorder={handleReorderPlaces}
@@ -549,7 +549,7 @@ export function MobileLayout({ conversationId, user }: LayoutProps) {
         )}
 
         {activeTab === "sessions" && (
-          <div className="h-full pb-safe">
+          <div className="h-full pb-safe" data-testid="sessions-tab-content">
             <ConversationLibraryDrawer
               conversations={conversations}
               activeConversationId={activeConversationId}
@@ -564,7 +564,7 @@ export function MobileLayout({ conversationId, user }: LayoutProps) {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="border-t bg-background pb-safe">
+      <div className="border-t bg-background pb-safe" data-testid="mobile-bottom-nav">
         <div className="flex justify-around">
           <button
             onClick={() => setActiveTab("chat")}
@@ -572,6 +572,7 @@ export function MobileLayout({ conversationId, user }: LayoutProps) {
               activeTab === "chat" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
             aria-label="Chat tab"
+            data-testid="tab-chat"
           >
             <MessageCircle className="h-6 w-6" />
             <span className="text-xs">Chat</span>
@@ -583,6 +584,7 @@ export function MobileLayout({ conversationId, user }: LayoutProps) {
               activeTab === "plan" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
             aria-label="Plan tab"
+            data-testid="tab-plan"
           >
             <MapPin className="h-6 w-6" />
             <span className="text-xs">Plan</span>
@@ -594,6 +596,7 @@ export function MobileLayout({ conversationId, user }: LayoutProps) {
               activeTab === "sessions" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
             aria-label="Chats tab"
+            data-testid="tab-sessions"
           >
             <MessagesSquare className="h-6 w-6" />
             <span className="text-xs">Chats</span>

@@ -29,7 +29,7 @@ export function ConversationLibraryPanel({
   if (isCollapsed) {
     return (
       <TooltipProvider>
-        <div className="flex h-full flex-col items-center py-4 bg-white">
+        <div className="flex h-full flex-col items-center py-4 bg-white" data-testid="conversation-library-panel-collapsed">
           <div className="flex-1 flex flex-col items-center gap-4">
             <Tooltip>
               <TooltipTrigger>
@@ -43,7 +43,7 @@ export function ConversationLibraryPanel({
             </Tooltip>
 
             {conversations.length > 0 && (
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground" data-testid="conversation-count-collapsed">
                 {conversations.length}
               </span>
             )}
@@ -60,6 +60,7 @@ export function ConversationLibraryPanel({
                     size="icon"
                     className="h-10 w-10"
                     aria-label="Expand sidebar"
+                    data-testid="expand-library-button"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </Button>
@@ -76,12 +77,12 @@ export function ConversationLibraryPanel({
   }
 
   return (
-    <div className="flex h-full flex-col bg-white">
-      <div className="flex-shrink-0 bg-white border-b sticky top-0 z-[10]">
+    <div className="flex h-full flex-col bg-white" data-testid="conversation-library-panel">
+      <div className="flex-shrink-0 bg-white border-b sticky top-0 z-[10]" data-testid="library-panel-header">
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-2">
             <MessagesSquare className="h-5 w-5" />
-            <h2 className="font-semibold">Chats</h2>
+            <h2 className="font-semibold" data-testid="library-panel-title">Chats</h2>
           </div>
           {onToggleCollapse && (
             <Button
@@ -90,6 +91,7 @@ export function ConversationLibraryPanel({
               size="icon"
               className="h-8 w-8"
               aria-label="Collapse sidebar"
+              data-testid="collapse-library-button"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>

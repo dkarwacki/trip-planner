@@ -28,5 +28,9 @@ export function AIMode() {
     }
   }, [selectedPlaceId, context, clearConversation, setAIContext]);
 
-  return <AIChatPanel />;
+  return (
+    <div data-testid="ai-mode">
+      <AIChatPanel />
+    </div>
+  );
 }

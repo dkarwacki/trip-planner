@@ -11,12 +11,12 @@ import { MapPinned } from "lucide-react";
  */
 export function ItineraryEmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-      <div className="mb-4 rounded-full bg-muted p-4">
+    <div className="flex flex-col items-center justify-center py-12 px-4 text-center" data-testid="itinerary-empty-state">
+      <div className="mb-4 rounded-full bg-muted p-4" data-testid="empty-state-icon">
         <MapPinned className="h-8 w-8 text-muted-foreground" />
       </div>
-      <h3 className="mb-2 font-semibold">No places yet</h3>
-      <p className="text-sm text-muted-foreground">Add places from chat suggestions to build your itinerary</p>
+      <h3 className="mb-2 font-semibold" data-testid="empty-state-title">No places yet</h3>
+      <p className="text-sm text-muted-foreground" data-testid="empty-state-description">Add places from chat suggestions to build your itinerary</p>
     </div>
   );
 }

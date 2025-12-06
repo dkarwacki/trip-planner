@@ -65,10 +65,11 @@ export function ConversationListItem({
       className={`group w-full rounded-lg border p-3 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer ${
         isActive ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 hover:bg-accent/50"
       }`}
+      data-testid="conversation-list-item"
     >
       {/* Header: Title and actions */}
       <div className="mb-2 flex items-start justify-between gap-2">
-        <h3 className="flex-1 font-medium leading-tight line-clamp-2">{conversation.title}</h3>
+        <h3 className="flex-1 font-medium leading-tight line-clamp-2" data-testid="conversation-title">{conversation.title}</h3>
 
         <div className="flex gap-1">
           {conversation.tripId && onOpenMap && (
@@ -81,6 +82,7 @@ export function ConversationListItem({
                 onOpenMap();
               }}
               aria-label="Open trip map"
+              data-testid="open-trip-map-button"
             >
               <ExternalLink size={14} />
             </Button>
@@ -94,6 +96,7 @@ export function ConversationListItem({
               onDelete();
             }}
             aria-label="Delete conversation"
+            data-testid="delete-conversation-button"
           >
             <Trash2 size={14} />
           </Button>
@@ -101,29 +104,29 @@ export function ConversationListItem({
       </div>
 
       {/* Metadata */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground" data-testid="conversation-metadata">
         {/* Message count */}
         <div className="flex items-center gap-1">
           <MessageCircle size={12} />
-          <span>{conversation.messageCount}</span>
+          <span data-testid="message-count">{conversation.messageCount}</span>
         </div>
 
         {/* Timestamp */}
         <span>•</span>
-        <span>{relativeTime}</span>
+        <span data-testid="relative-time">{relativeTime}</span>
 
         {/* Trip indicator */}
         {conversation.tripId && (
           <>
             <span>•</span>
-            <span className="text-primary">Trip created</span>
+            <span className="text-primary" data-testid="trip-indicator">Trip created</span>
           </>
         )}
       </div>
 
       {/* Personas */}
       {conversation.personas && conversation.personas.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
+        <div className="mt-2 flex flex-wrap gap-1" data-testid="conversation-personas">
           {conversation.personas.slice(0, 3).map((persona) => (
             <PersonaChip key={persona} persona={persona} isSelected={false} showLabel={false} size="sm" />
           ))}

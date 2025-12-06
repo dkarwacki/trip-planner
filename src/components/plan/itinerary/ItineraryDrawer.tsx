@@ -17,14 +17,14 @@ import type { ItineraryPanelProps } from "../types";
  */
 export function ItineraryDrawer({ places, onReorder, onRemove, onExportToMap }: ItineraryPanelProps) {
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" data-testid="itinerary-drawer">
       {/* Header */}
-      <div className="flex items-center justify-between border-b p-4">
+      <div className="flex items-center justify-between border-b p-4" data-testid="itinerary-header">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5" />
-          <h2 className="text-lg font-semibold">Your Itinerary</h2>
+          <h2 className="text-lg font-semibold" data-testid="itinerary-title">Your Itinerary</h2>
           {places.length > 0 && (
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground" data-testid="itinerary-count">
               {places.length}
             </span>
           )}

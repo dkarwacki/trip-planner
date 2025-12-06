@@ -74,6 +74,7 @@ export function PlaceSuggestionCard({
       ref={scrollRef}
       className={`rounded-lg border bg-card transition-all ${isHighlighted ? "ring-2 ring-primary" : ""}`}
       onTransitionEnd={() => setIsHighlighted(false)}
+      data-testid="place-suggestion-card"
     >
       {/* Photo */}
       <PhotoBlock
@@ -93,7 +94,7 @@ export function PlaceSuggestionCard({
           {/* Header: Name and validation */}
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold leading-tight">{place.name}</h3>
+              <h3 className="font-semibold leading-tight" data-testid="place-name">{place.name}</h3>
               <ValidationBadge status={place.validationStatus} size="sm" />
             </div>
 
@@ -108,6 +109,7 @@ export function PlaceSuggestionCard({
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              data-testid="google-maps-link"
             >
               <MapPin className="w-3.5 h-3.5" />
               View on Google Maps
@@ -115,7 +117,7 @@ export function PlaceSuggestionCard({
           </div>
 
           {/* Description */}
-          {place.description && <p className="text-sm text-muted-foreground">{parseBoldText(place.description)}</p>}
+          {place.description && <p className="text-sm text-muted-foreground" data-testid="place-description">{parseBoldText(place.description)}</p>}
         </div>
 
         {/* Bottom section - fixed position */}
@@ -142,6 +144,7 @@ export function PlaceSuggestionCard({
                 }
               `}
               aria-label={isAdded ? "Already added to plan" : `Add ${place.name} to plan`}
+              data-testid="add-to-plan-button"
             >
               {isAdding ? (
                 <>

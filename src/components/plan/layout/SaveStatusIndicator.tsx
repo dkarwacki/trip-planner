@@ -21,7 +21,7 @@ export function SaveStatusIndicator({ status }: SaveStatusIndicatorProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex items-center gap-2 text-sm" data-testid="save-status-indicator" data-status={status}>
       {status === "saving" && (
         <>
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />

@@ -7,5 +7,9 @@ import React from "react";
 import { PlanPanel } from "../plan";
 
 export function PlanMode() {
-  return <PlanPanel />;
+  return (
+    <div data-testid="plan-mode">
+      <PlanPanel />
+    </div>
+  );
 }

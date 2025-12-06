@@ -26,6 +26,7 @@ export function ExportButton({ disabled = false, isLoading = false, onClick, pla
       className="w-full"
       size="lg"
       aria-label={`Show ${placeCount} places on map`}
+      data-testid="export-to-map-button"
     >
       {isLoading ? (
         <>

@@ -21,6 +21,7 @@ export function MobileBottomNav({ activeTab, onTabChange, planItemCount = 0 }: M
     <nav
       className="fixed bottom-0 left-0 right-0 z-[100] border-t border-gray-200 bg-white pt-2"
       style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
+      data-testid="mobile-bottom-nav"
     >
       <div className="flex h-[55px] items-center justify-around">
         {/* Map Tab */}
@@ -29,6 +30,7 @@ export function MobileBottomNav({ activeTab, onTabChange, planItemCount = 0 }: M
           icon={<Map className="h-6 w-6" />}
           label="Map"
           onClick={() => onTabChange("map")}
+          dataTestId="mobile-tab-map"
         />
 
         {/* Discover Tab */}
@@ -37,6 +39,7 @@ export function MobileBottomNav({ activeTab, onTabChange, planItemCount = 0 }: M
           icon={<Compass className="h-6 w-6" />}
           label="Discover"
           onClick={() => onTabChange("discover")}
+          dataTestId="mobile-tab-discover"
         />
 
         {/* Plan Tab */}
@@ -46,6 +49,7 @@ export function MobileBottomNav({ activeTab, onTabChange, planItemCount = 0 }: M
           label="Plan"
           badge={planItemCount > 0 ? planItemCount : undefined}
           onClick={() => onTabChange("plan")}
+          dataTestId="mobile-tab-plan"
         />
       </div>
     </nav>
@@ -58,9 +62,10 @@ interface TabButtonProps {
   label: string;
   badge?: number;
   onClick: () => void;
+  dataTestId?: string;
 }
 
-function TabButton({ active, icon, label, badge, onClick }: TabButtonProps) {
+function TabButton({ active, icon, label, badge, onClick, dataTestId }: TabButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -70,6 +75,7 @@ function TabButton({ active, icon, label, badge, onClick }: TabButtonProps) {
         active ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
       )}
       aria-current={active ? "page" : undefined}
+      data-testid={dataTestId}
     >
       <div className="relative">
         {icon}

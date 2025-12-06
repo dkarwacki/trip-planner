@@ -4,7 +4,7 @@
 
 export function TypingIndicator() {
   return (
-    <div className="flex justify-start">
+    <div className="flex justify-start" data-testid="typing-indicator">
       <div className="bg-gray-100 rounded-2xl px-4 py-3 flex items-center gap-2">
         <span className="text-sm text-gray-600">AI is thinking</span>
         <div className="flex gap-1">

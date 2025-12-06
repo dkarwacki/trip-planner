@@ -28,7 +28,7 @@ export function ItineraryPanel({
   if (isCollapsed) {
     return (
       <TooltipProvider>
-        <div className="flex h-full flex-col items-center py-4 bg-white">
+        <div className="flex h-full flex-col items-center py-4 bg-white" data-testid="itinerary-panel-collapsed">
           <div className="flex-1 flex flex-col items-center gap-4">
             <Tooltip>
               <TooltipTrigger>
@@ -42,7 +42,10 @@ export function ItineraryPanel({
             </Tooltip>
 
             {places.length > 0 && (
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+              <span
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground"
+                data-testid="itinerary-count-collapsed"
+              >
                 {places.length}
               </span>
             )}
@@ -59,6 +62,7 @@ export function ItineraryPanel({
                     size="icon"
                     className="h-10 w-10"
                     aria-label="Expand panel"
+                    data-testid="expand-itinerary-button"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -75,9 +79,9 @@ export function ItineraryPanel({
   }
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-white" data-testid="itinerary-panel">
       {/* Sticky Header */}
-      <div className="flex-shrink-0 bg-white border-b sticky top-0 z-[10]">
+      <div className="flex-shrink-0 bg-white border-b sticky top-0 z-[10]" data-testid="itinerary-panel-header">
         <div className="flex items-center justify-between p-3">
           {onToggleCollapse && (
             <Button
@@ -86,6 +90,7 @@ export function ItineraryPanel({
               size="icon"
               className="h-8 w-8"
               aria-label="Collapse panel"
+              data-testid="collapse-itinerary-button"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -93,9 +98,14 @@ export function ItineraryPanel({
 
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            <h2 className="font-semibold">Your Itinerary</h2>
+            <h2 className="font-semibold" data-testid="itinerary-panel-title">
+              Your Itinerary
+            </h2>
             {places.length > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+              <span
+                className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground"
+                data-testid="itinerary-panel-count"
+              >
                 {places.length}
               </span>
             )}

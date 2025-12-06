@@ -52,12 +52,15 @@ export function DynamicSidebar({
         className={`${
           isCollapsed ? "w-16" : "w-[24rem] lg:w-[28rem]"
         } flex flex-col bg-white border-r shadow-sm transition-all duration-300 ease-in-out relative z-[110] flex-shrink-0`}
+        data-testid="dynamic-sidebar"
+        data-collapsed={isCollapsed}
+        data-mode={activeMode}
       >
         {isCollapsed ? (
           /* Collapsed Icon Rail */
-          <div className="flex flex-col h-full" style={{ pointerEvents: "auto" }}>
+          <div className="flex flex-col h-full" style={{ pointerEvents: "auto" }} data-testid="sidebar-collapsed">
             {/* Mode Icons */}
-            <div className="flex-1 flex flex-col items-center gap-2 py-4" style={{ pointerEvents: "auto" }}>
+            <div className="flex-1 flex flex-col items-center gap-2 py-4" style={{ pointerEvents: "auto" }} data-testid="mode-icons">
               {Object.values(MODE_CONFIG).map((mode) => {
                 const Icon = mode.icon;
                 const isActive = activeMode === mode.id;
@@ -76,6 +79,7 @@ export function DynamicSidebar({
                         }}
                         aria-label={mode.label}
                         style={{ pointerEvents: "auto", position: "relative", zIndex: 121 }}
+                        data-testid={`mode-icon-${mode.id}`}
                       >
                         <Icon className="h-5 w-5" />
                       </Button>
@@ -98,6 +102,7 @@ export function DynamicSidebar({
                     size="icon"
                     className="h-10 w-10"
                     aria-label="Expand sidebar"
+                    data-testid="expand-sidebar-button"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </Button>
@@ -112,10 +117,10 @@ export function DynamicSidebar({
           /* Expanded Sidebar */
           <>
             {/* Mode Tabs - Sticky Header */}
-            <div className="flex-shrink-0 bg-white border-b sticky top-0 z-[120] relative">
+            <div className="flex-shrink-0 bg-white border-b sticky top-0 z-[120] relative" data-testid="sidebar-header">
               <div className="flex items-center justify-between p-3 relative" style={{ pointerEvents: "auto" }}>
                 {/* Mode Tabs */}
-                <div className="flex gap-1 flex-1" style={{ pointerEvents: "auto" }}>
+                <div className="flex gap-1 flex-1" style={{ pointerEvents: "auto" }} data-testid="mode-tabs">
                   {Object.values(MODE_CONFIG).map((mode) => {
                     const Icon = mode.icon;
                     const isActive = activeMode === mode.id;
@@ -128,6 +133,7 @@ export function DynamicSidebar({
                         onClick={() => onModeChange(mode.id)}
                         className="flex items-center gap-2 flex-1"
                         style={{ pointerEvents: "auto", position: "relative", zIndex: 121 }}
+                        data-testid={`mode-tab-${mode.id}`}
                       >
                         <Icon className="h-4 w-4" />
                         <span className="hidden lg:inline">{mode.label}</span>
@@ -145,6 +151,7 @@ export function DynamicSidebar({
                       size="icon"
                       className="h-8 w-8 ml-2 flex-shrink-0"
                       aria-label="Collapse sidebar"
+                      data-testid="collapse-sidebar-button"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -157,7 +164,7 @@ export function DynamicSidebar({
             </div>
 
             {/* Mode Content */}
-            <div className="flex-1 overflow-hidden flex flex-col">{children}</div>
+            <div className="flex-1 overflow-hidden flex flex-col" data-testid="mode-content">{children}</div>
           </>
         )}
       </div>

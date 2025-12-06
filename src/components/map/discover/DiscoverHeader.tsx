@@ -49,16 +49,16 @@ export const DiscoverHeader = React.memo(function DiscoverHeader({
   }
 
   return (
-    <div className="px-4 py-3 border-b border-gray-200 bg-white">
+    <div className="px-4 py-3 border-b border-gray-200 bg-white" data-testid="discover-header">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900 mb-1">Selected: {placeName}</h2>
-          <p className="text-xs text-gray-600">
+          <h2 className="text-sm font-semibold text-gray-900 mb-1" data-testid="selected-place-name">Selected: {placeName}</h2>
+          <p className="text-xs text-gray-600" data-testid="place-counts">
             {attractionsCount} attractions • {restaurantsCount} restaurants
           </p>
         </div>
         {filteredCount < totalCount && (
-          <div className="text-xs font-medium text-blue-600">
+          <div className="text-xs font-medium text-blue-600" data-testid="filtered-count">
             Showing {filteredCount} of {totalCount}
           </div>
         )}

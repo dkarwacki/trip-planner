@@ -57,7 +57,7 @@ export function PersonaSelectorMobile({ selected, onChange, isLoading = false }:
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" data-testid="persona-selector-mobile-loading">
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         <span className="text-xs text-muted-foreground">Loading...</span>
       </div>
@@ -65,9 +65,9 @@ export function PersonaSelectorMobile({ selected, onChange, isLoading = false }:
   }
 
   return (
-    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded} data-testid="persona-selector-mobile">
       {/* Collapsed State - Shows selected count and icons */}
-      <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 rounded-md p-2 hover:bg-accent/50 transition-colors">
+      <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 rounded-md p-2 hover:bg-accent/50 transition-colors" data-testid="persona-selector-toggle">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
             Travel Style ({selected.length})
@@ -103,7 +103,7 @@ export function PersonaSelectorMobile({ selected, onChange, isLoading = false }:
 
       {/* Expanded State - Full persona cards */}
       <CollapsibleContent>
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2" data-testid="persona-cards-grid">
           {allPersonas.map((persona) => {
             const isSelected = selected.includes(persona.type);
             const IconComponent = iconMap[persona.icon];
@@ -116,6 +116,7 @@ export function PersonaSelectorMobile({ selected, onChange, isLoading = false }:
                   isSelected ? "border-primary bg-primary/10 shadow-sm" : "border-input bg-background hover:bg-accent"
                 }`}
                 aria-pressed={isSelected}
+                data-testid={`persona-card-${persona.type}`}
               >
                 <div className="flex items-center gap-2">
                   <div

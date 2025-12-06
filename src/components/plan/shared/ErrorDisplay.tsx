@@ -29,11 +29,11 @@ export function ErrorDisplay({ message, onRetry, size = "md", variant = "inline"
   const containerClasses = variant === "inline" ? "rounded-lg border border-destructive/50 bg-destructive/10 p-4" : "";
 
   return (
-    <div className={containerClasses}>
+    <div className={containerClasses} data-testid="error-display">
       <div className="flex items-start gap-3">
         <AlertCircle size={iconSize} className="flex-shrink-0 text-destructive" aria-hidden="true" />
         <div className="flex-1 space-y-2">
-          <p className={`text-destructive ${textSize}`} role="alert">
+          <p className={`text-destructive ${textSize}`} role="alert" data-testid="error-message">
             {message}
           </p>
           {onRetry && (
@@ -43,6 +43,7 @@ export function ErrorDisplay({ message, onRetry, size = "md", variant = "inline"
               onClick={onRetry}
               className="gap-2"
               aria-label="Retry action"
+              data-testid="retry-button"
             >
               <RefreshCw size={14} />
               Try Again

@@ -74,17 +74,17 @@ export function DesktopHeader({ saveStatus, onRetrySync, tripId, user }: Desktop
     }
   };
   return (
-    <header className="h-14 border-b bg-white flex items-center justify-between px-4 flex-shrink-0 z-[110] relative">
+    <header className="h-14 border-b bg-white flex items-center justify-between px-4 flex-shrink-0 z-[110] relative" data-testid="map-desktop-header">
       {/* Left: Branding */}
       <div className="flex items-center gap-2 flex-shrink-0">
-        <a href="/" className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2" data-testid="logo-link">
           <h1 className="text-lg font-bold text-gray-900">Trip Planner</h1>
         </a>
-        <span className="text-xs text-gray-500 font-medium px-2 py-1 bg-gray-100 rounded">Map</span>
+        <span className="text-xs text-gray-500 font-medium px-2 py-1 bg-gray-100 rounded" data-testid="map-badge">Map</span>
       </div>
 
       {/* Center: Save Status */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-2 flex-shrink-0" data-testid="save-status-container">
         {saveStatus === "saving" && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -119,6 +119,7 @@ export function DesktopHeader({ saveStatus, onRetrySync, tripId, user }: Desktop
           onClick={handleConversationClick}
           disabled={isCreatingConversation}
           className="flex items-center gap-1.5"
+          data-testid="open-chat-button"
         >
           {isCreatingConversation ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -130,7 +131,7 @@ export function DesktopHeader({ saveStatus, onRetrySync, tripId, user }: Desktop
 
         {/* Trip History Selector */}
         <TripSelector>
-          <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+          <Button variant="outline" size="sm" className="flex items-center gap-1.5" data-testid="trips-button">
             <Clock className="h-4 w-4" />
             <span>Trips</span>
           </Button>

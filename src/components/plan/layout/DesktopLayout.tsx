@@ -499,7 +499,7 @@ export function DesktopLayout({ conversationId, user }: LayoutProps) {
   const showHeaderPersonas = messages.length > 0;
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50">
+    <div className="flex h-screen flex-col bg-gray-50" data-testid="plan-page-desktop">
       {/* Header with save status */}
       <PlanHeader
         saveStatus={tripSyncStatus}
@@ -508,7 +508,7 @@ export function DesktopLayout({ conversationId, user }: LayoutProps) {
       />
 
       {/* Main content area - 3 columns */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden" data-testid="desktop-main-content">
         {/* Left Sidebar - Conversation Library */}
         <div
           className={`bg-white border-r shadow-sm transition-all duration-300 flex-shrink-0 ${

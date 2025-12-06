@@ -42,7 +42,7 @@ export function PersonaSelector({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center gap-2 p-4">
+      <div className="flex items-center justify-center gap-2 p-4" data-testid="persona-selector-loading">
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         <span className="text-sm text-muted-foreground">Loading personas...</span>
       </div>
@@ -57,9 +57,9 @@ export function PersonaSelector({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="text-xs font-medium text-muted-foreground">Travel Style</div>
-      <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-2" data-testid="persona-selector">
+      <div className="text-xs font-medium text-muted-foreground" data-testid="persona-selector-label">Travel Style</div>
+      <div className="flex flex-wrap gap-2" data-testid="persona-chips-container">
         <AnimatePresence mode="popLayout">
           {displayedPersonas.map((persona) => (
             <PersonaChip
@@ -76,7 +76,7 @@ export function PersonaSelector({
         </AnimatePresence>
       </div>
       {!readOnly && selected.length === 0 && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground" data-testid="persona-selector-hint">
           Select at least one travel style to get personalized suggestions
         </p>
       )}

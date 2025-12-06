@@ -32,7 +32,7 @@ export function MessageList({ messages, isLoading = false, onAddPlace, addedPlac
   const firstAssistantIndex = messages.findIndex((m) => m.role === "assistant");
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 p-4" data-testid="message-list">
       {messages.map((message, index) => {
         if (message.role === "user") {
           return <UserMessage key={message.id} message={message} />;
@@ -57,7 +57,7 @@ export function MessageList({ messages, isLoading = false, onAddPlace, addedPlac
       {isLoading && <TypingIndicator />}
 
       {/* Scroll anchor */}
-      <div ref={messagesEndRef} />
+      <div ref={messagesEndRef} data-testid="messages-end-anchor" />
     </div>
   );
 }
