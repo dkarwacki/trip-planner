@@ -12,13 +12,18 @@ interface PlanHeaderProps {
 
 export function PlanHeader({ saveStatus, onRetrySync, user }: PlanHeaderProps) {
   return (
-    <header className="h-14 border-b bg-white flex items-center justify-between px-4 flex-shrink-0 z-[110] relative" data-testid="plan-header">
+    <header
+      className="h-14 border-b bg-white flex items-center justify-between px-4 flex-shrink-0 z-[110] relative"
+      data-testid="plan-header"
+    >
       {/* Left: Branding */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <a href="/" className="flex items-center gap-2" data-testid="logo-link">
           <h1 className="text-lg font-bold text-gray-900">Trip Planner</h1>
         </a>
-        <span className="text-xs text-gray-500 font-medium px-2 py-1 bg-gray-100 rounded" data-testid="plan-badge">Plan</span>
+        <span className="text-xs text-gray-500 font-medium px-2 py-1 bg-gray-100 rounded" data-testid="plan-badge">
+          Plan
+        </span>
       </div>
 
       {/* Right: Save Status & User Menu */}

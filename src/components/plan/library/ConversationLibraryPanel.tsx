@@ -29,7 +29,10 @@ export function ConversationLibraryPanel({
   if (isCollapsed) {
     return (
       <TooltipProvider>
-        <div className="flex h-full flex-col items-center py-4 bg-white" data-testid="conversation-library-panel-collapsed">
+        <div
+          className="flex h-full flex-col items-center py-4 bg-white"
+          data-testid="conversation-library-panel-collapsed"
+        >
           <div className="flex-1 flex flex-col items-center gap-4">
             <Tooltip>
               <TooltipTrigger>
@@ -43,7 +46,10 @@ export function ConversationLibraryPanel({
             </Tooltip>
 
             {conversations.length > 0 && (
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground" data-testid="conversation-count-collapsed">
+              <span
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground"
+                data-testid="conversation-count-collapsed"
+              >
                 {conversations.length}
               </span>
             )}
@@ -82,7 +88,9 @@ export function ConversationLibraryPanel({
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-2">
             <MessagesSquare className="h-5 w-5" />
-            <h2 className="font-semibold" data-testid="library-panel-title">Chats</h2>
+            <h2 className="font-semibold" data-testid="library-panel-title">
+              Chats
+            </h2>
           </div>
           {onToggleCollapse && (
             <Button

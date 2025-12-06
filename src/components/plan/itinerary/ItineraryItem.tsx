@@ -36,7 +36,12 @@ export function ItineraryItem({ place, order, onRemove }: ItineraryItemProps) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={`relative flex gap-4 ${isDragging ? "opacity-50 z-50" : ""}`} data-testid="itinerary-item">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`relative flex gap-4 ${isDragging ? "opacity-50 z-50" : ""}`}
+      data-testid="itinerary-item"
+    >
       {/* Timeline Node */}
       <div className="flex-shrink-0 flex flex-col items-center pt-2">
         <div
@@ -74,7 +79,9 @@ export function ItineraryItem({ place, order, onRemove }: ItineraryItemProps) {
           {/* Content */}
           <div className="flex-1 flex flex-col justify-center min-w-0">
             <div className="flex justify-between items-start">
-              <h4 className="text-sm font-medium text-gray-900 truncate pr-2" data-testid="itinerary-item-name">{place.name}</h4>
+              <h4 className="text-sm font-medium text-gray-900 truncate pr-2" data-testid="itinerary-item-name">
+                {place.name}
+              </h4>
               <button
                 onClick={handleRemove}
                 className="text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"

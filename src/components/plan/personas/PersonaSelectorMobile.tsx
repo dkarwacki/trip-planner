@@ -67,7 +67,10 @@ export function PersonaSelectorMobile({ selected, onChange, isLoading = false }:
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded} data-testid="persona-selector-mobile">
       {/* Collapsed State - Shows selected count and icons */}
-      <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 rounded-md p-2 hover:bg-accent/50 transition-colors" data-testid="persona-selector-toggle">
+      <CollapsibleTrigger
+        className="flex w-full items-center justify-between gap-2 rounded-md p-2 hover:bg-accent/50 transition-colors"
+        data-testid="persona-selector-toggle"
+      >
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
             Travel Style ({selected.length})

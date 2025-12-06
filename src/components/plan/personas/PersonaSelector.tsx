@@ -58,7 +58,9 @@ export function PersonaSelector({
 
   return (
     <div className="flex flex-col gap-2" data-testid="persona-selector">
-      <div className="text-xs font-medium text-muted-foreground" data-testid="persona-selector-label">Travel Style</div>
+      <div className="text-xs font-medium text-muted-foreground" data-testid="persona-selector-label">
+        Travel Style
+      </div>
       <div className="flex flex-wrap gap-2" data-testid="persona-chips-container">
         <AnimatePresence mode="popLayout">
           {displayedPersonas.map((persona) => (

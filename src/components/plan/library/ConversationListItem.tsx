@@ -69,7 +69,9 @@ export function ConversationListItem({
     >
       {/* Header: Title and actions */}
       <div className="mb-2 flex items-start justify-between gap-2">
-        <h3 className="flex-1 font-medium leading-tight line-clamp-2" data-testid="conversation-title">{conversation.title}</h3>
+        <h3 className="flex-1 font-medium leading-tight line-clamp-2" data-testid="conversation-title">
+          {conversation.title}
+        </h3>
 
         <div className="flex gap-1">
           {conversation.tripId && onOpenMap && (
@@ -119,7 +121,9 @@ export function ConversationListItem({
         {conversation.tripId && (
           <>
             <span>•</span>
-            <span className="text-primary" data-testid="trip-indicator">Trip created</span>
+            <span className="text-primary" data-testid="trip-indicator">
+              Trip created
+            </span>
           </>
         )}
       </div>

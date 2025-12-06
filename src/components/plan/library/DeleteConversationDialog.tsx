@@ -25,9 +25,14 @@ export function DeleteConversationDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" data-testid="delete-conversation-dialog">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+      data-testid="delete-conversation-dialog"
+    >
       <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg">
-        <h2 className="mb-2 text-lg font-semibold" data-testid="dialog-title">Delete Conversation?</h2>
+        <h2 className="mb-2 text-lg font-semibold" data-testid="dialog-title">
+          Delete Conversation?
+        </h2>
         <p className="mb-6 text-sm text-muted-foreground" data-testid="dialog-description">
           Are you sure you want to delete <strong>{conversationTitle}</strong>? This action cannot be undone.
         </p>
